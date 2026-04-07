@@ -80,6 +80,19 @@ export async function POST(req: NextRequest) {
 
   const { ig_access_token, ig_user_id } = profile
 
+  // 1b. Fetch follower count and update profile
+  try {
+    const meRes = await fetch(
+      `https://graph.instagram.com/v21.0/me?fields=followers_count,media_count&access_token=${ig_access_token}`
+    )
+    if (meRes.ok) {
+      const meData = await meRes.json()
+      if (meData.followers_count != null) {
+        await adminClient.from('profiles').update({ followers_count: meData.followers_count }).eq('id', profileId)
+      }
+    }
+  } catch { /* non-blocking */ }
+
   // 2. Fetch recent media from Instagram Graph API
   const mediaUrl = new URL(`https://graph.instagram.com/v21.0/me/media`)
   mediaUrl.searchParams.set('fields', 'id,caption,media_type,media_url,thumbnail_url,timestamp,permalink,like_count,comments_count')
@@ -171,11 +184,12 @@ export async function POST(req: NextRequest) {
   // 5b. Refresh metrics on existing reels (plays, likes, comments, saves, shares)
   const existingReels = reelsWithInsights.filter(r => existingIds.has(r.media.id))
   await Promise.all(
-    existingReels.map(({ media, plays, shares, saved }) =>
+    existingReels.map(({ media, plays, reach, shares, saved }) =>
       adminClient
         .from('client_reels')
         .update({
           views: plays,
+          reach,
           likes: media.like_count ?? 0,
           comments: media.comments_count ?? 0,
           saves: saved,
@@ -190,7 +204,7 @@ export async function POST(req: NextRequest) {
   const newReels = reelsWithInsights.filter(r => !existingIds.has(r.media.id))
   const savedSummaries: ReelSummary[] = []
 
-  for (const { media, plays, shares, saved } of newReels) {
+  for (const { media, plays, reach, shares, saved } of newReels) {
     let transcript = ''
     let hook = ''
 
@@ -223,6 +237,7 @@ export async function POST(req: NextRequest) {
       date: media.timestamp,
       scraped_week,
       views: plays,
+      reach,
       likes: media.like_count ?? 0,
       comments: media.comments_count ?? 0,
       saves: saved,

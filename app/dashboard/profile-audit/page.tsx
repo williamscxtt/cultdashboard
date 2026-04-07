@@ -1,0 +1,419 @@
+'use client'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { createClient } from '@/lib/supabase'
+import { Card, Button, Badge, PageHeader, SectionLabel } from '@/components/ui'
+import { CheckCircle2, AlertTriangle, ArrowRight, Copy, ChevronDown, ChevronUp, Upload, AtSign, X } from 'lucide-react'
+import { toast } from 'sonner'
+
+interface AuditScores {
+  profile_pic: number
+  name_username: number
+  bio: number
+  link: number
+  highlights: number
+  pinned_posts: number
+}
+
+interface AuditFeedback {
+  what_works: string
+  what_to_fix: string
+  action: string
+}
+
+interface AuditAnalysis {
+  scores: AuditScores
+  overall_score: number
+  verdict: string
+  feedback: Record<string, AuditFeedback>
+  bio_rewrite: string
+  detailed_bio_analysis: string
+  highlight_suggestions: string[]
+  priority_fixes: string[]
+}
+
+interface AuditHistoryItem {
+  id: string
+  ig_username: string | null
+  overall_score: number
+  verdict: string
+  created_at: string
+  analysis: AuditAnalysis
+}
+
+const ELEMENT_LABELS: Record<string, string> = {
+  profile_pic: 'Profile Picture',
+  name_username: 'Name & Username',
+  bio: 'Bio',
+  link: 'Link in Bio',
+  highlights: 'Highlights',
+  pinned_posts: 'Pinned Posts',
+}
+
+function scoreColor(score: number) {
+  if (score >= 8) return 'hsl(142 71% 36%)'
+  if (score >= 7) return 'var(--accent)'
+  if (score >= 5) return 'hsl(38 92% 50%)'
+  return 'hsl(0 72% 51%)'
+}
+
+function verdictBadge(verdict: string): 'success' | 'accent' | 'warning' | 'error' {
+  if (verdict === 'Excellent') return 'success'
+  if (verdict === 'Good') return 'accent'
+  if (verdict === 'Needs Work') return 'warning'
+  return 'error'
+}
+
+export default function ProfileAuditPage() {
+  const [screenshot, setScreenshot] = useState<File | null>(null)
+  const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [audit, setAudit] = useState<AuditAnalysis | null>(null)
+  const [auditId, setAuditId] = useState<string | null>(null)
+  const [history, setHistory] = useState<AuditHistoryItem[]>([])
+  const [userId, setUserId] = useState('')
+  const [igUsername, setIgUsername] = useState('')
+  const [expandedElements, setExpandedElements] = useState<Set<string>>(new Set())
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) {
+        setUserId(data.user.id)
+        loadHistory(data.user.id)
+        // Prefill IG username from profile
+        supabase.from('profiles').select('ig_username').eq('id', data.user.id).single().then(({ data: p }) => {
+          if (p?.ig_username) setIgUsername(p.ig_username)
+        })
+      }
+    })
+  }, [])
+
+  const loadHistory = useCallback(async (uid: string) => {
+    setLoadingHistory(true)
+    const res = await fetch(`/api/profile-audit?profileId=${uid}`)
+    const data = await res.json()
+    if (data.audits) setHistory(data.audits)
+    setLoadingHistory(false)
+  }, [])
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setScreenshot(file)
+    const reader = new FileReader()
+    reader.onload = (ev) => setScreenshotPreview(ev.target?.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  function removeScreenshot() {
+    setScreenshot(null)
+    setScreenshotPreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  async function handleAudit() {
+    setLoading(true)
+    setAudit(null)
+    setAuditId(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('profileId', userId)
+      if (igUsername.trim()) formData.append('igUsername', igUsername.trim().replace('@', ''))
+      if (screenshot) formData.append('screenshot', screenshot)
+
+      const res = await fetch('/api/profile-audit', { method: 'POST', body: formData })
+      const data = await res.json()
+
+      if (!res.ok) {
+        toast.error(data.error || 'Audit failed')
+        return
+      }
+
+      setAudit(data.analysis)
+      setAuditId(data.id)
+      loadHistory(userId)
+      toast.success('Audit complete')
+    } catch {
+      toast.error('Network error — please try again')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  function toggleElement(key: string) {
+    setExpandedElements(prev => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+  }
+
+  function loadHistoryAudit(item: AuditHistoryItem) {
+    setAudit(item.analysis)
+    setAuditId(item.id)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const canAudit = !loading && (screenshot !== null || igUsername.trim().length > 0)
+
+  return (
+    <div style={{ padding: '24px', maxWidth: 800, margin: '0 auto' }}>
+      <PageHeader
+        title="Profile Audit"
+        description="Upload a screenshot of your Instagram profile and get a full AI audit across 6 elements."
+      />
+
+      {/* Input card */}
+      <Card style={{ padding: 20, marginBottom: 16 }}>
+        {/* Screenshot upload */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 8 }}>
+            Profile Screenshot
+          </label>
+          {screenshotPreview ? (
+            <div style={{ position: 'relative', display: 'inline-block' }}>
+              <img
+                src={screenshotPreview}
+                alt="Profile screenshot"
+                style={{ maxHeight: 280, borderRadius: 8, border: '1px solid var(--border)', display: 'block' }}
+              />
+              <button
+                onClick={removeScreenshot}
+                style={{
+                  position: 'absolute', top: 8, right: 8,
+                  background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%',
+                  width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: 'white',
+                }}
+              >
+                <X size={13} />
+              </button>
+            </div>
+          ) : (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                border: '2px dashed var(--border)', borderRadius: 10,
+                padding: '32px 24px', textAlign: 'center', cursor: 'pointer',
+                transition: 'border-color 0.15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+            >
+              <Upload size={24} style={{ color: 'var(--muted-foreground)', margin: '0 auto 10px', display: 'block' }} />
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginBottom: 4 }}>Upload profile screenshot</div>
+              <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>Take a screenshot from your iPhone and upload it here</div>
+            </div>
+          )}
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
+        </div>
+
+        {/* IG handle */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 8 }}>
+            Instagram Handle
+            {igUsername && <span style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 400, marginLeft: 6 }}>Used to fetch live profile data via API</span>}
+          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AtSign size={15} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
+            <input
+              type="text"
+              value={igUsername}
+              onChange={e => setIgUsername(e.target.value)}
+              placeholder="yourhandle"
+              style={{ flex: 1 }}
+            />
+          </div>
+        </div>
+
+        <Button onClick={handleAudit} disabled={!canAudit} style={{ width: '100%' }}>
+          {loading ? (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>◌</span>
+              Analysing profile...
+            </span>
+          ) : 'Run Audit'}
+        </Button>
+        <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
+      </Card>
+
+      {/* Results */}
+      {audit && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Overall score */}
+          <Card style={{ padding: 24 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6 }}>Overall Score</div>
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                  <span style={{ fontSize: 52, fontWeight: 900, color: scoreColor(audit.overall_score), lineHeight: 1 }}>
+                    {audit.overall_score.toFixed(1)}
+                  </span>
+                  <span style={{ fontSize: 18, color: 'var(--muted-foreground)' }}>/10</span>
+                </div>
+                <div style={{ marginTop: 8 }}>
+                  <Badge variant={verdictBadge(audit.verdict)}>{audit.verdict}</Badge>
+                </div>
+              </div>
+              {/* Score bars */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6, minWidth: 200 }}>
+                {Object.entries(audit.scores).map(([key, score]) => (
+                  <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 11, color: 'var(--muted-foreground)', width: 100, textAlign: 'right', flexShrink: 0 }}>{ELEMENT_LABELS[key]}</span>
+                    <div style={{ flex: 1, height: 5, background: 'var(--muted)', borderRadius: 3 }}>
+                      <div style={{ height: '100%', borderRadius: 3, background: scoreColor(score), width: `${score * 10}%`, transition: 'width 0.5s ease' }} />
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: scoreColor(score), width: 18 }}>{score}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          {/* Element-by-element breakdown */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <SectionLabel>Element Breakdown</SectionLabel>
+            {Object.entries(audit.scores).map(([key, score]) => {
+              const fb = audit.feedback?.[key]
+              const isExpanded = expandedElements.has(key)
+              return (
+                <Card key={key} style={{ padding: 0, overflow: 'hidden' }}>
+                  <button
+                    onClick={() => toggleElement(key)}
+                    style={{
+                      width: '100%', padding: '14px 16px',
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      background: 'transparent', border: 'none', cursor: 'pointer',
+                      fontFamily: 'inherit', textAlign: 'left',
+                    }}
+                  >
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: 'var(--muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                      <span style={{ fontSize: 15, fontWeight: 800, color: scoreColor(score) }}>{score}</span>
+                    </div>
+                    <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>{ELEMENT_LABELS[key]}</span>
+                    {isExpanded ? <ChevronUp size={15} style={{ color: 'var(--muted-foreground)' }} /> : <ChevronDown size={15} style={{ color: 'var(--muted-foreground)' }} />}
+                  </button>
+                  {isExpanded && fb && (
+                    <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid var(--border)' }}>
+                      {fb.what_works && (
+                        <div style={{ display: 'flex', gap: 10, paddingTop: 14 }}>
+                          <CheckCircle2 size={15} style={{ color: 'hsl(142 71% 45%)', flexShrink: 0, marginTop: 1 }} />
+                          <span style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6 }}>{fb.what_works}</span>
+                        </div>
+                      )}
+                      {fb.what_to_fix && (
+                        <div style={{ display: 'flex', gap: 10 }}>
+                          <AlertTriangle size={15} style={{ color: 'hsl(38 92% 50%)', flexShrink: 0, marginTop: 1 }} />
+                          <span style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6 }}>{fb.what_to_fix}</span>
+                        </div>
+                      )}
+                      {fb.action && (
+                        <div style={{ display: 'flex', gap: 10, background: 'hsl(220 90% 56% / 0.06)', borderRadius: 8, padding: '10px 12px' }}>
+                          <ArrowRight size={15} style={{ color: 'var(--accent)', flexShrink: 0, marginTop: 1 }} />
+                          <span style={{ fontSize: 13, color: 'var(--accent)', fontWeight: 600, lineHeight: 1.6 }}>{fb.action}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </Card>
+              )
+            })}
+          </div>
+
+          {/* Priority fixes */}
+          <Card style={{ padding: 20 }}>
+            <div style={{ marginBottom: 12 }}><SectionLabel>Priority Fixes</SectionLabel></div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {audit.priority_fixes.map((fix, i) => (
+                <div key={i} style={{ display: 'flex', gap: 10, fontSize: 13 }}>
+                  <span style={{
+                    width: 22, height: 22, borderRadius: '50%', flexShrink: 0,
+                    background: i === 0 ? 'var(--foreground)' : 'var(--muted)',
+                    color: i === 0 ? 'var(--background)' : 'var(--muted-foreground)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: 11, fontWeight: 700,
+                  }}>{i + 1}</span>
+                  <span style={{ color: 'var(--foreground)', lineHeight: 1.6, fontWeight: i === 0 ? 600 : 400 }}>{fix}</span>
+                </div>
+              ))}
+            </div>
+          </Card>
+
+          {/* Bio rewrite */}
+          <Card style={{ padding: 20, borderLeft: '3px solid var(--accent)', borderRadius: '0 10px 10px 0' }}>
+            <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8 }}>Your New Bio</div>
+            {audit.detailed_bio_analysis && (
+              <div style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.6, marginBottom: 14 }}>{audit.detailed_bio_analysis}</div>
+            )}
+            <div style={{
+              fontSize: 15, fontWeight: 600, color: 'var(--foreground)', lineHeight: 1.6,
+              background: 'var(--muted)', borderRadius: 8, padding: '12px 14px', marginBottom: 12,
+            }}>
+              {audit.bio_rewrite}
+            </div>
+            <Button size="sm" onClick={() => { navigator.clipboard.writeText(audit.bio_rewrite); toast.success('Bio copied') }}>
+              <Copy size={13} style={{ marginRight: 6 }} /> Copy Bio
+            </Button>
+          </Card>
+
+          {/* Highlight suggestions */}
+          {audit.highlight_suggestions?.length > 0 && (
+            <Card style={{ padding: 20 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: 12 }}>Suggested Highlight Names</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {audit.highlight_suggestions.map((s, i) => (
+                  <span key={i} style={{
+                    fontSize: 13, fontWeight: 600, padding: '6px 14px', borderRadius: 999,
+                    background: 'var(--foreground)', color: 'var(--background)',
+                  }}>{s}</span>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
+      )}
+
+      {/* History */}
+      {(history.length > 0 || loadingHistory) && (
+        <div style={{ marginTop: 32 }}>
+          <div style={{ marginBottom: 12 }}><SectionLabel>Audit History</SectionLabel></div>
+          {loadingHistory ? (
+            <div style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>Loading...</div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {history.map(item => (
+                <button
+                  key={item.id}
+                  onClick={() => loadHistoryAudit(item)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 12, width: '100%', textAlign: 'left',
+                    background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 10,
+                    padding: '12px 16px', cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>
+                      {item.ig_username ? `@${item.ig_username}` : 'Profile Audit'}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+                      {new Date(item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 16, fontWeight: 800, color: scoreColor(item.overall_score) }}>
+                      {item.overall_score?.toFixed(1)}
+                    </span>
+                    <Badge variant={verdictBadge(item.verdict)}>{item.verdict}</Badge>
+                  </div>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
