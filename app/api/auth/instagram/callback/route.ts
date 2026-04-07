@@ -44,14 +44,18 @@ export async function GET(req: NextRequest) {
 
     // Save to Supabase
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    console.log('[IG callback] supabase user:', user?.id ?? null, 'authError:', authError?.message ?? null)
+    if (!user) throw new Error('Not authenticated — no Supabase session')
 
-    await supabase.from('profiles').update({
+    const { error: updateError } = await supabase.from('profiles').update({
       ig_access_token: accessToken,
       ig_username: igUsername,
       ig_user_id: igUserId,
     }).eq('id', user.id)
+
+    console.log('[IG callback] update error:', updateError?.message ?? null, 'username:', igUsername)
+    if (updateError) throw new Error(`DB update failed: ${updateError.message}`)
 
     return NextResponse.redirect(new URL('/dashboard/settings?ig_connected=1', req.url))
   } catch (err: unknown) {
