@@ -1,11 +1,18 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
+import { createClient as createAdmin } from '@supabase/supabase-js'
 import type { Profile, ClientReel } from '@/lib/types'
 import Link from 'next/link'
 import AnalyticsCharts from '@/components/dashboard/AnalyticsCharts'
 import ScriptCards from '@/components/dashboard/ScriptCards'
+import ClientDetailActions from '@/components/dashboard/ClientDetailActions'
 import { Card, Badge, StatCard, PageHeader, EmptyState } from '@/components/ui'
 import { ArrowLeft, FileText } from 'lucide-react'
+
+const adminClient = createAdmin(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!
+)
 
 export default async function ClientDetailPage({
   params,
@@ -26,7 +33,7 @@ export default async function ClientDetailPage({
 
   if (adminProfile?.role !== 'admin') redirect('/dashboard')
 
-  const { data: clientProfile } = await supabase
+  const { data: clientProfile } = await adminClient
     .from('profiles')
     .select('*')
     .eq('id', id)
@@ -34,19 +41,20 @@ export default async function ClientDetailPage({
 
   if (!clientProfile || clientProfile.role !== 'client') redirect('/dashboard/clients')
 
-  const { data: reels } = await supabase
-    .from('client_reels')
-    .select('*')
-    .eq('profile_id', id)
-    .order('date', { ascending: false })
-
-  const { data: weeklyScript } = await supabase
-    .from('weekly_scripts')
-    .select('*')
-    .eq('profile_id', id)
-    .order('week_start', { ascending: false })
-    .limit(1)
-    .single()
+  const [{ data: reels }, { data: weeklyScript }] = await Promise.all([
+    adminClient
+      .from('client_reels')
+      .select('*')
+      .eq('profile_id', id)
+      .order('date', { ascending: false }),
+    adminClient
+      .from('weekly_scripts')
+      .select('*')
+      .eq('profile_id', id)
+      .order('week_start', { ascending: false })
+      .limit(1)
+      .single(),
+  ])
 
   const reelData = (reels ?? []) as ClientReel[]
 
@@ -75,9 +83,7 @@ export default async function ClientDetailPage({
   return (
     <div style={{ padding: '24px', maxWidth: 1024, margin: '0 auto' }}>
       {/* Admin banner */}
-      <Card style={{
-        padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20,
-      }}>
+      <Card style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         <Link
           href="/dashboard/clients"
           style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--muted-foreground)', textDecoration: 'none', fontSize: 13, fontWeight: 500 }}
@@ -95,10 +101,16 @@ export default async function ClientDetailPage({
         {profile.ig_username && (
           <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>@{profile.ig_username}</div>
         )}
-        <div style={{ marginLeft: 'auto' }}>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Badge variant={profile.is_active ? 'success' : 'muted'}>
             {profile.is_active ? 'Active' : 'Inactive'}
           </Badge>
+          {/* Client actions: view as, toggle active, delete */}
+          <ClientDetailActions
+            clientId={profile.id}
+            clientName={profile.name || profile.email || 'Client'}
+            isActive={profile.is_active}
+          />
         </div>
       </Card>
 

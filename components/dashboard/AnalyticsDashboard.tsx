@@ -124,6 +124,7 @@ function StatCard({
     <div style={{
       background: 'var(--card)', border: '1px solid var(--border)',
       borderRadius: 12, padding: '20px 20px 16px',
+      boxShadow: 'var(--shadow-sm)',
       display: 'flex', flexDirection: 'column', gap: 0,
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
@@ -342,10 +343,18 @@ function ReelCard({ reel, idx }: { reel: ClientReel; idx: number }) {
 }
 
 // ─── main export ──────────────────────────────────────────────────────────────
-interface Props { profileId: string; followersCount?: number | null; igUsername?: string | null; followerHistory?: FollowerSnapshot[] }
+interface Props {
+  profileId: string
+  followersCount?: number | null
+  igUsername?: string | null
+  followerHistory?: FollowerSnapshot[]
+  profileName?: string
+  dashboardBio?: string
+  focusThisWeek?: string
+}
 interface SyncResult { synced: number; total: number; classified?: number; warning?: string }
 
-export default function AnalyticsDashboard({ profileId, followersCount, igUsername, followerHistory = [] }: Props) {
+export default function AnalyticsDashboard({ profileId, followersCount, igUsername, followerHistory = [], profileName, dashboardBio, focusThisWeek }: Props) {
   const [reels, setReels] = useState<ClientReel[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -356,6 +365,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   const [viewsMode, setViewsMode] = useState('Daily')
   const [engMode, setEngMode] = useState('Daily')
   const [contentSort, setContentSort] = useState('Recent')
+  const [activePlatform, setActivePlatform] = useState('All')
 
   const fetchReels = useCallback(async () => {
     setLoading(true)
@@ -523,23 +533,61 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
     <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto' }}>
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 12 }}>
-        <div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.4px', margin: 0 }}>Analytics</h1>
-          <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '3px 0 0' }}>
-            {total > 0 ? `${total} reels · Instagram` : 'Connect Instagram in Settings to start'}
-          </p>
+      <div style={{ marginBottom: 24 }}>
+        {/* Name + sync row */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap', marginBottom: 10 }}>
+          <div>
+            <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.5px', margin: 0, lineHeight: 1.1 }}>
+              {profileName ? `${profileName}'s Dashboard` : 'Dashboard'}
+            </h1>
+            <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '4px 0 0' }}>
+              {total > 0 ? `${total} reels tracked · Instagram` : 'Connect Instagram in Settings to start'}
+            </p>
+          </div>
+          <button onClick={handleSync} disabled={syncing} style={{
+            display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
+            height: 36, padding: '0 16px', borderRadius: 8, border: '1px solid var(--border)',
+            background: 'var(--card)', color: 'var(--foreground)',
+            fontWeight: 600, fontSize: 13, cursor: syncing ? 'not-allowed' : 'pointer',
+            fontFamily: 'inherit', opacity: syncing ? 0.6 : 1, transition: 'opacity 0.15s',
+          }}>
+            <RefreshCw size={13} style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }} />
+            {syncing ? 'Syncing…' : 'Sync Instagram'}
+          </button>
         </div>
-        <button onClick={handleSync} disabled={syncing} style={{
-          display: 'flex', alignItems: 'center', gap: 7,
-          height: 36, padding: '0 16px', borderRadius: 8, border: '1px solid var(--border)',
-          background: 'var(--card)', color: 'var(--foreground)',
-          fontWeight: 600, fontSize: 13, cursor: syncing ? 'not-allowed' : 'pointer',
-          fontFamily: 'inherit', opacity: syncing ? 0.6 : 1, transition: 'opacity 0.15s',
-        }}>
-          <RefreshCw size={13} style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }} />
-          {syncing ? 'Syncing…' : 'Sync'}
-        </button>
+
+        {/* Bio + weekly focus */}
+        {(dashboardBio || focusThisWeek) && (
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            {dashboardBio && (
+              <div style={{
+                flex: '1 1 300px', padding: '14px 18px', borderRadius: 10,
+                background: 'var(--card)', border: '1px solid var(--border)',
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                  About
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6, margin: 0 }}>
+                  {dashboardBio}
+                </p>
+              </div>
+            )}
+            {focusThisWeek && (
+              <div style={{
+                flex: '0 1 280px', padding: '14px 18px', borderRadius: 10,
+                background: 'hsl(var(--accent-hsl, 25 100% 55%) / 0.08)',
+                border: '1px solid hsl(var(--accent-hsl, 25 100% 55%) / 0.25)',
+              }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
+                  🎯 This Week's Focus
+                </div>
+                <p style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
+                  {focusThisWeek}
+                </p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Platform + time filters ─────────────────────────────────────────── */}
@@ -547,34 +595,43 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
         {/* Platform tabs */}
         <div style={{ display: 'flex', gap: 6 }}>
           {[
-            { label: 'All', icon: null, active: true },
-            { label: 'Instagram', icon: <IgIcon size={13} />, active: true },
-            { label: 'YouTube', icon: <YouTubeIcon size={13} />, active: false },
-            { label: 'TikTok', icon: <TikTokIcon size={13} />, active: false },
-          ].map(({ label, icon, active }) => (
-            <div key={label} style={{
-              display: 'flex', alignItems: 'center', gap: 5,
-              padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-              border: label === 'All' ? '2px solid var(--accent)' : '1px solid var(--border)',
-              background: label === 'All' ? 'hsl(220 90% 56% / 0.08)' : 'var(--card)',
-              color: active ? 'var(--foreground)' : 'var(--muted-foreground)',
-              cursor: active ? 'pointer' : 'default',
-              opacity: active ? 1 : 0.5,
-              position: 'relative' as const,
-            }}>
-              {icon}
-              {label}
-              {!active && (
-                <span style={{
-                  fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
-                  background: 'var(--muted)', color: 'var(--muted-foreground)',
-                  padding: '1px 4px', borderRadius: 3, letterSpacing: '0.04em',
-                }}>
-                  soon
-                </span>
-              )}
-            </div>
-          ))}
+            { label: 'All', icon: null, enabled: true },
+            { label: 'Instagram', icon: <IgIcon size={13} />, enabled: true },
+            { label: 'YouTube', icon: <YouTubeIcon size={13} />, enabled: false },
+            { label: 'TikTok', icon: <TikTokIcon size={13} />, enabled: false },
+          ].map(({ label, icon, enabled }) => {
+            const isActive = activePlatform === label
+            return (
+              <button
+                key={label}
+                onClick={() => enabled && setActivePlatform(label)}
+                disabled={!enabled}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                  border: isActive ? '2px solid var(--accent)' : '1px solid var(--border)',
+                  background: isActive ? 'hsl(220 90% 56% / 0.08)' : 'var(--card)',
+                  color: enabled ? 'var(--foreground)' : 'var(--muted-foreground)',
+                  cursor: enabled ? 'pointer' : 'default',
+                  opacity: enabled ? 1 : 0.5,
+                  fontFamily: 'inherit', position: 'relative' as const,
+                  transition: 'border-color 0.15s, background 0.15s',
+                }}
+              >
+                {icon}
+                {label}
+                {!enabled && (
+                  <span style={{
+                    fontSize: 9, fontWeight: 700, textTransform: 'uppercase',
+                    background: 'var(--muted)', color: 'var(--muted-foreground)',
+                    padding: '1px 4px', borderRadius: 3, letterSpacing: '0.04em',
+                  }}>
+                    soon
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
 
         {/* Time range */}

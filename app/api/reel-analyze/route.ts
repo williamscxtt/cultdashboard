@@ -1,17 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { execFile } from 'child_process'
-import { promisify } from 'util'
-import { unlink, readFile } from 'fs/promises'
-import { join } from 'path'
-import { randomUUID } from 'crypto'
-import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 
-export const maxDuration = 120
+export const maxDuration = 60
 
-const execFileAsync = promisify(execFile)
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 function getAdminClient() {
@@ -21,49 +13,14 @@ function getAdminClient() {
   )
 }
 
-const YTDLP_PATHS = [
-  '/opt/homebrew/bin/yt-dlp',
-  '/usr/local/bin/yt-dlp',
-  '/usr/bin/yt-dlp',
-  'yt-dlp',
-]
-
-async function findYtdlp(): Promise<string> {
-  for (const p of YTDLP_PATHS) {
-    try {
-      await execFileAsync(p, ['--version'], { timeout: 3000 })
-      return p
-    } catch {}
-  }
-  throw new Error('yt-dlp not found. Install with: brew install yt-dlp')
-}
-
-async function downloadAudio(url: string): Promise<string> {
-  const id = randomUUID()
-  const outputTemplate = join('/tmp', `reel-${id}.%(ext)s`)
-  const audioPath = join('/tmp', `reel-${id}.mp3`)
-  const ytdlp = await findYtdlp()
-
-  await execFileAsync(ytdlp, [
-    '--extract-audio',
-    '--audio-format', 'mp3',
-    '--audio-quality', '5',
-    '--no-playlist',
-    '--no-warnings',
-    '--output', outputTemplate,
-    url,
-  ], { timeout: 60000 })
-
-  return audioPath
-}
-
-async function transcribeAudio(audioPath: string): Promise<string> {
+async function transcribeAudioFile(file: File): Promise<string> {
   if (!process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY === 'your_openai_api_key') {
-    throw new Error('OpenAI API key not set. Add OPENAI_API_KEY to .env.local to enable auto-transcription.')
+    throw new Error('OpenAI API key not configured. Add OPENAI_API_KEY to enable audio transcription.')
   }
 
-  const audioBuffer = await readFile(audioPath)
-  const file = new File([audioBuffer], 'reel.mp3', { type: 'audio/mpeg' })
+  // Lazy import to avoid bundling issues
+  const { default: OpenAI } = await import('openai')
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
   const result = await openai.audio.transcriptions.create({
     file,
@@ -74,7 +31,7 @@ async function transcribeAudio(audioPath: string): Promise<string> {
   return result.text
 }
 
-async function analyzeReel(transcript: string, url: string) {
+async function analyzeReel(transcript: string) {
   const system = `You are a world-class short-form video strategist analyzing reels for Will Scott's CULT coaching program.
 Analyze the reel transcript and return ONLY valid JSON (no markdown, no explanation) with this exact structure:
 {
@@ -98,7 +55,7 @@ Be specific, direct, actionable. Reference exact lines from the transcript.`
     system,
     messages: [{
       role: 'user',
-      content: `Analyze this reel transcript:\n\n${transcript}\n\nReel URL: ${url}`,
+      content: `Analyze this reel transcript:\n\n${transcript}`,
     }],
   })
 
@@ -108,27 +65,48 @@ Be specific, direct, actionable. Reference exact lines from the transcript.`
 }
 
 export async function POST(req: NextRequest) {
-  const tmpFiles: string[] = []
+  const contentType = req.headers.get('content-type') ?? ''
+
+  let transcript = ''
+  let profileId: string | null = null
+
+  if (contentType.includes('multipart/form-data')) {
+    // Audio file upload mode
+    const formData = await req.formData()
+    profileId = formData.get('profileId') as string | null
+    const audioFile = formData.get('audio') as File | null
+    const pastedTranscript = formData.get('transcript') as string | null
+
+    if (pastedTranscript?.trim()) {
+      transcript = pastedTranscript.trim()
+    } else if (audioFile) {
+      try {
+        transcript = await transcribeAudioFile(audioFile)
+      } catch (err: unknown) {
+        const msg = err instanceof Error ? err.message : 'Transcription failed'
+        return NextResponse.json({ error: msg }, { status: 500 })
+      }
+    } else {
+      return NextResponse.json({ error: 'Provide a transcript or audio file' }, { status: 400 })
+    }
+  } else {
+    // JSON mode — transcript pasted directly
+    const body = await req.json()
+    profileId = body.profileId ?? null
+    transcript = body.transcript?.trim() ?? ''
+
+    if (!transcript) {
+      return NextResponse.json({ error: 'transcript is required' }, { status: 400 })
+    }
+  }
 
   try {
-    const { url, profileId } = await req.json()
-    if (!url) return NextResponse.json({ error: 'URL is required' }, { status: 400 })
+    const analysis = await analyzeReel(transcript)
 
-    // Step 1: Download audio from the reel
-    const audioPath = await downloadAudio(url)
-    tmpFiles.push(audioPath)
-
-    // Step 2: Transcribe with OpenAI Whisper
-    const transcript = await transcribeAudio(audioPath)
-
-    // Step 3: Analyze with Claude
-    const analysis = await analyzeReel(transcript, url)
-
-    // Step 4: Save to DB (fire and forget)
     if (profileId) {
       void getAdminClient().from('reel_analyses').insert({
         profile_id: profileId,
-        reel_url: url,
+        reel_url: null,
         transcript,
         verdict: analysis.verdict,
         overall_score: analysis.overall_score,
@@ -144,9 +122,5 @@ export async function POST(req: NextRequest) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('reel-analyze error:', message)
     return NextResponse.json({ error: message }, { status: 500 })
-  } finally {
-    for (const f of tmpFiles) {
-      await unlink(f).catch(() => {})
-    }
   }
 }

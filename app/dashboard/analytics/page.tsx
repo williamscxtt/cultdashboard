@@ -1,31 +1,126 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
+import Anthropic from '@anthropic-ai/sdk'
 import AnalyticsDashboard from '@/components/dashboard/AnalyticsDashboard'
 import type { FollowerSnapshot } from '@/lib/types'
+
+const adminClient = createAdmin(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_KEY!
+)
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+
+// ─── AI generators ────────────────────────────────────────────────────────────
+
+async function generateDashboardBio(profile: Record<string, unknown>): Promise<string> {
+  const intro = (profile.intro_structured ?? {}) as Record<string, unknown>
+  const name = String(profile.name || 'This coach')
+  const niche = String(intro.specific_niche || intro.what_you_coach || profile.niche || 'coaching')
+  const idealClient = String(intro.ideal_client || profile.target_audience || 'coaches')
+  const transformation = String(intro.transformation_story || intro.client_transformation || '')
+  const monthlyRevenue = String(intro.monthly_revenue || profile.monthly_revenue || profile.starting_revenue || '')
+  const revenueGoal = String(intro.revenue_goal || intro.goal_revenue || profile.revenue_goal || '')
+
+  const prompt = `Write a 2-3 sentence personal brand description for ${name}.
+They are in the ${niche} niche. Their ideal client: ${idealClient}.${transformation ? ` Transformation they deliver: ${transformation}.` : ''}${monthlyRevenue ? ` Currently at ${monthlyRevenue}/month.` : ''}${revenueGoal ? ` Goal: ${revenueGoal}/month.` : ''}
+
+Format: "[Name] coaches [specific audience] on [specific topic]. They help [clients stuck at X] achieve [transformation/result]. [One sentence about their method or approach]."
+
+Be concrete and specific. No fluff. Use present tense. Do not use quotation marks.`
+
+  const res = await anthropic.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 150,
+    messages: [{ role: 'user', content: prompt }],
+  })
+  return res.content[0].type === 'text' ? res.content[0].text.trim() : ''
+}
+
+async function generateWeeklyFocus(profile: Record<string, unknown>): Promise<string> {
+  const intro = (profile.intro_structured ?? {}) as Record<string, unknown>
+  const name = String(profile.name || 'this coach')
+  const niche = String(intro.specific_niche || intro.what_you_coach || profile.niche || 'coaching')
+  const challenge = String(intro.biggest_problem || profile.biggest_challenge || '')
+  const goal90 = String(intro.goal_90_days || profile.ninety_day_goal || '')
+  const monthlyRevenue = String(intro.monthly_revenue || profile.monthly_revenue || '')
+
+  const prompt = `Write a single, punchy 1-2 sentence weekly focus for ${name}, a ${niche} coach.
+${challenge ? `Their biggest challenge right now: ${challenge}.` : ''}
+${goal90 ? `Their 90-day goal: ${goal90}.` : ''}
+${monthlyRevenue ? `Currently at ${monthlyRevenue}/month.` : ''}
+
+Write it as a direct instruction or focus statement for this week. Be specific, actionable, no waffle. No bullet points. No "This week:" prefix. Just the focus itself. Max 30 words.`
+
+  const res = await anthropic.messages.create({
+    model: 'claude-haiku-4-5',
+    max_tokens: 80,
+    messages: [{ role: 'user', content: prompt }],
+  })
+  return res.content[0].type === 'text' ? res.content[0].text.trim() : ''
+}
+
+// ─── page ─────────────────────────────────────────────────────────────────────
 
 export default async function AnalyticsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const admin = createAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!)
+  const { data: realProfile } = await adminClient
+    .from('profiles').select('role').eq('id', user.id).single()
+
+  const impersonatingAs = realProfile?.role === 'admin' ? await getImpersonatedId() : null
+  const profileId = effectiveId(user.id, realProfile?.role === 'admin', impersonatingAs)
 
   const [{ data: profile }, { data: snapshots }] = await Promise.all([
-    admin.from('profiles').select('followers_count, ig_username').eq('id', user.id).single(),
-    admin.from('follower_snapshots')
+    adminClient.from('profiles').select('*').eq('id', profileId).single(),
+    adminClient
+      .from('follower_snapshots')
       .select('date, count')
-      .eq('profile_id', user.id)
+      .eq('profile_id', profileId)
       .order('date', { ascending: true })
       .limit(90),
   ])
 
+  if (!profile) redirect('/login')
+
+  const profileData = profile as Record<string, unknown>
+  let dashboardBio = String(profile.dashboard_bio || '')
+  let focusThisWeek = String(profile.focus_this_week || '')
+
+  // Generate missing AI fields (run in parallel if both missing)
+  const needsBio = !dashboardBio
+  const needsFocus = !focusThisWeek
+
+  if (needsBio || needsFocus) {
+    const [bio, focus] = await Promise.all([
+      needsBio ? generateDashboardBio(profileData) : Promise.resolve(dashboardBio),
+      needsFocus ? generateWeeklyFocus(profileData) : Promise.resolve(focusThisWeek),
+    ])
+
+    dashboardBio = bio
+    focusThisWeek = focus
+
+    // Store back to DB (fire and forget — don't block render)
+    const updates: Record<string, string> = {}
+    if (needsBio && bio) updates.dashboard_bio = bio
+    if (needsFocus && focus) updates.focus_this_week = focus
+    if (Object.keys(updates).length > 0) {
+      adminClient.from('profiles').update(updates).eq('id', profileId).then(() => {})
+    }
+  }
+
   return (
     <AnalyticsDashboard
-      profileId={user.id}
+      profileId={profileId}
       followersCount={profile?.followers_count ?? null}
       igUsername={profile?.ig_username ?? null}
       followerHistory={(snapshots ?? []) as FollowerSnapshot[]}
+      profileName={String(profile?.name || '')}
+      dashboardBio={dashboardBio}
+      focusThisWeek={focusThisWeek}
     />
   )
 }

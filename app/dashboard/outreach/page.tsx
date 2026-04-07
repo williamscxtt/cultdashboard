@@ -2,33 +2,35 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
-import AiChat from '@/components/dashboard/AiChat'
+import OutreachView from '@/components/dashboard/OutreachView'
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 )
 
-export default async function AiPage() {
+export default async function OutreachPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const { data: realProfile } = await adminClient
-    .from('profiles').select('role, name').eq('id', user.id).single()
+    .from('profiles').select('role').eq('id', user.id).single()
 
   const impersonatingAs = realProfile?.role === 'admin' ? await getImpersonatedId() : null
   const profileId = effectiveId(user.id, realProfile?.role === 'admin', impersonatingAs)
 
-  const { data: effectiveProfile } = await adminClient
-    .from('profiles').select('id, name').eq('id', profileId).single()
+  const [{ data: entries }, { data: replies }] = await Promise.all([
+    adminClient.from('daily_outreach').select('*').eq('profile_id', profileId)
+      .order('date', { ascending: false }).limit(60),
+    adminClient.from('saved_replies').select('*').eq('profile_id', profileId)
+      .order('created_at', { ascending: false }),
+  ])
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', flex: 1 }}>
-      <AiChat
-        profileId={profileId}
-        profileName={effectiveProfile?.name ?? realProfile?.name ?? ''}
-      />
-    </div>
+    <OutreachView
+      initialEntries={entries ?? []}
+      initialReplies={replies ?? []}
+    />
   )
 }

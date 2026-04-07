@@ -2,14 +2,15 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
-import AiChat from '@/components/dashboard/AiChat'
+import WeeklyLogView from '@/components/dashboard/WeeklyLogView'
+import type { WeeklyLog } from '@/lib/types'
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 )
 
-export default async function AiPage() {
+export default async function WeeklyLogPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -20,15 +21,20 @@ export default async function AiPage() {
   const impersonatingAs = realProfile?.role === 'admin' ? await getImpersonatedId() : null
   const profileId = effectiveId(user.id, realProfile?.role === 'admin', impersonatingAs)
 
-  const { data: effectiveProfile } = await adminClient
-    .from('profiles').select('id, name').eq('id', profileId).single()
+  const [{ data: effectiveProfile }, { data: logs }] = await Promise.all([
+    adminClient.from('profiles').select('name').eq('id', profileId).single(),
+    adminClient
+      .from('weekly_log')
+      .select('*')
+      .eq('profile_id', profileId)
+      .order('date', { ascending: false })
+      .limit(52),
+  ])
 
   return (
-    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', flex: 1 }}>
-      <AiChat
-        profileId={profileId}
-        profileName={effectiveProfile?.name ?? realProfile?.name ?? ''}
-      />
-    </div>
+    <WeeklyLogView
+      profileName={(effectiveProfile?.name ?? realProfile?.name) || 'You'}
+      logs={(logs ?? []) as WeeklyLog[]}
+    />
   )
 }

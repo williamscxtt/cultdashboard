@@ -4,7 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
 import { Card, Badge, Button, PageHeader, SectionLabel } from '@/components/ui'
-import { Video, LogOut, Check } from 'lucide-react'
+import { Video, LogOut, Check, Eye, EyeOff } from 'lucide-react'
 import { toast } from 'sonner'
 import CompetitorManager from '@/components/dashboard/CompetitorManager'
 
@@ -23,6 +23,12 @@ export default function SettingsClient({ profile }: { profile: Profile }) {
   const [name, setName] = useState(profile.name || '')
   const [saving, setSaving] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [showNewPw, setShowNewPw] = useState(false)
+  const [showConfirmPw, setShowConfirmPw] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -45,13 +51,22 @@ export default function SettingsClient({ profile }: { profile: Profile }) {
     setSaving(false)
   }
 
-  async function handlePasswordReset() {
+  async function handlePasswordChange(e: React.FormEvent) {
+    e.preventDefault()
+    if (newPassword.length < 6) { toast.error('Password must be at least 6 characters'); return }
+    if (newPassword !== confirmPassword) { toast.error('Passwords do not match'); return }
+    setChangingPassword(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(profile.email ?? '', {
-      redirectTo: `${window.location.origin}/dashboard/settings`,
-    })
-    if (error) toast.error(error.message)
-    else toast.success('Password reset email sent!')
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success('Password changed successfully!')
+      setShowPasswordForm(false)
+      setNewPassword('')
+      setConfirmPassword('')
+    }
+    setChangingPassword(false)
   }
 
   async function handleSignOut() {
@@ -186,18 +201,79 @@ export default function SettingsClient({ profile }: { profile: Profile }) {
         {/* Competitors */}
         <CompetitorManager />
 
-        {/* Danger Zone */}
+        {/* Security */}
+        <Card style={{ padding: 20 }}>
+          <SectionLabel>Security</SectionLabel>
+          {!showPasswordForm ? (
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <Button variant="secondary" size="sm" onClick={() => setShowPasswordForm(true)}>
+                Change Password
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleSignOut}>
+                <LogOut size={13} />
+                Sign out
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>New password</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showNewPw ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder="Min. 6 characters"
+                    autoFocus
+                    style={{ paddingRight: 36 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPw(v => !v)}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', display: 'flex' }}
+                  >
+                    {showNewPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Confirm new password</label>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type={showConfirmPw ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="Repeat password"
+                    style={{ paddingRight: 36 }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPw(v => !v)}
+                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', display: 'flex' }}
+                  >
+                    {showConfirmPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <Button type="submit" size="sm" disabled={changingPassword}>
+                  {changingPassword ? 'Saving…' : 'Save new password'}
+                </Button>
+                <Button type="button" variant="secondary" size="sm" onClick={() => { setShowPasswordForm(false); setNewPassword(''); setConfirmPassword('') }}>
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          )}
+        </Card>
+
+        {/* Sign Out */}
         <Card style={{ padding: 20, borderColor: 'hsl(0 70% 30%)' }}>
           <SectionLabel>Danger Zone</SectionLabel>
-          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-            <Button variant="secondary" size="sm" onClick={handlePasswordReset}>
-              Change Password
-            </Button>
-            <Button variant="destructive" size="sm" onClick={handleSignOut}>
-              <LogOut size={13} />
-              Sign out
-            </Button>
-          </div>
+          <Button variant="destructive" size="sm" onClick={handleSignOut}>
+            <LogOut size={13} />
+            Sign out
+          </Button>
         </Card>
       </div>
     </div>

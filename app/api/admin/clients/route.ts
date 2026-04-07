@@ -59,3 +59,47 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ userId: newUser.user!.id, tempPassword })
 }
+
+export async function PATCH(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const adminClient = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!)
+  const { id, is_active } = await req.json()
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+  const { error } = await adminClient.from('profiles').update({ is_active }).eq('id', id)
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ ok: true })
+}
+
+export async function DELETE(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
+  const adminClient = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!)
+  const { id } = await req.json()
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+  // Delete auth user (cascades to profile via FK trigger)
+  const { error } = await adminClient.auth.admin.deleteUser(id)
+  if (error) {
+    // If auth delete fails try to at least deactivate
+    await adminClient.from('profiles').update({ is_active: false }).eq('id', id)
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
+  // Also delete profile row (in case no cascade)
+  await adminClient.from('profiles').delete().eq('id', id)
+
+  return NextResponse.json({ ok: true })
+}

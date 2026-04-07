@@ -3,6 +3,8 @@ import Anthropic from '@anthropic-ai/sdk'
 import type { MessageParam } from '@anthropic-ai/sdk/resources/messages'
 import { createClient } from '@supabase/supabase-js'
 
+export const maxDuration = 60
+
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
 const adminClient = createClient(
@@ -21,17 +23,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'profileId is required' }, { status: 400 })
     }
 
-    // Fetch client's onboarding data for personalised scoring
-    const [onboardingResult, knowledgeResult, igProfileResult] = await Promise.all([
-      adminClient.from('onboarding').select('*').eq('profile_id', profileId).single(),
-      adminClient.from('knowledge_documents').select('title,content').eq('category', 'Personal Branding').limit(5),
-      // Fetch IG profile data if they have a connected account
-      adminClient.from('profiles').select('ig_username,ig_user_id,ig_access_token').eq('id', profileId).single(),
+    // Fetch client data for personalised scoring
+    const [profileResult, knowledgeResult] = await Promise.all([
+      adminClient.from('profiles').select('ig_username,ig_user_id,ig_access_token,intro_structured,niche,target_audience,biggest_challenge,monthly_revenue,ninety_day_goal').eq('id', profileId).single(),
+      adminClient.from('knowledge_documents').select('title,content').limit(5),
     ])
 
-    const onboarding = onboardingResult.data
+    const igProfile = profileResult.data
+    const intro = (igProfile?.intro_structured ?? {}) as Record<string, string>
     const knowledgeDocs = knowledgeResult.data ?? []
-    const igProfile = igProfileResult.data
 
     // Try to fetch live IG data if they have a connected token
     let igLiveData: Record<string, unknown> | null = null
@@ -47,14 +47,19 @@ export async function POST(req: NextRequest) {
       } catch {}
     }
 
-    // Build context string
-    const clientContext = onboarding ? `
-Client niche: ${onboarding.niche}
-Target audience: ${onboarding.target_audience}
-Main goal: ${onboarding.main_goal}
-Their offer: ${onboarding.biggest_challenge}
-Brand voice: ${onboarding.brand_voice}
-Monthly revenue: ${onboarding.monthly_revenue}
+    // Build context string from profile + intro_structured
+    const niche = intro.specific_niche || intro.what_you_coach || igProfile?.niche || ''
+    const audience = intro.ideal_client || intro.target_audience || igProfile?.target_audience || ''
+    const challenge = intro.biggest_problem || intro.biggest_challenge || igProfile?.biggest_challenge || ''
+    const revenue = intro.monthly_revenue || igProfile?.monthly_revenue || ''
+    const goal = intro.goal_90_days || igProfile?.ninety_day_goal || ''
+
+    const clientContext = (niche || audience || challenge) ? `
+Client niche: ${niche || 'N/A'}
+Target audience: ${audience || 'N/A'}
+Biggest challenge: ${challenge || 'N/A'}
+Monthly revenue: ${revenue || 'N/A'}
+90-day goal: ${goal || 'N/A'}
 `.trim() : ''
 
     const knowledgeContext = knowledgeDocs.length > 0

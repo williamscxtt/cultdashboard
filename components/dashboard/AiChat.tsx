@@ -1,7 +1,7 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Send } from 'lucide-react'
+import { Send, MessageSquare, Sparkles } from 'lucide-react'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -14,25 +14,39 @@ const SUGGESTED_QUESTIONS = [
   "What should I post this week?",
   "How do I write a better hook?",
   "How do I grow faster on Instagram?",
-  "What's working right now in my niche?",
   "How do I convert followers to clients?",
+  "What's the best content format for my niche?",
 ]
 
 function ThinkingDots() {
   return (
-    <span style={{ display: 'inline-flex', gap: 3, alignItems: 'center' }}>
+    <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>
       {[0, 1, 2].map(i => (
         <span
           key={i}
           style={{
-            width: 5, height: 5, borderRadius: '50%',
-            background: 'var(--muted-foreground)',
+            width: 6, height: 6, borderRadius: '50%',
+            background: 'var(--accent)',
             display: 'inline-block',
             animation: `pulse 1.2s ease-in-out ${i * 0.2}s infinite`,
           }}
         />
       ))}
     </span>
+  )
+}
+
+function WillAvatar({ size = 32 }: { size?: number }) {
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 9, flexShrink: 0,
+      background: 'linear-gradient(135deg, var(--accent), hsl(260 80% 56%))',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: size * 0.38, fontWeight: 800, color: 'white',
+      boxShadow: '0 2px 8px hsl(220 90% 56% / 0.3)',
+    }}>
+      W
+    </div>
   )
 }
 
@@ -98,91 +112,121 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
     }
   }
 
+  const canSend = input.trim().length > 0 && !loading
+
   return (
-    <div style={{ display: 'flex', height: '100%', flex: 1, background: 'var(--background)' }}>
-      {/* Left suggestions panel */}
+    <div style={{ display: 'flex', height: '100%', flex: 1, overflow: 'hidden' }}>
+
+      {/* ── Left panel: suggestions ──────────────────────────────────────── */}
       <div style={{
-        width: 180, minWidth: 180,
+        width: 200, minWidth: 200, flexShrink: 0,
         background: 'var(--card)', borderRight: '1px solid var(--border)',
-        padding: '16px 10px', display: 'flex', flexDirection: 'column', gap: 4,
+        display: 'flex', flexDirection: 'column',
+        padding: '16px 10px',
+        overflowY: 'auto',
       }}>
-        <div style={{
-          fontSize: 10, fontWeight: 600, color: 'var(--muted-foreground)',
-          letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8,
-          padding: '0 6px',
-        }}>
-          Ask Will
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, padding: '0 4px' }}>
+          <Sparkles size={12} color="var(--accent)" />
+          <span style={{
+            fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)',
+            textTransform: 'uppercase', letterSpacing: '0.1em',
+          }}>
+            Quick questions
+          </span>
         </div>
-        {SUGGESTED_QUESTIONS.map(q => (
-          <button
-            key={q}
-            onClick={() => { setInput(q); inputRef.current?.focus() }}
-            disabled={loading}
-            style={{
-              background: 'transparent', border: '1px solid var(--border)',
-              borderRadius: 6, padding: '7px 10px',
-              fontSize: 11, fontWeight: 500, color: 'var(--muted-foreground)',
-              textAlign: 'left', cursor: loading ? 'not-allowed' : 'pointer',
-              lineHeight: 1.5, transition: 'background 0.1s, color 0.1s',
-              fontFamily: 'inherit',
-            }}
-            onMouseEnter={e => {
-              if (!loading) {
-                (e.currentTarget as HTMLElement).style.background = 'var(--muted)'
-                ;(e.currentTarget as HTMLElement).style.color = 'var(--foreground)'
-              }
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.background = 'transparent'
-              ;(e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)'
-            }}
-          >
-            {q}
-          </button>
-        ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {SUGGESTED_QUESTIONS.map(q => (
+            <button
+              key={q}
+              onClick={() => { setInput(q); inputRef.current?.focus() }}
+              disabled={loading}
+              style={{
+                background: 'transparent', border: '1px solid var(--border)',
+                borderRadius: 8, padding: '8px 10px',
+                fontSize: 11.5, fontWeight: 500, color: 'var(--muted-foreground)',
+                textAlign: 'left', cursor: loading ? 'not-allowed' : 'pointer',
+                lineHeight: 1.5, transition: 'all 0.12s', fontFamily: 'inherit',
+              }}
+              onMouseEnter={e => {
+                if (!loading) {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.background = 'hsl(220 90% 56% / 0.06)'
+                  el.style.borderColor = 'hsl(220 90% 56% / 0.3)'
+                  el.style.color = 'var(--foreground)'
+                }
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.background = 'transparent'
+                el.style.borderColor = 'var(--border)'
+                el.style.color = 'var(--muted-foreground)'
+              }}
+            >
+              {q}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Main chat area */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      {/* ── Main chat ────────────────────────────────────────────────────── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+
         {/* Header */}
         <div style={{
-          padding: '14px 20px',
+          padding: '12px 20px',
           background: 'var(--card)', borderBottom: '1px solid var(--border)',
-          display: 'flex', alignItems: 'center', gap: 10,
+          display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0,
         }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: '50%',
-            background: 'var(--foreground)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 11, fontWeight: 700, color: 'var(--background)', flexShrink: 0,
-          }}>
-            W
-          </div>
+          <WillAvatar size={32} />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)' }}>Ask Will AI</div>
-            <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
-              Powered by Will&apos;s coaching frameworks
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1.2 }}>
+              Ask Will AI
+            </div>
+            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 1 }}>
+              {profileName ? `Personalised for ${profileName}` : 'Powered by Will\'s coaching frameworks'}
             </div>
           </div>
-          <span style={{
-            marginLeft: 'auto', fontSize: 10, fontWeight: 600,
-            background: 'hsl(220 90% 56% / 0.1)', color: 'var(--accent)',
-            padding: '2px 8px', borderRadius: 999,
-          }}>
-            BETA
-          </span>
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{
+              width: 7, height: 7, borderRadius: '50%',
+              background: 'hsl(142 71% 45%)',
+              boxShadow: '0 0 0 2px hsl(142 71% 45% / 0.25)',
+              display: 'inline-block',
+            }} />
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'hsl(142 71% 35%)' }}>Online</span>
+          </div>
         </div>
 
         {/* Messages */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px', display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{
+          flex: 1, overflowY: 'auto',
+          padding: '24px 20px',
+          display: 'flex', flexDirection: 'column', gap: 16,
+        }}>
           {messages.length === 0 && (
-            <div style={{ textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 13, marginTop: 40 }}>
-              <div style={{ fontSize: 28, marginBottom: 10 }}>💬</div>
-              Ask Will anything about growing your brand on Instagram.
-              <br />
-              <span style={{ fontSize: 11, color: 'var(--muted-foreground)', opacity: 0.7 }}>
-                Use the suggestions on the left, or type your own.
-              </span>
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'center', flex: 1, textAlign: 'center',
+              color: 'var(--muted-foreground)', paddingTop: 48,
+            }}>
+              <div style={{
+                width: 56, height: 56, borderRadius: 16,
+                background: 'linear-gradient(135deg, var(--accent), hsl(260 80% 56%))',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                marginBottom: 16,
+                boxShadow: '0 4px 16px hsl(220 90% 56% / 0.3)',
+              }}>
+                <MessageSquare size={24} color="white" />
+              </div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)', marginBottom: 6 }}>
+                Ask Will anything
+              </div>
+              <div style={{ fontSize: 13, lineHeight: 1.6, maxWidth: 340 }}>
+                Get personalised advice on growing your Instagram, writing better content, and converting followers to clients.
+              </div>
+              <div style={{ fontSize: 11, marginTop: 12, opacity: 0.6 }}>
+                Use the questions on the left or type your own below
+              </div>
             </div>
           )}
 
@@ -192,30 +236,29 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
               style={{
                 display: 'flex',
                 flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
-                alignItems: 'flex-start',
+                alignItems: 'flex-end',
                 gap: 8,
+                animation: 'slide-up 0.2s ease both',
               }}
             >
-              {msg.role === 'assistant' && (
-                <div style={{
-                  width: 28, height: 28, borderRadius: '50%',
-                  background: 'var(--foreground)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: 11, fontWeight: 700, color: 'var(--background)',
-                  flexShrink: 0, marginTop: 2,
-                }}>
-                  W
-                </div>
-              )}
+              {msg.role === 'assistant' && <WillAvatar size={28} />}
 
               <div style={{
                 maxWidth: '72%',
-                padding: '10px 14px',
-                borderRadius: msg.role === 'user' ? '14px 4px 14px 14px' : '4px 14px 14px 14px',
-                background: msg.role === 'user' ? 'var(--foreground)' : 'var(--card)',
-                color: msg.role === 'user' ? 'var(--background)' : 'var(--foreground)',
-                fontSize: 13, lineHeight: 1.65, whiteSpace: 'pre-wrap',
+                padding: '11px 15px',
+                borderRadius: msg.role === 'user'
+                  ? '14px 4px 14px 14px'
+                  : '4px 14px 14px 14px',
+                background: msg.role === 'user'
+                  ? 'var(--foreground)'
+                  : 'var(--card)',
+                color: msg.role === 'user'
+                  ? 'var(--background)'
+                  : 'var(--foreground)',
+                fontSize: 13.5, lineHeight: 1.7,
+                whiteSpace: 'pre-wrap',
                 border: msg.role === 'assistant' ? '1px solid var(--border)' : 'none',
+                boxShadow: 'var(--shadow-sm)',
               }}>
                 {msg.content}
               </div>
@@ -223,20 +266,15 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
           ))}
 
           {loading && (
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8 }}>
+              <WillAvatar size={28} />
               <div style={{
-                width: 28, height: 28, borderRadius: '50%',
-                background: 'var(--foreground)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: 11, fontWeight: 700, color: 'var(--background)', flexShrink: 0,
-              }}>
-                W
-              </div>
-              <div style={{
-                padding: '10px 14px', borderRadius: '4px 14px 14px 14px',
+                padding: '12px 16px',
+                borderRadius: '4px 14px 14px 14px',
                 background: 'var(--card)', border: '1px solid var(--border)',
-                fontSize: 12, color: 'var(--muted-foreground)',
+                boxShadow: 'var(--shadow-sm)',
                 display: 'flex', alignItems: 'center', gap: 8,
+                fontSize: 12, color: 'var(--muted-foreground)',
               }}>
                 Will is thinking <ThinkingDots />
               </div>
@@ -244,7 +282,11 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
           )}
 
           {error && (
-            <div style={{ background: 'hsl(0 50% 96%)', border: '1px solid hsl(0 70% 90%)', borderRadius: 6, padding: '8px 12px', fontSize: 12, color: 'hsl(0 72% 51%)' }}>
+            <div style={{
+              background: 'hsl(0 50% 96%)', border: '1px solid hsl(0 70% 88%)',
+              borderRadius: 8, padding: '10px 14px',
+              fontSize: 13, color: 'hsl(0 72% 45%)',
+            }}>
               {error}
             </div>
           )}
@@ -254,32 +296,55 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
 
         {/* Input bar */}
         <div style={{
-          padding: '14px 20px',
+          padding: '12px 16px',
           background: 'var(--card)', borderTop: '1px solid var(--border)',
-          display: 'flex', gap: 10, alignItems: 'flex-end',
+          display: 'flex', gap: 10, alignItems: 'flex-end', flexShrink: 0,
         }}>
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask Will anything... (Enter to send, Shift+Enter for new line)"
-            rows={1}
-            style={{
-              flex: 1, resize: 'none', maxHeight: 120,
-              lineHeight: 1.5, height: 'auto',
-            }}
-          />
+          <div style={{ flex: 1, position: 'relative' }}>
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask Will anything… (Enter to send, Shift+Enter for new line)"
+              rows={1}
+              style={{
+                width: '100%', resize: 'none', maxHeight: 120,
+                lineHeight: 1.6, padding: '10px 14px',
+                borderRadius: 10, border: '1.5px solid var(--border)',
+                background: 'var(--background)',
+                fontSize: 13.5, fontFamily: 'inherit', color: 'var(--foreground)',
+                outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
+              }}
+              onFocus={e => {
+                e.currentTarget.style.borderColor = 'var(--accent)'
+                e.currentTarget.style.boxShadow = '0 0 0 3px hsl(220 90% 56% / 0.12)'
+              }}
+              onBlur={e => {
+                e.currentTarget.style.borderColor = 'var(--border)'
+                e.currentTarget.style.boxShadow = 'none'
+              }}
+            />
+          </div>
           <button
             onClick={() => sendMessage(input)}
-            disabled={loading || !input.trim()}
+            disabled={!canSend}
             style={{
-              background: loading || !input.trim() ? 'var(--muted)' : 'var(--foreground)',
-              color: loading || !input.trim() ? 'var(--muted-foreground)' : 'var(--background)',
-              border: 'none', borderRadius: 6, padding: '10px 14px',
-              cursor: loading || !input.trim() ? 'not-allowed' : 'pointer',
-              transition: 'background 0.15s', flexShrink: 0, fontFamily: 'inherit',
-              display: 'flex', alignItems: 'center',
+              width: 40, height: 40, borderRadius: 10, flexShrink: 0,
+              border: 'none', cursor: canSend ? 'pointer' : 'not-allowed',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: canSend
+                ? 'linear-gradient(135deg, var(--accent), hsl(260 80% 56%))'
+                : 'var(--muted)',
+              color: canSend ? 'white' : 'var(--muted-foreground)',
+              transition: 'all 0.15s',
+              boxShadow: canSend ? '0 2px 8px hsl(220 90% 56% / 0.35)' : 'none',
+            }}
+            onMouseEnter={e => {
+              if (canSend) (e.currentTarget as HTMLElement).style.filter = 'brightness(1.1)'
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.filter = ''
             }}
           >
             <Send size={15} />

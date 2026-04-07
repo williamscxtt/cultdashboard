@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
-import { Copy, Bookmark, Trash2, ChevronDown, ChevronUp } from 'lucide-react'
+import { Copy, Bookmark, Trash2, ChevronDown, ChevronUp, Upload, FileAudio, AlignLeft } from 'lucide-react'
 import { PageHeader, Card, Button, EmptyState } from '@/components/ui'
 import { createClient } from '@/lib/supabase'
 
@@ -26,7 +26,7 @@ interface IdeaBankEntry {
   created_at: string
 }
 
-type Stage = 'idle' | 'downloading' | 'transcribing' | 'analysing' | 'done' | 'error'
+type Mode = 'paste' | 'audio'
 
 const VERDICT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   Exceptional: { bg: 'hsl(142 50% 95%)', text: 'hsl(142 71% 30%)', border: 'hsl(142 50% 80%)' },
@@ -43,22 +43,19 @@ function scoreColor(score: number) {
   return 'hsl(0 72% 51%)'
 }
 
-const STAGES: { key: Stage; label: string }[] = [
-  { key: 'downloading',  label: 'Downloading reel...' },
-  { key: 'transcribing', label: 'Transcribing audio...' },
-  { key: 'analysing',    label: 'Analysing with AI...' },
-]
-
 export default function ReelCopyPage() {
-  const [url, setUrl] = useState('')
-  const [stage, setStage] = useState<Stage>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
+  const [mode, setMode] = useState<Mode>('paste')
   const [transcript, setTranscript] = useState('')
+  const [audioFile, setAudioFile] = useState<File | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
   const [analysis, setAnalysis] = useState<Analysis | null>(null)
   const [showTranscript, setShowTranscript] = useState(false)
   const [ideaBank, setIdeaBank] = useState<IdeaBankEntry[]>([])
   const [userId, setUserId] = useState('')
   const [savingHook, setSavingHook] = useState(false)
+  const [resultTranscript, setResultTranscript] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     const supabase = createClient()
@@ -77,42 +74,42 @@ export default function ReelCopyPage() {
   }, [])
 
   async function handleAnalyze() {
-    if (!url.trim()) return
     setAnalysis(null)
-    setTranscript('')
     setErrorMsg('')
-
-    // Simulate stage progression (actual stages happen server-side)
-    setStage('downloading')
-    const stageTimer = setTimeout(() => setStage('transcribing'), 8000)
-    const stageTimer2 = setTimeout(() => setStage('analysing'), 20000)
+    setResultTranscript('')
+    setLoading(true)
 
     try {
-      const res = await fetch('/api/reel-analyze', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: url.trim(), profileId: userId }),
-      })
+      let res: Response
 
-      clearTimeout(stageTimer)
-      clearTimeout(stageTimer2)
+      if (mode === 'paste') {
+        if (!transcript.trim()) { toast.error('Paste a transcript first'); setLoading(false); return }
+        res = await fetch('/api/reel-analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ transcript: transcript.trim(), profileId: userId }),
+        })
+      } else {
+        if (!audioFile) { toast.error('Select an audio file first'); setLoading(false); return }
+        const formData = new FormData()
+        formData.append('audio', audioFile)
+        formData.append('profileId', userId)
+        res = await fetch('/api/reel-analyze', { method: 'POST', body: formData })
+      }
 
       const data = await res.json()
 
       if (!res.ok) {
-        setStage('error')
-        setErrorMsg(data.error || 'Something went wrong')
+        setErrorMsg(data.error || 'Analysis failed')
         return
       }
 
-      setTranscript(data.transcript || '')
+      setResultTranscript(data.transcript || transcript)
       setAnalysis(data.analysis)
-      setStage('done')
     } catch {
-      clearTimeout(stageTimer)
-      clearTimeout(stageTimer2)
-      setStage('error')
       setErrorMsg('Network error — please try again')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -139,7 +136,6 @@ export default function ReelCopyPage() {
     toast.success('Removed from Idea Bank')
   }
 
-  const isRunning = stage === 'downloading' || stage === 'transcribing' || stage === 'analysing'
   const verdict = analysis?.verdict ?? ''
   const verdictStyle = VERDICT_COLORS[verdict] ?? VERDICT_COLORS.Average
 
@@ -147,81 +143,114 @@ export default function ReelCopyPage() {
     <div style={{ padding: '24px', maxWidth: 800, margin: '0 auto' }}>
       <PageHeader
         title="Reel Copy Tool"
-        description="Paste any reel URL — it gets downloaded, transcribed, and analysed automatically."
+        description="Paste a reel transcript or upload audio — get a full AI breakdown and adapted hook."
       />
 
-      {/* URL input */}
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <input
-            type="url"
-            placeholder="https://www.instagram.com/reel/..."
-            value={url}
-            onChange={e => setUrl(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && !isRunning && handleAnalyze()}
-            style={{ flex: 1 }}
-            disabled={isRunning}
-          />
-          <Button onClick={handleAnalyze} disabled={isRunning || !url.trim()}>
-            {isRunning ? 'Analyzing...' : 'Analyze'}
-          </Button>
-        </div>
+      {/* Mode selector */}
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        {([
+          { key: 'paste' as Mode, icon: <AlignLeft size={14} />, label: 'Paste Transcript' },
+          { key: 'audio' as Mode, icon: <FileAudio size={14} />, label: 'Upload Audio' },
+        ]).map(({ key, icon, label }) => (
+          <button
+            key={key}
+            onClick={() => { setMode(key); setAnalysis(null); setErrorMsg('') }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+              border: mode === key ? '2px solid var(--accent)' : '1px solid var(--border)',
+              background: mode === key ? 'hsl(220 90% 56% / 0.08)' : 'var(--card)',
+              color: mode === key ? 'var(--accent)' : 'var(--muted-foreground)',
+              cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'border-color 0.15s, background 0.15s',
+            }}
+          >
+            {icon}{label}
+          </button>
+        ))}
+      </div>
 
-        {/* Progress indicator */}
-        {isRunning && (
-          <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {STAGES.map(({ key, label }) => {
-              const stageIndex = STAGES.findIndex(s => s.key === stage)
-              const thisIndex = STAGES.findIndex(s => s.key === key)
-              const isActive = key === stage
-              const isDone = thisIndex < stageIndex
-              return (
-                <div key={key} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: isDone ? 'var(--accent)' : isActive ? 'var(--foreground)' : 'var(--muted)',
-                    transition: 'background 0.3s',
-                  }}>
-                    {isDone ? (
-                      <span style={{ color: 'white', fontSize: 11 }}>✓</span>
-                    ) : isActive ? (
-                      <span style={{
-                        width: 8, height: 8, borderRadius: '50%',
-                        background: 'var(--background)',
-                        animation: 'pulse 1s infinite',
-                        display: 'block',
-                      }} />
-                    ) : null}
+      {/* Input card */}
+      <Card style={{ marginBottom: 16, padding: 20 }}>
+        {mode === 'paste' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>
+              Paste the reel script or transcript
+            </label>
+            <textarea
+              value={transcript}
+              onChange={e => setTranscript(e.target.value)}
+              placeholder="Copy the transcript from a reel, or type/paste the script you want to analyse..."
+              rows={8}
+              style={{ resize: 'vertical', lineHeight: 1.6 }}
+            />
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>
+              Upload audio (MP3, M4A, WAV)
+            </label>
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                border: '2px dashed var(--border)', borderRadius: 10,
+                padding: '28px 20px', textAlign: 'center', cursor: 'pointer',
+                transition: 'border-color 0.15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+            >
+              {audioFile ? (
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)', marginBottom: 4 }}>
+                    {audioFile.name}
                   </div>
-                  <span style={{
-                    fontSize: 13,
-                    color: isActive ? 'var(--foreground)' : isDone ? 'var(--muted-foreground)' : 'var(--border)',
-                    fontWeight: isActive ? 600 : 400,
-                  }}>
-                    {label}
-                  </span>
+                  <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
+                    {(audioFile.size / 1024 / 1024).toFixed(1)} MB — click to change
+                  </div>
                 </div>
-              )
-            })}
-            <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
+              ) : (
+                <>
+                  <Upload size={22} style={{ color: 'var(--muted-foreground)', margin: '0 auto 10px', display: 'block' }} />
+                  <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginBottom: 4 }}>Upload audio file</div>
+                  <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>MP3, M4A, WAV — max 25MB</div>
+                </>
+              )}
+            </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/*"
+              style={{ display: 'none' }}
+              onChange={e => setAudioFile(e.target.files?.[0] ?? null)}
+            />
+            <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.5 }}>
+              Audio is transcribed using OpenAI Whisper, then analysed by Claude. Requires OPENAI_API_KEY to be configured.
+            </p>
           </div>
         )}
 
-        {/* Error */}
-        {stage === 'error' && (
+        {errorMsg && (
           <div style={{
-            marginTop: 14,
+            marginTop: 12,
             background: 'hsl(0 50% 96%)', border: '1px solid hsl(0 70% 85%)',
             borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'hsl(0 72% 45%)',
           }}>
             {errorMsg}
           </div>
         )}
+
+        <Button
+          onClick={handleAnalyze}
+          disabled={loading || (mode === 'paste' ? !transcript.trim() : !audioFile)}
+          style={{ marginTop: 14, width: '100%' }}
+        >
+          {loading ? (mode === 'audio' ? 'Transcribing & analysing…' : 'Analysing…') : 'Analyse Reel'}
+        </Button>
       </Card>
 
       {/* Results */}
-      {analysis && stage === 'done' && (
+      {analysis && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           {/* Verdict banner */}
           <div style={{
@@ -314,7 +343,7 @@ export default function ReelCopyPage() {
           </Card>
 
           {/* Transcript (collapsible) */}
-          {transcript && (
+          {resultTranscript && (
             <Card style={{ padding: 0, overflow: 'hidden' }}>
               <button
                 onClick={() => setShowTranscript(!showTranscript)}
@@ -329,8 +358,8 @@ export default function ReelCopyPage() {
                 {showTranscript ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
               </button>
               {showTranscript && (
-                <div style={{ padding: '0 20px 20px', fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.7, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
-                  {transcript}
+                <div style={{ padding: '16px 20px 20px', fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.7, borderTop: '1px solid var(--border)' }}>
+                  {resultTranscript}
                 </div>
               )}
             </Card>
@@ -342,7 +371,7 @@ export default function ReelCopyPage() {
       {ideaBank.length > 0 && (
         <div style={{ marginTop: 32 }}>
           <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginBottom: 12 }}>
-            Idea Bank <span style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>({ideaBank.length} saved hooks)</span>
+            Saved Hooks <span style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>({ideaBank.length})</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {ideaBank.map(entry => (
@@ -368,12 +397,11 @@ export default function ReelCopyPage() {
         </div>
       )}
 
-      {/* Empty state when idle */}
-      {stage === 'idle' && ideaBank.length === 0 && (
+      {!analysis && !loading && ideaBank.length === 0 && (
         <EmptyState
           icon={<Copy size={18} />}
           title="No reels analysed yet"
-          description="Paste any Instagram, TikTok, or YouTube Shorts URL above and hit Analyze."
+          description="Paste a reel transcript or upload an audio file to get an AI breakdown."
         />
       )}
     </div>

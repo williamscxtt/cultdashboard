@@ -114,9 +114,13 @@ export default function ProfileAuditPage() {
   }
 
   async function handleAudit() {
+    if (!userId) { toast.error('Not logged in — please refresh'); return }
     setLoading(true)
     setAudit(null)
     setAuditId(null)
+
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 55000) // 55s client timeout
 
     try {
       const formData = new FormData()
@@ -124,11 +128,15 @@ export default function ProfileAuditPage() {
       if (igUsername.trim()) formData.append('igUsername', igUsername.trim().replace('@', ''))
       if (screenshot) formData.append('screenshot', screenshot)
 
-      const res = await fetch('/api/profile-audit', { method: 'POST', body: formData })
+      const res = await fetch('/api/profile-audit', { method: 'POST', body: formData, signal: controller.signal })
       const data = await res.json()
 
       if (!res.ok) {
         toast.error(data.error || 'Audit failed')
+        return
+      }
+      if (!data.analysis) {
+        toast.error('No analysis returned — try again')
         return
       }
 
@@ -136,9 +144,14 @@ export default function ProfileAuditPage() {
       setAuditId(data.id)
       loadHistory(userId)
       toast.success('Audit complete')
-    } catch {
-      toast.error('Network error — please try again')
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        toast.error('Audit timed out — the AI is taking too long. Try with a smaller screenshot.')
+      } else {
+        toast.error('Network error — please try again')
+      }
     } finally {
+      clearTimeout(timeout)
       setLoading(false)
     }
   }

@@ -113,8 +113,15 @@ function ClientCard({ client }: { client: Profile }) {
         </Badge>
       </div>
 
+      {/* Niche tag */}
+      {(client.niche || (client.intro_structured as { specific_niche?: string } | null)?.specific_niche) && (
+        <div style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.4 }}>
+          {client.niche || (client.intro_structured as { specific_niche?: string } | null)?.specific_niche}
+        </div>
+      )}
+
       {/* Details */}
-      <div style={{ display: 'flex', gap: 20 }}>
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 2, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Instagram</div>
           <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
@@ -122,8 +129,16 @@ function ClientCard({ client }: { client: Profile }) {
           </div>
         </div>
         <div>
-          <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 2, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Followers</div>
-          <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>—</div>
+          <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 2, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Phase</div>
+          <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
+            {client.phase_number ? `Phase ${client.phase_number}` : '—'}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 2, fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Start Followers</div>
+          <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
+            {client.starting_followers?.toLocaleString() ?? '—'}
+          </div>
         </div>
       </div>
 
@@ -195,6 +210,16 @@ function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
       tiktok_handle: null,
       onboarding_completed: false,
       created_at: new Date().toISOString(),
+      niche: null, bio: null, coaching_phase: null, monthly_revenue: null,
+      revenue_goal: null, target_audience: null, posts_per_week: null,
+      content_pillars: null, ninety_day_goal: null, focus_this_week: null,
+      biggest_challenge: null, why_joined: null, dm_goal: null,
+      phase_number: null, date_joined: null, starting_followers: null,
+      starting_avg_views: null, starting_revenue: null,
+      ninety_day_follower_goal: null, ninety_day_revenue_goal: null,
+      starting_active_clients: null, intro_structured: null,
+      intro_freeform: null, intro_insights: null, dashboard_bio: null,
+      weekly_checklist: null,
     })
   }
 

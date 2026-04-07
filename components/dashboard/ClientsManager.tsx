@@ -277,12 +277,18 @@ function ClientRow({ client, onToggleActive }: { client: Profile; onToggleActive
           </div>
         </div>
       </td>
-      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--muted-foreground)' }}>—</td>
+      <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--muted-foreground)', maxWidth: 180 }}>
+        <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {client.niche || (client.intro_structured as { specific_niche?: string } | null)?.specific_niche || '—'}
+        </div>
+      </td>
       <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--muted-foreground)' }}>
         {client.ig_username ? `@${client.ig_username}` : '—'}
       </td>
       <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--muted-foreground)' }}>
-        {new Date(client.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+        {client.date_joined
+          ? new Date(client.date_joined).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+          : new Date(client.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
       </td>
       <td style={{ padding: '12px 16px' }}>
         <button
@@ -370,6 +376,16 @@ function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
       tiktok_handle: null,
       onboarding_completed: false,
       created_at: new Date().toISOString(),
+      niche: null, bio: null, coaching_phase: null, monthly_revenue: null,
+      revenue_goal: null, target_audience: null, posts_per_week: null,
+      content_pillars: null, ninety_day_goal: null, focus_this_week: null,
+      biggest_challenge: null, why_joined: null, dm_goal: null,
+      phase_number: null, date_joined: null, starting_followers: null,
+      starting_avg_views: null, starting_revenue: null,
+      ninety_day_follower_goal: null, ninety_day_revenue_goal: null,
+      starting_active_clients: null, intro_structured: null,
+      intro_freeform: null, intro_insights: null, dashboard_bio: null,
+      weekly_checklist: null,
     })
   }
 
