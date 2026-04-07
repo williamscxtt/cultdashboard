@@ -80,7 +80,8 @@ export async function POST(req: NextRequest) {
 
   const { ig_access_token, ig_user_id } = profile
 
-  // 1b. Fetch follower count and update profile
+  // 1b. Fetch follower count, update profile, and store history snapshot
+  let currentFollowers: number | null = null
   try {
     const meRes = await fetch(
       `https://graph.instagram.com/v21.0/me?fields=followers_count,media_count&access_token=${ig_access_token}`
@@ -88,10 +89,52 @@ export async function POST(req: NextRequest) {
     if (meRes.ok) {
       const meData = await meRes.json()
       if (meData.followers_count != null) {
+        currentFollowers = meData.followers_count
         await adminClient.from('profiles').update({ followers_count: meData.followers_count }).eq('id', profileId)
+        // Store today's snapshot
+        const today = new Date().toISOString().slice(0, 10)
+        await adminClient.from('follower_snapshots').upsert(
+          { profile_id: profileId, date: today, count: meData.followers_count },
+          { onConflict: 'profile_id,date' }
+        )
       }
     }
   } catch { /* non-blocking */ }
+
+  // 1c. Fetch daily follower change insights for last 30 days to build history
+  if (currentFollowers != null) {
+    try {
+      const until = Math.floor(Date.now() / 1000)
+      const since = until - 30 * 86400
+      const insightsUrl = new URL(`https://graph.instagram.com/v21.0/${ig_user_id}/insights`)
+      insightsUrl.searchParams.set('metric', 'follower_count')
+      insightsUrl.searchParams.set('period', 'day')
+      insightsUrl.searchParams.set('since', String(since))
+      insightsUrl.searchParams.set('until', String(until))
+      insightsUrl.searchParams.set('access_token', ig_access_token)
+
+      const insRes = await fetch(insightsUrl.toString())
+      if (insRes.ok) {
+        const insJson = await insRes.json()
+        const values: Array<{ value: number; end_time: string }> =
+          insJson.data?.[0]?.values ?? []
+
+        if (values.length > 0) {
+          // Reconstruct absolute counts backwards from current
+          let runningCount = currentFollowers
+          const snapshots: Array<{ profile_id: string; date: string; count: number }> = []
+          for (let i = values.length - 1; i >= 0; i--) {
+            const day = values[i].end_time.slice(0, 10)
+            snapshots.push({ profile_id: profileId, date: day, count: runningCount })
+            runningCount -= values[i].value // subtract today's delta to get yesterday's count
+          }
+          if (snapshots.length > 0) {
+            await adminClient.from('follower_snapshots').upsert(snapshots, { onConflict: 'profile_id,date' })
+          }
+        }
+      }
+    } catch { /* non-blocking — history is nice-to-have */ }
+  }
 
   // 2. Fetch recent media from Instagram Graph API
   const mediaUrl = new URL(`https://graph.instagram.com/v21.0/me/media`)
@@ -175,11 +218,16 @@ export async function POST(req: NextRequest) {
   const reelIds = reelsWithInsights.map(r => r.media.id)
   const { data: existingRows } = await adminClient
     .from('client_reels')
-    .select('reel_id')
+    .select('reel_id, format_type, transcript, hook')
     .eq('profile_id', profileId)
     .in('reel_id', reelIds)
 
   const existingIds = new Set((existingRows ?? []).map((r: { reel_id: string }) => r.reel_id))
+  const existingDataMap = new Map(
+    (existingRows ?? []).map((r: { reel_id: string; format_type: string | null; transcript: string | null; hook: string | null }) =>
+      [r.reel_id, { format_type: r.format_type, transcript: r.transcript, hook: r.hook }]
+    )
+  )
 
   // 5b. Refresh metrics on existing reels (plays, likes, comments, saves, shares)
   const existingReels = reelsWithInsights.filter(r => existingIds.has(r.media.id))
@@ -194,11 +242,70 @@ export async function POST(req: NextRequest) {
           comments: media.comments_count ?? 0,
           saves: saved,
           shares,
+          thumbnail_url: media.thumbnail_url ?? null,
+          permalink: media.permalink ?? null,
         })
         .eq('reel_id', media.id)
         .eq('profile_id', profileId)
     )
   )
+
+  // 5c. Classify existing reels that still have null format_type
+  const existingNeedingClassification = existingReels.filter(r => !existingDataMap.get(r.media.id)?.format_type)
+  if (existingNeedingClassification.length > 0) {
+    const classifyInput = existingNeedingClassification.map(r => {
+      const stored = existingDataMap.get(r.media.id)
+      return {
+        reel_id: r.media.id,
+        transcript: (stored?.transcript || r.media.caption || '').slice(0, 400),
+        hook: stored?.hook || r.media.caption?.slice(0, 100) || '',
+      }
+    })
+
+    try {
+      const classifyPrompt = `You are classifying Instagram Reels into content format types.
+
+Given these reels (reel_id, transcript snippet, hook), classify each into ONE of these format types:
+- "talking_head" — person speaking directly to camera, no b-roll
+- "story_time" — narrative arc, personal story or experience
+- "tutorial" — step-by-step how-to or educational
+- "list" — numbered tips, "X ways to..." format
+- "transformation" — before/after reveal
+- "rant" — emotional/opinionated monologue
+- "trend" — uses trending audio or format
+- "pov" — point-of-view style framing
+- "documentary" — cinematic, b-roll heavy
+- "other" — doesn't fit above
+
+Return ONLY a JSON object mapping reel_id to format_type, like:
+{"reel_id_1": "tutorial", "reel_id_2": "story_time"}
+
+Reels to classify:
+${JSON.stringify(classifyInput, null, 2)}`
+
+      const classifyRes = await anthropic.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: classifyPrompt }],
+      })
+
+      const rawText = classifyRes.content[0].type === 'text' ? classifyRes.content[0].text : '{}'
+      const jsonText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+      const formatMap: Record<string, string> = JSON.parse(jsonText)
+
+      await Promise.all(
+        Object.entries(formatMap).map(([reel_id, format_type]) =>
+          adminClient
+            .from('client_reels')
+            .update({ format_type })
+            .eq('reel_id', reel_id)
+            .eq('profile_id', profileId)
+        )
+      )
+    } catch {
+      // Classification failed — non-blocking
+    }
+  }
 
   // 6. Process new reels: transcribe + save
   const newReels = reelsWithInsights.filter(r => !existingIds.has(r.media.id))
@@ -246,6 +353,8 @@ export async function POST(req: NextRequest) {
       hook,
       caption: media.caption ?? '',
       format_type: null,
+      thumbnail_url: media.thumbnail_url ?? null,
+      permalink: media.permalink ?? null,
     })
 
     if (!insertError) {
@@ -353,6 +462,7 @@ ${JSON.stringify(classifyInput, null, 2)}`
   return NextResponse.json({
     synced: savedSummaries.length,
     total,
+    classified: existingNeedingClassification.length,
     reels: [...savedSummaries, ...existingSummaries],
   })
 }

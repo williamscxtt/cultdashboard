@@ -17,6 +17,13 @@ export interface ClientReel {
   hashtags: string[] | null
   format_type: string | null
   content_pillar: string | null
+  thumbnail_url: string | null
+  permalink: string | null
+}
+
+export interface FollowerSnapshot {
+  date: string
+  count: number
 }
 
 export interface Profile {

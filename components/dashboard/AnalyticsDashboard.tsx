@@ -10,7 +10,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line,
 } from 'recharts'
 import { Card } from '@/components/ui'
-import type { ClientReel } from '@/lib/types'
+import type { ClientReel, FollowerSnapshot } from '@/lib/types'
 
 // ─── Instagram icon ───────────────────────────────────────────────────────────
 function IgIcon({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
@@ -115,9 +115,9 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
 
 // ─── stat card ────────────────────────────────────────────────────────────────
 function StatCard({
-  label, value, change, sparkData, accentColor = 'var(--accent)',
+  label, value, change, sparkData, accentColor = 'var(--accent)', nullLabel = 'no prior data',
 }: {
-  label: string; value: string; change: number | null; sparkData: number[]; accentColor?: string
+  label: string; value: string; change: number | null; sparkData: number[]; accentColor?: string; nullLabel?: string
 }) {
   const up = change !== null && change >= 0
   return (
@@ -154,7 +154,7 @@ function StatCard({
           </span>
         </div>
       ) : (
-        <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>no prior data</div>
+        <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{nullLabel}</div>
       )}
     </div>
   )
@@ -214,102 +214,138 @@ function ReelCard({ reel, idx }: { reel: ClientReel; idx: number }) {
     ? new Date(reel.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
     : ''
 
-  return (
+  const thumbnailArea = (
     <div style={{
-      background: 'var(--card)', border: '1px solid var(--border)',
-      borderRadius: 12, overflow: 'hidden', transition: 'transform 0.15s, border-color 0.15s',
-    }}
-      onMouseEnter={e => {
-        const el = e.currentTarget as HTMLElement
-        el.style.transform = 'translateY(-2px)'
-        el.style.borderColor = 'var(--accent)'
-      }}
-      onMouseLeave={e => {
-        const el = e.currentTarget as HTMLElement
-        el.style.transform = 'translateY(0)'
-        el.style.borderColor = 'var(--border)'
-      }}
-    >
-      {/* Thumbnail */}
-      <div style={{ height: 110, background: gradient, position: 'relative' }}>
-        {/* Top-left: platform badge */}
+      height: 110,
+      background: reel.thumbnail_url ? 'transparent' : gradient,
+      position: 'relative',
+      overflow: 'hidden',
+    }}>
+      {reel.thumbnail_url && (
+        <img
+          src={reel.thumbnail_url}
+          alt=""
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+          onError={e => {
+            // If thumbnail URL has expired, fall back to gradient
+            const img = e.currentTarget as HTMLImageElement
+            img.style.display = 'none'
+            const parent = img.parentElement as HTMLElement
+            parent.style.background = gradient
+          }}
+        />
+      )}
+      {/* Top-left: platform badge */}
+      <div style={{
+        position: 'absolute', top: 8, left: 8,
+        display: 'flex', alignItems: 'center', gap: 4,
+        background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
+        borderRadius: 5, padding: '3px 7px',
+        fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.03em',
+      }}>
+        <IgIcon size={10} color="#fff" /> instagram
+      </div>
+      {/* Top-right: format */}
+      {reel.format_type && (
         <div style={{
-          position: 'absolute', top: 8, left: 8,
-          display: 'flex', alignItems: 'center', gap: 4,
+          position: 'absolute', top: 8, right: 8,
           background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
           borderRadius: 5, padding: '3px 7px',
-          fontSize: 10, fontWeight: 700, color: '#fff', letterSpacing: '0.03em',
+          fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.04em',
         }}>
-          <IgIcon size={10} color="#fff" /> instagram
+          {reel.format_type.replace(/_/g, ' ')}
         </div>
-        {/* Top-right: format */}
-        {reel.format_type && (
-          <div style={{
-            position: 'absolute', top: 8, right: 8,
-            background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)',
-            borderRadius: 5, padding: '3px 7px',
-            fontSize: 9, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.04em',
-          }}>
-            {reel.format_type.replace(/_/g, ' ')}
-          </div>
-        )}
-        {/* Play button */}
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: 34, height: 34, borderRadius: '50%',
-          background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <Play size={13} fill="#fff" color="#fff" />
-        </div>
-        {/* Date bottom-left */}
-        <div style={{
-          position: 'absolute', bottom: 8, left: 8,
-          fontSize: 10, color: 'rgba(255,255,255,0.75)', fontWeight: 500,
-        }}>
-          {date}
-        </div>
+      )}
+      {/* Play button */}
+      <div style={{
+        position: 'absolute', top: '50%', left: '50%',
+        transform: 'translate(-50%, -50%)',
+        width: 34, height: 34, borderRadius: '50%',
+        background: 'rgba(255,255,255,0.18)', backdropFilter: 'blur(6px)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <Play size={13} fill="#fff" color="#fff" />
       </div>
+      {/* Date bottom-left */}
+      <div style={{
+        position: 'absolute', bottom: 8, left: 8,
+        fontSize: 10, color: 'rgba(255,255,255,0.75)', fontWeight: 500,
+      }}>
+        {date}
+      </div>
+    </div>
+  )
 
-      {/* Content */}
-      <div style={{ padding: '12px 14px' }}>
-        <div style={{
-          fontSize: 13, color: 'var(--foreground)', fontWeight: 500,
-          lineHeight: 1.45, marginBottom: 10,
-          display: '-webkit-box',
-          WebkitLineClamp: 2,
-          WebkitBoxOrient: 'vertical' as const,
-          overflow: 'hidden',
-        }}>
-          {hookText}
-        </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' as const }}>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
-            <Eye size={10} /> {fmtNum(reel.views ?? 0)}
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
-            <Heart size={10} /> {fmtNum(reel.likes ?? 0)}
-          </span>
-          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
-            <MessageCircle size={10} /> {fmtNum(reel.comments ?? 0)}
-          </span>
-          {(reel.saves ?? 0) > 0 && (
-            <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
-              <Bookmark size={10} /> {fmtNum(reel.saves ?? 0)}
-            </span>
-          )}
-        </div>
+  const content = (
+    <div style={{ padding: '12px 14px' }}>
+      <div style={{
+        fontSize: 13, color: 'var(--foreground)', fontWeight: 500,
+        lineHeight: 1.45, marginBottom: 10,
+        display: '-webkit-box',
+        WebkitLineClamp: 2,
+        WebkitBoxOrient: 'vertical' as const,
+        overflow: 'hidden',
+      }}>
+        {hookText}
       </div>
+      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' as const }}>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
+          <Eye size={10} /> {fmtNum(reel.views ?? 0)}
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
+          <Heart size={10} /> {fmtNum(reel.likes ?? 0)}
+        </span>
+        <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
+          <MessageCircle size={10} /> {fmtNum(reel.comments ?? 0)}
+        </span>
+        {(reel.saves ?? 0) > 0 && (
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
+            <Bookmark size={10} /> {fmtNum(reel.saves ?? 0)}
+          </span>
+        )}
+      </div>
+    </div>
+  )
+
+  const cardStyle: React.CSSProperties = {
+    background: 'var(--card)', border: '1px solid var(--border)',
+    borderRadius: 12, overflow: 'hidden', transition: 'transform 0.15s, border-color 0.15s',
+    display: 'block', textDecoration: 'none', color: 'inherit',
+  }
+  const hoverOn = (e: React.MouseEvent) => {
+    const el = e.currentTarget as HTMLElement
+    el.style.transform = 'translateY(-2px)'
+    el.style.borderColor = 'var(--accent)'
+  }
+  const hoverOff = (e: React.MouseEvent) => {
+    const el = e.currentTarget as HTMLElement
+    el.style.transform = 'translateY(0)'
+    el.style.borderColor = 'var(--border)'
+  }
+
+  if (reel.permalink) {
+    return (
+      <a href={reel.permalink} target="_blank" rel="noopener noreferrer"
+        style={cardStyle} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
+        {thumbnailArea}
+        {content}
+      </a>
+    )
+  }
+
+  return (
+    <div style={cardStyle} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
+      {thumbnailArea}
+      {content}
     </div>
   )
 }
 
 // ─── main export ──────────────────────────────────────────────────────────────
-interface Props { profileId: string; followersCount?: number | null; igUsername?: string | null }
-interface SyncResult { synced: number; total: number; warning?: string }
+interface Props { profileId: string; followersCount?: number | null; igUsername?: string | null; followerHistory?: FollowerSnapshot[] }
+interface SyncResult { synced: number; total: number; classified?: number; warning?: string }
 
-export default function AnalyticsDashboard({ profileId, followersCount, igUsername }: Props) {
+export default function AnalyticsDashboard({ profileId, followersCount, igUsername, followerHistory = [] }: Props) {
   const [reels, setReels] = useState<ClientReel[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -376,13 +412,20 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
     const curEng    = currentReels.reduce((a, r) => a + (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0), 0)
     const prvEng    = prevReels.reduce((a, r) => a + (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0), 0)
 
+    // Follower history: last N days of snapshots
+    const fSnap = followerHistory.slice(-days)
+    const followerSpark = fSnap.map(s => s.count)
+    const followerChange = fSnap.length >= 2
+      ? pct(fSnap[fSnap.length - 1].count, fSnap[0].count)
+      : null
+
     return {
       views:     { value: fmtNum(curViews), change: pct(curViews, prvViews),    spark: currentReels.map(r => r.views ?? 0) },
       reach:     { value: fmtNum(curReach), change: pct(curReach, prvReach),    spark: currentReels.map(r => r.reach ?? 0) },
       eng:       { value: fmtNum(curEng),   change: pct(curEng, prvEng),        spark: currentReels.map(r => (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0)) },
-      followers: { value: fmtNum(followersCount ?? 0), change: null as number | null, spark: [] as number[] },
+      followers: { value: followersCount != null ? fmtNum(followersCount) : '—', change: followerChange, spark: followerSpark },
     }
-  }, [currentReels, prevReels, followersCount])
+  }, [currentReels, prevReels, followersCount, followerHistory, days])
 
   // ── views over time ───────────────────────────────────────────────────────
   const viewsChart = useMemo(() => {
@@ -558,6 +601,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
           fontSize: 13, fontWeight: 500, border: '1px solid hsl(142 50% 20%)',
         }}>
           Synced {syncResult.synced} new reel{syncResult.synced !== 1 ? 's' : ''} of {syncResult.total} found.
+          {syncResult.classified ? <span style={{ marginLeft: 8 }}>Classified {syncResult.classified} reel{syncResult.classified !== 1 ? 's' : ''}.</span> : null}
           {syncResult.warning && <span style={{ color: 'hsl(38 92% 55%)', marginLeft: 8 }}>{syncResult.warning}</span>}
         </div>
       )}
@@ -578,10 +622,11 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
         <StatCard label="Engagements" value={stats.eng.value} change={stats.eng.change} sparkData={stats.eng.spark} accentColor="hsl(280 70% 56%)" />
         <StatCard
           label="Followers"
-          value={followersCount != null ? fmtNum(followersCount) : '—'}
-          change={null}
-          sparkData={[]}
+          value={stats.followers.value}
+          change={stats.followers.change}
+          sparkData={stats.followers.spark}
           accentColor="hsl(38 90% 55%)"
+          nullLabel="synced on connect"
         />
       </div>
 
