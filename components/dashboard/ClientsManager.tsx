@@ -365,6 +365,7 @@ function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
       ig_username: igUsername || null,
       ig_user_id: null,
       ig_access_token: null,
+      followers_count: null,
       yt_channel_id: null,
       tiktok_handle: null,
       onboarding_completed: false,
