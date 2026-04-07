@@ -10,9 +10,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(new URL('/dashboard/settings?ig_error=1', req.url))
   }
 
-  const appId = process.env.INSTAGRAM_APP_ID!
-  const appSecret = process.env.INSTAGRAM_APP_SECRET!
+  const appId = process.env.INSTAGRAM_APP_ID?.trim()!
+  const appSecret = process.env.INSTAGRAM_APP_SECRET?.trim()!
   const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL?.trim()}/api/auth/instagram/callback`
+
+  console.log('[IG callback] appId:', appId, 'redirectUri:', redirectUri)
 
   try {
     // Exchange code for short-lived token
@@ -21,7 +23,8 @@ export async function GET(req: NextRequest) {
       body: new URLSearchParams({ client_id: appId, client_secret: appSecret, redirect_uri: redirectUri, code, grant_type: 'authorization_code' }),
     })
     const tokenData = await tokenRes.json()
-    if (tokenData.error_type) throw new Error(tokenData.error_message || tokenData.error_type)
+    console.log('[IG callback] token response:', JSON.stringify(tokenData))
+    if (tokenData.error_type || tokenData.error) throw new Error(tokenData.error_message || tokenData.error_type || tokenData.error)
 
     // Exchange for long-lived token (60 days)
     const longRes = await fetch(
