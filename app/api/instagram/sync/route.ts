@@ -128,27 +128,31 @@ export async function POST(req: NextRequest) {
       let plays = 0, reach = 0, shares = 0, saved = 0
       try {
         const insightUrl = new URL(`https://graph.instagram.com/v21.0/${media.id}/insights`)
-        insightUrl.searchParams.set('metric', 'plays,reach,saved,shares')
+        insightUrl.searchParams.set('metric', 'ig_reels_video_view_total_time,ig_reels_avg_watch_time,reach,saved,shares')
         insightUrl.searchParams.set('access_token', ig_access_token)
 
         const insightRes = await fetch(insightUrl.toString())
-        const insightJson = await insightRes.json()
-        // Log first reel only to see what the API returns
-        if (reels.indexOf(media) === 0) {
-          console.log('[sync] first reel insight response:', JSON.stringify(insightJson).slice(0, 300))
-        }
         if (insightRes.ok) {
+          const insightJson = await insightRes.json()
           const insights: IGInsight[] = insightJson.data ?? []
+          let totalTime = 0, avgTime = 0
           for (const item of insights) {
             const val = item.value ?? item.values?.[0]?.value ?? 0
-            if (item.name === 'plays' && val > plays) plays = val
+            if (item.name === 'ig_reels_video_view_total_time') totalTime = val
+            else if (item.name === 'ig_reels_avg_watch_time') avgTime = val
             else if (item.name === 'reach') reach = val
             else if (item.name === 'shares') shares = val
             else if (item.name === 'saved') saved = val
           }
+          // Estimate plays from total/avg watch time; fall back to reach
+          if (totalTime > 0 && avgTime > 0) {
+            plays = Math.round(totalTime / avgTime)
+          } else if (reach > 0) {
+            plays = reach
+          }
         }
-      } catch (e) {
-        console.error(`[sync] insights threw:`, String(e).slice(0, 200))
+      } catch {
+        // Insights unavailable — continue with zeros
       }
       return { media, plays, reach, shares, saved }
     })
