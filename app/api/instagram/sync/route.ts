@@ -128,22 +128,38 @@ export async function POST(req: NextRequest) {
       let plays = 0, reach = 0, shares = 0, saved = 0
       try {
         const insightUrl = new URL(`https://graph.instagram.com/v21.0/${media.id}/insights`)
-        // Use all known play-count metric names — Instagram returns whichever it supports
-        insightUrl.searchParams.set('metric', 'plays,video_views,ig_reels_aggregated_all_plays_count,reach,shares,saved')
+        insightUrl.searchParams.set('metric', 'ig_reels_aggregated_all_plays_count,reach,shares,saved')
+        insightUrl.searchParams.set('period', 'lifetime')
         insightUrl.searchParams.set('access_token', ig_access_token)
 
         const insightRes = await fetch(insightUrl.toString())
         const insightJson = await insightRes.json()
         if (!insightRes.ok) {
-          console.error(`[sync] insights error for ${media.id}:`, JSON.stringify(insightJson))
+          // Fall back to older metric names for non-reel videos
+          const fallbackUrl = new URL(`https://graph.instagram.com/v21.0/${media.id}/insights`)
+          fallbackUrl.searchParams.set('metric', 'plays,reach,shares,saved')
+          fallbackUrl.searchParams.set('period', 'lifetime')
+          fallbackUrl.searchParams.set('access_token', ig_access_token)
+          const fallbackRes = await fetch(fallbackUrl.toString())
+          if (fallbackRes.ok) {
+            const fallbackJson = await fallbackRes.json()
+            const insights: IGInsight[] = fallbackJson.data ?? []
+            for (const item of insights) {
+              const val = item.value ?? item.values?.[0]?.value ?? 0
+              if (item.name === 'plays' && val > plays) plays = val
+              else if (item.name === 'reach') reach = val
+              else if (item.name === 'shares') shares = val
+              else if (item.name === 'saved') saved = val
+            }
+          } else {
+            console.error(`[sync] insights error for ${media.id}:`, JSON.stringify(insightJson))
+          }
         } else {
           const insights: IGInsight[] = insightJson.data ?? []
-          console.log(`[sync] insights for ${media.id}:`, JSON.stringify(insights))
           for (const item of insights) {
             const val = item.value ?? item.values?.[0]?.value ?? 0
-            if (item.name === 'plays' || item.name === 'video_views' || item.name === 'ig_reels_aggregated_all_plays_count') {
-              if (val > plays) plays = val
-            } else if (item.name === 'reach') reach = val
+            if (item.name === 'ig_reels_aggregated_all_plays_count' && val > plays) plays = val
+            else if (item.name === 'reach') reach = val
             else if (item.name === 'shares') shares = val
             else if (item.name === 'saved') saved = val
           }
