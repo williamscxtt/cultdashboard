@@ -152,7 +152,8 @@ export async function POST(req: NextRequest) {
               else if (item.name === 'saved') saved = val
             }
           } else {
-            console.error(`[sync] insights error for ${media.id}:`, JSON.stringify(insightJson))
+            const e = insightJson?.error ?? insightJson
+            console.error(`[sync] FINAL ERROR id=${media.id} code=${e.code} type=${e.type} msg=${e.message}`)
           }
         } else {
           const insights: IGInsight[] = insightJson.data ?? []
