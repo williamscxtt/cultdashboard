@@ -130,7 +130,7 @@ export default function SettingsClient({ profile }: { profile: Profile }) {
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
                   <a href="/api/auth/instagram" style={{ textDecoration: 'none' }}>
-                    <Button variant={profile.ig_access_token ? 'secondary' : 'default'} size="sm">
+                    <Button variant={profile.ig_access_token ? 'secondary' : 'primary'} size="sm">
                       {profile.ig_access_token ? 'Reconnect' : 'Connect'}
                     </Button>
                   </a>
