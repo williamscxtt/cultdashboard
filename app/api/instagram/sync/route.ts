@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
             }
           } else {
             const e = insightJson?.error ?? insightJson
-            console.error(`[sync] FINAL ERROR id=${media.id} code=${e.code} type=${e.type} msg=${e.message}`)
+            console.error(`IGFAIL code=${e.code} msg=${e.message} type=${e.type}`)
           }
         } else {
           const insights: IGInsight[] = insightJson.data ?? []
