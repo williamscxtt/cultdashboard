@@ -30,16 +30,26 @@ export async function GET(req: NextRequest) {
 
   const firstReel = reels[0]
 
-  // Try insights
-  const insightUrl = new URL(`https://graph.instagram.com/v21.0/${firstReel.id}/insights`)
-  insightUrl.searchParams.set('metric', 'plays,reach,saved,shares')
-  insightUrl.searchParams.set('access_token', profile.ig_access_token)
-  const insightRes = await fetch(insightUrl.toString())
-  const insightJson = await insightRes.json()
+  // Try each metric individually to find what works
+  const metricsToTry = [
+    'ig_reels_aggregated_all_plays_count',
+    'ig_reels_video_view_total_time',
+    'ig_reels_avg_watch_time',
+    'reach',
+    'saved',
+    'shares',
+    'total_interactions',
+  ]
 
-  return NextResponse.json({
-    reel_id: firstReel.id,
-    insight_status: insightRes.status,
-    insight_response: insightJson,
-  })
+  const results: Record<string, unknown> = {}
+  for (const metric of metricsToTry) {
+    const url = new URL(`https://graph.instagram.com/v21.0/${firstReel.id}/insights`)
+    url.searchParams.set('metric', metric)
+    url.searchParams.set('access_token', profile.ig_access_token)
+    const res = await fetch(url.toString())
+    const json = await res.json()
+    results[metric] = res.ok ? json.data : json.error?.message
+  }
+
+  return NextResponse.json({ reel_id: firstReel.id, results })
 }
