@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { TrendingUp, Zap, ChevronDown, ChevronUp, ExternalLink, BarChart2, FileText, CheckCircle, AlertTriangle, Lock, MessageCircle, HelpCircle, Lightbulb, Play, Eye, Heart } from 'lucide-react'
+import { TrendingUp, Zap, ChevronDown, ChevronUp, ExternalLink, BarChart2, FileText, CheckCircle, AlertTriangle, Lock, MessageCircle, HelpCircle, Lightbulb, Play, Eye, Heart, Users, Sparkles, Globe } from 'lucide-react'
 import type { WeeklyReport, TrendingTopic, TopHook, ClientReel } from '@/lib/types'
 import { Card, Badge, SectionLabel } from '@/components/ui'
+import CompetitorManager from '@/components/dashboard/CompetitorManager'
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -330,6 +331,46 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
   const [commentAnalysis, setCommentAnalysis] = useState<CommentAnalysis | null>(null)
   const [commentUnlocksAt, setCommentUnlocksAt] = useState<string | null>(commentAnalysisUnlocksAt ?? null)
   const [commentError, setCommentError] = useState<string | null>(null)
+
+  // Competitor intel state
+  const [competitorHandles, setCompetitorHandles] = useState<string[]>([])
+  const [topCompReels, setTopCompReels] = useState<Array<{ account: string; views: number; hook: string; format_type: string }>>([])
+  const [intelReport, setIntelReport] = useState<{
+    headline: string; top_format: string; format_insight: string;
+    top_hooks: string[]; what_is_working: string[]; content_gaps: string[];
+    post_ideas: string[]; weekly_verdict: string;
+  } | null>(null)
+  const [generatingIntel, setGeneratingIntel] = useState(false)
+  const [intelError, setIntelError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetch('/api/competitor-intel')
+      .then(r => r.json())
+      .then(d => {
+        if (d.reels) setTopCompReels(d.reels.slice(0, 8))
+        if (d.competitors) setCompetitorHandles(d.competitors)
+      })
+      .catch(() => {})
+  }, [])
+
+  async function handleGenerateIntel() {
+    setGeneratingIntel(true)
+    setIntelError(null)
+    try {
+      const res = await fetch('/api/competitor-intel', { method: 'POST' })
+      const data = await res.json()
+      if (data.error === 'no_competitors') {
+        setIntelError('Add at least one competitor below to generate intelligence.')
+      } else if (data.error === 'no_data') {
+        setIntelError('No competitor reel data yet — data is collected every Monday. Check back then.')
+      } else if (data.error) {
+        setIntelError(data.error)
+      } else if (data.report) {
+        setIntelReport(data.report)
+      }
+    } catch { setIntelError('Network error') }
+    setGeneratingIntel(false)
+  }
 
   const analysisAvailable = !analysisUnlocksAt || new Date(analysisUnlocksAt) <= new Date()
 
@@ -827,59 +868,209 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
         </Card>
       )}
 
-      {/* ── Content Library ── */}
-      {reels.length > 0 && (
-        <div style={{ marginTop: 20 }}>
-          <Card style={{ overflow: 'hidden' }}>
-            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
-              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', letterSpacing: '-0.2px' }}>Content Library</div>
-              <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>All your synced reels</div>
+      {/* ── Niche Intelligence ── */}
+      <div style={{ marginTop: 20 }}>
+        <Card style={{ overflow: 'hidden' }}>
+          {/* Header */}
+          <div style={{
+            padding: '16px 20px',
+            borderBottom: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            flexWrap: 'wrap', gap: 12,
+          }}>
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                <Globe size={14} style={{ color: 'hsl(270 60% 55%)' }} />
+                <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>Niche Intelligence</span>
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
+                Track competitors and get weekly insights on what&apos;s winning in your niche
+              </div>
             </div>
-            <div style={{ padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
-              {[...reels].sort((a, b) => (b.views ?? 0) - (a.views ?? 0)).slice(0, 30).map((r, idx) => {
-                const reelLink = r.permalink || (r.reel_id ? `https://www.instagram.com/reel/${r.reel_id}/` : null)
-                const gradients = ['linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', 'linear-gradient(135deg,#405de6,#5851db,#833ab4)', 'linear-gradient(135deg,#fd1d1d,#fcb045)', 'linear-gradient(135deg,#f77737,#e1306c)', 'linear-gradient(135deg,#5851db,#833ab4)']
-                const grad = gradients[idx % gradients.length]
-                const card = (
-                  <div key={r.reel_id || r.id || idx} style={{
-                    borderRadius: 8, overflow: 'hidden', position: 'relative',
-                    background: r.thumbnail_url ? 'var(--muted)' : grad,
-                    aspectRatio: '9/16',
-                    cursor: reelLink ? 'pointer' : 'default',
-                    border: '1px solid var(--border)',
-                  }}>
-                    {r.thumbnail_url && (
-                      <img src={r.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }}
-                        onError={e => { const img = e.currentTarget as HTMLImageElement; img.style.display = 'none'; (img.parentElement as HTMLElement).style.background = grad }} />
-                    )}
-                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <Play size={11} fill="#fff" color="#fff" />
-                    </div>
-                    {r.format_type && (
-                      <div style={{ position: 'absolute', top: 5, right: 5, background: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: '2px 5px', fontSize: 8, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
-                        {r.format_type.replace(/_/g, ' ')}
+            <button
+              onClick={handleGenerateIntel}
+              disabled={generatingIntel}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '8px 16px', borderRadius: 8, border: 'none',
+                background: 'hsl(270 60% 55%)',
+                color: '#fff',
+                fontSize: 13, fontWeight: 600,
+                cursor: generatingIntel ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit', opacity: generatingIntel ? 0.6 : 1,
+                transition: 'opacity 0.15s',
+              }}
+            >
+              <Sparkles size={13} />
+              {generatingIntel ? 'Generating…' : intelReport ? 'Regenerate Intel' : 'Generate Weekly Intel'}
+            </button>
+          </div>
+
+          <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+            {/* Competitor Manager */}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
+                Your Tracked Competitors
+              </div>
+              <CompetitorManager />
+            </div>
+
+            {/* Error state */}
+            {intelError && (
+              <div style={{
+                padding: '10px 14px', borderRadius: 8,
+                background: 'hsl(38 92% 45% / 0.08)', border: '1px solid hsl(38 92% 45% / 0.2)',
+                fontSize: 13, color: 'hsl(38 92% 40%)',
+              }}>
+                {intelError}
+              </div>
+            )}
+
+            {/* Top competitor reels (before intel generated) */}
+            {!intelReport && topCompReels.length > 0 && (
+              <div>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
+                  Top Competitor Reels This Period
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {topCompReels.map((r, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '10px 14px', borderRadius: 8, background: 'var(--muted)',
+                    }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                        background: 'hsl(270 60% 55% / 0.15)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 11, fontWeight: 700, color: 'hsl(270 60% 55%)',
+                      }}>{i + 1}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 2 }}>
+                          @{r.account}
+                          {r.format_type && (
+                            <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 500, color: 'var(--muted-foreground)' }}>
+                              {r.format_type.replace(/_/g, ' ')}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          &ldquo;{r.hook || '(no hook captured)'}&rdquo;
+                        </div>
                       </div>
-                    )}
-                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.7))', padding: '20px 6px 5px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 10, color: '#fff', fontWeight: 600 }}>
-                          <Eye size={9} /> {r.views != null && r.views >= 1000 ? `${(r.views / 1000).toFixed(0)}k` : (r.views ?? 0).toLocaleString()}
-                        </span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 10, color: 'rgba(255,255,255,0.75)' }}>
-                          <Heart size={9} /> {r.likes != null && r.likes >= 1000 ? `${(r.likes / 1000).toFixed(0)}k` : (r.likes ?? 0).toLocaleString()}
-                        </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 12, fontWeight: 700, color: 'var(--foreground)', flexShrink: 0 }}>
+                        <Eye size={11} style={{ color: 'var(--muted-foreground)' }} />
+                        {r.views >= 1000 ? `${(r.views / 1000).toFixed(0)}k` : r.views.toLocaleString()}
                       </div>
                     </div>
+                  ))}
+                </div>
+                <div style={{ marginTop: 10, fontSize: 12, color: 'var(--muted-foreground)', fontStyle: 'italic' }}>
+                  Hit &ldquo;Generate Weekly Intel&rdquo; above for a full AI analysis of what&apos;s winning in your niche.
+                </div>
+              </div>
+            )}
+
+            {/* Intel Report */}
+            {intelReport && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                {/* Headline */}
+                <div style={{
+                  padding: '14px 16px', borderRadius: 10,
+                  background: 'hsl(270 60% 55% / 0.08)', border: '1px solid hsl(270 60% 55% / 0.2)',
+                }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(270 60% 55%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>
+                    This Week&apos;s Verdict
                   </div>
-                )
-                return reelLink
-                  ? <a key={r.reel_id || r.id || idx} href={reelLink} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textDecoration: 'none' }}>{card}</a>
-                  : card
-              })}
-            </div>
-          </Card>
-        </div>
-      )}
+                  <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', lineHeight: 1.55, margin: 0 }}>
+                    {intelReport.headline}
+                  </p>
+                </div>
+
+                {/* Format + insight */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div style={{ padding: '12px 14px', borderRadius: 8, background: 'var(--muted)' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Best Format</div>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>{intelReport.top_format}</div>
+                    <div style={{ fontSize: 11, color: 'var(--muted-foreground)', lineHeight: 1.5 }}>{intelReport.format_insight}</div>
+                  </div>
+                  <div style={{ padding: '12px 14px', borderRadius: 8, background: 'var(--muted)' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Top Hooks to Study</div>
+                    {intelReport.top_hooks?.map((h, i) => (
+                      <div key={i} style={{ fontSize: 11, color: 'var(--foreground)', fontStyle: 'italic', marginBottom: 5, lineHeight: 1.5 }}>
+                        &ldquo;{h}&rdquo;
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* What's working + content gaps */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(142 50% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>What&apos;s Working</div>
+                    {intelReport.what_is_working?.map((w, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 5 }}>
+                        <CheckCircle size={11} style={{ color: 'hsl(142 50% 45%)', flexShrink: 0, marginTop: 2 }} />
+                        <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>{w}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(220 90% 56%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Content Gaps You Can Own</div>
+                    {intelReport.content_gaps?.map((g, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 5 }}>
+                        <Zap size={11} style={{ color: 'hsl(220 90% 56%)', flexShrink: 0, marginTop: 2 }} />
+                        <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>{g}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Post ideas */}
+                {intelReport.post_ideas?.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(38 92% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
+                      Reel Ideas for You This Week
+                    </div>
+                    {intelReport.post_ideas.map((idea, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 8, padding: '10px 14px', borderRadius: 8, background: 'var(--muted)' }}>
+                        <span style={{
+                          width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
+                          background: 'hsl(38 92% 45%)', color: '#fff',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          fontSize: 10, fontWeight: 700, marginTop: 1,
+                        }}>{i + 1}</span>
+                        <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.55 }}>{idea}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Verdict */}
+                <Card style={{ padding: '14px 16px', background: 'var(--foreground)', borderRadius: 8 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--background)', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
+                    This Week&apos;s Focus
+                  </div>
+                  <p style={{ fontSize: 13, color: 'var(--background)', lineHeight: 1.65, margin: 0 }}>{intelReport.weekly_verdict}</p>
+                </Card>
+              </div>
+            )}
+
+            {/* Empty state — no competitors yet */}
+            {competitorHandles.length === 0 && !intelError && (
+              <div style={{ padding: '20px 0', textAlign: 'center' }}>
+                <Users size={20} style={{ color: 'var(--muted-foreground)', margin: '0 auto 10px' }} />
+                <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginBottom: 4 }}>
+                  No competitors tracked yet
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.6 }}>
+                  Add accounts above to start tracking what&apos;s working in your niche.
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
 
     </div>
   )

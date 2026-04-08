@@ -294,61 +294,67 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
           <div ref={bottomRef} />
         </div>
 
-        {/* Input bar */}
-        <div style={{
-          padding: '12px 16px',
-          background: 'var(--card)', borderTop: '1px solid var(--border)',
-          display: 'flex', gap: 10, alignItems: 'flex-end', flexShrink: 0,
-        }}>
-          <div style={{ flex: 1, position: 'relative' }}>
+        {/* Input bar — floating pill */}
+        <div style={{ padding: '10px 16px 18px', background: 'var(--background)', flexShrink: 0 }}>
+          <div
+            style={{
+              display: 'flex', alignItems: 'flex-end',
+              background: 'var(--card)',
+              border: '1.5px solid var(--border)',
+              borderRadius: 20,
+              boxShadow: '0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
+              padding: '6px 6px 6px 18px',
+              transition: 'border-color 0.15s, box-shadow 0.15s',
+            }}
+            onFocusCapture={e => {
+              const el = e.currentTarget as HTMLElement
+              el.style.borderColor = 'var(--accent)'
+              el.style.boxShadow = '0 4px 24px rgba(0,0,0,0.10), 0 0 0 3px hsl(220 90% 56% / 0.10)'
+            }}
+            onBlurCapture={e => {
+              const el = e.currentTarget as HTMLElement
+              el.style.borderColor = 'var(--border)'
+              el.style.boxShadow = '0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)'
+            }}
+          >
             <textarea
               ref={inputRef}
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask Will anything… (Enter to send, Shift+Enter for new line)"
+              placeholder="Ask Will anything…"
               rows={1}
               style={{
-                width: '100%', resize: 'none', maxHeight: 120,
-                lineHeight: 1.6, padding: '10px 14px',
-                borderRadius: 10, border: '1.5px solid var(--border)',
-                background: 'var(--background)',
-                fontSize: 13.5, fontFamily: 'inherit', color: 'var(--foreground)',
-                outline: 'none', transition: 'border-color 0.15s, box-shadow 0.15s',
-              }}
-              onFocus={e => {
-                e.currentTarget.style.borderColor = 'var(--accent)'
-                e.currentTarget.style.boxShadow = '0 0 0 3px hsl(220 90% 56% / 0.12)'
-              }}
-              onBlur={e => {
-                e.currentTarget.style.borderColor = 'var(--border)'
-                e.currentTarget.style.boxShadow = 'none'
+                flex: 1, resize: 'none', maxHeight: 140,
+                lineHeight: 1.65, padding: '8px 0',
+                border: 'none', background: 'transparent',
+                fontSize: 14, fontFamily: 'inherit', color: 'var(--foreground)',
+                outline: 'none',
               }}
             />
+            <button
+              onClick={() => sendMessage(input)}
+              disabled={!canSend}
+              style={{
+                width: 36, height: 36, borderRadius: 14, flexShrink: 0, alignSelf: 'flex-end',
+                border: 'none', cursor: canSend ? 'pointer' : 'not-allowed',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: canSend
+                  ? 'linear-gradient(135deg, var(--accent), hsl(260 80% 56%))'
+                  : 'var(--muted)',
+                color: canSend ? 'white' : 'var(--muted-foreground)',
+                transition: 'all 0.15s',
+                boxShadow: canSend ? '0 2px 8px hsl(220 90% 56% / 0.35)' : 'none',
+              }}
+              onMouseEnter={e => { if (canSend) (e.currentTarget as HTMLElement).style.filter = 'brightness(1.1)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter = '' }}
+            >
+              <Send size={14} />
+            </button>
           </div>
-          <button
-            onClick={() => sendMessage(input)}
-            disabled={!canSend}
-            style={{
-              width: 40, height: 40, borderRadius: 10, flexShrink: 0,
-              border: 'none', cursor: canSend ? 'pointer' : 'not-allowed',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: canSend
-                ? 'linear-gradient(135deg, var(--accent), hsl(260 80% 56%))'
-                : 'var(--muted)',
-              color: canSend ? 'white' : 'var(--muted-foreground)',
-              transition: 'all 0.15s',
-              boxShadow: canSend ? '0 2px 8px hsl(220 90% 56% / 0.35)' : 'none',
-            }}
-            onMouseEnter={e => {
-              if (canSend) (e.currentTarget as HTMLElement).style.filter = 'brightness(1.1)'
-            }}
-            onMouseLeave={e => {
-              (e.currentTarget as HTMLElement).style.filter = ''
-            }}
-          >
-            <Send size={15} />
-          </button>
+          <div style={{ fontSize: 11, color: 'var(--muted-foreground)', textAlign: 'center', marginTop: 6, opacity: 0.55 }}>
+            Enter to send · Shift+Enter for new line
+          </div>
         </div>
       </div>
     </div>

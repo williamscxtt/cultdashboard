@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { createClient } from '@/lib/supabase'
+// createClient import removed — using /api/effective-profile instead
 import { Card, Button, Badge, PageHeader, SectionLabel } from '@/components/ui'
 import { CheckCircle2, AlertTriangle, ArrowRight, Copy, ChevronDown, ChevronUp, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
@@ -76,11 +76,10 @@ export default function ProfileAuditPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUserId(data.user.id)
-        loadHistory(data.user.id)
+    fetch('/api/effective-profile').then(r => r.json()).then(({ profileId }) => {
+      if (profileId) {
+        setUserId(profileId)
+        loadHistory(profileId)
       }
     })
   }, [])

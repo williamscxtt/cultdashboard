@@ -17,9 +17,15 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 async function generateDashboardBio(profile: Record<string, unknown>): Promise<string> {
   const intro = (profile.intro_structured ?? {}) as Record<string, unknown>
   const name = String(profile.name || 'This coach')
-  const niche = String(intro.specific_niche || intro.what_you_coach || profile.niche || 'coaching')
-  const idealClient = String(intro.ideal_client || profile.target_audience || 'coaches')
+  const niche = String(intro.specific_niche || intro.what_you_coach || profile.niche || '')
+  const idealClient = String(intro.ideal_client || profile.target_audience || '')
   const transformation = String(intro.transformation_story || intro.client_transformation || '')
+
+  // Require at least niche + ideal client to generate something meaningful
+  if (!niche || !idealClient) {
+    return `Honestly ${name.split(' ')[0]}, I can't write this yet. You haven't filled in enough of your onboarding hub for me to know who you are, who you help, or what you do. Go fill in your Onboarding Hub properly and I'll generate this for you.`
+  }
+
   const monthlyRevenue = String(intro.monthly_revenue || profile.monthly_revenue || profile.starting_revenue || '')
   const revenueGoal = String(intro.revenue_goal || intro.goal_revenue || profile.revenue_goal || '')
 
@@ -41,10 +47,15 @@ Be concrete and specific. No fluff. Use present tense. Do not use quotation mark
 async function generateWeeklyFocus(profile: Record<string, unknown>): Promise<string> {
   const intro = (profile.intro_structured ?? {}) as Record<string, unknown>
   const name = String(profile.name || 'this coach')
-  const niche = String(intro.specific_niche || intro.what_you_coach || profile.niche || 'coaching')
+  const niche = String(intro.specific_niche || intro.what_you_coach || profile.niche || '')
   const challenge = String(intro.biggest_problem || profile.biggest_challenge || '')
   const goal90 = String(intro.goal_90_days || profile.ninety_day_goal || '')
   const monthlyRevenue = String(intro.monthly_revenue || profile.monthly_revenue || '')
+
+  // Require at least a niche and either a challenge or a goal
+  if (!niche || (!challenge && !goal90)) {
+    return `I can't set a focus for you this week because you haven't told me what you're working on or what your goals are. Fill in your Onboarding Hub — specifically your biggest challenge and 90-day goal — and I'll give you something actually useful.`
+  }
 
   const prompt = `Write a single, punchy 1-2 sentence weekly focus for ${name}, a ${niche} coach.
 ${challenge ? `Their biggest challenge right now: ${challenge}.` : ''}
@@ -104,10 +115,10 @@ export default async function AnalyticsPage() {
     dashboardBio = bio
     focusThisWeek = focus
 
-    // Store back to DB (fire and forget — don't block render)
+    // Store back to DB (fire and forget) — skip caching fallback "insufficient data" messages
     const updates: Record<string, string> = {}
-    if (needsBio && bio) updates.dashboard_bio = bio
-    if (needsFocus && focus) updates.focus_this_week = focus
+    if (needsBio && bio && !bio.startsWith('Honestly ')) updates.dashboard_bio = bio
+    if (needsFocus && focus && !focus.startsWith("I can't set a focus")) updates.focus_this_week = focus
     if (Object.keys(updates).length > 0) {
       adminClient.from('profiles').update(updates).eq('id', profileId).then(() => {})
     }

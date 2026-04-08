@@ -4,9 +4,8 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
 import { Card, Badge, Button, PageHeader, SectionLabel } from '@/components/ui'
-import { Video, LogOut, Eye, EyeOff, RefreshCw } from 'lucide-react'
+import { Video, LogOut, Eye, EyeOff, RefreshCw, AlertTriangle, Unlink } from 'lucide-react'
 import { toast } from 'sonner'
-import CompetitorManager from '@/components/dashboard/CompetitorManager'
 
 // Instagram icon (not in lucide-react)
 function IgIcon({ size = 15 }: { size?: number }) {
@@ -28,6 +27,12 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
   const [showNewPw, setShowNewPw] = useState(false)
   const [showConfirmPw, setShowConfirmPw] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
+  // Instagram disconnect
+  const [disconnecting, setDisconnecting] = useState(false)
+  // Delete account — 3-step
+  const [deleteStep, setDeleteStep] = useState<0 | 1 | 2 | 3>(0)
+  const [deleteInput, setDeleteInput] = useState('')
+  const [deleting, setDeleting] = useState(false)
   const router = useRouter()
 
   async function handleSave(e: React.FormEvent) {
@@ -62,6 +67,37 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
     const supabase = createClient()
     await supabase.auth.signOut()
     router.push('/login')
+  }
+
+  async function handleDisconnectInstagram() {
+    setDisconnecting(true)
+    try {
+      const res = await fetch('/api/instagram/disconnect', { method: 'POST' })
+      if (!res.ok) throw new Error('Failed to disconnect')
+      toast.success('Instagram disconnected')
+      router.refresh()
+    } catch { toast.error('Failed to disconnect Instagram') }
+    setDisconnecting(false)
+  }
+
+  async function handleDeleteAccount() {
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/account/delete', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmation: 'DELETE' }),
+      })
+      if (!res.ok) {
+        const json = await res.json()
+        throw new Error(json.error || 'Failed to delete account')
+      }
+      toast.success('Account deleted')
+      router.push('/login')
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to delete account')
+    }
+    setDeleting(false)
   }
 
   return (
@@ -120,7 +156,28 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
                 </div>
               )}
             </div>
+            {profile.ig_username && !isImpersonating && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleDisconnectInstagram}
+                disabled={disconnecting}
+                style={{ flexShrink: 0 }}
+              >
+                <Unlink size={12} />
+                {disconnecting ? 'Disconnecting…' : 'Disconnect'}
+              </Button>
+            )}
           </div>
+          {profile.ig_username && !isImpersonating && (
+            <div style={{
+              marginTop: 12, padding: '10px 14px',
+              background: 'hsl(220 90% 56% / 0.06)',
+              borderRadius: 8, fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.5,
+            }}>
+              To connect a different account, disconnect first then contact Will to link your new handle.
+            </div>
+          )}
         </Card>
 
         {/* YouTube / TikTok */}
@@ -150,9 +207,6 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
             ))}
           </div>
         </Card>
-
-        {/* Competitors */}
-        <CompetitorManager />
 
         {/* Security — hidden when viewing as a client */}
         {!isImpersonating && (
@@ -222,14 +276,107 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
           </Card>
         )}
 
-        {/* Sign Out — hidden when viewing as a client */}
+        {/* Danger Zone — hidden when viewing as a client */}
         {!isImpersonating && (
-          <Card style={{ padding: 20, borderColor: 'hsl(0 70% 30%)' }}>
+          <Card style={{ padding: 20, border: '1px solid hsl(0 70% 40% / 0.35)' }}>
             <SectionLabel>Danger Zone</SectionLabel>
-            <Button variant="destructive" size="sm" onClick={handleSignOut}>
-              <LogOut size={13} />
-              Sign out
-            </Button>
+
+            {deleteStep === 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.6, margin: 0 }}>
+                  Deleting your account is permanent and cannot be undone. All your data, reels, scripts, and settings will be removed.
+                </p>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button variant="destructive" size="sm" onClick={() => setDeleteStep(1)}>
+                    <AlertTriangle size={12} />
+                    Delete my account
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {deleteStep === 1 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{
+                  padding: '12px 14px', borderRadius: 8,
+                  background: 'hsl(0 70% 40% / 0.08)', border: '1px solid hsl(0 70% 40% / 0.2)',
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'hsl(0 65% 45%)', marginBottom: 4 }}>
+                    Are you sure?
+                  </div>
+                  <p style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.6, margin: 0 }}>
+                    This will permanently delete your account, all your content data, competitor lists, AI conversations, and scripts. This cannot be reversed.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button variant="destructive" size="sm" onClick={() => setDeleteStep(2)}>
+                    Yes, I understand — continue
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => setDeleteStep(0)}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {deleteStep === 2 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <p style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.6, margin: 0 }}>
+                  Type <strong style={{ color: 'var(--foreground)' }}>DELETE</strong> to confirm you want to permanently delete your account.
+                </p>
+                <input
+                  type="text"
+                  value={deleteInput}
+                  onChange={e => setDeleteInput(e.target.value)}
+                  placeholder="Type DELETE here"
+                  autoFocus
+                  style={{ borderColor: deleteInput === 'DELETE' ? 'hsl(0 65% 50%)' : undefined }}
+                />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={deleteInput !== 'DELETE'}
+                    onClick={() => { setDeleteStep(3) }}
+                  >
+                    Confirm — delete my account
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => { setDeleteStep(0); setDeleteInput('') }}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {deleteStep === 3 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div style={{
+                  padding: '12px 14px', borderRadius: 8,
+                  background: 'hsl(0 70% 40% / 0.08)', border: '1px solid hsl(0 70% 40% / 0.3)',
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: 'hsl(0 65% 45%)', marginBottom: 4 }}>
+                    Final confirmation
+                  </div>
+                  <p style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.6, margin: 0 }}>
+                    One last chance. Click the button below to permanently and irreversibly delete your account. There is no recovery.
+                  </p>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    disabled={deleting}
+                    onClick={handleDeleteAccount}
+                  >
+                    <AlertTriangle size={12} />
+                    {deleting ? 'Deleting…' : 'Delete account permanently'}
+                  </Button>
+                  <Button variant="secondary" size="sm" onClick={() => { setDeleteStep(0); setDeleteInput('') }}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
           </Card>
         )}
       </div>

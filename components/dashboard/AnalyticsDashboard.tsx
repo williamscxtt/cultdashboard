@@ -493,7 +493,6 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null)
   const [syncError, setSyncError] = useState<string | null>(null)
-  const [refreshingThumbs, setRefreshingThumbs] = useState(false)
   const [timeRange, setTimeRange] = useState('1m')
   const [viewsMode, setViewsMode] = useState('Daily')
   const [engMode, setEngMode] = useState('Daily')
@@ -516,19 +515,6 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
   useEffect(() => { fetchReels() }, [fetchReels])
 
-  async function handleRefreshThumbnails() {
-    setRefreshingThumbs(true)
-    try {
-      await fetch('/api/instagram/sync', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId }),
-      })
-      await fetchReels()
-    } catch { /* silent */ }
-    setRefreshingThumbs(false)
-  }
-
   async function handleSync() {
     setSyncing(true)
     setSyncResult(null)
@@ -546,6 +532,12 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
         else setSyncError(data.error)
       } else {
         setSyncResult({ synced: data.synced, total: data.total, warning: data.warning })
+        // Auto-refresh thumbnails after every sync
+        fetch('/api/instagram/sync', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profileId }),
+        }).catch(() => {})
         await fetchReels()
       }
     } catch {
@@ -688,18 +680,6 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            {total > 0 && (
-              <button onClick={handleRefreshThumbnails} disabled={refreshingThumbs || syncing} title="Re-scrape to persist thumbnails to storage" style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                height: 36, padding: '0 14px', borderRadius: 8, border: '1px solid var(--border)',
-                background: 'var(--card)', color: 'var(--muted-foreground)',
-                fontWeight: 600, fontSize: 12, cursor: refreshingThumbs ? 'not-allowed' : 'pointer',
-                fontFamily: 'inherit', opacity: refreshingThumbs ? 0.6 : 1, transition: 'opacity 0.15s',
-              }}>
-                <RefreshCw size={11} style={{ animation: refreshingThumbs ? 'spin 1s linear infinite' : 'none' }} />
-                {refreshingThumbs ? 'Refreshing…' : 'Refresh Thumbnails'}
-              </button>
-            )}
             <button onClick={handleSync} disabled={syncing} style={{
               display: 'flex', alignItems: 'center', gap: 7,
               height: 36, padding: '0 16px', borderRadius: 8, border: '1px solid var(--border)',

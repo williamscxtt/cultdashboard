@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
-import { Copy, Bookmark, Trash2, ChevronDown, ChevronUp, Upload, FileAudio, AlignLeft } from 'lucide-react'
+import { Copy, Bookmark, Trash2, ChevronDown, ChevronUp, Upload, FileAudio, AlignLeft, Link as LinkIcon } from 'lucide-react'
 import { PageHeader, Card, Button, EmptyState } from '@/components/ui'
-import { createClient } from '@/lib/supabase'
+// createClient import removed — using /api/effective-profile instead
 
 interface Analysis {
   verdict: string
@@ -26,7 +26,7 @@ interface IdeaBankEntry {
   created_at: string
 }
 
-type Mode = 'paste' | 'audio'
+type Mode = 'url' | 'paste' | 'audio'
 
 const VERDICT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   Exceptional: { bg: 'hsl(142 50% 95%)', text: 'hsl(142 71% 30%)', border: 'hsl(142 50% 80%)' },
@@ -44,7 +44,8 @@ function scoreColor(score: number) {
 }
 
 export default function ReelCopyPage() {
-  const [mode, setMode] = useState<Mode>('paste')
+  const [mode, setMode] = useState<Mode>('url')
+  const [igUrl, setIgUrl] = useState('')
   const [transcript, setTranscript] = useState('')
   const [audioFile, setAudioFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
@@ -58,11 +59,10 @@ export default function ReelCopyPage() {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const supabase = createClient()
-    supabase.auth.getUser().then(({ data }) => {
-      if (data.user) {
-        setUserId(data.user.id)
-        loadIdeaBank(data.user.id)
+    fetch('/api/effective-profile').then(r => r.json()).then(({ profileId }) => {
+      if (profileId) {
+        setUserId(profileId)
+        loadIdeaBank(profileId)
       }
     })
   }, [])
@@ -82,7 +82,13 @@ export default function ReelCopyPage() {
     try {
       let res: Response
 
-      if (mode === 'paste') {
+      if (mode === 'url') {
+        if (!igUrl.trim() || !igUrl.includes('instagram.com')) { toast.error('Paste a valid Instagram reel URL'); setLoading(false); return }
+        const formData = new FormData()
+        formData.append('ig_url', igUrl.trim())
+        formData.append('profileId', userId)
+        res = await fetch('/api/reel-analyze', { method: 'POST', body: formData })
+      } else if (mode === 'paste') {
         if (!transcript.trim()) { toast.error('Paste a transcript first'); setLoading(false); return }
         res = await fetch('/api/reel-analyze', {
           method: 'POST',
@@ -143,12 +149,13 @@ export default function ReelCopyPage() {
     <div style={{ padding: '24px', maxWidth: 800, margin: '0 auto' }}>
       <PageHeader
         title="Reel Copy Tool"
-        description="Paste a reel transcript or upload audio — get a full AI breakdown and adapted hook."
+        description="Drop an Instagram reel link — get a full AI breakdown, personalised adaptation advice, and a rewritten hook for your niche."
       />
 
       {/* Mode selector */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         {([
+          { key: 'url' as Mode, icon: <LinkIcon size={14} />, label: 'Instagram URL' },
           { key: 'paste' as Mode, icon: <AlignLeft size={14} />, label: 'Paste Transcript' },
           { key: 'audio' as Mode, icon: <FileAudio size={14} />, label: 'Upload Audio' },
         ]).map(({ key, icon, label }) => (
@@ -172,7 +179,26 @@ export default function ReelCopyPage() {
 
       {/* Input card */}
       <Card style={{ marginBottom: 16, padding: 20 }}>
-        {mode === 'paste' ? (
+        {mode === 'url' ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>
+              Instagram Reel URL
+            </label>
+            <input
+              type="url"
+              value={igUrl}
+              onChange={e => setIgUrl(e.target.value)}
+              placeholder="https://www.instagram.com/reel/..."
+              style={{ fontSize: 14 }}
+            />
+            <div style={{
+              fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.6,
+              padding: '10px 14px', borderRadius: 8, background: 'var(--muted)',
+            }}>
+              Paste any public Instagram reel link. The AI will transcribe it, score it, and tell you exactly how to adapt it for your niche and voice — or whether it&apos;s even worth adapting at all.
+            </div>
+          </div>
+        ) : mode === 'paste' ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>
               Paste the reel script or transcript
@@ -242,10 +268,12 @@ export default function ReelCopyPage() {
 
         <Button
           onClick={handleAnalyze}
-          disabled={loading || (mode === 'paste' ? !transcript.trim() : !audioFile)}
+          disabled={loading || (mode === 'url' ? !igUrl.trim() : mode === 'paste' ? !transcript.trim() : !audioFile)}
           style={{ marginTop: 14, width: '100%' }}
         >
-          {loading ? (mode === 'audio' ? 'Transcribing & analysing…' : 'Analysing…') : 'Analyse Reel'}
+          {loading
+            ? (mode === 'url' ? 'Fetching & analysing…' : mode === 'audio' ? 'Transcribing & analysing…' : 'Analysing…')
+            : 'Analyse Reel'}
         </Button>
       </Card>
 
