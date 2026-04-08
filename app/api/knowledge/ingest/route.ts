@@ -38,10 +38,12 @@ export async function POST(req: NextRequest) {
   let isPdf = false
   let pdfBase64 = ''
 
-  const ct = req.headers.get('content-type') ?? ''
-
-  if (ct.includes('multipart/form-data')) {
+  // Try FormData first (covers multipart uploads from the browser).
+  // Fall back to JSON for programmatic callers.
+  let parsedAsForm = false
+  try {
     const form = await req.formData()
+    parsedAsForm = true
     description = String(form.get('description') ?? '')
     rawText = String(form.get('text') ?? '')
     const file = form.get('file') as File | null
@@ -58,11 +60,14 @@ export async function POST(req: NextRequest) {
       } else if (ext === 'csv') {
         rawText = csvToText(new TextDecoder().decode(bytes))
       } else {
-        // For XLSX and other formats, treat as binary → just use description
         rawText = rawText || `[Binary file: ${file.name} — ${file.size} bytes. Use the description context to guide categorisation.]`
       }
     }
-  } else {
+  } catch {
+    // Not FormData — try JSON
+  }
+
+  if (!parsedAsForm) {
     const body = await req.json().catch(() => ({})) as { rawText?: string; description?: string }
     rawText = body.rawText ?? ''
     description = body.description ?? ''

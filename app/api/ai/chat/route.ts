@@ -22,7 +22,8 @@ function buildSystemPrompt(
   profile: Record<string, unknown>,
   reels: Array<Record<string, unknown>>,
   competitorReels: Array<Record<string, unknown>>,
-  conversationHistory: Array<{ role: string; content: string }>
+  conversationHistory: Array<{ role: string; content: string }>,
+  knowledgeDocs: Array<{ title: string; category: string; source: string; content: string }>
 ): string {
   const intro = (profile.intro_structured ?? {}) as Record<string, unknown>
 
@@ -123,6 +124,11 @@ Competitors being tracked: ${compAccounts.join(', ')}
 Top competitor reels this week:
 ${compTopReels.map(r => `- @${safeStr(r.account)}: "${safeStr(r.hook)}" [${safeStr(r.format_type)}] — ${Number(r.views).toLocaleString()} views`).join('\n')}` : ''}
 
+${knowledgeDocs.length > 0 ? `═══ KNOWLEDGE LIBRARY ═══
+These are frameworks, principles, and strategies that apply to coaching clients. When you use any of these, always translate them to fit ${name}'s specific niche, offer, and audience. NEVER use Will Scott's own offer, results, or brand as examples — ${name} has their own offer and story. Adapt every framework to their world.
+
+${knowledgeDocs.map(d => `【${d.category}】 ${d.title} (${d.source})\n${d.content}`).join('\n\n---\n\n')}` : ''}
+
 ═══ HOW TO RESPOND ═══
 - Speak as Will Scott: direct, no fluff, slightly provocative, big brother energy
 - Reference their specific data (views, revenue, niche, story) in every response
@@ -131,7 +137,8 @@ ${compTopReels.map(r => `- @${safeStr(r.account)}: "${safeStr(r.hook)}" [${safeS
 - Keep responses under 200 words unless they ask for a full script or plan
 - Never use corporate language, filler phrases, or "I understand your frustration"
 - If you reference their content, use their actual hooks and formats
-- When suggesting scripts or hooks, make them fit their exact niche and voice`
+- When suggesting scripts or hooks, make them fit their exact niche and voice
+- NEVER use Will Scott's own offer, clients, results, or brand as examples for ${name} — always substitute their specific situation`
 }
 
 export async function POST(req: NextRequest) {
@@ -153,7 +160,7 @@ export async function POST(req: NextRequest) {
   const profileId = effectiveId(user.id, realProfile?.role === 'admin', impersonatingAs)
 
   // Fetch all client context in parallel
-  const [{ data: profile }, { data: reels }, { data: competitorReels }] = await Promise.all([
+  const [{ data: profile }, { data: reels }, { data: competitorReels }, { data: knowledgeDocs }] = await Promise.all([
     adminClient.from('profiles').select('*').eq('id', profileId).single(),
     adminClient
       .from('client_reels')
@@ -166,6 +173,11 @@ export async function POST(req: NextRequest) {
       .select('account, views, hook, format_type, caption')
       .order('views', { ascending: false })
       .limit(20),
+    adminClient
+      .from('knowledge_documents')
+      .select('title, category, source, content')
+      .order('category', { ascending: true })
+      .limit(40),
   ])
 
   // Fetch or create session conversation history
@@ -185,7 +197,8 @@ export async function POST(req: NextRequest) {
     profile as Record<string, unknown> ?? {},
     (reels ?? []) as Array<Record<string, unknown>>,
     (competitorReels ?? []) as Array<Record<string, unknown>>,
-    previousMessages
+    previousMessages,
+    (knowledgeDocs ?? []) as Array<{ title: string; category: string; source: string; content: string }>
   )
 
   // Build message history for Claude (last 10 messages for context)
