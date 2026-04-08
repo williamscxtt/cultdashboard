@@ -76,9 +76,16 @@ export default function LoginPage() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--background)' }}>
+      <style>{`
+        @media (max-width: 640px) {
+          .login-brand-panel { display: none !important; }
+          .login-form-panel { padding: 32px 24px !important; align-items: flex-start !important; }
+          .login-form-panel > div { max-width: 100% !important; padding-top: 20px; }
+        }
+      `}</style>
 
       {/* ── Left brand panel ─────────────────────────────────────────────── */}
-      <div style={{
+      <div className="login-brand-panel" style={{
         width: 420, flexShrink: 0,
         background: 'var(--foreground)',
         display: 'flex', flexDirection: 'column',
@@ -126,7 +133,7 @@ export default function LoginPage() {
       </div>
 
       {/* ── Right form panel ─────────────────────────────────────────────── */}
-      <div style={{
+      <div className="login-form-panel" style={{
         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
         padding: '0 32px',
       }}>

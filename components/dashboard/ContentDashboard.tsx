@@ -336,12 +336,15 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
   const [competitorHandles, setCompetitorHandles] = useState<string[]>([])
   const [topCompReels, setTopCompReels] = useState<Array<{ account: string; views: number; hook: string; format_type: string }>>([])
   const [intelReport, setIntelReport] = useState<{
-    headline: string; top_format: string; format_insight: string;
+    headline: string; own_performance?: string; top_format: string; format_insight: string;
     top_hooks: string[]; what_is_working: string[]; content_gaps: string[];
-    post_ideas: string[]; weekly_verdict: string;
+    post_ideas?: string[]; weekly_verdict: string;
+    big_hits?: Array<{ account: string; hook: string; views: number; why_it_worked: string }>;
+    scripts?: Array<{ day: string; format: string; hook: string; script: string; caption: string; cta: string }>;
   } | null>(null)
   const [generatingIntel, setGeneratingIntel] = useState(false)
   const [intelError, setIntelError] = useState<string | null>(null)
+  const [scriptsExpanded, setScriptsExpanded] = useState<Record<number, boolean>>({})
 
   useEffect(() => {
     fetch('/api/competitor-intel')
@@ -408,7 +411,34 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
       })
       const data = await res.json()
       if (data.error === 'no_comments') {
-        setCommentError('No comment data yet — sync your Instagram first to collect comments.')
+        // Auto-sync to collect comments, then retry
+        setCommentError('Syncing your account to collect comments — this takes about a minute…')
+        const syncRes = await fetch('/api/instagram/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profileId }),
+        })
+        if (!syncRes.ok) {
+          setCommentError('Could not sync your Instagram. Make sure your username is set in Settings.')
+          setCommentAnalysing(false)
+          return
+        }
+        // Retry analysis
+        setCommentError(null)
+        const retryRes = await fetch('/api/content/comments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profileId }),
+        })
+        const retryData = await retryRes.json()
+        if (retryData.error === 'no_comments') {
+          setCommentError('No comment data found even after syncing. Instagram may not have returned comments for your recent reels.')
+        } else if (retryData.error && retryData.error !== 'locked') {
+          setCommentError(retryData.error)
+        } else if (retryData.analysis) {
+          setCommentAnalysis(retryData.analysis)
+          setCommentUnlocksAt(retryData.unlocks_at ?? null)
+        }
       } else if (data.error && data.error !== 'locked') {
         setCommentError(data.error)
       } else if (data.analysis) {
@@ -987,6 +1017,14 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
                   </p>
                 </div>
 
+                {/* Own performance */}
+                {intelReport.own_performance && (
+                  <div style={{ padding: '12px 16px', borderRadius: 8, background: 'hsl(220 90% 56% / 0.07)', border: '1px solid hsl(220 90% 56% / 0.2)' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(220 90% 56%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Your Performance This Week</div>
+                    <p style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6, margin: 0 }}>{intelReport.own_performance}</p>
+                  </div>
+                )}
+
                 {/* Format + insight */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div style={{ padding: '12px 14px', borderRadius: 8, background: 'var(--muted)' }}>
@@ -1003,6 +1041,25 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
                     ))}
                   </div>
                 </div>
+
+                {/* Big hits */}
+                {intelReport.big_hits && intelReport.big_hits.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(38 92% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
+                      Big Hits This Week
+                    </div>
+                    {intelReport.big_hits.map((hit, i) => (
+                      <div key={i} style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--muted)', marginBottom: 8, borderLeft: '3px solid hsl(38 92% 45%)' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: 'hsl(38 92% 45%)' }}>{hit.account}</span>
+                          <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>— {hit.views?.toLocaleString()} views</span>
+                        </div>
+                        <div style={{ fontSize: 12, fontStyle: 'italic', color: 'var(--foreground)', marginBottom: 4 }}>&ldquo;{hit.hook}&rdquo;</div>
+                        <div style={{ fontSize: 11, color: 'var(--muted-foreground)', lineHeight: 1.5 }}>{hit.why_it_worked}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 {/* What's working + content gaps */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
@@ -1026,26 +1083,6 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
                   </div>
                 </div>
 
-                {/* Post ideas */}
-                {intelReport.post_ideas?.length > 0 && (
-                  <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(38 92% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
-                      Reel Ideas for You This Week
-                    </div>
-                    {intelReport.post_ideas.map((idea, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 8, padding: '10px 14px', borderRadius: 8, background: 'var(--muted)' }}>
-                        <span style={{
-                          width: 20, height: 20, borderRadius: '50%', flexShrink: 0,
-                          background: 'hsl(38 92% 45%)', color: '#fff',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          fontSize: 10, fontWeight: 700, marginTop: 1,
-                        }}>{i + 1}</span>
-                        <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.55 }}>{idea}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
                 {/* Verdict */}
                 <Card style={{ padding: '14px 16px', background: 'var(--foreground)', borderRadius: 8 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--background)', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
@@ -1053,6 +1090,77 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
                   </div>
                   <p style={{ fontSize: 13, color: 'var(--background)', lineHeight: 1.65, margin: 0 }}>{intelReport.weekly_verdict}</p>
                 </Card>
+
+                {/* 7 daily scripts */}
+                {intelReport.scripts && intelReport.scripts.length > 0 && (
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--foreground)', marginBottom: 12, letterSpacing: '-0.2px' }}>
+                      Your 7 Scripts for This Week
+                    </div>
+                    {intelReport.scripts.map((script, i) => {
+                      const isOpen = scriptsExpanded[i]
+                      return (
+                        <div key={i} style={{
+                          borderRadius: 10, border: '1px solid var(--border)',
+                          marginBottom: 10, overflow: 'hidden',
+                        }}>
+                          <button
+                            onClick={() => setScriptsExpanded(prev => ({ ...prev, [i]: !prev[i] }))}
+                            style={{
+                              width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                              padding: '12px 16px', background: 'var(--card)',
+                              border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
+                            }}
+                          >
+                            <span style={{
+                              width: 28, height: 28, borderRadius: 8, flexShrink: 0,
+                              background: 'var(--accent)', color: '#fff',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              fontSize: 11, fontWeight: 800,
+                            }}>{script.day?.slice(0, 2).toUpperCase()}</span>
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: 2 }}>
+                                {script.day} · {script.format}
+                              </div>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', lineHeight: 1.4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                &ldquo;{script.hook}&rdquo;
+                              </div>
+                            </div>
+                            {isOpen ? <ChevronUp size={14} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} /> : <ChevronDown size={14} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />}
+                          </button>
+                          {isOpen && (
+                            <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border)', background: 'var(--background)' }}>
+                              <div style={{ padding: '14px 0', whiteSpace: 'pre-wrap', fontSize: 13, color: 'var(--foreground)', lineHeight: 1.7 }}>
+                                {script.script}
+                              </div>
+                              {script.caption && (
+                                <div style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--muted)', marginBottom: 10 }}>
+                                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>Caption</div>
+                                  <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.6 }}>{script.caption}</div>
+                                </div>
+                              )}
+                              {script.cta && (
+                                <div style={{ display: 'inline-flex', padding: '4px 10px', borderRadius: 20, background: 'hsl(220 90% 56% / 0.12)', fontSize: 11, fontWeight: 600, color: 'hsl(220 90% 56%)' }}>
+                                  CTA: {script.cta}
+                                </div>
+                              )}
+                              <button
+                                onClick={() => navigator.clipboard.writeText(`${script.hook}\n\n${script.script}\n\nCaption: ${script.caption}\n\n${script.cta}`)}
+                                style={{
+                                  float: 'right', padding: '5px 12px', borderRadius: 6,
+                                  background: 'var(--muted)', border: '1px solid var(--border)',
+                                  fontSize: 11, fontWeight: 600, color: 'var(--foreground)', cursor: 'pointer',
+                                }}
+                              >
+                                Copy
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             )}
 

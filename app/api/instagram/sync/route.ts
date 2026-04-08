@@ -37,6 +37,8 @@ async function apifyStartRun(username: string): Promise<string> {
     body: JSON.stringify({
       username: [username],
       resultsLimit: 30,
+      includeComments: true,
+      maxCommentsPerPost: 30,
     }),
   })
   if (!res.ok) {
@@ -337,6 +339,8 @@ export async function POST(req: NextRequest) {
     return adminClient.from('client_reels').update({
       views: r.views, likes: r.likes, comments: r.comments,
       ...(storedThumb ? { thumbnail_url: storedThumb } : {}),
+      // Refresh comments_text if Apify returned them
+      ...(r.comments_text?.length ? { comments_text: r.comments_text } : {}),
     }).eq('reel_id', r.reel_id).eq('profile_id', profileId)
   }))
 

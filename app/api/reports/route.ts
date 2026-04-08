@@ -182,18 +182,27 @@ health_status: "green" (on track), "amber" (slipping), "red" (at risk — hasn't
 
   const { data: savedReport, error: saveError } = await adminClient
     .from('client_progress_reports')
-    .insert({ profile_id: profileId, week_start: weekStart, report_data: reportJson })
+    .insert({
+      profile_id: profileId,
+      week_start: weekStart,
+      report_json: reportJson,
+      health_status: reportJson.health_status as string ?? 'green',
+      health_reason: reportJson.health_reason as string ?? '',
+    })
     .select()
     .single()
 
   if (saveError) {
-    // Return unsaved report rather than failing
+    // Return unsaved report rather than failing (map report_json → report_data for frontend)
     return NextResponse.json({
       report: { id: 'unsaved', profile_id: profileId, week_start: weekStart, report_data: reportJson, created_at: new Date().toISOString() },
     })
   }
 
-  return NextResponse.json({ report: savedReport })
+  // Map report_json → report_data so the frontend type stays consistent
+  return NextResponse.json({
+    report: { ...savedReport, report_data: savedReport.report_json },
+  })
 }
 
 export async function GET(request: NextRequest) {
@@ -209,5 +218,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ reports: data || [] })
+  // Map report_json → report_data for frontend consistency
+  const reports = (data || []).map(r => ({ ...r, report_data: r.report_json }))
+  return NextResponse.json({ reports })
 }
