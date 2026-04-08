@@ -19,6 +19,7 @@ export interface ClientReel {
   content_pillar: string | null
   thumbnail_url: string | null
   permalink: string | null
+  comments_text?: string[] | null
 }
 
 export interface FollowerSnapshot {

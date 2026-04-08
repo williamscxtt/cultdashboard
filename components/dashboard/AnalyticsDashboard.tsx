@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import {
   RefreshCw, TrendingUp, TrendingDown,
-  Play, Eye, Heart, MessageCircle, Bookmark,
+  Play, Eye, Heart, MessageCircle, Bookmark, Zap, ExternalLink,
 } from 'lucide-react'
 import {
   AreaChart, Area, BarChart, Bar, Cell,
@@ -207,15 +207,131 @@ function ChartHeader({
   )
 }
 
+// ─── reel analysis panel ──────────────────────────────────────────────────────
+interface ReelAnalysis {
+  verdict: string
+  score: number
+  hook_score: number
+  performance_context: string
+  what_worked: string[]
+  what_to_improve: string[]
+  audience_fit: string
+  suggested_hook: string
+}
+
+const VERDICT_COLORS: Record<string, string> = {
+  Exceptional: 'hsl(142 71% 35%)',
+  Strong:      'hsl(142 50% 45%)',
+  Average:     'hsl(38 92% 45%)',
+  Weak:        'hsl(0 65% 50%)',
+  Poor:        'hsl(0 72% 40%)',
+}
+
+function AnalysisPanel({ analysis }: { analysis: ReelAnalysis }) {
+  const color = VERDICT_COLORS[analysis.verdict] ?? 'var(--muted-foreground)'
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {/* Score row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 5,
+          padding: '3px 10px', borderRadius: 20,
+          background: `${color}22`, border: `1px solid ${color}55`,
+          fontSize: 11, fontWeight: 700, color,
+        }}>
+          {analysis.verdict} · {analysis.score}/100
+        </div>
+        <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+          Hook: {analysis.hook_score}/100
+        </div>
+      </div>
+
+      {/* Performance context */}
+      <p style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.55, margin: 0, fontStyle: 'italic' }}>
+        {analysis.performance_context}
+      </p>
+
+      {/* What worked */}
+      {analysis.what_worked?.length > 0 && (
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(142 50% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>What worked</div>
+          {analysis.what_worked.map((point, i) => (
+            <div key={i} style={{ fontSize: 11, color: 'var(--foreground)', lineHeight: 1.5, paddingLeft: 10, borderLeft: '2px solid hsl(142 50% 45%)', marginBottom: 4 }}>
+              {point}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* What to improve */}
+      {analysis.what_to_improve?.length > 0 && (
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(38 92% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>Improve</div>
+          {analysis.what_to_improve.map((point, i) => (
+            <div key={i} style={{ fontSize: 11, color: 'var(--foreground)', lineHeight: 1.5, paddingLeft: 10, borderLeft: '2px solid hsl(38 92% 45%)', marginBottom: 4 }}>
+              {point}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Audience fit */}
+      {analysis.audience_fit && (
+        <p style={{ fontSize: 11, color: 'var(--muted-foreground)', lineHeight: 1.5, margin: 0 }}>
+          <strong style={{ color: 'var(--foreground)' }}>Audience fit:</strong> {analysis.audience_fit}
+        </p>
+      )}
+
+      {/* Suggested hook */}
+      {analysis.suggested_hook && (
+        <div style={{
+          padding: '8px 10px', borderRadius: 6,
+          background: 'hsl(220 90% 56% / 0.08)',
+          border: '1px solid hsl(220 90% 56% / 0.2)',
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: 'hsl(220 90% 56%)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Stronger hook</div>
+          <div style={{ fontSize: 11, color: 'var(--foreground)', lineHeight: 1.5, fontStyle: 'italic' }}>
+            &ldquo;{analysis.suggested_hook}&rdquo;
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── reel card ────────────────────────────────────────────────────────────────
-function ReelCard({ reel, idx }: { reel: ClientReel; idx: number }) {
+function ReelCard({ reel, idx, profileId }: { reel: ClientReel; idx: number; profileId?: string }) {
+  const [analysing, setAnalysing] = useState(false)
+  const [analysis, setAnalysis] = useState<ReelAnalysis | null>(null)
+  const [showAnalysis, setShowAnalysis] = useState(false)
+
   const gradient = IG_GRADIENTS[idx % IG_GRADIENTS.length]
   const hookText = reel.hook || reel.caption?.slice(0, 80) || '(no hook)'
   const date = reel.date
     ? new Date(reel.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
     : ''
+  // Construct permalink from reel_id if not stored
+  const reelLink = reel.permalink || (reel.reel_id ? `https://www.instagram.com/reel/${reel.reel_id}/` : null)
+  const canAnalyse = !!(reel.transcript || reel.caption || reel.hook) && !!profileId
 
-  const thumbnailArea = (
+  async function handleAnalyse() {
+    if (!canAnalyse || analysing) return
+    setShowAnalysis(true)
+    setAnalysing(true)
+    setAnalysis(null)
+    try {
+      const res = await fetch('/api/instagram/analyze-reel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reelId: reel.reel_id, profileId }),
+      })
+      const data = await res.json()
+      if (data.analysis) setAnalysis(data.analysis)
+    } catch { /* silently fail */ }
+    setAnalysing(false)
+  }
+
+  const thumbnailInner = (
     <div style={{
       height: 110,
       background: reel.thumbnail_url ? 'transparent' : gradient,
@@ -228,7 +344,6 @@ function ReelCard({ reel, idx }: { reel: ClientReel; idx: number }) {
           alt=""
           style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
           onError={e => {
-            // If thumbnail URL has expired, fall back to gradient
             const img = e.currentTarget as HTMLImageElement
             img.style.display = 'none'
             const parent = img.parentElement as HTMLElement
@@ -236,7 +351,6 @@ function ReelCard({ reel, idx }: { reel: ClientReel; idx: number }) {
           }}
         />
       )}
-      {/* Top-left: platform badge */}
       <div style={{
         position: 'absolute', top: 8, left: 8,
         display: 'flex', alignItems: 'center', gap: 4,
@@ -246,7 +360,6 @@ function ReelCard({ reel, idx }: { reel: ClientReel; idx: number }) {
       }}>
         <IgIcon size={10} color="#fff" /> instagram
       </div>
-      {/* Top-right: format */}
       {reel.format_type && (
         <div style={{
           position: 'absolute', top: 8, right: 8,
@@ -257,7 +370,6 @@ function ReelCard({ reel, idx }: { reel: ClientReel; idx: number }) {
           {reel.format_type.replace(/_/g, ' ')}
         </div>
       )}
-      {/* Play button */}
       <div style={{
         position: 'absolute', top: '50%', left: '50%',
         transform: 'translate(-50%, -50%)',
@@ -267,7 +379,6 @@ function ReelCard({ reel, idx }: { reel: ClientReel; idx: number }) {
       }}>
         <Play size={13} fill="#fff" color="#fff" />
       </div>
-      {/* Date bottom-left */}
       <div style={{
         position: 'absolute', bottom: 8, left: 8,
         fontSize: 10, color: 'rgba(255,255,255,0.75)', fontWeight: 500,
@@ -277,67 +388,88 @@ function ReelCard({ reel, idx }: { reel: ClientReel; idx: number }) {
     </div>
   )
 
-  const content = (
-    <div style={{ padding: '12px 14px' }}>
-      <div style={{
-        fontSize: 13, color: 'var(--foreground)', fontWeight: 500,
-        lineHeight: 1.45, marginBottom: 10,
-        display: '-webkit-box',
-        WebkitLineClamp: 2,
-        WebkitBoxOrient: 'vertical' as const,
-        overflow: 'hidden',
-      }}>
-        {hookText}
-      </div>
-      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' as const }}>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
-          <Eye size={10} /> {fmtNum(reel.views ?? 0)}
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
-          <Heart size={10} /> {fmtNum(reel.likes ?? 0)}
-        </span>
-        <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
-          <MessageCircle size={10} /> {fmtNum(reel.comments ?? 0)}
-        </span>
-        {(reel.saves ?? 0) > 0 && (
+  return (
+    <div style={{
+      background: 'var(--card)', border: '1px solid var(--border)',
+      borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.15s',
+    }}>
+      {/* Thumbnail — links to reel */}
+      {reelLink ? (
+        <a href={reelLink} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textDecoration: 'none' }}>
+          {thumbnailInner}
+        </a>
+      ) : thumbnailInner}
+
+      {/* Content */}
+      <div style={{ padding: '12px 14px' }}>
+        <div style={{
+          fontSize: 13, color: 'var(--foreground)', fontWeight: 500,
+          lineHeight: 1.45, marginBottom: 8,
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical' as const,
+          overflow: 'hidden',
+        }}>
+          {hookText}
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' as const, alignItems: 'center' }}>
           <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
-            <Bookmark size={10} /> {fmtNum(reel.saves ?? 0)}
+            <Eye size={10} /> {fmtNum(reel.views ?? 0)}
           </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
+            <Heart size={10} /> {fmtNum(reel.likes ?? 0)}
+          </span>
+          <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
+            <MessageCircle size={10} /> {fmtNum(reel.comments ?? 0)}
+          </span>
+          {(reel.saves ?? 0) > 0 && (
+            <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)' }}>
+              <Bookmark size={10} /> {fmtNum(reel.saves ?? 0)}
+            </span>
+          )}
+          {reelLink && (
+            <a href={reelLink} target="_blank" rel="noopener noreferrer"
+              style={{ marginLeft: 'auto', color: 'var(--muted-foreground)', display: 'flex', lineHeight: 1 }}>
+              <ExternalLink size={11} />
+            </a>
+          )}
+        </div>
+
+        {/* Analyse button */}
+        {canAnalyse && (
+          <button
+            onClick={handleAnalyse}
+            disabled={analysing}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              marginTop: 10, padding: '5px 10px', borderRadius: 6,
+              border: '1px solid var(--border)', background: 'var(--muted)',
+              color: 'var(--foreground)', fontSize: 11, fontWeight: 600,
+              cursor: analysing ? 'not-allowed' : 'pointer',
+              fontFamily: 'inherit', opacity: analysing ? 0.6 : 1,
+              transition: 'all 0.15s', width: '100%', justifyContent: 'center',
+            }}
+            onMouseEnter={e => { if (!analysing) { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)'; (e.currentTarget as HTMLElement).style.color = 'var(--accent)' } }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.color = 'var(--foreground)' }}
+          >
+            <Zap size={10} />
+            {analysing ? 'Analysing…' : showAnalysis && analysis ? 'Re-analyse' : 'Analyse'}
+          </button>
         )}
       </div>
-    </div>
-  )
 
-  const cardStyle: React.CSSProperties = {
-    background: 'var(--card)', border: '1px solid var(--border)',
-    borderRadius: 12, overflow: 'hidden', transition: 'transform 0.15s, border-color 0.15s',
-    display: 'block', textDecoration: 'none', color: 'inherit',
-  }
-  const hoverOn = (e: React.MouseEvent) => {
-    const el = e.currentTarget as HTMLElement
-    el.style.transform = 'translateY(-2px)'
-    el.style.borderColor = 'var(--accent)'
-  }
-  const hoverOff = (e: React.MouseEvent) => {
-    const el = e.currentTarget as HTMLElement
-    el.style.transform = 'translateY(0)'
-    el.style.borderColor = 'var(--border)'
-  }
-
-  if (reel.permalink) {
-    return (
-      <a href={reel.permalink} target="_blank" rel="noopener noreferrer"
-        style={cardStyle} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
-        {thumbnailArea}
-        {content}
-      </a>
-    )
-  }
-
-  return (
-    <div style={cardStyle} onMouseEnter={hoverOn} onMouseLeave={hoverOff}>
-      {thumbnailArea}
-      {content}
+      {/* Analysis panel */}
+      {showAnalysis && (
+        <div style={{ borderTop: '1px solid var(--border)', padding: '12px 14px', background: 'var(--muted)' }}>
+          {analysing && !analysis ? (
+            <div style={{ fontSize: 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '8px 0' }}>
+              Analysing with AI…
+            </div>
+          ) : analysis ? (
+            <AnalysisPanel analysis={analysis} />
+          ) : null}
+        </div>
+      )}
     </div>
   )
 }
@@ -361,6 +493,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null)
   const [syncError, setSyncError] = useState<string | null>(null)
+  const [refreshingThumbs, setRefreshingThumbs] = useState(false)
   const [timeRange, setTimeRange] = useState('1m')
   const [viewsMode, setViewsMode] = useState('Daily')
   const [engMode, setEngMode] = useState('Daily')
@@ -382,6 +515,19 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   }, [profileId])
 
   useEffect(() => { fetchReels() }, [fetchReels])
+
+  async function handleRefreshThumbnails() {
+    setRefreshingThumbs(true)
+    try {
+      await fetch('/api/instagram/sync', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId }),
+      })
+      await fetchReels()
+    } catch { /* silent */ }
+    setRefreshingThumbs(false)
+  }
 
   async function handleSync() {
     setSyncing(true)
@@ -417,8 +563,6 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   const stats = useMemo(() => {
     const curViews  = currentReels.reduce((a, r) => a + (r.views ?? 0), 0)
     const prvViews  = prevReels.reduce((a, r) => a + (r.views ?? 0), 0)
-    const curReach  = currentReels.reduce((a, r) => a + (r.reach ?? 0), 0)
-    const prvReach  = prevReels.reduce((a, r) => a + (r.reach ?? 0), 0)
     const curEng    = currentReels.reduce((a, r) => a + (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0), 0)
     const prvEng    = prevReels.reduce((a, r) => a + (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0), 0)
 
@@ -431,7 +575,6 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
     return {
       views:     { value: fmtNum(curViews), change: pct(curViews, prvViews),    spark: currentReels.map(r => r.views ?? 0) },
-      reach:     { value: fmtNum(curReach), change: pct(curReach, prvReach),    spark: currentReels.map(r => r.reach ?? 0) },
       eng:       { value: fmtNum(curEng),   change: pct(curEng, prvEng),        spark: currentReels.map(r => (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0)) },
       followers: { value: followersCount != null ? fmtNum(followersCount) : '—', change: followerChange, spark: followerSpark },
     }
@@ -544,16 +687,30 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
               {total > 0 ? `${total} reels tracked · Instagram` : 'Connect Instagram in Settings to start'}
             </p>
           </div>
-          <button onClick={handleSync} disabled={syncing} style={{
-            display: 'flex', alignItems: 'center', gap: 7, flexShrink: 0,
-            height: 36, padding: '0 16px', borderRadius: 8, border: '1px solid var(--border)',
-            background: 'var(--card)', color: 'var(--foreground)',
-            fontWeight: 600, fontSize: 13, cursor: syncing ? 'not-allowed' : 'pointer',
-            fontFamily: 'inherit', opacity: syncing ? 0.6 : 1, transition: 'opacity 0.15s',
-          }}>
-            <RefreshCw size={13} style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }} />
-            {syncing ? 'Syncing…' : 'Sync Instagram'}
-          </button>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            {total > 0 && (
+              <button onClick={handleRefreshThumbnails} disabled={refreshingThumbs || syncing} title="Re-scrape to persist thumbnails to storage" style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                height: 36, padding: '0 14px', borderRadius: 8, border: '1px solid var(--border)',
+                background: 'var(--card)', color: 'var(--muted-foreground)',
+                fontWeight: 600, fontSize: 12, cursor: refreshingThumbs ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit', opacity: refreshingThumbs ? 0.6 : 1, transition: 'opacity 0.15s',
+              }}>
+                <RefreshCw size={11} style={{ animation: refreshingThumbs ? 'spin 1s linear infinite' : 'none' }} />
+                {refreshingThumbs ? 'Refreshing…' : 'Refresh Thumbnails'}
+              </button>
+            )}
+            <button onClick={handleSync} disabled={syncing} style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              height: 36, padding: '0 16px', borderRadius: 8, border: '1px solid var(--border)',
+              background: 'var(--card)', color: 'var(--foreground)',
+              fontWeight: 600, fontSize: 13, cursor: syncing ? 'not-allowed' : 'pointer',
+              fontFamily: 'inherit', opacity: syncing ? 0.6 : 1, transition: 'opacity 0.15s',
+            }}>
+              <RefreshCw size={13} style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }} />
+              {syncing ? 'Syncing…' : 'Sync Instagram'}
+            </button>
+          </div>
         </div>
 
         {/* Bio + weekly focus */}
@@ -673,9 +830,8 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       )}
 
       {/* ── Stat cards ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 16 }}>
         <StatCard label="Views" value={stats.views.value} change={stats.views.change} sparkData={stats.views.spark} accentColor="hsl(220 90% 56%)" />
-        <StatCard label="Reach" value={stats.reach.value} change={stats.reach.change} sparkData={stats.reach.spark} accentColor="hsl(160 60% 45%)" />
         <StatCard label="Engagements" value={stats.eng.value} change={stats.eng.change} sparkData={stats.eng.spark} accentColor="hsl(280 70% 56%)" />
         <StatCard
           label="Followers"
@@ -857,7 +1013,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
               gap: 14,
             }}>
               {libraryReels.map((reel, idx) => (
-                <ReelCard key={reel.reel_id || reel.id || idx} reel={reel} idx={idx} />
+                <ReelCard key={reel.reel_id || reel.id || idx} reel={reel} idx={idx} profileId={profileId} />
               ))}
             </div>
           </div>

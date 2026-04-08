@@ -90,9 +90,10 @@ export default async function AnalyticsPage() {
   let dashboardBio = String(profile.dashboard_bio || '')
   let focusThisWeek = String(profile.focus_this_week || '')
 
-  // Generate missing AI fields (run in parallel if both missing)
-  const needsBio = !dashboardBio
-  const needsFocus = !focusThisWeek
+  // Only generate AI fields for clients who have completed onboarding
+  const onboarded = Boolean(profile.onboarding_completed)
+  const needsBio = onboarded && !dashboardBio
+  const needsFocus = onboarded && !focusThisWeek
 
   if (needsBio || needsFocus) {
     const [bio, focus] = await Promise.all([

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { TrendingUp, Zap, ChevronDown, ChevronUp, ExternalLink, BarChart2, FileText } from 'lucide-react'
+import { TrendingUp, Zap, ChevronDown, ChevronUp, ExternalLink, BarChart2, FileText, CheckCircle, AlertTriangle, Lock, MessageCircle, HelpCircle, Lightbulb, Play, Eye, Heart } from 'lucide-react'
 import type { WeeklyReport, TrendingTopic, TopHook, ClientReel } from '@/lib/types'
 import { Card, Badge, SectionLabel } from '@/components/ui'
 
@@ -11,6 +11,39 @@ import { Card, Badge, SectionLabel } from '@/components/ui'
 interface Props {
   report: WeeklyReport | null
   reels: ClientReel[]
+  profileId?: string
+  contentAnalysisUnlocksAt?: string | null
+  commentAnalysisUnlocksAt?: string | null
+}
+
+interface CommentQuestion {
+  question: string
+  frequency: string
+  content_idea: string
+}
+
+interface CommentAnalysis {
+  consensus: string
+  top_emotions: string[]
+  common_questions: CommentQuestion[]
+  objections_or_doubts: string[]
+  content_opportunities: string[]
+  audience_insight: string
+}
+
+interface ContentAnalysis {
+  headline: string
+  content_score: number
+  posts_this_period: number
+  avg_views: number
+  top_format: string
+  format_verdict: string
+  top_hooks: string[]
+  what_is_working: string[]
+  what_is_not_working: string[]
+  pattern_insight: string
+  this_week_actions: string[]
+  hook_recommendations: string[]
 }
 
 // ─── markdown renderer ────────────────────────────────────────────────────────
@@ -85,8 +118,274 @@ function EmptyIntel() {
 
 // ─── main ─────────────────────────────────────────────────────────────────────
 
-export default function ContentDashboard({ report, reels }: Props) {
+function ContentAnalysisPanel({ analysis }: { analysis: ContentAnalysis }) {
+  const scoreColor = analysis.content_score >= 75 ? 'hsl(142 71% 35%)' : analysis.content_score >= 50 ? 'hsl(38 92% 45%)' : 'hsl(0 65% 50%)'
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Score + headline */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{
+          width: 56, height: 56, borderRadius: 12, flexShrink: 0,
+          background: `${scoreColor}18`, border: `2px solid ${scoreColor}44`,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 20, fontWeight: 800, color: scoreColor,
+        }}>
+          {analysis.content_score}
+        </div>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1.4 }}>
+            {analysis.headline}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 3 }}>
+            {analysis.posts_this_period} reels · avg {(analysis.avg_views ?? 0).toLocaleString()} views · best format: {analysis.top_format}
+          </div>
+        </div>
+      </div>
+
+      {/* Format verdict */}
+      <p style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6, margin: 0, paddingLeft: 12, borderLeft: '3px solid var(--accent)' }}>
+        {analysis.format_verdict}
+      </p>
+
+      {/* What's working / not working */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(142 50% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>What&apos;s working</div>
+          {analysis.what_is_working?.map((point, i) => (
+            <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginBottom: 5 }}>
+              <CheckCircle size={12} style={{ color: 'hsl(142 50% 45%)', flexShrink: 0, marginTop: 2 }} />
+              <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>{point}</span>
+            </div>
+          ))}
+        </div>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(38 92% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Needs work</div>
+          {analysis.what_is_not_working?.map((point, i) => (
+            <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginBottom: 5 }}>
+              <AlertTriangle size={12} style={{ color: 'hsl(38 92% 45%)', flexShrink: 0, marginTop: 2 }} />
+              <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>{point}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Pattern insight */}
+      {analysis.pattern_insight && (
+        <Card style={{ padding: '12px 16px', background: 'var(--foreground)', borderRadius: 8 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--background)', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Key pattern</div>
+          <p style={{ fontSize: 13, color: 'var(--background)', lineHeight: 1.6, margin: 0 }}>{analysis.pattern_insight}</p>
+        </Card>
+      )}
+
+      {/* This week's actions */}
+      {analysis.this_week_actions?.length > 0 && (
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>This week&apos;s actions</div>
+          {analysis.this_week_actions.map((action, i) => (
+            <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 6 }}>
+              <span style={{
+                width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+                background: 'var(--accent)', color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, fontWeight: 700, marginTop: 1,
+              }}>{i + 1}</span>
+              <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>{action}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Hook recommendations */}
+      {analysis.hook_recommendations?.length > 0 && (
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>Hook ideas to try</div>
+          {analysis.hook_recommendations.map((hook, i) => (
+            <div key={i} style={{
+              fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5,
+              padding: '6px 10px', borderRadius: 6, marginBottom: 5,
+              background: 'var(--muted)', fontStyle: 'italic',
+            }}>
+              &ldquo;{hook}&rdquo;
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function CommentAnalysisPanel({ analysis }: { analysis: CommentAnalysis }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      {/* Consensus */}
+      <div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
+          General Consensus
+        </div>
+        <p style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.65, margin: 0, paddingLeft: 12, borderLeft: '3px solid var(--accent)' }}>
+          {analysis.consensus}
+        </p>
+      </div>
+
+      {/* Top emotions */}
+      {analysis.top_emotions?.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {analysis.top_emotions.map((e, i) => (
+            <span key={i} style={{
+              fontSize: 12, padding: '3px 10px', borderRadius: 20,
+              background: 'var(--muted)', color: 'var(--foreground)', fontWeight: 500,
+            }}>{e}</span>
+          ))}
+        </div>
+      )}
+
+      {/* Common questions */}
+      {analysis.common_questions?.length > 0 && (
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 8 }}>
+            <HelpCircle size={12} style={{ color: 'hsl(220 90% 56%)' }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: 'hsl(220 90% 56%)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+              Common Questions
+            </span>
+          </div>
+          {analysis.common_questions.map((q, i) => (
+            <div key={i} style={{
+              marginBottom: 10, padding: '10px 12px', borderRadius: 8,
+              background: 'var(--muted)', borderLeft: '3px solid hsl(220 90% 56%)',
+            }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', lineHeight: 1.45, marginBottom: 4 }}>
+                &ldquo;{q.question}&rdquo;
+                <span style={{
+                  marginLeft: 6, fontSize: 10, padding: '1px 6px', borderRadius: 10,
+                  background: q.frequency === 'high' ? 'hsl(0 65% 50% / 0.15)' : 'var(--border)',
+                  color: q.frequency === 'high' ? 'hsl(0 65% 50%)' : 'var(--muted-foreground)',
+                  fontWeight: 600,
+                }}>{q.frequency}</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+                <Lightbulb size={11} style={{ color: 'hsl(38 92% 45%)', flexShrink: 0, marginTop: 2 }} />
+                <span style={{ fontSize: 11, color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
+                  Video idea: {q.content_idea}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Objections */}
+      {analysis.objections_or_doubts?.filter(Boolean).length > 0 && (
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(38 92% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
+            Objections / Doubts
+          </div>
+          {analysis.objections_or_doubts.map((obj, i) => (
+            <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginBottom: 5 }}>
+              <AlertTriangle size={11} style={{ color: 'hsl(38 92% 45%)', flexShrink: 0, marginTop: 2 }} />
+              <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>{obj}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Content opportunities */}
+      {analysis.content_opportunities?.length > 0 && (
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(142 50% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
+            Content Opportunities
+          </div>
+          {analysis.content_opportunities.map((opp, i) => (
+            <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
+              <span style={{
+                width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
+                background: 'hsl(142 50% 45%)', color: '#fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 10, fontWeight: 700, marginTop: 1,
+              }}>{i + 1}</span>
+              <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>{opp}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Audience insight */}
+      {analysis.audience_insight && (
+        <Card style={{ padding: '12px 16px', background: 'var(--foreground)', borderRadius: 8 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--background)', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>
+            Audience Insight
+          </div>
+          <p style={{ fontSize: 13, color: 'var(--background)', lineHeight: 1.6, margin: 0 }}>{analysis.audience_insight}</p>
+        </Card>
+      )}
+    </div>
+  )
+}
+
+export default function ContentDashboard({ report, reels, profileId, contentAnalysisUnlocksAt, commentAnalysisUnlocksAt }: Props) {
   const [reportExpanded, setReportExpanded] = useState(false)
+  const [analysing, setAnalysing] = useState(false)
+  const [contentAnalysis, setContentAnalysis] = useState<ContentAnalysis | null>(null)
+  const [analysisUnlocksAt, setAnalysisUnlocksAt] = useState<string | null>(contentAnalysisUnlocksAt ?? null)
+  const [commentAnalysing, setCommentAnalysing] = useState(false)
+  const [commentAnalysis, setCommentAnalysis] = useState<CommentAnalysis | null>(null)
+  const [commentUnlocksAt, setCommentUnlocksAt] = useState<string | null>(commentAnalysisUnlocksAt ?? null)
+  const [commentError, setCommentError] = useState<string | null>(null)
+
+  const analysisAvailable = !analysisUnlocksAt || new Date(analysisUnlocksAt) <= new Date()
+
+  async function handleContentAnalysis() {
+    if (!profileId || !analysisAvailable || analysing) return
+    setAnalysing(true)
+    try {
+      const res = await fetch('/api/content/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId }),
+      })
+      const data = await res.json()
+      if (data.error && data.error !== 'locked') {
+        console.error('Content analysis error:', data.error)
+      } else if (data.analysis) {
+        setContentAnalysis(data.analysis)
+        setAnalysisUnlocksAt(data.unlocks_at ?? null)
+      }
+    } catch { /* silently fail */ }
+    setAnalysing(false)
+  }
+
+  const commentAvailable = !commentUnlocksAt || new Date(commentUnlocksAt) <= new Date()
+
+  async function handleCommentAnalysis() {
+    if (!profileId || !commentAvailable || commentAnalysing) return
+    setCommentAnalysing(true)
+    setCommentError(null)
+    try {
+      const res = await fetch('/api/content/comments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId }),
+      })
+      const data = await res.json()
+      if (data.error === 'no_comments') {
+        setCommentError('No comment data yet — sync your Instagram first to collect comments.')
+      } else if (data.error && data.error !== 'locked') {
+        setCommentError(data.error)
+      } else if (data.analysis) {
+        setCommentAnalysis(data.analysis)
+        setCommentUnlocksAt(data.unlocks_at ?? null)
+      }
+    } catch { setCommentError('Network error') }
+    setCommentAnalysing(false)
+  }
+
+  const commentUnlockLabel = commentUnlocksAt
+    ? new Date(commentUnlocksAt).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })
+    : null
+
+  const unlockDate = analysisUnlocksAt ? new Date(analysisUnlocksAt) : null
+  const unlockLabel = unlockDate
+    ? unlockDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : null
 
   const pillars = deriveContentPillars(reels)
   const maxPillarViews = pillars.length ? Math.max(...pillars.map(p => p.avgViews)) : 1
@@ -270,6 +569,114 @@ export default function ContentDashboard({ report, reels }: Props) {
         </div>
       )}
 
+      {/* ── Weekly Content Analysis ── */}
+      {profileId && (
+        <div style={{ marginBottom: 20 }}>
+          <Card style={{ overflow: 'hidden' }}>
+            <div style={{
+              padding: '16px 20px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              borderBottom: contentAnalysis ? '1px solid var(--border)' : 'none',
+              flexWrap: 'wrap', gap: 12,
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                  <Zap size={14} style={{ color: 'var(--accent)' }} />
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>
+                    My Content Breakdown
+                  </span>
+                  {!analysisAvailable && <Badge variant="muted">Locked</Badge>}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
+                  {analysisAvailable
+                    ? 'AI analysis of your last 30 days of content — available once per week'
+                    : `Next analysis available ${unlockLabel}`}
+                </div>
+              </div>
+              <button
+                onClick={handleContentAnalysis}
+                disabled={!analysisAvailable || analysing}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 16px', borderRadius: 8, border: 'none',
+                  background: analysisAvailable ? 'var(--accent)' : 'var(--muted)',
+                  color: analysisAvailable ? '#fff' : 'var(--muted-foreground)',
+                  fontSize: 13, fontWeight: 600, cursor: analysisAvailable && !analysing ? 'pointer' : 'not-allowed',
+                  fontFamily: 'inherit', transition: 'opacity 0.15s',
+                  opacity: analysing ? 0.6 : 1,
+                }}
+              >
+                {!analysisAvailable ? <Lock size={13} /> : <Zap size={13} />}
+                {analysing ? 'Analysing…' : contentAnalysis ? 'Re-run Analysis' : 'Generate My Breakdown'}
+              </button>
+            </div>
+
+            {contentAnalysis && (
+              <div style={{ padding: '20px 20px' }}>
+                <ContentAnalysisPanel analysis={contentAnalysis} />
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* ── Comment Intelligence ── */}
+      {profileId && (
+        <div style={{ marginBottom: 20 }}>
+          <Card style={{ overflow: 'hidden' }}>
+            <div style={{
+              padding: '16px 20px',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              borderBottom: commentAnalysis ? '1px solid var(--border)' : 'none',
+              flexWrap: 'wrap', gap: 12,
+            }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 2 }}>
+                  <MessageCircle size={14} style={{ color: 'hsl(220 90% 56%)' }} />
+                  <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>
+                    Comment Intelligence
+                  </span>
+                  {!commentAvailable && <Badge variant="muted">Locked</Badge>}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
+                  {commentAvailable
+                    ? 'What your audience is saying, asking, and thinking — available once per week'
+                    : `Next analysis available ${commentUnlockLabel}`}
+                </div>
+              </div>
+              <button
+                onClick={handleCommentAnalysis}
+                disabled={!commentAvailable || commentAnalysing}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '8px 16px', borderRadius: 8, border: 'none',
+                  background: commentAvailable ? 'hsl(220 90% 56%)' : 'var(--muted)',
+                  color: commentAvailable ? '#fff' : 'var(--muted-foreground)',
+                  fontSize: 13, fontWeight: 600, cursor: commentAvailable && !commentAnalysing ? 'pointer' : 'not-allowed',
+                  fontFamily: 'inherit', transition: 'opacity 0.15s',
+                  opacity: commentAnalysing ? 0.6 : 1,
+                }}
+              >
+                {!commentAvailable ? <Lock size={13} /> : <MessageCircle size={13} />}
+                {commentAnalysing ? 'Analysing…' : commentAnalysis ? 'Re-run Analysis' : 'Analyse My Comments'}
+              </button>
+            </div>
+
+            {commentError && (
+              <div style={{ padding: '12px 20px', fontSize: 13, color: 'hsl(38 92% 45%)', background: 'hsl(38 92% 45% / 0.08)' }}>
+                {commentError}
+              </div>
+            )}
+
+            {commentAnalysis && (
+              <div style={{ padding: '20px 20px' }}>
+                <CommentAnalysisPanel analysis={commentAnalysis} />
+              </div>
+            )}
+          </Card>
+        </div>
+      )}
+
       {/* ── Content Pillars ── */}
       <div style={{ marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
@@ -418,6 +825,60 @@ export default function ContentDashboard({ report, reels }: Props) {
               ))}
           </div>
         </Card>
+      )}
+
+      {/* ── Content Library ── */}
+      {reels.length > 0 && (
+        <div style={{ marginTop: 20 }}>
+          <Card style={{ overflow: 'hidden' }}>
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', letterSpacing: '-0.2px' }}>Content Library</div>
+              <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>All your synced reels</div>
+            </div>
+            <div style={{ padding: 16, display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: 10 }}>
+              {[...reels].sort((a, b) => (b.views ?? 0) - (a.views ?? 0)).slice(0, 30).map((r, idx) => {
+                const reelLink = r.permalink || (r.reel_id ? `https://www.instagram.com/reel/${r.reel_id}/` : null)
+                const gradients = ['linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', 'linear-gradient(135deg,#405de6,#5851db,#833ab4)', 'linear-gradient(135deg,#fd1d1d,#fcb045)', 'linear-gradient(135deg,#f77737,#e1306c)', 'linear-gradient(135deg,#5851db,#833ab4)']
+                const grad = gradients[idx % gradients.length]
+                const card = (
+                  <div key={r.reel_id || r.id || idx} style={{
+                    borderRadius: 8, overflow: 'hidden', position: 'relative',
+                    background: r.thumbnail_url ? 'var(--muted)' : grad,
+                    aspectRatio: '9/16',
+                    cursor: reelLink ? 'pointer' : 'default',
+                    border: '1px solid var(--border)',
+                  }}>
+                    {r.thumbnail_url && (
+                      <img src={r.thumbnail_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', position: 'absolute', inset: 0 }}
+                        onError={e => { const img = e.currentTarget as HTMLImageElement; img.style.display = 'none'; (img.parentElement as HTMLElement).style.background = grad }} />
+                    )}
+                    <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 28, height: 28, borderRadius: '50%', background: 'rgba(0,0,0,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Play size={11} fill="#fff" color="#fff" />
+                    </div>
+                    {r.format_type && (
+                      <div style={{ position: 'absolute', top: 5, right: 5, background: 'rgba(0,0,0,0.6)', borderRadius: 4, padding: '2px 5px', fontSize: 8, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.03em' }}>
+                        {r.format_type.replace(/_/g, ' ')}
+                      </div>
+                    )}
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'linear-gradient(transparent, rgba(0,0,0,0.7))', padding: '20px 6px 5px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 10, color: '#fff', fontWeight: 600 }}>
+                          <Eye size={9} /> {r.views != null && r.views >= 1000 ? `${(r.views / 1000).toFixed(0)}k` : (r.views ?? 0).toLocaleString()}
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: 2, fontSize: 10, color: 'rgba(255,255,255,0.75)' }}>
+                          <Heart size={9} /> {r.likes != null && r.likes >= 1000 ? `${(r.likes / 1000).toFixed(0)}k` : (r.likes ?? 0).toLocaleString()}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )
+                return reelLink
+                  ? <a key={r.reel_id || r.id || idx} href={reelLink} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textDecoration: 'none' }}>{card}</a>
+                  : card
+              })}
+            </div>
+          </Card>
+        </div>
       )}
 
     </div>

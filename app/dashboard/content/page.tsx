@@ -18,7 +18,7 @@ export default async function ContentPage() {
   const impersonatingAs = realProfile?.role === 'admin' ? await getImpersonatedId() : null
   const profileId = effectiveId(user.id, realProfile?.role === 'admin', impersonatingAs)
 
-  const [{ data: report }, { data: reels }] = await Promise.all([
+  const [{ data: report }, { data: reels }, { data: profileData }] = await Promise.all([
     // Latest weekly intel report — global, same for all users
     adminClient
       .from('weekly_reports')
@@ -34,12 +34,24 @@ export default async function ContentPage() {
       .eq('profile_id', profileId)
       .order('date', { ascending: false })
       .limit(200),
+
+    // Profile for content analysis lock status
+    adminClient
+      .from('profiles')
+      .select('content_analysis_unlocks_at, comment_analysis_unlocks_at')
+      .eq('id', profileId)
+      .single(),
   ])
+
+  const pd = profileData as { content_analysis_unlocks_at?: string | null; comment_analysis_unlocks_at?: string | null } | null
 
   return (
     <ContentDashboard
       report={(report ?? null) as WeeklyReport | null}
       reels={(reels ?? []) as ClientReel[]}
+      profileId={profileId}
+      contentAnalysisUnlocksAt={pd?.content_analysis_unlocks_at ?? null}
+      commentAnalysisUnlocksAt={pd?.comment_analysis_unlocks_at ?? null}
     />
   )
 }

@@ -86,6 +86,7 @@ interface ApifyReel {
   timestamp: string
   duration_sec: number
   follower_count: number
+  comments_text: string[]
 }
 
 function getFirst(obj: Record<string, unknown>, keys: string[], def: unknown = null) {
@@ -98,20 +99,34 @@ function getFirst(obj: Record<string, unknown>, keys: string[], def: unknown = n
 
 function normalise(item: Record<string, unknown>): ApifyReel {
   const caption = String(getFirst(item, ['caption', 'text', 'accessibility_caption'], '') ?? '')
-  const hashtags = (caption.match(/#\w+/g) ?? []).map((h: string) => h.slice(1))
+
+  // Handle nested owner/author objects for follower count
+  const ownerObj = (item.owner ?? item.authorMeta ?? item.ownerProfile) as Record<string, unknown> | null | undefined
+  const nestedFollowers = ownerObj
+    ? Number(ownerObj.followersCount ?? ownerObj.followerCount ?? ownerObj.followers ?? 0)
+    : 0
+
+  // Extract comment text (latestComments array from Apify)
+  const rawComments = (item.latestComments ?? item.comments_data ?? []) as Array<Record<string, unknown>>
+  const commentsText = rawComments
+    .slice(0, 30)
+    .map(c => String(c.text ?? c.content ?? '').trim())
+    .filter(Boolean)
+
   return {
     reel_id:        String(getFirst(item, ['shortCode', 'id', 'code'], '')),
-    url:            String(getFirst(item, ['url', 'link'], '')),
-    video_url:      String(getFirst(item, ['videoUrl', 'videoSrc', 'video_url'], '')),
-    thumbnail_url:  String(getFirst(item, ['thumbnailSrc', 'displayUrl', 'thumbnail_url'], '')),
+    url:            String(getFirst(item, ['url', 'link', 'webVideoUrl'], '')),
+    video_url:      String(getFirst(item, ['videoUrl', 'videoSrc', 'video_url', 'downloadUrl'], '')),
+    thumbnail_url:  String(getFirst(item, ['thumbnailSrc', 'displayUrl', 'thumbnail_url', 'previewImageUrl'], '')),
     username:       String(getFirst(item, ['ownerUsername', 'username'], '')).toLowerCase(),
-    views:          Number(getFirst(item, ['videoPlayCount', 'playCount', 'videoViewCount', 'views'], 0)),
-    likes:          Number(getFirst(item, ['likesCount', 'likes'], 0)),
-    comments:       Number(getFirst(item, ['commentsCount', 'comments'], 0)),
+    views:          Number(getFirst(item, ['videoPlayCount', 'playCount', 'videoViewCount', 'views', 'playsCount'], 0)),
+    likes:          Number(getFirst(item, ['likesCount', 'likes', 'diggCount'], 0)),
+    comments:       Number(getFirst(item, ['commentsCount', 'comments', 'commentCount'], 0)),
     caption,
-    timestamp:      String(getFirst(item, ['timestamp', 'takenAt'], '')),
+    timestamp:      String(getFirst(item, ['timestamp', 'takenAt', 'createTimeISO'], '')),
     duration_sec:   Number(getFirst(item, ['videoDuration', 'duration'], 0)),
-    follower_count: Number(getFirst(item, ['ownerFollowersCount', 'followersCount'], 0)),
+    follower_count: Number(getFirst(item, ['ownerFollowersCount', 'followersCount', 'authorFollowersCount'], 0)) || nestedFollowers,
+    comments_text:  commentsText,
   }
 }
 
@@ -160,6 +175,32 @@ function parseDate(ts: string | number): string | null {
   try {
     if (typeof ts === 'number') return new Date(ts * 1000).toISOString().slice(0, 10)
     return new Date(ts).toISOString().slice(0, 10)
+  } catch {
+    return null
+  }
+}
+
+// ── Thumbnail persistence to Supabase Storage ────────────────────────────────
+
+const BUCKET = 'reel-thumbnails'
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
+
+function isStorageUrl(url: string): boolean {
+  return url.includes('.supabase.co/storage')
+}
+
+async function persistThumbnail(profileId: string, reelId: string, cdnUrl: string): Promise<string | null> {
+  if (!cdnUrl || isStorageUrl(cdnUrl)) return cdnUrl || null
+  try {
+    const res = await fetch(cdnUrl, { signal: AbortSignal.timeout(15_000) })
+    if (!res.ok) return null
+    const buffer = Buffer.from(await res.arrayBuffer())
+    const ct = res.headers.get('content-type') || 'image/jpeg'
+    const ext = ct.includes('png') ? 'png' : 'jpg'
+    const path = `${profileId}/${reelId}.${ext}`
+    const { error } = await adminClient.storage.from(BUCKET).upload(path, buffer, { contentType: ct, upsert: true })
+    if (error) return null
+    return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${path}`
   } catch {
     return null
   }
@@ -226,6 +267,9 @@ export async function POST(req: NextRequest) {
 
   const igUsername = profile.ig_username.toLowerCase().replace('@', '')
 
+  // Ensure storage bucket exists (no-op if already created)
+  await adminClient.storage.createBucket(BUCKET, { public: true }).catch(() => {})
+
   // ── 1. Apify scrape ──────────────────────────────────────────────────────
   let reels: ApifyReel[]
   try {
@@ -261,28 +305,33 @@ export async function POST(req: NextRequest) {
   const existingSet = new Set((existing ?? []).map((r: { reel_id: string }) => r.reel_id))
   const newReels = reels.filter(r => r.reel_id && !existingSet.has(r.reel_id))
 
-  // Refresh metrics on existing reels
+  // Refresh metrics on existing reels + persist any non-storage thumbnails
   const updatedReels = reels.filter(r => existingSet.has(r.reel_id))
-  await Promise.allSettled(updatedReels.map(r =>
-    adminClient.from('client_reels').update({
+  await Promise.allSettled(updatedReels.map(async r => {
+    const storedThumb = r.thumbnail_url ? await persistThumbnail(profileId, r.reel_id, r.thumbnail_url) : null
+    return adminClient.from('client_reels').update({
       views: r.views, likes: r.likes, comments: r.comments,
-      thumbnail_url: r.thumbnail_url || null,
+      ...(storedThumb ? { thumbnail_url: storedThumb } : {}),
     }).eq('reel_id', r.reel_id).eq('profile_id', profileId)
-  ))
+  }))
 
   if (!newReels.length) {
     return NextResponse.json({ synced: 0, total: reels.length, message: 'All reels already synced.' })
   }
 
-  // ── 4. Transcribe new reels in parallel (max 5 at a time) ───────────────
+  // ── 4. Transcribe + persist thumbnails for new reels (max 5 at a time) ─
   const BATCH = 5
   for (let i = 0; i < newReels.length; i += BATCH) {
     await Promise.all(
       newReels.slice(i, i + BATCH).map(async (r) => {
         r.caption = r.caption || '' // ensure string
-        const transcript = await transcribeReel(r.video_url)
+        const [transcript, storedThumb] = await Promise.all([
+          transcribeReel(r.video_url),
+          r.thumbnail_url ? persistThumbnail(profileId, r.reel_id, r.thumbnail_url) : Promise.resolve(null),
+        ])
         ;(r as ApifyReel & { transcript?: string; hook?: string }).transcript = transcript
         ;(r as ApifyReel & { hook?: string }).hook = extractHook(transcript)
+        if (storedThumb) r.thumbnail_url = storedThumb
       })
     )
   }
@@ -298,7 +347,7 @@ export async function POST(req: NextRequest) {
   // ── 6. Insert new reels ──────────────────────────────────────────────────
   const today = new Date().toISOString().slice(0, 10)
   const rows = newReels.map(r => {
-    const ext = r as ApifyReel & { transcript?: string; hook?: string }
+    const ext = r as ApifyReel & { transcript?: string; hook?: string; comments_text?: string[] }
     return {
       profile_id:    profileId,
       reel_id:       r.reel_id,
@@ -314,6 +363,7 @@ export async function POST(req: NextRequest) {
       format_type:   formatMap[r.reel_id] ?? null,
       thumbnail_url: r.thumbnail_url || null,
       permalink:     r.url || null,
+      comments_text: ext.comments_text?.length ? ext.comments_text : null,
     }
   })
 
@@ -328,4 +378,51 @@ export async function POST(req: NextRequest) {
     total: reels.length,
     followers: followerCount || null,
   })
+}
+
+// ── PATCH — refresh thumbnails for all existing reels ─────────────────────────
+// Re-scrapes Apify for fresh CDN URLs then persists them to Supabase Storage.
+// Call this once to fix all expired thumbnails.
+
+export async function PATCH(req: NextRequest) {
+  const body = await req.json().catch(() => ({})) as { profileId?: string }
+  const { profileId } = body
+  if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
+
+  const { data: profile } = await adminClient
+    .from('profiles').select('ig_username').eq('id', profileId).single()
+
+  if (!profile?.ig_username) {
+    return NextResponse.json({ error: 'No Instagram username set' }, { status: 400 })
+  }
+
+  await adminClient.storage.createBucket(BUCKET, { public: true }).catch(() => {})
+
+  const igUsername = profile.ig_username.toLowerCase().replace('@', '')
+
+  // Fetch fresh reel data from Apify
+  let reels: ApifyReel[]
+  try {
+    const runId = await apifyStartRun(igUsername)
+    const datasetId = await apifyPollRun(runId)
+    reels = await apifyDownload(datasetId)
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Apify error' }, { status: 502 })
+  }
+
+  // Persist thumbnails for all reels with non-storage URLs
+  let updated = 0
+  await Promise.allSettled(reels.map(async r => {
+    if (!r.thumbnail_url || isStorageUrl(r.thumbnail_url)) return
+    const storedUrl = await persistThumbnail(profileId, r.reel_id, r.thumbnail_url)
+    if (storedUrl) {
+      await adminClient.from('client_reels')
+        .update({ thumbnail_url: storedUrl })
+        .eq('reel_id', r.reel_id)
+        .eq('profile_id', profileId)
+      updated++
+    }
+  }))
+
+  return NextResponse.json({ updated, total: reels.length })
 }
