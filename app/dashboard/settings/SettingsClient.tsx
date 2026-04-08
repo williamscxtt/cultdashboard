@@ -1,10 +1,10 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
 import { Card, Badge, Button, PageHeader, SectionLabel } from '@/components/ui'
-import { Video, LogOut, Check, Eye, EyeOff } from 'lucide-react'
+import { Video, LogOut, Eye, EyeOff, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import CompetitorManager from '@/components/dashboard/CompetitorManager'
 
@@ -19,10 +19,9 @@ function IgIcon({ size = 15 }: { size?: number }) {
   )
 }
 
-export default function SettingsClient({ profile }: { profile: Profile }) {
+export default function SettingsClient({ profile, isImpersonating = false }: { profile: Profile; isImpersonating?: boolean }) {
   const [name, setName] = useState(profile.name || '')
   const [saving, setSaving] = useState(false)
-  const [disconnecting, setDisconnecting] = useState(false)
   const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -30,16 +29,6 @@ export default function SettingsClient({ profile }: { profile: Profile }) {
   const [showConfirmPw, setShowConfirmPw] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
   const router = useRouter()
-  const searchParams = useSearchParams()
-
-  const igConnected = searchParams.get('ig_connected') === '1'
-  const igErrorRaw  = searchParams.get('ig_error')
-  const igError     = igErrorRaw && igErrorRaw !== '1' ? igErrorRaw : igErrorRaw ? 'Instagram connection failed.' : null
-
-  useEffect(() => {
-    if (igConnected) toast.success('Instagram connected!')
-    if (igError)     toast.error(igError)
-  }, [igConnected, igError])
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault()
@@ -75,18 +64,6 @@ export default function SettingsClient({ profile }: { profile: Profile }) {
     router.push('/login')
   }
 
-  async function handleDisconnectIG() {
-    setDisconnecting(true)
-    const supabase = createClient()
-    const { error } = await supabase
-      .from('profiles')
-      .update({ ig_access_token: null, ig_username: null, ig_user_id: null })
-      .eq('id', profile.id)
-    if (error) toast.error(error.message)
-    else { toast.success('Instagram disconnected.'); router.refresh() }
-    setDisconnecting(false)
-  }
-
   return (
     <div style={{ padding: '24px', maxWidth: 640, margin: '0 auto' }}>
       <PageHeader title="Settings" description="Manage your account and connected channels." />
@@ -116,58 +93,34 @@ export default function SettingsClient({ profile }: { profile: Profile }) {
         {/* Instagram */}
         <Card style={{ padding: 20 }}>
           <SectionLabel>Instagram</SectionLabel>
-          {profile.ig_username ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <div style={{
-                    width: 36, height: 36, borderRadius: 8,
-                    background: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <IgIcon size={16} />
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>
-                      @{profile.ig_username}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
-                      {profile.ig_access_token ? (
-                        <>
-                          <Check size={11} style={{ color: 'hsl(142 50% 45%)' }} />
-                          <span style={{ fontSize: 12, color: 'hsl(142 50% 45%)', fontWeight: 600 }}>Connected</span>
-                        </>
-                      ) : (
-                        <span style={{ fontSize: 12, color: 'hsl(38 92% 55%)', fontWeight: 600 }}>Token expired — reconnect to sync</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div style={{ display: 'flex', gap: 8 }}>
-                  <a href="/api/auth/instagram" style={{ textDecoration: 'none' }}>
-                    <Button variant={profile.ig_access_token ? 'secondary' : 'primary'} size="sm">
-                      {profile.ig_access_token ? 'Reconnect' : 'Connect'}
-                    </Button>
-                  </a>
-                  <Button variant="destructive" size="sm" onClick={handleDisconnectIG} disabled={disconnecting}>
-                    {disconnecting ? 'Disconnecting…' : 'Disconnect'}
-                  </Button>
-                </div>
-              </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{
+              width: 36, height: 36, borderRadius: 8, flexShrink: 0,
+              background: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <IgIcon size={16} />
             </div>
-          ) : (
-            <div>
-              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.6, marginBottom: 14 }}>
-                Connect your Instagram Business account to unlock analytics, weekly scripts, and AI coaching.
-              </p>
-              <a href="/api/auth/instagram" style={{ textDecoration: 'none', display: 'inline-block' }}>
-                <Button size="sm" style={{ gap: 7 }}>
-                  <IgIcon size={14} />
-                  Connect Instagram
-                </Button>
-              </a>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {profile.ig_username ? (
+                <>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>
+                    @{profile.ig_username}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
+                    <RefreshCw size={10} style={{ color: 'hsl(142 50% 45%)' }} />
+                    <span style={{ fontSize: 12, color: 'hsl(142 50% 45%)', fontWeight: 600 }}>
+                      Synced automatically every Monday
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
+                  No account linked. Contact Will to connect your Instagram.
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </Card>
 
         {/* YouTube / TikTok */}
@@ -201,80 +154,84 @@ export default function SettingsClient({ profile }: { profile: Profile }) {
         {/* Competitors */}
         <CompetitorManager />
 
-        {/* Security */}
-        <Card style={{ padding: 20 }}>
-          <SectionLabel>Security</SectionLabel>
-          {!showPasswordForm ? (
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-              <Button variant="secondary" size="sm" onClick={() => setShowPasswordForm(true)}>
-                Change Password
-              </Button>
-              <Button variant="destructive" size="sm" onClick={handleSignOut}>
-                <LogOut size={13} />
-                Sign out
-              </Button>
-            </div>
-          ) : (
-            <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>New password</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showNewPw ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                    placeholder="Min. 6 characters"
-                    autoFocus
-                    style={{ paddingRight: 36 }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPw(v => !v)}
-                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', display: 'flex' }}
-                  >
-                    {showNewPw ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Confirm new password</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showConfirmPw ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="Repeat password"
-                    style={{ paddingRight: 36 }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPw(v => !v)}
-                    style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', display: 'flex' }}
-                  >
-                    {showConfirmPw ? <EyeOff size={14} /> : <Eye size={14} />}
-                  </button>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <Button type="submit" size="sm" disabled={changingPassword}>
-                  {changingPassword ? 'Saving…' : 'Save new password'}
+        {/* Security — hidden when viewing as a client */}
+        {!isImpersonating && (
+          <Card style={{ padding: 20 }}>
+            <SectionLabel>Security</SectionLabel>
+            {!showPasswordForm ? (
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                <Button variant="secondary" size="sm" onClick={() => setShowPasswordForm(true)}>
+                  Change Password
                 </Button>
-                <Button type="button" variant="secondary" size="sm" onClick={() => { setShowPasswordForm(false); setNewPassword(''); setConfirmPassword('') }}>
-                  Cancel
+                <Button variant="destructive" size="sm" onClick={handleSignOut}>
+                  <LogOut size={13} />
+                  Sign out
                 </Button>
               </div>
-            </form>
-          )}
-        </Card>
+            ) : (
+              <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>New password</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showNewPw ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      placeholder="Min. 6 characters"
+                      autoFocus
+                      style={{ paddingRight: 36 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPw(v => !v)}
+                      style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', display: 'flex' }}
+                    >
+                      {showNewPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Confirm new password</label>
+                  <div style={{ position: 'relative' }}>
+                    <input
+                      type={showConfirmPw ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      placeholder="Repeat password"
+                      style={{ paddingRight: 36 }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPw(v => !v)}
+                      style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', display: 'flex' }}
+                    >
+                      {showConfirmPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                    </button>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button type="submit" size="sm" disabled={changingPassword}>
+                    {changingPassword ? 'Saving…' : 'Save new password'}
+                  </Button>
+                  <Button type="button" variant="secondary" size="sm" onClick={() => { setShowPasswordForm(false); setNewPassword(''); setConfirmPassword('') }}>
+                    Cancel
+                  </Button>
+                </div>
+              </form>
+            )}
+          </Card>
+        )}
 
-        {/* Sign Out */}
-        <Card style={{ padding: 20, borderColor: 'hsl(0 70% 30%)' }}>
-          <SectionLabel>Danger Zone</SectionLabel>
-          <Button variant="destructive" size="sm" onClick={handleSignOut}>
-            <LogOut size={13} />
-            Sign out
-          </Button>
-        </Card>
+        {/* Sign Out — hidden when viewing as a client */}
+        {!isImpersonating && (
+          <Card style={{ padding: 20, borderColor: 'hsl(0 70% 30%)' }}>
+            <SectionLabel>Danger Zone</SectionLabel>
+            <Button variant="destructive" size="sm" onClick={handleSignOut}>
+              <LogOut size={13} />
+              Sign out
+            </Button>
+          </Card>
+        )}
       </div>
     </div>
   )

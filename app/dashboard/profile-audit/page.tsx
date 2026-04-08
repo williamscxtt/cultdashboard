@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase'
 import { Card, Button, Badge, PageHeader, SectionLabel } from '@/components/ui'
-import { CheckCircle2, AlertTriangle, ArrowRight, Copy, ChevronDown, ChevronUp, Upload, AtSign, X } from 'lucide-react'
+import { CheckCircle2, AlertTriangle, ArrowRight, Copy, ChevronDown, ChevronUp, Upload, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface AuditScores {
@@ -71,7 +71,6 @@ export default function ProfileAuditPage() {
   const [auditId, setAuditId] = useState<string | null>(null)
   const [history, setHistory] = useState<AuditHistoryItem[]>([])
   const [userId, setUserId] = useState('')
-  const [igUsername, setIgUsername] = useState('')
   const [expandedElements, setExpandedElements] = useState<Set<string>>(new Set())
   const [loadingHistory, setLoadingHistory] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -82,10 +81,6 @@ export default function ProfileAuditPage() {
       if (data.user) {
         setUserId(data.user.id)
         loadHistory(data.user.id)
-        // Prefill IG username from profile
-        supabase.from('profiles').select('ig_username').eq('id', data.user.id).single().then(({ data: p }) => {
-          if (p?.ig_username) setIgUsername(p.ig_username)
-        })
       }
     })
   }, [])
@@ -125,7 +120,6 @@ export default function ProfileAuditPage() {
     try {
       const formData = new FormData()
       formData.append('profileId', userId)
-      if (igUsername.trim()) formData.append('igUsername', igUsername.trim().replace('@', ''))
       if (screenshot) formData.append('screenshot', screenshot)
 
       const res = await fetch('/api/profile-audit', { method: 'POST', body: formData, signal: controller.signal })
@@ -170,13 +164,13 @@ export default function ProfileAuditPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const canAudit = !loading && (screenshot !== null || igUsername.trim().length > 0)
+  const canAudit = !loading && screenshot !== null
 
   return (
     <div style={{ padding: '24px', maxWidth: 800, margin: '0 auto' }}>
       <PageHeader
         title="Profile Audit"
-        description="Upload a screenshot of your Instagram profile and get a full AI audit across 6 elements."
+        description="Take a screenshot of your Instagram profile from your phone and upload it below. Claude will score you out of 10 across 6 elements and tell you exactly what to fix."
       />
 
       {/* Input card */}
@@ -217,32 +211,14 @@ export default function ProfileAuditPage() {
               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
             >
               <Upload size={24} style={{ color: 'var(--muted-foreground)', margin: '0 auto 10px', display: 'block' }} />
-              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginBottom: 4 }}>Upload profile screenshot</div>
-              <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>Take a screenshot from your iPhone and upload it here</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginBottom: 4 }}>Upload your Instagram profile screenshot</div>
+              <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>On your phone: open Instagram → your profile → take a screenshot → upload here</div>
             </div>
           )}
           <input ref={fileInputRef} type="file" accept="image/*" onChange={handleFileChange} style={{ display: 'none' }} />
         </div>
 
-        {/* IG handle */}
-        <div style={{ marginBottom: 16 }}>
-          <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 8 }}>
-            Instagram Handle
-            {igUsername && <span style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 400, marginLeft: 6 }}>Used to fetch live profile data via API</span>}
-          </label>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <AtSign size={15} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
-            <input
-              type="text"
-              value={igUsername}
-              onChange={e => setIgUsername(e.target.value)}
-              placeholder="yourhandle"
-              style={{ flex: 1 }}
-            />
-          </div>
-        </div>
-
-        <Button onClick={handleAudit} disabled={!canAudit} style={{ width: '100%' }}>
+        <Button onClick={handleAudit} disabled={!canAudit} style={{ width: '100%', marginTop: 4 }}>
           {loading ? (
             <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ animation: 'spin 1s linear infinite', display: 'inline-block' }}>◌</span>

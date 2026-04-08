@@ -1,468 +1,331 @@
+/**
+ * Instagram sync via Apify + OpenAI Whisper.
+ *
+ * POST { profileId } → scrapes client's IG account via Apify cloud,
+ * transcribes new reels via Whisper, classifies formats via Claude,
+ * saves to client_reels + follower_snapshots.
+ *
+ * GET ?profileId=... → returns current sync status (reel count, last synced).
+ *
+ * Requires Vercel env vars: APIFY_API_TOKEN, OPENAI_API_KEY
+ */
+
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
-import OpenAI from 'openai'
 import Anthropic from '@anthropic-ai/sdk'
+
+export const maxDuration = 300 // 5 min — Vercel Pro/Fluid
 
 const adminClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 )
-
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-// Get ISO week string: YYYY-WW
-function isoWeek(dateStr: string): string {
-  const d = new Date(dateStr)
-  const jan4 = new Date(d.getFullYear(), 0, 4)
-  const dayOfYear = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86400000)
-  const weekNum = Math.ceil((dayOfYear + jan4.getDay()) / 7)
-  return `${d.getFullYear()}-${String(weekNum).padStart(2, '0')}`
+const APIFY_BASE = 'https://api.apify.com/v2'
+const ACTOR_ID = 'apify~instagram-reel-scraper'
+
+// ── Apify helpers ─────────────────────────────────────────────────────────────
+
+async function apifyStartRun(username: string): Promise<string> {
+  const token = process.env.APIFY_API_TOKEN
+  if (!token) throw new Error('APIFY_API_TOKEN not set')
+
+  const res = await fetch(`${APIFY_BASE}/acts/${ACTOR_ID}/runs?token=${token}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      username: [username],
+      resultsLimit: 30,
+    }),
+  })
+  if (!res.ok) {
+    const err = await res.text()
+    throw new Error(`Apify start failed: ${res.status} ${err.slice(0, 200)}`)
+  }
+  const data = await res.json()
+  return data.data.id as string
 }
 
-// Extract hook: first sentence, max 200 chars
-function extractHook(transcript: string): string {
-  const match = transcript.match(/^[^.!?]*[.!?]/)
-  const first = match ? match[0].trim() : transcript.slice(0, 200).trim()
-  return first.length > 200 ? first.slice(0, 200) : first
+async function apifyPollRun(runId: string, timeoutMs = 240_000): Promise<string> {
+  const token = process.env.APIFY_API_TOKEN!
+  const deadline = Date.now() + timeoutMs
+
+  while (Date.now() < deadline) {
+    await new Promise(r => setTimeout(r, 8000)) // poll every 8s
+    const res = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${token}`)
+    if (!res.ok) continue
+    const run = (await res.json()).data
+    const status: string = run.status
+    if (status === 'SUCCEEDED') return run.defaultDatasetId as string
+    if (['FAILED', 'ABORTED', 'TIMED-OUT'].includes(status)) {
+      throw new Error(`Apify run ${runId} ended with: ${status}`)
+    }
+  }
+  throw new Error('Apify run timed out after 4 minutes')
 }
 
-interface IGMedia {
-  id: string
-  caption?: string
-  media_type: string
-  media_url?: string
-  thumbnail_url?: string
-  timestamp: string
-  permalink?: string
-  like_count?: number
-  comments_count?: number
+async function apifyDownload(datasetId: string): Promise<ApifyReel[]> {
+  const token = process.env.APIFY_API_TOKEN!
+  const res = await fetch(`${APIFY_BASE}/datasets/${datasetId}/items?token=${token}&clean=true`)
+  if (!res.ok) throw new Error(`Apify download failed: ${res.status}`)
+  const items = await res.json() as Record<string, unknown>[]
+  return items.map(normalise)
 }
 
-interface IGInsight {
-  name: string
-  values?: Array<{ value: number }>
-  value?: number
-}
-
-interface ReelSummary {
+interface ApifyReel {
   reel_id: string
-  hook: string
+  url: string
+  video_url: string
+  thumbnail_url: string
+  username: string
   views: number
   likes: number
-  date: string
-  format_type: string | null
-  is_new: boolean
+  comments: number
+  caption: string
+  timestamp: string
+  duration_sec: number
+  follower_count: number
 }
 
-export async function POST(req: NextRequest) {
-  const body = await req.json()
-  const { profileId } = body
-
-  if (!profileId) {
-    return NextResponse.json({ error: 'profileId is required' }, { status: 400 })
+function getFirst(obj: Record<string, unknown>, keys: string[], def: unknown = null) {
+  for (const k of keys) {
+    const v = obj[k]
+    if (v !== null && v !== undefined) return v
   }
+  return def
+}
 
-  // 1. Fetch profile
-  const { data: profile, error: profileError } = await adminClient
-    .from('profiles')
-    .select('ig_access_token, ig_user_id, ig_username')
-    .eq('id', profileId)
-    .single()
-
-  if (profileError || !profile) {
-    return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+function normalise(item: Record<string, unknown>): ApifyReel {
+  const caption = String(getFirst(item, ['caption', 'text', 'accessibility_caption'], '') ?? '')
+  const hashtags = (caption.match(/#\w+/g) ?? []).map((h: string) => h.slice(1))
+  return {
+    reel_id:        String(getFirst(item, ['shortCode', 'id', 'code'], '')),
+    url:            String(getFirst(item, ['url', 'link'], '')),
+    video_url:      String(getFirst(item, ['videoUrl', 'videoSrc', 'video_url'], '')),
+    thumbnail_url:  String(getFirst(item, ['thumbnailSrc', 'displayUrl', 'thumbnail_url'], '')),
+    username:       String(getFirst(item, ['ownerUsername', 'username'], '')).toLowerCase(),
+    views:          Number(getFirst(item, ['videoPlayCount', 'playCount', 'videoViewCount', 'views'], 0)),
+    likes:          Number(getFirst(item, ['likesCount', 'likes'], 0)),
+    comments:       Number(getFirst(item, ['commentsCount', 'comments'], 0)),
+    caption,
+    timestamp:      String(getFirst(item, ['timestamp', 'takenAt'], '')),
+    duration_sec:   Number(getFirst(item, ['videoDuration', 'duration'], 0)),
+    follower_count: Number(getFirst(item, ['ownerFollowersCount', 'followersCount'], 0)),
   }
+}
 
-  if (!profile.ig_access_token || !profile.ig_user_id) {
-    return NextResponse.json({ error: 'Instagram not connected' })
-  }
+// ── Whisper transcription ─────────────────────────────────────────────────────
 
-  const { ig_access_token, ig_user_id } = profile
+async function transcribeReel(videoUrl: string): Promise<string> {
+  if (!videoUrl) return ''
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) return ''
 
-  // 1b. Fetch follower count, update profile, and store history snapshot
-  let currentFollowers: number | null = null
   try {
-    const meRes = await fetch(
-      `https://graph.instagram.com/v21.0/me?fields=followers_count,media_count&access_token=${ig_access_token}`
-    )
-    if (meRes.ok) {
-      const meData = await meRes.json()
-      if (meData.followers_count != null) {
-        currentFollowers = meData.followers_count
-        await adminClient.from('profiles').update({ followers_count: meData.followers_count }).eq('id', profileId)
-        // Store today's snapshot
-        const today = new Date().toISOString().slice(0, 10)
-        await adminClient.from('follower_snapshots').upsert(
-          { profile_id: profileId, date: today, count: meData.followers_count },
-          { onConflict: 'profile_id,date' }
-        )
-      }
-    }
-  } catch { /* non-blocking */ }
+    // Download video
+    const videoRes = await fetch(videoUrl, { signal: AbortSignal.timeout(30_000) })
+    if (!videoRes.ok) return ''
+    const buffer = Buffer.from(await videoRes.arrayBuffer())
 
-  // 1c. Fetch daily follower change insights for last 30 days to build history
-  if (currentFollowers != null) {
-    try {
-      const until = Math.floor(Date.now() / 1000)
-      const since = until - 30 * 86400
-      const insightsUrl = new URL(`https://graph.instagram.com/v21.0/${ig_user_id}/insights`)
-      insightsUrl.searchParams.set('metric', 'follower_count')
-      insightsUrl.searchParams.set('period', 'day')
-      insightsUrl.searchParams.set('since', String(since))
-      insightsUrl.searchParams.set('until', String(until))
-      insightsUrl.searchParams.set('access_token', ig_access_token)
+    // Send to Whisper
+    const form = new FormData()
+    form.append('file', new Blob([buffer], { type: 'video/mp4' }), 'reel.mp4')
+    form.append('model', 'whisper-1')
+    form.append('language', 'en')
 
-      const insRes = await fetch(insightsUrl.toString())
-      if (insRes.ok) {
-        const insJson = await insRes.json()
-        const values: Array<{ value: number; end_time: string }> =
-          insJson.data?.[0]?.values ?? []
-
-        if (values.length > 0) {
-          // Reconstruct absolute counts backwards from current
-          let runningCount = currentFollowers
-          const snapshots: Array<{ profile_id: string; date: string; count: number }> = []
-          for (let i = values.length - 1; i >= 0; i--) {
-            const day = values[i].end_time.slice(0, 10)
-            snapshots.push({ profile_id: profileId, date: day, count: runningCount })
-            runningCount -= values[i].value // subtract today's delta to get yesterday's count
-          }
-          if (snapshots.length > 0) {
-            await adminClient.from('follower_snapshots').upsert(snapshots, { onConflict: 'profile_id,date' })
-          }
-        }
-      }
-    } catch { /* non-blocking — history is nice-to-have */ }
-  }
-
-  // 2. Fetch recent media from Instagram Graph API
-  const mediaUrl = new URL(`https://graph.instagram.com/v21.0/me/media`)
-  mediaUrl.searchParams.set('fields', 'id,caption,media_type,media_url,thumbnail_url,timestamp,permalink,like_count,comments_count')
-  mediaUrl.searchParams.set('limit', '50')
-  mediaUrl.searchParams.set('access_token', ig_access_token)
-
-  let mediaData: IGMedia[] = []
-
-  const mediaRes = await fetch(mediaUrl.toString())
-
-  if (mediaRes.status === 401) {
-    // Token expired — clear it
-    await adminClient
-      .from('profiles')
-      .update({ ig_access_token: null })
-      .eq('id', profileId)
-    return NextResponse.json({ error: 'token_expired' })
-  }
-
-  if (mediaRes.status === 429) {
-    return NextResponse.json({ error: 'rate_limited', warning: 'Instagram API rate limit hit. Try again later.', synced: 0, total: 0, reels: [] })
-  }
-
-  if (!mediaRes.ok) {
-    const errBody = await mediaRes.text()
-    console.error('Instagram media fetch failed:', mediaRes.status, errBody)
-    return NextResponse.json({ error: `Instagram API error: ${mediaRes.status}`, detail: errBody }, { status: 502 })
-  }
-
-  const mediaJson = await mediaRes.json()
-  mediaData = (mediaJson.data ?? []) as IGMedia[]
-
-  // 3. Filter to VIDEO (reels) only
-  const reels = mediaData.filter(m => m.media_type === 'VIDEO')
-  const total = reels.length
-
-  // 4. Fetch insights for each reel
-  const reelsWithInsights: Array<{
-    media: IGMedia
-    plays: number
-    reach: number
-    shares: number
-    saved: number
-  }> = await Promise.all(
-    reels.map(async (media) => {
-      let plays = 0, reach = 0, shares = 0, saved = 0
-      try {
-        const insightUrl = new URL(`https://graph.instagram.com/v21.0/${media.id}/insights`)
-        insightUrl.searchParams.set('metric', 'ig_reels_video_view_total_time,ig_reels_avg_watch_time,reach,saved,shares')
-        insightUrl.searchParams.set('access_token', ig_access_token)
-
-        const insightRes = await fetch(insightUrl.toString())
-        if (insightRes.ok) {
-          const insightJson = await insightRes.json()
-          const insights: IGInsight[] = insightJson.data ?? []
-          let totalTime = 0, avgTime = 0
-          for (const item of insights) {
-            const val = item.value ?? item.values?.[0]?.value ?? 0
-            if (item.name === 'ig_reels_video_view_total_time') totalTime = val
-            else if (item.name === 'ig_reels_avg_watch_time') avgTime = val
-            else if (item.name === 'reach') reach = val
-            else if (item.name === 'shares') shares = val
-            else if (item.name === 'saved') saved = val
-          }
-          // Estimate plays from total/avg watch time; fall back to reach
-          if (totalTime > 0 && avgTime > 0) {
-            plays = Math.round(totalTime / avgTime)
-          } else if (reach > 0) {
-            plays = reach
-          }
-        }
-      } catch {
-        // Insights unavailable — continue with zeros
-      }
-      return { media, plays, reach, shares, saved }
+    const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}` },
+      body: form,
+      signal: AbortSignal.timeout(60_000),
     })
-  )
+    if (!whisperRes.ok) return ''
+    const data = await whisperRes.json() as { text?: string }
+    return (data.text ?? '').trim()
+  } catch {
+    return ''
+  }
+}
 
-  // 5. Check which reel_ids already exist in client_reels
-  const reelIds = reelsWithInsights.map(r => r.media.id)
-  const { data: existingRows } = await adminClient
-    .from('client_reels')
-    .select('reel_id, format_type, transcript, hook')
-    .eq('profile_id', profileId)
-    .in('reel_id', reelIds)
+function extractHook(transcript: string): string {
+  if (!transcript) return ''
+  const match = transcript.match(/^[^.!?]*[.!?]/)
+  const first = match ? match[0].trim() : transcript.slice(0, 200)
+  return first.slice(0, 200)
+}
 
-  const existingIds = new Set((existingRows ?? []).map((r: { reel_id: string }) => r.reel_id))
-  const existingDataMap = new Map(
-    (existingRows ?? []).map((r: { reel_id: string; format_type: string | null; transcript: string | null; hook: string | null }) =>
-      [r.reel_id, { format_type: r.format_type, transcript: r.transcript, hook: r.hook }]
-    )
-  )
+function parseDate(ts: string | number): string | null {
+  if (!ts) return null
+  try {
+    if (typeof ts === 'number') return new Date(ts * 1000).toISOString().slice(0, 10)
+    return new Date(ts).toISOString().slice(0, 10)
+  } catch {
+    return null
+  }
+}
 
-  // 5b. Refresh metrics on existing reels (plays, likes, comments, saves, shares)
-  const existingReels = reelsWithInsights.filter(r => existingIds.has(r.media.id))
-  await Promise.all(
-    existingReels.map(({ media, plays, reach, shares, saved }) =>
-      adminClient
-        .from('client_reels')
-        .update({
-          views: plays,
-          reach,
-          likes: media.like_count ?? 0,
-          comments: media.comments_count ?? 0,
-          saves: saved,
-          shares,
-          thumbnail_url: media.thumbnail_url ?? null,
-          permalink: media.permalink ?? null,
-        })
-        .eq('reel_id', media.id)
-        .eq('profile_id', profileId)
-    )
-  )
+// ── Format classification ─────────────────────────────────────────────────────
 
-  // 5c. Classify existing reels that still have null format_type
-  const existingNeedingClassification = existingReels.filter(r => !existingDataMap.get(r.media.id)?.format_type)
-  if (existingNeedingClassification.length > 0) {
-    const classifyInput = existingNeedingClassification.map(r => {
-      const stored = existingDataMap.get(r.media.id)
-      return {
-        reel_id: r.media.id,
-        transcript: (stored?.transcript || r.media.caption || '').slice(0, 400),
-        hook: stored?.hook || r.media.caption?.slice(0, 100) || '',
-      }
+async function classifyFormats(reels: Array<{ reel_id: string; transcript: string; caption: string }>): Promise<Record<string, string>> {
+  if (!reels.length) return {}
+  const FORMATS = ['talking_head','story_time','tutorial','list','transformation','rant','trend','pov','other']
+  const items = reels.map((r, i) => `${i + 1}. [${r.reel_id}] ${(r.transcript || r.caption).slice(0, 200)}`)
+  try {
+    const msg = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 512,
+      messages: [{
+        role: 'user',
+        content: `Classify each reel into ONE format: ${FORMATS.join(', ')}.\n\n${items.join('\n')}\n\nReply ONLY with JSON: [{"index":1,"format_type":"tutorial"},...]`,
+      }],
     })
+    const text = msg.content[0].type === 'text' ? msg.content[0].text : ''
+    const match = text.match(/\[[\s\S]*\]/)
+    if (!match) return {}
+    const arr = JSON.parse(match[0]) as Array<{ index: number; format_type: string }>
+    return Object.fromEntries(arr.map(c => [reels[c.index - 1]?.reel_id ?? '', c.format_type]))
+  } catch {
+    return {}
+  }
+}
 
-    try {
-      const classifyPrompt = `You are classifying Instagram Reels into content format types.
+// ── Status helper ─────────────────────────────────────────────────────────────
 
-Given these reels (reel_id, transcript snippet, hook), classify each into ONE of these format types:
-- "talking_head" — person speaking directly to camera, no b-roll
-- "story_time" — narrative arc, personal story or experience
-- "tutorial" — step-by-step how-to or educational
-- "list" — numbered tips, "X ways to..." format
-- "transformation" — before/after reveal
-- "rant" — emotional/opinionated monologue
-- "trend" — uses trending audio or format
-- "pov" — point-of-view style framing
-- "documentary" — cinematic, b-roll heavy
-- "other" — doesn't fit above
+async function getStatus(profileId: string) {
+  const [{ data: latest }, { count }] = await Promise.all([
+    adminClient.from('client_reels').select('created_at').eq('profile_id', profileId)
+      .order('created_at', { ascending: false }).limit(1).single(),
+    adminClient.from('client_reels').select('*', { count: 'exact', head: true }).eq('profile_id', profileId),
+  ])
+  return { synced: 0, total: count ?? 0, last_synced: latest?.created_at ?? null }
+}
 
-Return ONLY a JSON object mapping reel_id to format_type, like:
-{"reel_id_1": "tutorial", "reel_id_2": "story_time"}
+// ── GET — status only ─────────────────────────────────────────────────────────
 
-Reels to classify:
-${JSON.stringify(classifyInput, null, 2)}`
+export async function GET(req: NextRequest) {
+  const profileId = new URL(req.url).searchParams.get('profileId')
+  if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
+  return NextResponse.json(await getStatus(profileId))
+}
 
-      const classifyRes = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
-        messages: [{ role: 'user', content: classifyPrompt }],
-      })
+// ── POST — full Apify sync ────────────────────────────────────────────────────
 
-      const rawText = classifyRes.content[0].type === 'text' ? classifyRes.content[0].text : '{}'
-      const jsonText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-      const formatMap: Record<string, string> = JSON.parse(jsonText)
+export async function POST(req: NextRequest) {
+  const body = await req.json().catch(() => ({})) as { profileId?: string }
+  const { profileId } = body
+  if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
 
-      await Promise.all(
-        Object.entries(formatMap).map(([reel_id, format_type]) =>
-          adminClient
-            .from('client_reels')
-            .update({ format_type })
-            .eq('reel_id', reel_id)
-            .eq('profile_id', profileId)
-        )
-      )
-    } catch {
-      // Classification failed — non-blocking
-    }
+  // Get profile
+  const { data: profile } = await adminClient
+    .from('profiles').select('ig_username').eq('id', profileId).single()
+
+  if (!profile?.ig_username) {
+    return NextResponse.json({ error: 'No Instagram username set for this profile.' }, { status: 400 })
   }
 
-  // 6. Process new reels: transcribe + save
-  const newReels = reelsWithInsights.filter(r => !existingIds.has(r.media.id))
-  const savedSummaries: ReelSummary[] = []
+  const igUsername = profile.ig_username.toLowerCase().replace('@', '')
 
-  for (const { media, plays, reach, shares, saved } of newReels) {
-    let transcript = ''
-    let hook = ''
-
-    // Transcribe via Whisper
-    const videoSrc = media.media_url
-    if (videoSrc) {
-      try {
-        const videoRes = await fetch(videoSrc)
-        if (videoRes.ok) {
-          const arrayBuffer = await videoRes.arrayBuffer()
-          const buffer = Buffer.from(arrayBuffer)
-
-          const transcription = await openai.audio.transcriptions.create({
-            file: new File([buffer], 'reel.mp4', { type: 'video/mp4' }),
-            model: 'whisper-1',
-          })
-          transcript = transcription.text ?? ''
-          hook = transcript ? extractHook(transcript) : ''
-        }
-      } catch {
-        // Transcription failed — continue with empty strings
-      }
-    }
-
-    const scraped_week = isoWeek(media.timestamp)
-
-    const { error: insertError } = await adminClient.from('client_reels').insert({
-      profile_id: profileId,
-      reel_id: media.id,
-      date: media.timestamp,
-      scraped_week,
-      views: plays,
-      reach,
-      likes: media.like_count ?? 0,
-      comments: media.comments_count ?? 0,
-      saves: saved,
-      shares,
-      transcript,
-      hook,
-      caption: media.caption ?? '',
-      format_type: null,
-      thumbnail_url: media.thumbnail_url ?? null,
-      permalink: media.permalink ?? null,
-    })
-
-    if (!insertError) {
-      savedSummaries.push({
-        reel_id: media.id,
-        hook: hook || media.caption?.slice(0, 100) || '(no hook)',
-        views: plays,
-        likes: media.like_count ?? 0,
-        date: media.timestamp,
-        format_type: null,
-        is_new: true,
-      })
-    }
+  // ── 1. Apify scrape ──────────────────────────────────────────────────────
+  let reels: ApifyReel[]
+  try {
+    const runId = await apifyStartRun(igUsername)
+    const datasetId = await apifyPollRun(runId)
+    reels = await apifyDownload(datasetId)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Apify error'
+    console.error('[sync] Apify failed:', msg)
+    return NextResponse.json({ error: msg }, { status: 502 })
   }
 
-  // 7. Classify format types for newly saved reels using Claude
-  const reelsToClassify = savedSummaries.filter(r => r.is_new)
-
-  if (reelsToClassify.length > 0) {
-    const transcriptMap: Record<string, string> = {}
-    for (const r of reelsToClassify) {
-      // Retrieve transcript from the reel we just saved (or fall back to caption)
-      const { data: saved_reel } = await adminClient
-        .from('client_reels')
-        .select('transcript')
-        .eq('reel_id', r.reel_id)
-        .eq('profile_id', profileId)
-        .single()
-      const fallbackCaption = newReels.find(n => n.media.id === r.reel_id)?.media.caption ?? ''
-      transcriptMap[r.reel_id] = saved_reel?.transcript || fallbackCaption
-    }
-
-    const classifyInput = reelsToClassify.map(r => ({
-      reel_id: r.reel_id,
-      transcript: (transcriptMap[r.reel_id] ?? '').slice(0, 600),
-      hook: r.hook,
-    }))
-
-    try {
-      const classifyPrompt = `You are classifying Instagram Reels into content format types.
-
-Given these reels (reel_id, transcript snippet, hook), classify each into ONE of these format types:
-- "talking_head" — person speaking directly to camera, no b-roll
-- "story_time" — narrative arc, personal story or experience
-- "tutorial" — step-by-step how-to or educational
-- "list" — numbered tips, "X ways to..." format
-- "transformation" — before/after reveal
-- "rant" — emotional/opinionated monologue
-- "trend" — uses trending audio or format
-- "pov" — point-of-view style framing
-- "documentary" — cinematic, b-roll heavy
-- "other" — doesn't fit above
-
-Return ONLY a JSON object mapping reel_id to format_type, like:
-{"reel_id_1": "tutorial", "reel_id_2": "story_time"}
-
-Reels to classify:
-${JSON.stringify(classifyInput, null, 2)}`
-
-      const classifyRes = await anthropic.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 512,
-        messages: [{ role: 'user', content: classifyPrompt }],
-      })
-
-      const rawText = classifyRes.content[0].type === 'text' ? classifyRes.content[0].text : '{}'
-      const jsonText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
-      const formatMap: Record<string, string> = JSON.parse(jsonText)
-
-      // 8. Update format_type in client_reels
-      await Promise.all(
-        Object.entries(formatMap).map(([reel_id, format_type]) =>
-          adminClient
-            .from('client_reels')
-            .update({ format_type })
-            .eq('reel_id', reel_id)
-            .eq('profile_id', profileId)
-        )
-      )
-
-      // Reflect classifications in our summary
-      for (const summary of savedSummaries) {
-        if (formatMap[summary.reel_id]) {
-          summary.format_type = formatMap[summary.reel_id]
-        }
-      }
-    } catch {
-      // Classification failed — format_type stays null, not a blocking error
-    }
+  if (!reels.length) {
+    return NextResponse.json({ synced: 0, total: 0, message: 'No reels found on this account.' })
   }
 
-  // Also include existing reels in summary (not is_new)
-  const existingSummaries: ReelSummary[] = reelsWithInsights
-    .filter(r => existingIds.has(r.media.id))
-    .map(r => ({
-      reel_id: r.media.id,
-      hook: r.media.caption?.slice(0, 100) || '(existing)',
-      views: r.plays,
-      likes: r.media.like_count ?? 0,
-      date: r.media.timestamp,
-      format_type: null,
-      is_new: false,
-    }))
+  // ── 2. Save follower snapshot ────────────────────────────────────────────
+  const followerCount = reels.reduce((max, r) => Math.max(max, r.follower_count), 0)
+  if (followerCount > 0) {
+    const today = new Date().toISOString().slice(0, 10)
+    await adminClient.from('follower_snapshots').upsert(
+      { profile_id: profileId, date: today, count: followerCount },
+      { onConflict: 'profile_id,date' }
+    )
+    await adminClient.from('profiles').update({ followers_count: followerCount }).eq('id', profileId)
+  }
+
+  // ── 3. Find new reels ────────────────────────────────────────────────────
+  const reelIds = reels.map(r => r.reel_id).filter(Boolean)
+  const { data: existing } = await adminClient
+    .from('client_reels').select('reel_id').eq('profile_id', profileId).in('reel_id', reelIds)
+
+  const existingSet = new Set((existing ?? []).map((r: { reel_id: string }) => r.reel_id))
+  const newReels = reels.filter(r => r.reel_id && !existingSet.has(r.reel_id))
+
+  // Refresh metrics on existing reels
+  const updatedReels = reels.filter(r => existingSet.has(r.reel_id))
+  await Promise.allSettled(updatedReels.map(r =>
+    adminClient.from('client_reels').update({
+      views: r.views, likes: r.likes, comments: r.comments,
+      thumbnail_url: r.thumbnail_url || null,
+    }).eq('reel_id', r.reel_id).eq('profile_id', profileId)
+  ))
+
+  if (!newReels.length) {
+    return NextResponse.json({ synced: 0, total: reels.length, message: 'All reels already synced.' })
+  }
+
+  // ── 4. Transcribe new reels in parallel (max 5 at a time) ───────────────
+  const BATCH = 5
+  for (let i = 0; i < newReels.length; i += BATCH) {
+    await Promise.all(
+      newReels.slice(i, i + BATCH).map(async (r) => {
+        r.caption = r.caption || '' // ensure string
+        const transcript = await transcribeReel(r.video_url)
+        ;(r as ApifyReel & { transcript?: string; hook?: string }).transcript = transcript
+        ;(r as ApifyReel & { hook?: string }).hook = extractHook(transcript)
+      })
+    )
+  }
+
+  // ── 5. Classify format types ─────────────────────────────────────────────
+  const toClassify = newReels.map(r => ({
+    reel_id: r.reel_id,
+    transcript: (r as ApifyReel & { transcript?: string }).transcript ?? '',
+    caption: r.caption,
+  }))
+  const formatMap = await classifyFormats(toClassify)
+
+  // ── 6. Insert new reels ──────────────────────────────────────────────────
+  const today = new Date().toISOString().slice(0, 10)
+  const rows = newReels.map(r => {
+    const ext = r as ApifyReel & { transcript?: string; hook?: string }
+    return {
+      profile_id:    profileId,
+      reel_id:       r.reel_id,
+      scraped_week:  today,
+      date:          parseDate(r.timestamp),
+      views:         r.views,
+      likes:         r.likes,
+      comments:      r.comments,
+      caption:       r.caption,
+      duration_sec:  r.duration_sec || null,
+      transcript:    ext.transcript ?? '',
+      hook:          ext.hook ?? '',
+      format_type:   formatMap[r.reel_id] ?? null,
+      thumbnail_url: r.thumbnail_url || null,
+      permalink:     r.url || null,
+    }
+  })
+
+  const { error: insertErr } = await adminClient.from('client_reels').insert(rows)
+  if (insertErr) {
+    console.error('[sync] Insert error:', insertErr.message)
+    return NextResponse.json({ error: insertErr.message }, { status: 500 })
+  }
 
   return NextResponse.json({
-    synced: savedSummaries.length,
-    total,
-    classified: existingNeedingClassification.length,
-    reels: [...savedSummaries, ...existingSummaries],
+    synced: rows.length,
+    total: reels.length,
+    followers: followerCount || null,
   })
 }
