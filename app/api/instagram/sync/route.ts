@@ -287,7 +287,32 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 2. Save follower snapshot ────────────────────────────────────────────
-  const followerCount = reels.reduce((max, r) => Math.max(max, r.follower_count), 0)
+  let followerCount = reels.reduce((max, r) => Math.max(max, r.follower_count), 0)
+
+  // Fallback: if reel scraper didn't include follower count, hit the profile scraper directly
+  if (followerCount === 0) {
+    try {
+      const token = process.env.APIFY_API_TOKEN!
+      const profileRes = await fetch(
+        `${APIFY_BASE}/acts/apify~instagram-profile-scraper/run-sync-get-dataset-items?token=${token}&timeout=30`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usernames: [igUsername], resultsLimit: 1 }),
+          signal: AbortSignal.timeout(35_000),
+        }
+      )
+      if (profileRes.ok) {
+        const profiles = await profileRes.json() as Array<Record<string, unknown>>
+        if (profiles[0]) {
+          followerCount = Number(
+            profiles[0].followersCount ?? profiles[0].followerCount ?? profiles[0].followers ?? 0
+          )
+        }
+      }
+    } catch { /* silent — don't block sync */ }
+  }
+
   if (followerCount > 0) {
     const today = new Date().toISOString().slice(0, 10)
     await adminClient.from('follower_snapshots').upsert(

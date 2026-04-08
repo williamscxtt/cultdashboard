@@ -5,12 +5,19 @@ import { createClient } from '@/lib/supabase'
 import { Button } from '@/components/ui'
 import { Zap } from 'lucide-react'
 
+type Mode = 'login' | 'signup' | 'forgot'
+
 export default function LoginPage() {
+  const [mode, setMode] = useState<Mode>('login')
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  const reset = (m: Mode) => { setMode(m); setError(''); setSuccess('') }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -19,6 +26,45 @@ export default function LoginPage() {
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) { setError(error.message); setLoading(false) }
     else router.push('/dashboard')
+  }
+
+  async function handleSignup(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true); setError('')
+    const supabase = createClient()
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { name } },
+    })
+    if (error) { setError(error.message); setLoading(false); return }
+
+    // Create profile row via server
+    if (data.session) {
+      // Immediately signed in (email confirmation disabled)
+      await fetch('/api/auth/create-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name }),
+      })
+      router.push('/onboarding')
+    } else {
+      // Email confirmation required
+      setSuccess("Account created — check your email to confirm, then come back and log in.")
+      setLoading(false)
+    }
+  }
+
+  async function handleForgot(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true); setError('')
+    const supabase = createClient()
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    })
+    if (error) { setError(error.message); setLoading(false); return }
+    setSuccess('Password reset email sent — check your inbox.')
+    setLoading(false)
   }
 
   const features = [
@@ -38,7 +84,6 @@ export default function LoginPage() {
         display: 'flex', flexDirection: 'column',
         justifyContent: 'center', padding: '0 52px',
       }}>
-        {/* Logo */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36 }}>
           <div style={{
             width: 36, height: 36, borderRadius: 10,
@@ -86,74 +131,144 @@ export default function LoginPage() {
         padding: '0 32px',
       }}>
         <div style={{ width: '100%', maxWidth: 380 }}>
-          <h1 style={{
-            fontSize: 22, fontWeight: 800, color: 'var(--foreground)',
-            marginBottom: 4, letterSpacing: '-0.4px',
-          }}>
-            Welcome back
-          </h1>
-          <p style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 28 }}>
-            Sign in to your dashboard
-          </p>
 
-          <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <div>
-              <label style={{
-                display: 'block', fontSize: 12, fontWeight: 600,
-                color: 'var(--foreground)', marginBottom: 6,
-              }}>
-                Email address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-              />
-            </div>
-            <div>
-              <label style={{
-                display: 'block', fontSize: 12, fontWeight: 600,
-                color: 'var(--foreground)', marginBottom: 6,
-              }}>
-                Password
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-              />
-            </div>
+          {/* ── Login ── */}
+          {mode === 'login' && (
+            <>
+              <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', marginBottom: 4, letterSpacing: '-0.4px' }}>
+                Welcome back
+              </h1>
+              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 28 }}>
+                Sign in to your dashboard
+              </p>
 
-            {error && (
-              <div style={{
-                background: 'hsl(0 50% 96%)',
-                border: '1px solid hsl(0 70% 88%)',
-                borderRadius: 8, padding: '10px 14px',
-                fontSize: 13, color: 'hsl(0 72% 45%)',
-              }}>
-                {error}
-              </div>
-            )}
+              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Email address</label>
+                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
+                </div>
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>Password</label>
+                    <button type="button" onClick={() => reset('forgot')} style={{ fontSize: 12, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      Forgot password?
+                    </button>
+                  </div>
+                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
+                </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              disabled={loading}
-              style={{ width: '100%', marginTop: 4, height: 44, fontSize: 14 }}
-            >
-              {loading ? 'Signing in…' : 'Sign in →'}
-            </Button>
-          </form>
+                {error && <ErrorBox>{error}</ErrorBox>}
 
-          <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--muted-foreground)', marginTop: 24 }}>
-            No access? Contact Will.
-          </p>
+                <Button type="submit" variant="primary" disabled={loading} style={{ width: '100%', marginTop: 4, height: 44, fontSize: 14 }}>
+                  {loading ? 'Signing in…' : 'Sign in →'}
+                </Button>
+              </form>
+
+              <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted-foreground)', marginTop: 24 }}>
+                Don&apos;t have an account?{' '}
+                <button onClick={() => reset('signup')} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
+                  Sign up
+                </button>
+              </p>
+            </>
+          )}
+
+          {/* ── Sign up ── */}
+          {mode === 'signup' && (
+            <>
+              <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', marginBottom: 4, letterSpacing: '-0.4px' }}>
+                Create your account
+              </h1>
+              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 28 }}>
+                Join Creator Cult and start growing.
+              </p>
+
+              {success ? (
+                <SuccessBox>{success}</SuccessBox>
+              ) : (
+                <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Full name</label>
+                    <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Will Scott" required />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Email address</label>
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Password</label>
+                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" minLength={8} required />
+                  </div>
+
+                  {error && <ErrorBox>{error}</ErrorBox>}
+
+                  <Button type="submit" variant="primary" disabled={loading} style={{ width: '100%', marginTop: 4, height: 44, fontSize: 14 }}>
+                    {loading ? 'Creating account…' : 'Create account →'}
+                  </Button>
+                </form>
+              )}
+
+              <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted-foreground)', marginTop: 24 }}>
+                Already have an account?{' '}
+                <button onClick={() => reset('login')} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
+                  Sign in
+                </button>
+              </p>
+            </>
+          )}
+
+          {/* ── Forgot password ── */}
+          {mode === 'forgot' && (
+            <>
+              <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', marginBottom: 4, letterSpacing: '-0.4px' }}>
+                Reset your password
+              </h1>
+              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 28 }}>
+                Enter your email and we&apos;ll send you a reset link.
+              </p>
+
+              {success ? (
+                <SuccessBox>{success}</SuccessBox>
+              ) : (
+                <form onSubmit={handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Email address</label>
+                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
+                  </div>
+
+                  {error && <ErrorBox>{error}</ErrorBox>}
+
+                  <Button type="submit" variant="primary" disabled={loading} style={{ width: '100%', marginTop: 4, height: 44, fontSize: 14 }}>
+                    {loading ? 'Sending…' : 'Send reset link →'}
+                  </Button>
+                </form>
+              )}
+
+              <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted-foreground)', marginTop: 24 }}>
+                <button onClick={() => reset('login')} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
+                  ← Back to sign in
+                </button>
+              </p>
+            </>
+          )}
         </div>
       </div>
+    </div>
+  )
+}
+
+function ErrorBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ background: 'hsl(0 50% 96%)', border: '1px solid hsl(0 70% 88%)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'hsl(0 72% 45%)' }}>
+      {children}
+    </div>
+  )
+}
+
+function SuccessBox({ children }: { children: React.ReactNode }) {
+  return (
+    <div style={{ background: 'hsl(142 50% 96%)', border: '1px solid hsl(142 60% 80%)', borderRadius: 8, padding: '12px 16px', fontSize: 13, color: 'hsl(142 72% 28%)', lineHeight: 1.5 }}>
+      {children}
     </div>
   )
 }

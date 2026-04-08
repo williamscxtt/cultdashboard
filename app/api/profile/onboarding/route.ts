@@ -29,23 +29,34 @@ export async function POST(req: NextRequest) {
     // Extract named profile columns from payload
     const { intro_structured, ...profileFields } = body
 
-    const ALLOWED = [
+    const ALLOWED_STR = [
       'name', 'niche', 'bio', 'target_audience', 'monthly_revenue', 'revenue_goal',
       'posts_per_week', 'content_pillars', 'ninety_day_goal', 'biggest_challenge',
       'why_joined', 'dm_goal', 'coaching_phase', 'focus_this_week', 'dashboard_bio',
+      'ig_username',
     ]
 
     const updates: Record<string, unknown> = {}
-    for (const key of ALLOWED) {
+    for (const key of ALLOWED_STR) {
       if (!(key in profileFields)) continue
       const val = profileFields[key]
       if (key === 'posts_per_week') {
         updates[key] = val !== '' && val !== null ? (Number(val) || null) : null
       } else if (key === 'content_pillars') {
         updates[key] = Array.isArray(val) && val.length > 0 ? val : null
+      } else if (key === 'ig_username') {
+        // Strip @ prefix and lowercase
+        updates[key] = typeof val === 'string' && val.trim() !== ''
+          ? val.trim().replace(/^@/, '').toLowerCase()
+          : null
       } else {
         updates[key] = typeof val === 'string' && val.trim() !== '' ? val.trim() : null
       }
+    }
+
+    // Boolean flag — mark onboarding complete
+    if ('onboarding_completed' in profileFields) {
+      updates.onboarding_completed = Boolean(profileFields.onboarding_completed)
     }
 
     // Always store full intro_structured
