@@ -15,6 +15,7 @@ interface Props {
   profileId?: string
   contentAnalysisUnlocksAt?: string | null
   commentAnalysisUnlocksAt?: string | null
+  cachedCommentAnalysis?: Record<string, unknown> | null
 }
 
 interface CommentQuestion {
@@ -322,13 +323,16 @@ function CommentAnalysisPanel({ analysis }: { analysis: CommentAnalysis }) {
   )
 }
 
-export default function ContentDashboard({ report, reels, profileId, contentAnalysisUnlocksAt, commentAnalysisUnlocksAt }: Props) {
+export default function ContentDashboard({ report, reels, profileId, contentAnalysisUnlocksAt, commentAnalysisUnlocksAt, cachedCommentAnalysis }: Props) {
   const [reportExpanded, setReportExpanded] = useState(false)
   const [analysing, setAnalysing] = useState(false)
   const [contentAnalysis, setContentAnalysis] = useState<ContentAnalysis | null>(null)
   const [analysisUnlocksAt, setAnalysisUnlocksAt] = useState<string | null>(contentAnalysisUnlocksAt ?? null)
   const [commentAnalysing, setCommentAnalysing] = useState(false)
-  const [commentAnalysis, setCommentAnalysis] = useState<CommentAnalysis | null>(null)
+  // Initialise from server-side cached analysis so it persists across refreshes
+  const [commentAnalysis, setCommentAnalysis] = useState<CommentAnalysis | null>(
+    (cachedCommentAnalysis as CommentAnalysis | null) ?? null
+  )
   const [commentUnlocksAt, setCommentUnlocksAt] = useState<string | null>(commentAnalysisUnlocksAt ?? null)
   const [commentError, setCommentError] = useState<string | null>(null)
 

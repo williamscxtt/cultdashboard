@@ -15,28 +15,28 @@ import { useState } from 'react'
 // ─── nav definitions ──────────────────────────────────────────────────────────
 
 const mainNav = [
-  { href: '/dashboard/onboarding',  label: 'Onboarding Hub', icon: ClipboardList },
-  { href: '/dashboard/analytics',   label: 'Dashboard',      icon: BarChart2 },
-  { href: '/dashboard/content',     label: 'Content',        icon: Lightbulb },
-  { href: '/dashboard/scripts',     label: 'Scripts',        icon: FileText },
-  { href: '/dashboard/weekly-log',  label: 'Weekly Log',     icon: ListChecks },
-  { href: '/dashboard/dm-sales',    label: 'DM Sales',       icon: PhoneCall },
-  { href: '/dashboard/outreach',    label: 'Outreach',       icon: Send },
-  { href: '/dashboard/calendar',    label: 'Calendar',       icon: Calendar },
-  { href: '/dashboard/ai',          label: 'Ask Will AI',    icon: MessageSquare },
+  { href: '/dashboard/analytics',   label: 'Dashboard',        icon: BarChart2 },
+  { href: '/dashboard/scripts',     label: 'This Week',        icon: Zap },
+  { href: '/dashboard/content',     label: 'Content Intel',    icon: Lightbulb },
+  { href: '/dashboard/weekly-log',  label: 'Weekly Log',       icon: ListChecks },
+  { href: '/dashboard/dm-sales',    label: 'DM Sales',         icon: PhoneCall },
+  { href: '/dashboard/ai',          label: 'Ask Will AI',      icon: MessageSquare },
 ]
 
 const toolsNav = [
-  { href: '/dashboard/reel-copy',     label: 'Reel Copy Tool', icon: Copy },
-  { href: '/dashboard/profile-audit', label: 'Profile Audit',  icon: Search },
-  { href: '/dashboard/settings',      label: 'Settings',       icon: Settings },
+  { href: '/dashboard/outreach',    label: 'Outreach',         icon: Send },
+  { href: '/dashboard/calendar',    label: 'Content Calendar', icon: Calendar },
+  { href: '/dashboard/reel-copy',   label: 'Reel Analyser',    icon: Copy },
+  { href: '/dashboard/profile-audit', label: 'Profile Audit', icon: Search },
+  { href: '/dashboard/onboarding',  label: 'Onboarding Hub',   icon: ClipboardList },
+  { href: '/dashboard/settings',    label: 'Settings',         icon: Settings },
 ]
 
 const adminNav = [
-  { href: '/dashboard/clients',   label: 'Clients',          icon: Users },
-  { href: '/dashboard/intel',     label: 'Intel',            icon: Globe },
-  { href: '/dashboard/knowledge', label: 'Knowledge Base',   icon: BookOpen },
-  { href: '/dashboard/reports',   label: 'Progress Reports', icon: TrendingUp },
+  { href: '/dashboard/clients',   label: 'Clients',            icon: Users },
+  { href: '/dashboard/reports',   label: 'Progress Reports',   icon: TrendingUp },
+  { href: '/dashboard/intel',     label: 'Global Intel',       icon: Globe },
+  { href: '/dashboard/knowledge', label: 'Knowledge Base',     icon: BookOpen },
 ]
 
 // ─── props ────────────────────────────────────────────────────────────────────

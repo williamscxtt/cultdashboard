@@ -35,15 +35,19 @@ export default async function ContentPage() {
       .order('date', { ascending: false })
       .limit(200),
 
-    // Profile for content analysis lock status
+    // Profile for content analysis lock status + cached comment analysis
     adminClient
       .from('profiles')
-      .select('content_analysis_unlocks_at, comment_analysis_unlocks_at')
+      .select('content_analysis_unlocks_at, comment_analysis_unlocks_at, comment_analysis_json')
       .eq('id', profileId)
       .single(),
   ])
 
-  const pd = profileData as { content_analysis_unlocks_at?: string | null; comment_analysis_unlocks_at?: string | null } | null
+  const pd = profileData as {
+    content_analysis_unlocks_at?: string | null
+    comment_analysis_unlocks_at?: string | null
+    comment_analysis_json?: Record<string, unknown> | null
+  } | null
 
   return (
     <ContentDashboard
@@ -52,6 +56,7 @@ export default async function ContentPage() {
       profileId={profileId}
       contentAnalysisUnlocksAt={pd?.content_analysis_unlocks_at ?? null}
       commentAnalysisUnlocksAt={pd?.comment_analysis_unlocks_at ?? null}
+      cachedCommentAnalysis={pd?.comment_analysis_json ?? null}
     />
   )
 }

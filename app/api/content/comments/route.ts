@@ -24,14 +24,19 @@ export async function GET(req: NextRequest) {
 
   const { data: profile } = await adminClient
     .from('profiles')
-    .select('comment_analysis_unlocks_at')
+    .select('comment_analysis_unlocks_at, comment_analysis_json')
     .eq('id', profileId)
     .single()
 
   const unlocksAt: string | null = profile?.comment_analysis_unlocks_at ?? null
   const available = !unlocksAt || new Date(unlocksAt) <= new Date()
 
-  return NextResponse.json({ available, unlocks_at: unlocksAt })
+  return NextResponse.json({
+    available,
+    unlocks_at: unlocksAt,
+    // Return cached analysis so the UI can restore it on page load
+    analysis: profile?.comment_analysis_json ?? null,
+  })
 }
 
 export async function POST(req: NextRequest) {
@@ -118,12 +123,15 @@ Return ONLY valid JSON:
     if (!match) return NextResponse.json({ error: 'Analysis parse failed' }, { status: 500 })
     const analysis = JSON.parse(match[0])
 
-    // Set lock: 7 days from now
+    // Set lock: 7 days from now + persist analysis so it survives page refresh
     const nextUnlock = new Date()
     nextUnlock.setDate(nextUnlock.getDate() + 7)
     await adminClient
       .from('profiles')
-      .update({ comment_analysis_unlocks_at: nextUnlock.toISOString() })
+      .update({
+        comment_analysis_unlocks_at: nextUnlock.toISOString(),
+        comment_analysis_json: analysis,
+      })
       .eq('id', profileId)
 
     return NextResponse.json({ analysis, unlocks_at: nextUnlock.toISOString() })
