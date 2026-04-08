@@ -560,8 +560,7 @@ export async function POST(req: NextRequest) {
       trending_topics: trendingTopics.slice(0, 10),
       top_hooks: topHooks,
     }, { onConflict: 'week_start' })
-    .then(() => {})
-    .catch(() => {})
+    .then(() => {}, () => {})
 
   return NextResponse.json({
     ok: true,
