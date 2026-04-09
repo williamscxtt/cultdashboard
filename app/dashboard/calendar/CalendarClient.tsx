@@ -1,12 +1,19 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { PageHeader, Button, Card, EmptyState } from '@/components/ui'
-import { Calendar, Copy, Check, List, LayoutGrid, ChevronLeft, ChevronRight, ExternalLink, Eye, Heart } from 'lucide-react'
+import { Calendar, Copy, Check, List, LayoutGrid, ChevronLeft, ChevronRight, ExternalLink, Eye, Heart, Pencil, Trash2, Plus, X } from 'lucide-react'
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const FORMAT_OPTIONS = ['RAW STORY', 'LISTICLE', 'COMPARISON', 'TUTORIAL', 'POV', 'TRANSFORMATION', 'MYTH BUST', 'BEHIND SCENES', 'TESTIMONIAL', 'HOT TAKE']
+const CTA_OPTIONS = ['DM CULT', 'Comment AUDIT', 'Follow for more', 'Link in bio']
+const DAY_HEADERS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 interface PlannedEntry {
+  id: string
   date: string
   day: string
   format: string
@@ -14,11 +21,12 @@ interface PlannedEntry {
   angle: string
   cta: string
   pillar: string
+  source?: 'ai' | 'user'
 }
 
 interface PostedReel {
   reel_id: string
-  date: string           // YYYY-MM-DD
+  date: string
   caption: string | null
   thumbnail_url: string | null
   views: number | null
@@ -52,6 +60,11 @@ function fmtNum(n: number | null | undefined): string {
   return String(n)
 }
 
+function getDayName(dateStr: string): string {
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d).toLocaleString('en-US', { weekday: 'long' })
+}
+
 interface WeekRow { days: (Date | null)[] }
 
 function getMonthDays(date: Date): WeekRow[] {
@@ -73,8 +86,6 @@ function getMonthDays(date: Date): WeekRow[] {
   }
   return weeks
 }
-
-const DAY_HEADERS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
 // ─── Format badge ─────────────────────────────────────────────────────────────
 
@@ -117,9 +128,167 @@ function CopyButton({ text }: { text: string }) {
   )
 }
 
+// ─── Edit modal ───────────────────────────────────────────────────────────────
+
+interface EditModalProps {
+  entry: PlannedEntry | null  // null = new entry
+  date: string
+  dayName: string
+  onSave: (entry: Partial<PlannedEntry> & { date: string; day: string }) => void
+  onClose: () => void
+  saving: boolean
+}
+
+function EditModal({ entry, date, dayName, onSave, onClose, saving }: EditModalProps) {
+  const [hook, setHook] = useState(entry?.hook ?? '')
+  const [format, setFormat] = useState(entry?.format ?? 'RAW STORY')
+  const [angle, setAngle] = useState(entry?.angle ?? '')
+  const [cta, setCta] = useState(entry?.cta ?? 'DM CULT')
+  const [pillar, setPillar] = useState(entry?.pillar ?? '')
+  const backdropRef = useRef<HTMLDivElement>(null)
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!hook.trim()) return
+    onSave({
+      ...(entry ? { id: entry.id } : {}),
+      date,
+      day: dayName,
+      hook: hook.trim(),
+      format,
+      angle: angle.trim(),
+      cta,
+      pillar: pillar.trim(),
+      source: 'user',
+    })
+  }
+
+  function handleBackdrop(e: React.MouseEvent) {
+    if (e.target === backdropRef.current) onClose()
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', background: 'var(--background)',
+    border: '1px solid var(--border)', borderRadius: 6,
+    padding: '8px 10px', fontSize: 13, color: 'var(--foreground)',
+    fontFamily: 'inherit', outline: 'none', boxSizing: 'border-box',
+  }
+  const labelStyle: React.CSSProperties = {
+    fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)',
+    textTransform: 'uppercase', letterSpacing: '0.06em', display: 'block', marginBottom: 5,
+  }
+
+  return (
+    <div
+      ref={backdropRef}
+      onClick={handleBackdrop}
+      style={{
+        position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+        zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: 16,
+      }}
+    >
+      <div style={{
+        background: 'var(--card)', border: '1px solid var(--border)',
+        borderRadius: 14, padding: 24, width: '100%', maxWidth: 520,
+        maxHeight: '90vh', overflowY: 'auto', position: 'relative',
+      }}>
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)' }}>
+              {entry ? 'Edit idea' : 'Add your own idea'}
+            </div>
+            <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>
+              {dayName}, {date}
+            </div>
+          </div>
+          <button onClick={onClose} style={{
+            background: 'var(--muted)', border: 'none', cursor: 'pointer',
+            borderRadius: 8, padding: '6px 8px', display: 'flex', alignItems: 'center',
+            color: 'var(--muted-foreground)',
+          }}>
+            <X size={15} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {/* Hook */}
+          <div>
+            <label style={labelStyle}>Hook *</label>
+            <textarea
+              value={hook}
+              onChange={e => setHook(e.target.value)}
+              placeholder="The opening line that stops the scroll..."
+              rows={3}
+              required
+              style={{ ...inputStyle, resize: 'vertical' }}
+            />
+          </div>
+
+          {/* Format + CTA row */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <div>
+              <label style={labelStyle}>Format</label>
+              <select value={format} onChange={e => setFormat(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+                {FORMAT_OPTIONS.map(f => <option key={f} value={f}>{f}</option>)}
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>CTA</label>
+              <select value={cta} onChange={e => setCta(e.target.value)} style={{ ...inputStyle, cursor: 'pointer' }}>
+                {CTA_OPTIONS.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+
+          {/* Angle */}
+          <div>
+            <label style={labelStyle}>Angle / Content brief</label>
+            <textarea
+              value={angle}
+              onChange={e => setAngle(e.target.value)}
+              placeholder="What's the story, key point, or structure of this video?"
+              rows={2}
+              style={{ ...inputStyle, resize: 'vertical' }}
+            />
+          </div>
+
+          {/* Pillar */}
+          <div>
+            <label style={labelStyle}>Content pillar</label>
+            <input
+              type="text"
+              value={pillar}
+              onChange={e => setPillar(e.target.value)}
+              placeholder="e.g. Client results, Mindset, Behind the scenes..."
+              style={inputStyle}
+            />
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', paddingTop: 4 }}>
+            <Button type="button" variant="secondary" onClick={onClose} disabled={saving}>Cancel</Button>
+            <Button type="submit" variant="primary" disabled={saving || !hook.trim()}>
+              {saving ? 'Saving…' : entry ? 'Save changes' : 'Add to calendar'}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ─── Detail panels ────────────────────────────────────────────────────────────
 
-function PlannedDetail({ entry, onClose }: { entry: PlannedEntry; onClose: () => void }) {
+function PlannedDetail({
+  entry, onClose, onEdit, onDelete
+}: {
+  entry: PlannedEntry
+  onClose: () => void
+  onEdit: (e: PlannedEntry) => void
+  onDelete: (id: string) => void
+}) {
   return (
     <div style={{
       background: 'var(--card)', border: '1px solid var(--border)',
@@ -133,17 +302,40 @@ function PlannedDetail({ entry, onClose }: { entry: PlannedEntry; onClose: () =>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
         <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted-foreground)' }}>{entry.day}, {entry.date}</span>
         <FormatBadge format={entry.format} />
-        <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'var(--muted)', color: 'var(--muted-foreground)' }}>{entry.pillar}</span>
+        {entry.pillar && (
+          <span style={{ fontSize: 11, fontWeight: 600, padding: '2px 8px', borderRadius: 999, background: 'var(--muted)', color: 'var(--muted-foreground)' }}>{entry.pillar}</span>
+        )}
+        {entry.source === 'user' && (
+          <span style={{ fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 999, background: 'hsl(250 80% 96%)', color: 'hsl(250 60% 50%)' }}>✏ Your idea</span>
+        )}
       </div>
       <div style={{ marginBottom: 12 }}>
         <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Hook</div>
         <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1.4 }}>{entry.hook}</div>
       </div>
-      <div style={{ marginBottom: 16 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Angle</div>
-        <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5 }}>{entry.angle}</div>
+      {entry.angle && (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Angle</div>
+          <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5 }}>{entry.angle}</div>
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+        <CopyButton text={entry.hook} />
+        <Button variant="secondary" size="sm" onClick={() => onEdit(entry)} style={{ gap: 6 }}>
+          <Pencil size={12} /> Edit
+        </Button>
+        <button
+          onClick={() => onDelete(entry.id)}
+          style={{
+            background: 'transparent', border: '1px solid hsl(0 72% 51% / 0.3)',
+            borderRadius: 6, padding: '4px 10px', cursor: 'pointer',
+            color: 'hsl(0 72% 51%)', fontSize: 12, fontWeight: 600,
+            display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'inherit',
+          }}
+        >
+          <Trash2 size={12} /> Delete
+        </button>
       </div>
-      <CopyButton text={entry.hook} />
     </div>
   )
 }
@@ -161,23 +353,13 @@ function PostedDetail({ reel, onClose }: { reel: PostedReel; onClose: () => void
       }}>×</button>
       <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
         {reel.thumbnail_url && (
-          <img
-            src={reel.thumbnail_url}
-            alt="Reel thumbnail"
-            style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }}
-          />
+          <img src={reel.thumbnail_url} alt="Reel thumbnail" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
         )}
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{
-              fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999,
-              background: 'hsl(142 50% 95%)', color: 'hsl(142 71% 35%)',
-            }}>✓ Posted {reel.date}</span>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'hsl(142 50% 95%)', color: 'hsl(142 71% 35%)' }}>✓ Posted {reel.date}</span>
             {reel.permalink && (
-              <a href={reel.permalink} target="_blank" rel="noopener noreferrer" style={{
-                display: 'inline-flex', alignItems: 'center', gap: 4,
-                fontSize: 11, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none',
-              }}>
+              <a href={reel.permalink} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>
                 <ExternalLink size={11} /> View on Instagram
               </a>
             )}
@@ -221,12 +403,14 @@ export default function CalendarClient({ profileId, reels }: Props) {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [postsPerWeek, setPostsPerWeek] = useState(5)
   const [error, setError] = useState('')
+  const [hoveredDate, setHoveredDate] = useState<string | null>(null)
+  const [editModal, setEditModal] = useState<{ entry: PlannedEntry | null; date: string; dayName: string } | null>(null)
+  const [saving, setSaving] = useState(false)
 
-  // Build lookup maps
+  // Lookup maps
   const plannedByDate: Record<string, PlannedEntry> = {}
   planned.forEach(e => { plannedByDate[e.date] = e })
 
-  // Group reels by date — keep the one with most views if multiple same day
   const reelsByDate: Record<string, PostedReel> = {}
   reels.forEach(r => {
     if (!r.date) return
@@ -271,16 +455,83 @@ export default function CalendarClient({ profileId, reels }: Props) {
     }
   }
 
+  // ── PATCH: add or update an entry ─────────────────────────────────────────
+  async function handleSave(entry: Partial<PlannedEntry> & { date: string; day: string }) {
+    setSaving(true)
+    // Optimistic update
+    const isNew = !entry.id || !planned.some(p => p.id === entry.id)
+    const newEntry: PlannedEntry = {
+      id: entry.id || Math.random().toString(36).slice(2),
+      date: entry.date,
+      day: entry.day,
+      format: entry.format ?? 'RAW STORY',
+      hook: entry.hook ?? '',
+      angle: entry.angle ?? '',
+      cta: entry.cta ?? 'DM CULT',
+      pillar: entry.pillar ?? '',
+      source: (entry.source ?? 'user') as 'ai' | 'user',
+    }
+    if (isNew) {
+      setPlanned(prev => [...prev, newEntry].sort((a, b) => a.date.localeCompare(b.date)))
+    } else {
+      setPlanned(prev => prev.map(p => p.id === newEntry.id ? newEntry : p))
+    }
+    // Update selected detail if editing what's open
+    if (selected?.type === 'planned' && selected.entry.id === newEntry.id) {
+      setSelected({ type: 'planned', entry: newEntry })
+    }
+    setEditModal(null)
+
+    try {
+      const res = await fetch('/api/generate-calendar', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId, month: toMonthParam(currentMonth), entry: newEntry }),
+      })
+      const data = await res.json()
+      if (Array.isArray(data.entries)) setPlanned(data.entries)
+    } catch {
+      // keep optimistic state
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // ── DELETE an entry ────────────────────────────────────────────────────────
+  async function handleDelete(entryId: string) {
+    // Optimistic update
+    setPlanned(prev => prev.filter(p => p.id !== entryId))
+    if (selected?.type === 'planned' && selected.entry.id === entryId) setSelected(null)
+
+    try {
+      const res = await fetch('/api/generate-calendar', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId, month: toMonthParam(currentMonth), entryId }),
+      })
+      const data = await res.json()
+      if (Array.isArray(data.entries)) setPlanned(data.entries)
+    } catch {
+      // keep optimistic state
+    }
+  }
+
+  function openEdit(entry: PlannedEntry) {
+    setEditModal({ entry, date: entry.date, dayName: entry.day || getDayName(entry.date) })
+  }
+
+  function openAdd(dateStr: string) {
+    setEditModal({ entry: null, date: dateStr, dayName: getDayName(dateStr) })
+  }
+
   function prevMonth() { setCurrentMonth(d => new Date(d.getFullYear(), d.getMonth() - 1, 1)) }
   function nextMonth() { setCurrentMonth(d => new Date(d.getFullYear(), d.getMonth() + 1, 1)) }
 
   const today = toISODate(new Date())
   const weeks = getMonthDays(currentMonth)
 
-  // For list view: merge posted reels + planned entries, sorted by date
   const monthStr = toMonthParam(currentMonth)
   const monthReels = reels.filter(r => r.date?.startsWith(monthStr))
-  const postedDates = new Set(monthReels.map(r => r.date))
   const allDates = new Set([...Object.keys(plannedByDate), ...monthReels.map(r => r.date)])
   const listItems = [...allDates].sort().map(date => ({
     date,
@@ -298,11 +549,7 @@ export default function CalendarClient({ profileId, reels }: Props) {
       {/* Controls */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
         {/* Month nav */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 4,
-          background: 'var(--card)', border: '1px solid var(--border)',
-          borderRadius: 8, padding: '0 4px', height: 38,
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8, padding: '0 4px', height: 38 }}>
           <button onClick={prevMonth} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)', padding: '6px 8px', display: 'flex', alignItems: 'center', borderRadius: 6 }} aria-label="Previous month">
             <ChevronLeft size={16} />
           </button>
@@ -336,6 +583,11 @@ export default function CalendarClient({ profileId, reels }: Props) {
           )}
         </Button>
 
+        {/* Add manual idea */}
+        <Button variant="secondary" onClick={() => openAdd(today >= monthStr + '-01' && today <= monthStr + '-31' ? today : monthStr + '-01')} style={{ gap: 6 }}>
+          <Plus size={14} /> Add idea
+        </Button>
+
         {/* View toggle */}
         <div style={{ display: 'flex', gap: 2, marginLeft: 'auto', background: 'var(--muted)', borderRadius: 8, padding: 3 }}>
           {(['grid', 'list'] as const).map(v => (
@@ -362,7 +614,11 @@ export default function CalendarClient({ profileId, reels }: Props) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted-foreground)' }}>
           <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block' }} />
-          Planned
+          AI planned
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted-foreground)' }}>
+          <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'hsl(250 60% 55%)', display: 'inline-block' }} />
+          Your idea
         </div>
       </div>
 
@@ -372,7 +628,15 @@ export default function CalendarClient({ profileId, reels }: Props) {
         </div>
       )}
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .cal-cell-actions { opacity: 0; transition: opacity 0.15s; }
+        .cal-cell:hover .cal-cell-actions { opacity: 1; }
+        .cal-cell-add { opacity: 0; transition: opacity 0.15s; }
+        .cal-cell:hover .cal-cell-add { opacity: 1; }
+        .cal-list-actions { opacity: 0; transition: opacity 0.15s; }
+        .cal-list-row:hover .cal-list-actions { opacity: 1; }
+      `}</style>
 
       {/* Grid view */}
       {viewMode === 'grid' && (
@@ -400,10 +664,15 @@ export default function CalendarClient({ profileId, reels }: Props) {
                   const reel = reelsByDate[dateStr]
                   const isToday = dateStr === today
                   const isPast = dateStr < today
+                  const isFuture = dateStr > today
                   const selKey = selected?.type === 'planned' ? selected.entry.date : selected?.type === 'posted' ? selected.reel.date : null
                   const isSelected = selKey === dateStr
+                  const isUserEntry = plan?.source === 'user'
 
-                  function handleClick() {
+                  function handleClick(e: React.MouseEvent) {
+                    // Don't trigger cell click if clicking action buttons
+                    const target = e.target as HTMLElement
+                    if (target.closest('.cal-cell-actions') || target.closest('.cal-cell-add')) return
                     if (reel) {
                       setSelected(isSelected && selected?.type === 'posted' ? null : { type: 'posted', reel })
                     } else if (plan) {
@@ -414,31 +683,65 @@ export default function CalendarClient({ profileId, reels }: Props) {
                   return (
                     <div
                       key={di}
+                      className="cal-cell"
                       onClick={handleClick}
                       style={{
                         minHeight: 80, padding: 7,
                         background: isSelected ? 'hsl(220 90% 56% / 0.06)' : 'var(--card)',
-                        cursor: (reel || plan) ? 'pointer' : 'default',
+                        cursor: (reel || plan) ? 'pointer' : isFuture ? 'default' : 'default',
                         borderRight: di < 6 ? '1px solid var(--border)' : 'none',
                         borderTop: isToday ? '2px solid var(--accent)' : undefined,
+                        borderLeft: isUserEntry ? '2px solid hsl(250 60% 55%)' : plan ? '2px solid var(--accent)' : undefined,
                         transition: 'background 0.15s',
                         position: 'relative',
                         opacity: isPast && !reel && !plan ? 0.45 : 1,
                       }}
                     >
-                      <div style={{ fontSize: 11, fontWeight: 600, color: isToday ? 'var(--accent)' : 'var(--muted-foreground)', marginBottom: 5 }}>
-                        {day.getDate()}
+                      {/* Date number + action buttons row */}
+                      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: isToday ? 'var(--accent)' : 'var(--muted-foreground)' }}>
+                          {day.getDate()}
+                        </div>
+
+                        {/* Edit/Delete on planned entries */}
+                        {plan && !reel && (
+                          <div className="cal-cell-actions" style={{ display: 'flex', gap: 2 }}>
+                            <button
+                              onClick={e => { e.stopPropagation(); openEdit(plan) }}
+                              title="Edit"
+                              style={{ background: 'var(--muted)', border: 'none', borderRadius: 4, padding: '2px 4px', cursor: 'pointer', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center' }}
+                            >
+                              <Pencil size={10} />
+                            </button>
+                            <button
+                              onClick={e => { e.stopPropagation(); handleDelete(plan.id) }}
+                              title="Delete"
+                              style={{ background: 'hsl(0 50% 96%)', border: 'none', borderRadius: 4, padding: '2px 4px', cursor: 'pointer', color: 'hsl(0 72% 51%)', display: 'flex', alignItems: 'center' }}
+                            >
+                              <Trash2 size={10} />
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Add idea on future empty days */}
+                        {!plan && !reel && !isPast && (
+                          <div className="cal-cell-add">
+                            <button
+                              onClick={e => { e.stopPropagation(); openAdd(dateStr) }}
+                              title="Add idea"
+                              style={{ background: 'var(--muted)', border: 'none', borderRadius: 4, padding: '2px 4px', cursor: 'pointer', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center' }}
+                            >
+                              <Plus size={10} />
+                            </button>
+                          </div>
+                        )}
                       </div>
 
-                      {/* Posted reel indicator */}
+                      {/* Posted reel */}
                       {reel && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                           {reel.thumbnail_url ? (
-                            <img
-                              src={reel.thumbnail_url}
-                              alt=""
-                              style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 4 }}
-                            />
+                            <img src={reel.thumbnail_url} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 4 }} />
                           ) : (
                             <div style={{ width: '100%', aspectRatio: '1', borderRadius: 4, background: 'hsl(142 50% 92%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               <span style={{ fontSize: 16 }}>📹</span>
@@ -450,10 +753,13 @@ export default function CalendarClient({ profileId, reels }: Props) {
                         </div>
                       )}
 
-                      {/* Planned entry (no reel on this day) */}
+                      {/* Planned entry */}
                       {!reel && plan && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                          <FormatBadge format={plan.format} />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                            <FormatBadge format={plan.format} />
+                            {isUserEntry && <span style={{ fontSize: 8, color: 'hsl(250 60% 55%)' }}>✏</span>}
+                          </div>
                           <div style={{ fontSize: 10, fontWeight: 500, color: 'var(--foreground)', lineHeight: 1.3, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                             {plan.hook}
                           </div>
@@ -471,7 +777,12 @@ export default function CalendarClient({ profileId, reels }: Props) {
             <PostedDetail reel={selected.reel} onClose={() => setSelected(null)} />
           )}
           {selected?.type === 'planned' && (
-            <PlannedDetail entry={selected.entry} onClose={() => setSelected(null)} />
+            <PlannedDetail
+              entry={selected.entry}
+              onClose={() => setSelected(null)}
+              onEdit={openEdit}
+              onDelete={handleDelete}
+            />
           )}
         </>
       )}
@@ -498,46 +809,95 @@ export default function CalendarClient({ profileId, reels }: Props) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {listItems.map(({ date, posted, plan }) => {
               const isSelDate = selected?.type === 'posted' ? selected.reel.date === date : selected?.type === 'planned' ? selected.entry.date === date : false
+              const isUserEntry = plan?.source === 'user'
               return (
-                <div
-                  key={date}
-                  onClick={() => {
-                    if (posted) setSelected(isSelDate ? null : { type: 'posted', reel: posted })
-                    else if (plan) setSelected(isSelDate ? null : { type: 'planned', entry: plan })
-                  }}
-                  style={{
-                    background: 'var(--card)', border: `1px solid ${isSelDate ? 'var(--accent)' : 'var(--border)'}`,
-                    borderRadius: 8, padding: '12px 16px', cursor: (posted || plan) ? 'pointer' : 'default',
-                    transition: 'border-color 0.15s',
-                    display: 'flex', alignItems: 'flex-start', gap: 12,
-                  }}
-                >
-                  {posted?.thumbnail_url && (
-                    <img src={posted.thumbnail_url} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
-                  )}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted-foreground)' }}>{date}</span>
+                <div key={date}>
+                  <div
+                    className="cal-list-row"
+                    onClick={() => {
+                      if (posted) setSelected(isSelDate ? null : { type: 'posted', reel: posted })
+                      else if (plan) setSelected(isSelDate ? null : { type: 'planned', entry: plan })
+                    }}
+                    style={{
+                      background: 'var(--card)',
+                      border: `1px solid ${isSelDate ? 'var(--accent)' : isUserEntry ? 'hsl(250 60% 55% / 0.4)' : 'var(--border)'}`,
+                      borderLeft: plan && !posted ? `3px solid ${isUserEntry ? 'hsl(250 60% 55%)' : 'var(--accent)'}` : undefined,
+                      borderRadius: 8, padding: '12px 16px', cursor: (posted || plan) ? 'pointer' : 'default',
+                      transition: 'border-color 0.15s',
+                      display: 'flex', alignItems: 'flex-start', gap: 12,
+                    }}
+                  >
+                    {posted?.thumbnail_url && (
+                      <img src={posted.thumbnail_url} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted-foreground)' }}>{date}</span>
+                        {posted && <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: 'hsl(142 50% 95%)', color: 'hsl(142 71% 35%)' }}>✓ Posted</span>}
+                        {plan && !posted && <FormatBadge format={plan.format} />}
+                        {isUserEntry && !posted && <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: 'hsl(250 80% 96%)', color: 'hsl(250 60% 50%)' }}>✏ Your idea</span>}
+                      </div>
                       {posted && (
-                        <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: 'hsl(142 50% 95%)', color: 'hsl(142 71% 35%)' }}>✓ Posted</span>
+                        <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 4 }}>
+                          <span><Eye size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />{fmtNum(posted.views)}</span>
+                          <span><Heart size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />{fmtNum(posted.likes)}</span>
+                        </div>
                       )}
-                      {plan && !posted && <FormatBadge format={plan.format} />}
+                      <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                        {posted ? (posted.caption || '—') : plan?.hook}
+                      </div>
                     </div>
-                    {posted && (
-                      <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 4 }}>
-                        <span><Eye size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />{fmtNum(posted.views)}</span>
-                        <span><Heart size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />{fmtNum(posted.likes)}</span>
+
+                    {/* Edit/Delete buttons on list rows */}
+                    {plan && !posted && (
+                      <div className="cal-list-actions" style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                        <button
+                          onClick={() => openEdit(plan)}
+                          title="Edit"
+                          style={{ background: 'var(--muted)', border: 'none', borderRadius: 6, padding: '5px 8px', cursor: 'pointer', color: 'var(--muted-foreground)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600 }}
+                        >
+                          <Pencil size={12} /> Edit
+                        </button>
+                        <button
+                          onClick={() => handleDelete(plan.id)}
+                          title="Delete"
+                          style={{ background: 'transparent', border: '1px solid hsl(0 72% 51% / 0.3)', borderRadius: 6, padding: '4px 8px', cursor: 'pointer', color: 'hsl(0 72% 51%)', display: 'flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600 }}
+                        >
+                          <Trash2 size={12} /> Delete
+                        </button>
                       </div>
                     )}
-                    <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                      {posted ? (posted.caption || '—') : plan?.hook}
-                    </div>
                   </div>
+
+                  {/* Expanded detail below selected row */}
+                  {isSelDate && selected?.type === 'posted' && (
+                    <PostedDetail reel={selected.reel} onClose={() => setSelected(null)} />
+                  )}
+                  {isSelDate && selected?.type === 'planned' && (
+                    <PlannedDetail
+                      entry={selected.entry}
+                      onClose={() => setSelected(null)}
+                      onEdit={openEdit}
+                      onDelete={handleDelete}
+                    />
+                  )}
                 </div>
               )
             })}
           </div>
         )
+      )}
+
+      {/* Edit / Add modal */}
+      {editModal && (
+        <EditModal
+          entry={editModal.entry}
+          date={editModal.date}
+          dayName={editModal.dayName}
+          onSave={handleSave}
+          onClose={() => setEditModal(null)}
+          saving={saving}
+        />
       )}
     </div>
   )

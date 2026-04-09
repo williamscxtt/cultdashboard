@@ -1,122 +1,115 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { randomUUID } from 'crypto'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
-function getAdminClient() {
+function adminClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_KEY!
   )
 }
 
+// ─── POST — generate a full month ─────────────────────────────────────────────
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const { profileId, month, postsPerWeek = 5 } = body as {
-      profileId: string
-      month: string
-      postsPerWeek?: number
+      profileId: string; month: string; postsPerWeek?: number
     }
+    if (!profileId || !month) return NextResponse.json({ error: 'profileId and month required' }, { status: 400 })
+    if (!/^\d{4}-\d{2}$/.test(month)) return NextResponse.json({ error: 'month must be YYYY-MM' }, { status: 400 })
 
-    if (!profileId || !month) {
-      return NextResponse.json(
-        { error: 'profileId and month are required' },
-        { status: 400 }
-      )
-    }
+    const db = adminClient()
 
-    // Validate month format YYYY-MM
-    if (!/^\d{4}-\d{2}$/.test(month)) {
-      return NextResponse.json(
-        { error: 'month must be in YYYY-MM format' },
-        { status: 400 }
-      )
-    }
+    // ── Pull all context in parallel ────────────────────────────────────────
+    const [
+      { data: onboarding },
+      { data: profile },
+      { data: brandVoice },
+      { data: pillars },
+      { data: topReels },
+    ] = await Promise.all([
+      db.from('onboarding').select('*').eq('profile_id', profileId).single(),
+      db.from('profiles').select('name, niche, target_audience, ninety_day_goal, biggest_challenge, intro_structured, content_pillars').eq('id', profileId).single(),
+      db.from('brand_voice').select('core_voice, hook_frameworks, script_examples, content_pillars_doc, key_phrases').eq('profile_id', profileId).single(),
+      db.from('content_pillars').select('pillar_name, avg_views, sample_hooks').eq('profile_id', profileId).order('avg_views', { ascending: false }).limit(6),
+      db.from('client_reels').select('hook, views, format_type').eq('profile_id', profileId).not('hook', 'is', null).neq('hook', '').order('views', { ascending: false }).limit(10),
+    ])
 
-    const adminClient = getAdminClient()
-
-    // Fetch onboarding data
-    const { data: onboarding, error: onboardingError } = await adminClient
-      .from('onboarding')
-      .select('*')
-      .eq('profile_id', profileId)
-      .single()
-
-    if (onboardingError && onboardingError.code !== 'PGRST116') {
-      console.error('Onboarding fetch error:', onboardingError)
-    }
-
-    // Fetch content pillars
-    const { data: pillars } = await adminClient
-      .from('content_pillars')
-      .select('pillar_name, avg_views, sample_hooks')
-      .eq('profile_id', profileId)
-      .order('avg_views', { ascending: false })
-      .limit(5)
-
-    // Build month date range info
     const [year, monthNum] = month.split('-').map(Number)
-    const monthName = new Date(year, monthNum - 1, 1).toLocaleString('en-US', {
-      month: 'long',
-    })
+    const monthName = new Date(year, monthNum - 1, 1).toLocaleString('en-US', { month: 'long' })
 
-    // Build client context string
-    const clientContext = onboarding
-      ? `
-Client niche: ${onboarding.niche}
-Target audience: ${onboarding.target_audience}
-Main goal: ${onboarding.main_goal}
-Biggest challenge: ${onboarding.biggest_challenge}
-Brand voice: ${onboarding.brand_voice}
-Content experience: ${onboarding.content_experience}
-Monthly revenue: ${onboarding.monthly_revenue}
-Unique story/background: ${onboarding.unique_story}
-Why they joined CULT: ${onboarding.why_joined_cult}
-Accounts they admire: ${onboarding.competitors_they_admire || 'Not specified'}
-`.trim()
-      : 'No onboarding data available — use general fitness/coaching content strategy.'
+    // ── Build rich context ──────────────────────────────────────────────────
+    const intro = (profile?.intro_structured ?? {}) as Record<string, string>
 
-    const topPillarsContext =
-      pillars && pillars.length > 0
-        ? `\nTop performing content pillars:\n${pillars
-            .map(
-              (p) =>
-                `- ${p.pillar_name} (avg ${p.avg_views?.toLocaleString() ?? '?'} views)${p.sample_hooks?.length ? ': e.g. "' + p.sample_hooks[0] + '"' : ''}`
-            )
-            .join('\n')}`
-        : ''
+    const clientSection = [
+      `Name: ${profile?.name || 'Client'}`,
+      `Niche: ${onboarding?.niche || intro.specific_niche || intro.what_you_coach || profile?.niche || 'Not specified'}`,
+      `Target audience: ${onboarding?.target_audience || intro.ideal_client || profile?.target_audience || 'Not specified'}`,
+      `Monthly revenue: ${onboarding?.monthly_revenue || intro.monthly_revenue || 'Not specified'}`,
+      `90-day goal: ${profile?.ninety_day_goal || intro.goal_90_days || onboarding?.main_goal || 'Not specified'}`,
+      `Biggest challenge: ${onboarding?.biggest_challenge || intro.biggest_problem || profile?.biggest_challenge || 'Not specified'}`,
+      `Brand voice: ${onboarding?.brand_voice || intro.brand_voice || 'Not specified'}`,
+      `Unique story/background: ${onboarding?.unique_story || intro.transformation_story || intro.your_story || 'Not specified'}`,
+      `Why they joined CULT: ${onboarding?.why_joined_cult || intro.why_joined || 'Not specified'}`,
+      intro.client_transformation ? `Client transformation: ${intro.client_transformation}` : null,
+      intro.proof_points ? `Proof / results: ${intro.proof_points}` : null,
+    ].filter(Boolean).join('\n')
 
-    const systemPrompt = `You are Will Scott's AI content strategist for CULT coaching. Generate a month of Instagram Reel content for this client.
-Return ONLY valid JSON array with this structure (one entry per day they should post):
-[
-  {
-    "date": "2026-04-01",
-    "day": "Wednesday",
-    "format": "RAW STORY",
-    "hook": "I made £0 for 6 months straight. Here's what changed.",
-    "angle": "Brief description of the content angle",
-    "cta": "DM CULT",
-    "pillar": "Authenticity"
-  }
-]
-Format types available: RAW STORY, LISTICLE, COMPARISON, TUTORIAL, POV, TRANSFORMATION, MYTH BUST, BEHIND SCENES, TESTIMONIAL, HOT TAKE
-CTA options: "DM CULT" (for coaching promotion), "Comment AUDIT" (for lead magnet), "Follow for more"
-Content pillars: mix based on what performs in their niche
-Posting frequency: ${postsPerWeek} posts per week, spread them evenly.
-Generate only the posting days, not every single day of the month.
-Be specific with hooks — no generic fluff. Hooks should stop the scroll.`
+    const brandVoiceSection = brandVoice ? [
+      brandVoice.core_voice ? `\nBRAND VOICE:\n${brandVoice.core_voice}` : null,
+      brandVoice.hook_frameworks ? `\nHOOK FRAMEWORKS (use these patterns):\n${brandVoice.hook_frameworks}` : null,
+      brandVoice.key_phrases ? `\nKEY PHRASES / LANGUAGE:\n${brandVoice.key_phrases}` : null,
+      brandVoice.content_pillars_doc ? `\nCONTENT PILLARS:\n${brandVoice.content_pillars_doc}` : null,
+      brandVoice.script_examples ? `\nSCRIPT EXAMPLES (mirror this style):\n${String(brandVoice.script_examples).slice(0, 800)}` : null,
+    ].filter(Boolean).join('\n') : ''
+
+    const pillarsSection = pillars?.length
+      ? `\nTOP PERFORMING PILLARS:\n${pillars.map(p => `- ${p.pillar_name} (avg ${p.avg_views?.toLocaleString() ?? '?'} views)${p.sample_hooks?.length ? ': e.g. "' + p.sample_hooks[0] + '"' : ''}`).join('\n')}`
+      : ''
+
+    const topHooksSection = topReels?.length
+      ? `\nTHEIR BEST PERFORMING HOOKS (mirror this style/tone):\n${topReels.map((r, i) => `${i + 1}. [${r.format_type || 'unknown'}] "${r.hook}" — ${r.views?.toLocaleString() ?? '?'} views`).join('\n')}`
+      : ''
+
+    // ── Prompt ──────────────────────────────────────────────────────────────
+    const systemPrompt = `You are an expert Instagram content strategist for CULT — a high-ticket coaching programme run by Will Scott.
+
+Your job is to generate a personalised month of Instagram Reel ideas for a CULT client.
+
+RULES:
+- Every hook must be specific to THIS client's niche, audience, and story. No generic content.
+- Hooks must stop the scroll. Use the client's brand voice, language, and hook frameworks if provided.
+- Mirror the style of their best performing hooks where possible.
+- Spread formats across the month. Don't repeat the same format back-to-back.
+- CTAs should rotate: push for coaching DMs, lead magnets, or growth.
+- Return ONLY a valid JSON array — no markdown, no explanation, no code fences.
+
+JSON structure (one object per posting day):
+[{"id":"<uuid>","date":"YYYY-MM-DD","day":"Monday","format":"RAW STORY","hook":"...","angle":"...","cta":"DM CULT","pillar":"...","source":"ai"}]
+
+Format options: RAW STORY, LISTICLE, COMPARISON, TUTORIAL, POV, TRANSFORMATION, MYTH BUST, BEHIND SCENES, TESTIMONIAL, HOT TAKE
+CTA options: "DM CULT", "Comment AUDIT", "Follow for more", "Link in bio"
+source: always "ai" for generated entries`
 
     const userMessage = `Generate a full content calendar for ${monthName} ${year}.
 
-${clientContext}
-${topPillarsContext}
+CLIENT PROFILE:
+${clientSection}
+${brandVoiceSection}
+${pillarsSection}
+${topHooksSection}
 
+Posting frequency: ${postsPerWeek} posts/week, evenly spread (skip some weekdays if needed — do NOT skip weekends).
 Month: ${month}
-Posts per week: ${postsPerWeek}
+Total posts target: ~${Math.round(postsPerWeek * 4.3)} posts
 
-Return ONLY the JSON array. No explanation, no markdown, no code fences. Pure JSON.`
+Generate ONLY posting days (not every day). Each entry needs a fresh uuid for the "id" field.
+Return ONLY the JSON array. Pure JSON, nothing else.`
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
@@ -125,121 +118,137 @@ Return ONLY the JSON array. No explanation, no markdown, no code fences. Pure JS
       messages: [{ role: 'user', content: userMessage }],
     })
 
-    const rawText =
-      response.content[0].type === 'text' ? response.content[0].text : ''
+    const rawText = response.content[0].type === 'text' ? response.content[0].text : ''
+    const jsonText = rawText.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
 
-    // Strip any accidental markdown fences
-    const jsonText = rawText
-      .replace(/^```(?:json)?\s*/i, '')
-      .replace(/\s*```$/, '')
-      .trim()
-
-    let calendar: unknown[]
+    let calendar: Record<string, unknown>[]
     try {
       calendar = JSON.parse(jsonText)
     } catch {
-      console.error('Failed to parse calendar JSON:', rawText.slice(0, 500))
-      return NextResponse.json(
-        { error: 'Failed to parse AI response as JSON' },
-        { status: 500 }
-      )
+      console.error('[generate-calendar] JSON parse failed:', rawText.slice(0, 400))
+      return NextResponse.json({ error: 'Failed to parse AI response' }, { status: 500 })
     }
+    if (!Array.isArray(calendar)) return NextResponse.json({ error: 'AI returned unexpected format' }, { status: 500 })
 
-    if (!Array.isArray(calendar)) {
-      return NextResponse.json(
-        { error: 'AI returned unexpected format' },
-        { status: 500 }
-      )
-    }
+    // Ensure every entry has a unique id and source
+    calendar = calendar.map(e => ({
+      ...e,
+      id: typeof e.id === 'string' && e.id.length > 8 ? e.id : randomUUID(),
+      source: 'ai',
+    }))
 
-    // Save to content_calendars table
-    const { data: saved, error: saveError } = await adminClient
+    // Save — preserve any existing user-added entries
+    const { data: existing } = await db.from('content_calendars').select('entries').eq('profile_id', profileId).eq('month', month).single()
+    const existingEntries = (Array.isArray(existing?.entries) ? existing.entries : []) as Record<string, unknown>[]
+    const userEntries = existingEntries.filter(e => e.source === 'user')
+
+    // Merge: user entries take precedence on their dates; AI fills the rest
+    const aiDates = new Set(calendar.map(e => e.date))
+    const userOnAiDates = userEntries.filter(e => aiDates.has(e.date as string))
+    const userOnOtherDates = userEntries.filter(e => !aiDates.has(e.date as string))
+    // Replace AI entry with user entry on same date
+    const mergedCalendar = [
+      ...calendar.filter(e => !userOnAiDates.some(u => u.date === e.date)),
+      ...userOnAiDates,
+      ...userOnOtherDates,
+    ].sort((a, b) => String(a.date).localeCompare(String(b.date)))
+
+    const { data: saved, error: saveError } = await db
       .from('content_calendars')
-      .upsert(
-        {
-          profile_id: profileId,
-          month,
-          posts_per_week: postsPerWeek,
-          entries: calendar,
-          generated_at: new Date().toISOString(),
-        },
-        { onConflict: 'profile_id,month' }
-      )
-      .select('id')
-      .single()
+      .upsert({ profile_id: profileId, month, posts_per_week: postsPerWeek, entries: mergedCalendar, generated_at: new Date().toISOString() }, { onConflict: 'profile_id,month' })
+      .select('id').single()
 
     if (saveError) {
-      console.error('Save error:', saveError)
-      // Return the calendar anyway even if save failed
-      return NextResponse.json({
-        calendar,
-        calendarId: null,
-        warning: 'Calendar generated but could not be saved: ' + saveError.message,
-      })
+      console.error('[generate-calendar] save error:', saveError.message)
+      return NextResponse.json({ calendar: mergedCalendar, calendarId: null, warning: 'Generated but not saved: ' + saveError.message })
     }
 
-    return NextResponse.json({
-      calendar,
-      calendarId: saved?.id ?? null,
-    })
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    console.error('generate-calendar error:', err)
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ calendar: mergedCalendar, calendarId: saved?.id ?? null })
+
+  } catch (err) {
+    console.error('[generate-calendar] error:', err)
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 })
   }
 }
+
+// ─── GET — load saved calendar ────────────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const profileId = searchParams.get('profileId')
     const month = searchParams.get('month')
+    if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
 
-    if (!profileId) {
-      return NextResponse.json(
-        { error: 'profileId query param is required' },
-        { status: 400 }
-      )
-    }
-
-    const adminClient = getAdminClient()
-
-    let query = adminClient
-      .from('content_calendars')
-      .select('*')
-      .eq('profile_id', profileId)
-      .order('generated_at', { ascending: false })
-      .limit(1)
-
-    if (month) {
-      query = adminClient
-        .from('content_calendars')
-        .select('*')
-        .eq('profile_id', profileId)
-        .eq('month', month)
-        .order('generated_at', { ascending: false })
-        .limit(1)
-    }
+    const db = adminClient()
+    let query = db.from('content_calendars').select('*').eq('profile_id', profileId).order('generated_at', { ascending: false }).limit(1)
+    if (month) query = db.from('content_calendars').select('*').eq('profile_id', profileId).eq('month', month).order('generated_at', { ascending: false }).limit(1)
 
     const { data, error } = await query.single()
+    if (error?.code === 'PGRST116') return NextResponse.json({ calendar: [], calendarId: null })
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ calendar: data?.entries ?? [], calendarId: data?.id ?? null, month: data?.month, postsPerWeek: data?.posts_per_week })
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 })
+  }
+}
 
-    if (error && error.code === 'PGRST116') {
-      // No rows found
-      return NextResponse.json({ calendar: null, calendarId: null })
+// ─── PATCH — update or add a single entry ────────────────────────────────────
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const { profileId, month, entry } = await req.json() as {
+      profileId: string
+      month: string
+      entry: Record<string, unknown>
+    }
+    if (!profileId || !month || !entry) return NextResponse.json({ error: 'profileId, month, entry required' }, { status: 400 })
+
+    const db = adminClient()
+    const { data: existing } = await db.from('content_calendars').select('id, entries').eq('profile_id', profileId).eq('month', month).single()
+
+    const entries = (Array.isArray(existing?.entries) ? existing.entries : []) as Record<string, unknown>[]
+    const entryId = entry.id as string
+
+    let updated: Record<string, unknown>[]
+    if (entryId && entries.some(e => e.id === entryId)) {
+      // Update existing
+      updated = entries.map(e => e.id === entryId ? { ...e, ...entry } : e)
+    } else {
+      // Add new — give it an id if missing
+      const newEntry: Record<string, unknown> = { ...entry, id: entryId || randomUUID(), source: (entry.source as string) ?? 'user' }
+      updated = [...entries, newEntry].sort((a, b) => String(a.date).localeCompare(String(b.date)))
     }
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (existing?.id) {
+      await db.from('content_calendars').update({ entries: updated }).eq('id', existing.id)
+    } else {
+      await db.from('content_calendars').insert({ profile_id: profileId, month, entries: updated, generated_at: new Date().toISOString() })
     }
 
-    return NextResponse.json({
-      calendar: data?.entries ?? [],
-      calendarId: data?.id ?? null,
-      month: data?.month ?? null,
-      postsPerWeek: data?.posts_per_week ?? null,
-    })
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ ok: true, entries: updated })
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 })
+  }
+}
+
+// ─── DELETE — remove a single entry ──────────────────────────────────────────
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { profileId, month, entryId } = await req.json() as { profileId: string; month: string; entryId: string }
+    if (!profileId || !month || !entryId) return NextResponse.json({ error: 'profileId, month, entryId required' }, { status: 400 })
+
+    const db = adminClient()
+    const { data: existing } = await db.from('content_calendars').select('id, entries').eq('profile_id', profileId).eq('month', month).single()
+    if (!existing) return NextResponse.json({ error: 'Calendar not found' }, { status: 404 })
+
+    const entries = (Array.isArray(existing.entries) ? existing.entries : []) as Record<string, unknown>[]
+    const updated = entries.filter(e => e.id !== entryId)
+
+    await db.from('content_calendars').update({ entries: updated }).eq('id', existing.id)
+    return NextResponse.json({ ok: true, entries: updated })
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 })
   }
 }
