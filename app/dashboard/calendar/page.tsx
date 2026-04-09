@@ -20,5 +20,14 @@ export default async function CalendarPage() {
   const impersonatingAs = realProfile?.role === 'admin' ? await getImpersonatedId() : null
   const profileId = effectiveId(user.id, realProfile?.role === 'admin', impersonatingAs)
 
-  return <CalendarClient profileId={profileId} />
+  // Fetch all reels so the calendar can show actual posting history
+  const { data: reels } = await adminClient
+    .from('client_reels')
+    .select('reel_id, date, caption, thumbnail_url, views, likes, permalink')
+    .eq('profile_id', profileId)
+    .not('date', 'is', null)
+    .order('date', { ascending: false })
+    .limit(300)
+
+  return <CalendarClient profileId={profileId} reels={reels ?? []} />
 }

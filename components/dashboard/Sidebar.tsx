@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   BarChart2, Lightbulb, MessageSquare,
   Settings, Users, LogOut, Calendar, Copy, Search,
-  BookOpen, TrendingUp, ListChecks, PhoneCall,
+  BookOpen, TrendingUp, PhoneCall,
   ChevronDown, ChevronUp, Send, Zap, PanelLeft, User, X,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
@@ -19,14 +19,13 @@ const mainNav = [
   { href: '/dashboard/analytics',   label: 'Dashboard',        icon: BarChart2 },
   { href: '/dashboard/scripts',     label: 'This Week',        icon: Zap },
   { href: '/dashboard/content',     label: 'Content Intel',    icon: Lightbulb },
-  { href: '/dashboard/weekly-log',  label: 'Weekly Log',       icon: ListChecks },
+  { href: '/dashboard/calendar',    label: 'Content Calendar', icon: Calendar },
   { href: '/dashboard/dm-sales',    label: 'DM Sales',         icon: PhoneCall },
   { href: '/dashboard/ai',          label: 'Ask Will AI',      icon: MessageSquare },
 ]
 
 const toolsNavBase = [
   { href: '/dashboard/outreach',      label: 'Outreach',         icon: Send },
-  { href: '/dashboard/calendar',      label: 'Content Calendar', icon: Calendar },
   { href: '/dashboard/reel-copy',     label: 'Reel Analyser',    icon: Copy },
   { href: '/dashboard/profile-audit', label: 'Profile Audit',    icon: Search },
   { href: '/dashboard/settings',      label: 'Settings',         icon: Settings },
