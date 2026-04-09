@@ -47,7 +47,7 @@ async function startApifyRun(usernames: string[]): Promise<string> {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         directUrls: usernames.map(u => `https://www.instagram.com/${u}/`),
-        resultsType: 'posts',
+        resultsType: 'reels',
         resultsLimit: 30,
         addParentData: false,
       }),
@@ -112,7 +112,7 @@ Reels:
 ${reels.map((r, i) => `${i + 1}. Hook: "${r.hook}" | Caption: "${r.caption?.slice(0, 120)}"`).join('\n')}`
 
   const msg = await anthropic.messages.create({
-    model: 'claude-haiku-4-5',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: 500,
     messages: [{ role: 'user', content: prompt }],
   })
