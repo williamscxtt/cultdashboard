@@ -187,7 +187,21 @@ export async function GET(req: NextRequest) {
     const { data, error } = await query.single()
     if (error?.code === 'PGRST116') return NextResponse.json({ calendar: [], calendarId: null })
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-    return NextResponse.json({ calendar: data?.entries ?? [], calendarId: data?.id ?? null, month: data?.month, postsPerWeek: data?.posts_per_week })
+
+    // Backfill IDs for any legacy entries that were saved without them
+    const rawEntries = (Array.isArray(data?.entries) ? data.entries : []) as Record<string, unknown>[]
+    const needsBackfill = rawEntries.some(e => typeof e.id !== 'string' || e.id.length < 8)
+    let calendar = rawEntries
+    if (needsBackfill && data?.id) {
+      calendar = rawEntries.map(e => ({
+        ...e,
+        id: typeof e.id === 'string' && e.id.length > 8 ? e.id : randomUUID(),
+      }))
+      // Persist backfilled IDs silently
+      db.from('content_calendars').update({ entries: calendar }).eq('id', data.id).then(() => {})
+    }
+
+    return NextResponse.json({ calendar, calendarId: data?.id ?? null, month: data?.month, postsPerWeek: data?.posts_per_week })
   } catch (err) {
     return NextResponse.json({ error: err instanceof Error ? err.message : 'Unknown error' }, { status: 500 })
   }

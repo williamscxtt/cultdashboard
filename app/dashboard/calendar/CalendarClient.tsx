@@ -499,6 +499,7 @@ export default function CalendarClient({ profileId, reels }: Props) {
 
   // ── DELETE an entry ────────────────────────────────────────────────────────
   async function handleDelete(entryId: string) {
+    if (!entryId) return   // guard: never wipe all entries if id is missing
     // Optimistic update
     setPlanned(prev => prev.filter(p => p.id !== entryId))
     if (selected?.type === 'planned' && selected.entry.id === entryId) setSelected(null)
