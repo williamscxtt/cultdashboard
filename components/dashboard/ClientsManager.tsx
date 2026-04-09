@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
-import { Card, Badge, Button, PageHeader, EmptyState } from '@/components/ui'
-import { Users, Grid3X3, Table2, AlertTriangle } from 'lucide-react'
+import { Card, Badge, Button, PageHeader, EmptyState, StatCard } from '@/components/ui'
+import { Users, Grid3X3, Table2, AlertTriangle, LayoutGrid } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ClientHealth {
@@ -28,7 +28,7 @@ export default function ClientsManager({ initialClients }: Props) {
   const [clients, setClients] = useState(initialClients)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [view, setView] = useState<'table' | 'heatmap'>('table')
+  const [view, setView] = useState<'cards' | 'table' | 'heatmap'>('cards')
   const [healthData, setHealthData] = useState<Record<string, ClientHealth>>({})
 
   useEffect(() => {
@@ -57,6 +57,8 @@ export default function ClientsManager({ initialClients }: Props) {
 
   const atRisk = clients.filter(c => healthData[c.id]?.status === 'red').length
   const slipping = clients.filter(c => healthData[c.id]?.status === 'amber').length
+  const activeCount = clients.filter(c => c.is_active).length
+  const igConnected = clients.filter(c => c.ig_username).length
 
   async function toggleActive(client: Profile) {
     const supabase = createClient()
@@ -91,6 +93,14 @@ export default function ClientsManager({ initialClients }: Props) {
           </div>
         }
       />
+
+      {/* Stat tiles */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+        <StatCard label="Total Clients" value={clients.length} />
+        <StatCard label="Active" value={activeCount} />
+        <StatCard label="IG Connected" value={igConnected} />
+        <StatCard label="At Risk" value={atRisk} />
+      </div>
 
       {/* Alert strip */}
       {(atRisk > 0 || slipping > 0) && (
@@ -130,7 +140,7 @@ export default function ClientsManager({ initialClients }: Props) {
           style={{ maxWidth: 280 }}
         />
         <div style={{ display: 'flex', gap: 2, marginLeft: 'auto', background: 'var(--muted)', borderRadius: 8, padding: 3 }}>
-          {([['table', Table2], ['heatmap', Grid3X3]] as const).map(([v, Icon]) => (
+          {([['cards', LayoutGrid, 'Cards'], ['table', Table2, 'Table'], ['heatmap', Grid3X3, 'Heatmap']] as const).map(([v, Icon, label]) => (
             <button key={v} onClick={() => setView(v)} style={{
               display: 'flex', alignItems: 'center', gap: 5,
               padding: '5px 10px', borderRadius: 6, border: 'none',
@@ -141,11 +151,30 @@ export default function ClientsManager({ initialClients }: Props) {
               transition: 'all 0.1s',
             }}>
               <Icon size={13} />
-              {v === 'table' ? 'Table' : 'Heatmap'}
+              {label}
             </button>
           ))}
         </div>
       </div>
+
+      {/* Cards view */}
+      {view === 'cards' && (
+        filtered.length === 0 ? (
+          <Card>
+            <EmptyState
+              icon={<Users size={20} />}
+              title={search ? 'No results' : 'No clients yet'}
+              description={search ? 'No clients match your search.' : 'Add your first client to get started.'}
+            />
+          </Card>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 12 }}>
+            {filtered.map(client => (
+              <ClientCard key={client.id} client={client} onToggleActive={toggleActive} />
+            ))}
+          </div>
+        )
+      )}
 
       {/* Heatmap view */}
       {view === 'heatmap' && (
@@ -323,6 +352,96 @@ function ClientRow({ client, onToggleActive }: { client: Profile; onToggleActive
         </Link>
       </td>
     </tr>
+  )
+}
+
+function ClientCard({ client, onToggleActive }: { client: Profile; onToggleActive: (c: Profile) => void }) {
+  const niche = client.niche || (client.intro_structured as { specific_niche?: string } | null)?.specific_niche
+  return (
+    <Card style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+      {/* Top row */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <div style={{
+            width: 38, height: 38, borderRadius: '50%',
+            background: 'var(--foreground)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 14, fontWeight: 700, color: 'var(--background)', flexShrink: 0,
+          }}>
+            {(client.name || client.email || '?')[0].toUpperCase()}
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{client.name || 'Unnamed'}</div>
+            <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{client.email}</div>
+          </div>
+        </div>
+        <button
+          onClick={() => onToggleActive(client)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+        >
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 5,
+            fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999,
+            background: client.is_active ? 'hsl(142 50% 95%)' : 'var(--muted)',
+            color: client.is_active ? 'hsl(142 71% 35%)' : 'var(--muted-foreground)',
+          }}>
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)', flexShrink: 0 }} />
+            {client.is_active ? 'Active' : 'Inactive'}
+          </span>
+        </button>
+      </div>
+
+      {/* Niche */}
+      {niche && (
+        <div style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.4 }}>{niche}</div>
+      )}
+
+      {/* Details row */}
+      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+        <div>
+          <div style={{ fontSize: 10, color: 'var(--muted-foreground)', marginBottom: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Instagram</div>
+          <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
+            {client.ig_username ? `@${client.ig_username}` : '—'}
+          </div>
+        </div>
+        <div>
+          <div style={{ fontSize: 10, color: 'var(--muted-foreground)', marginBottom: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Phase</div>
+          <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
+            {client.phase_number ? `Phase ${client.phase_number}` : '—'}
+          </div>
+        </div>
+        {client.followers_count ? (
+          <div>
+            <div style={{ fontSize: 10, color: 'var(--muted-foreground)', marginBottom: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Followers</div>
+            <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
+              {client.followers_count.toLocaleString()}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <div style={{ fontSize: 10, color: 'var(--muted-foreground)', marginBottom: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Joined</div>
+            <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
+              {new Date(client.date_joined ?? client.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* CTA */}
+      <Link
+        href={`/dashboard/clients/${client.id}`}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          height: 34, borderRadius: 6, fontSize: 13, fontWeight: 600,
+          background: 'var(--muted)', color: 'var(--foreground)',
+          textDecoration: 'none', transition: 'opacity 0.15s',
+        }}
+        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.7' }}
+        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+      >
+        View dashboard →
+      </Link>
+    </Card>
   )
 }
 

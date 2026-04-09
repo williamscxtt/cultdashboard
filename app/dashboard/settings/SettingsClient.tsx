@@ -7,13 +7,23 @@ import { Card, Badge, Button, PageHeader, SectionLabel } from '@/components/ui'
 import { Video, LogOut, Eye, EyeOff, RefreshCw, AlertTriangle, Unlink } from 'lucide-react'
 import { toast } from 'sonner'
 
-// Instagram icon (not in lucide-react)
-function IgIcon({ size = 15 }: { size?: number }) {
+// Official Instagram gradient logo
+function InstagramLogo({ size = 36 }: { size?: number }) {
+  const id = 'ig-grad'
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <rect x="2" y="2" width="20" height="20" rx="5" />
-      <circle cx="12" cy="12" r="4" />
-      <circle cx="17.5" cy="6.5" r="0.5" fill="currentColor" stroke="none" />
+    <svg width={size} height={size} viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+      <defs>
+        <radialGradient id={id} cx="30%" cy="107%" r="150%">
+          <stop offset="0%"  stopColor="#fdf497"/>
+          <stop offset="5%"  stopColor="#fdf497"/>
+          <stop offset="45%" stopColor="#fd5949"/>
+          <stop offset="60%" stopColor="#d6249f"/>
+          <stop offset="90%" stopColor="#285AEB"/>
+        </radialGradient>
+      </defs>
+      <rect x="1" y="1" width="46" height="46" rx="13" fill={`url(#${id})`}/>
+      <circle cx="24" cy="24" r="9" stroke="white" strokeWidth="3" fill="none"/>
+      <circle cx="34.5" cy="13.5" r="2.5" fill="white"/>
     </svg>
   )
 }
@@ -27,6 +37,10 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
   const [showNewPw, setShowNewPw] = useState(false)
   const [showConfirmPw, setShowConfirmPw] = useState(false)
   const [changingPassword, setChangingPassword] = useState(false)
+  // Instagram username editing
+  const [igUsername, setIgUsername] = useState(profile.ig_username || '')
+  const [savingIg, setSavingIg] = useState(false)
+  const [editingIg, setEditingIg] = useState(!profile.ig_username)
   // Instagram disconnect
   const [disconnecting, setDisconnecting] = useState(false)
   // Delete account — 3-step
@@ -75,9 +89,46 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
       const res = await fetch('/api/instagram/disconnect', { method: 'POST' })
       if (!res.ok) throw new Error('Failed to disconnect')
       toast.success('Instagram disconnected')
+      setIgUsername('')
+      setEditingIg(true)
       router.refresh()
     } catch { toast.error('Failed to disconnect Instagram') }
     setDisconnecting(false)
+  }
+
+  async function handleSaveInstagram(e: React.FormEvent) {
+    e.preventDefault()
+    setSavingIg(true)
+    try {
+      const res = await fetch('/api/profile/update-instagram', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ig_username: igUsername }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error || 'Failed to save')
+
+      if (json.ig_username) {
+        if (json.wiped) {
+          // Username changed — trigger a fresh sync
+          toast.success(`Switched to @${json.ig_username} — syncing data…`)
+          fetch('/api/instagram/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ profileId: profile.id }),
+          }).catch(() => {})
+        } else {
+          toast.success(`Instagram set to @${json.ig_username}`)
+        }
+      } else {
+        toast.success('Instagram username cleared')
+      }
+      setEditingIg(false)
+      router.refresh()
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to save Instagram username')
+    }
+    setSavingIg(false)
   }
 
   async function handleDeleteAccount() {
@@ -129,16 +180,44 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
         {/* Instagram */}
         <Card style={{ padding: 20 }}>
           <SectionLabel>Instagram</SectionLabel>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <div style={{
-              width: 36, height: 36, borderRadius: 8, flexShrink: 0,
-              background: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <IgIcon size={16} />
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+            <div style={{ marginTop: 1 }}>
+              <InstagramLogo size={36} />
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              {profile.ig_username ? (
+              {editingIg ? (
+                <form onSubmit={handleSaveInstagram} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>
+                      Instagram username
+                    </label>
+                    <div style={{ position: 'relative' }}>
+                      <span style={{
+                        position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)',
+                        fontSize: 13, color: 'var(--muted-foreground)', pointerEvents: 'none', userSelect: 'none',
+                      }}>@</span>
+                      <input
+                        type="text"
+                        value={igUsername}
+                        onChange={e => setIgUsername(e.target.value.replace(/^@+/, ''))}
+                        placeholder="yourhandle"
+                        autoFocus
+                        style={{ paddingLeft: 24 }}
+                      />
+                    </div>
+                  </div>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Button type="submit" size="sm" disabled={savingIg}>
+                      {savingIg ? 'Saving…' : 'Save'}
+                    </Button>
+                    {profile.ig_username && (
+                      <Button type="button" variant="secondary" size="sm" onClick={() => { setIgUsername(profile.ig_username || ''); setEditingIg(false) }}>
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+                </form>
+              ) : (
                 <>
                   <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)' }}>
                     @{profile.ig_username}
@@ -146,38 +225,29 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
                     <RefreshCw size={10} style={{ color: 'hsl(142 50% 45%)' }} />
                     <span style={{ fontSize: 12, color: 'hsl(142 50% 45%)', fontWeight: 600 }}>
-                      Synced automatically every Monday
+                      Synced automatically every day
                     </span>
                   </div>
+                  <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+                    <Button variant="secondary" size="sm" onClick={() => setEditingIg(true)}>
+                      Change username
+                    </Button>
+                    {!isImpersonating && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleDisconnectInstagram}
+                        disabled={disconnecting}
+                      >
+                        <Unlink size={12} />
+                        {disconnecting ? 'Disconnecting…' : 'Disconnect'}
+                      </Button>
+                    )}
+                  </div>
                 </>
-              ) : (
-                <div style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
-                  No account linked. Contact Will to connect your Instagram.
-                </div>
               )}
             </div>
-            {profile.ig_username && !isImpersonating && (
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleDisconnectInstagram}
-                disabled={disconnecting}
-                style={{ flexShrink: 0 }}
-              >
-                <Unlink size={12} />
-                {disconnecting ? 'Disconnecting…' : 'Disconnect'}
-              </Button>
-            )}
           </div>
-          {profile.ig_username && !isImpersonating && (
-            <div style={{
-              marginTop: 12, padding: '10px 14px',
-              background: 'hsl(220 90% 56% / 0.06)',
-              borderRadius: 8, fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.5,
-            }}>
-              To connect a different account, disconnect first then contact Will to link your new handle.
-            </div>
-          )}
         </Card>
 
         {/* YouTube / TikTok */}

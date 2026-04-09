@@ -1,42 +1,64 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: Inter, Arial, sans-serif;
 }
 
+/* ── Design Tokens ────────────────────────────────────────────────────── */
 :root {
-  --background: hsl(220 20% 97%);
-  --foreground: hsl(220 15% 10%);
-  --card: hsl(0 0% 100%);
-  --card-foreground: hsl(220 15% 10%);
-  --muted: hsl(220 15% 94%);
-  --muted-foreground: hsl(220 10% 46%);
-  --border: hsl(220 15% 90%);
-  --input: hsl(0 0% 100%);
-  --ring: hsl(220 90% 56%);
-  --accent: hsl(220 90% 56%);
-  --accent-foreground: hsl(0 0% 100%);
-  --destructive: hsl(0 72% 51%);
+  /* Palette */
+  --background:          hsl(0 0% 100%);
+  --foreground:          hsl(224 71% 4%);
+  --card:                hsl(0 0% 100%);
+  --card-foreground:     hsl(224 71% 4%);
+  --muted:               hsl(220 14% 96%);
+  --muted-foreground:    hsl(220 9% 46%);
+  --border:              hsl(220 13% 91%);
+  --input:               hsl(0 0% 100%);
+  --ring:                hsl(221 83% 53%);
+  --accent:              hsl(221 83% 53%);
+  --accent-foreground:   hsl(0 0% 100%);
+  --accent-subtle:       hsl(221 83% 53% / 0.08);
+  --accent-subtle-border:hsl(221 83% 53% / 0.2);
+  --destructive:         hsl(0 72% 51%);
   --destructive-foreground: hsl(0 0% 100%);
-  --success: hsl(142 71% 35%);
-  --warning: hsl(38 92% 40%);
-  --radius: 10px;
+  --success:             hsl(142 71% 35%);
+  --warning:             hsl(38 92% 40%);
+
+  /* Typography */
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+
+  /* Geometry */
+  --radius:    8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Shadows */
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+
+  /* Layout */
+  --sidebar-width:           224px;
+  --sidebar-width-collapsed: 56px;
+  --topbar-height:           48px;
 }
 
 .dark {
-  --background: hsl(222 20% 8%);
-  --foreground: hsl(220 10% 95%);
-  --card: hsl(222 20% 11%);
-  --card-foreground: hsl(220 10% 95%);
-  --muted: hsl(222 15% 16%);
+  --background:       hsl(222 20% 8%);
+  --foreground:       hsl(220 10% 95%);
+  --card:             hsl(222 20% 11%);
+  --card-foreground:  hsl(220 10% 95%);
+  --muted:            hsl(222 15% 16%);
   --muted-foreground: hsl(220 10% 58%);
-  --border: hsl(222 15% 18%);
-  --input: hsl(222 20% 13%);
+  --border:           hsl(222 15% 18%);
+  --input:            hsl(222 20% 13%);
+  --accent-subtle:    hsl(221 83% 53% / 0.15);
   --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.2);
   --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.2);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
@@ -44,17 +66,23 @@
   --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* ── Reset ────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
   background-color: var(--background);
   color: var(--foreground);
-  font-family: Inter, Arial, sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
   font-weight: 500;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+}
+
+/* Display font for headings */
+h1, h2, h3, h4, .font-display {
+  font-family: var(--font-display);
 }
 
 /* ── Scrollbar ────────────────────────────────────────────────────────── */
@@ -68,23 +96,52 @@ input, textarea, select {
   background: var(--input);
   border: 1.5px solid var(--border);
   color: var(--foreground);
-  border-radius: 8px;
+  border-radius: var(--radius);
   padding: 0 12px;
-  height: 40px;
+  height: 38px;
   outline: none;
   font-size: 14px;
   font-weight: 500;
-  font-family: inherit;
+  font-family: var(--font-body);
   width: 100%;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 input:focus, textarea:focus, select:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px hsl(220 90% 56% / 0.12);
+  box-shadow: 0 0 0 3px hsl(221 83% 53% / 0.1);
 }
-input::placeholder, textarea::placeholder { color: var(--muted-foreground); opacity: 0.7; }
+input::placeholder, textarea::placeholder { color: var(--muted-foreground); opacity: 0.65; }
 textarea { height: auto; padding: 10px 12px; line-height: 1.6; }
 select { padding-right: 32px; appearance: none; cursor: pointer; }
+
+/* ── Login page responsive ────────────────────────────────────────────── */
+@media (max-width: 640px) {
+  .login-brand-panel { display: none !important; }
+  .login-form-panel { padding: 32px 24px !important; align-items: flex-start !important; }
+}
+
+/* ── Dashboard mobile ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Full-width pages */
+  .dash-page { padding: 12px !important; }
+
+  /* Stack grids to 1 or 2 cols */
+  .stats-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
+  .stats-grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
+  .stats-grid-2 { grid-template-columns: 1fr !important; }
+
+  /* Cards take full width */
+  .card-row { flex-direction: column !important; }
+
+  /* Table horizontal scroll */
+  .table-wrap { overflow-x: auto !important; }
+
+  /* Reduce padding on cards */
+  .card-padded { padding: 14px !important; }
+
+  /* Tabs scroll horizontally */
+  .tabs-container { overflow-x: auto !important; flex-wrap: nowrap !important; }
+}
 
 /* ── Animations ───────────────────────────────────────────────────────── */
 @keyframes pulse-soft {
@@ -94,11 +151,16 @@ select { padding-right: 32px; appearance: none; cursor: pointer; }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
+  50% { opacity: 0.35; }
 }
 
 @keyframes slide-up {
   from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-6px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -111,7 +173,36 @@ select { padding-right: 32px; appearance: none; cursor: pointer; }
   to { transform: rotate(360deg); }
 }
 
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
 .animate-pulse-soft { animation: pulse-soft 2s ease-in-out infinite; }
-.animate-slide-up   { animation: slide-up 0.2s ease both; }
+.animate-slide-up   { animation: slide-up 0.18s ease both; }
+.animate-slide-down { animation: slide-down 0.18s ease both; }
 .animate-fade-in    { animation: fade-in 0.15s ease both; }
+.animate-scale-in   { animation: scale-in 0.15s ease both; }
 .animate-spin       { animation: spin 0.7s linear infinite; }
+
+/* Skeleton shimmer */
+.skeleton-shimmer {
+  background: linear-gradient(90deg, var(--muted) 25%, hsl(220 14% 93%) 50%, var(--muted) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite linear;
+}
+
+/* Page content transition */
+.page-enter {
+  animation: slide-up 0.18s ease both;
+}
+
+/* Sidebar transition */
+.sidebar-transition {
+  transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}

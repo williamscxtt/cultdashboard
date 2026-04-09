@@ -14,8 +14,8 @@ export function Card({ children, className = '', style = {}, onClick }: {
       style={{
         background: 'var(--card)',
         border: '1px solid var(--border)',
-        borderRadius: 12,
-        boxShadow: 'var(--shadow-sm)',
+        borderRadius: 'var(--radius-lg)',
+        boxShadow: 'var(--shadow-xs)',
         ...style,
         ...(onClick ? { cursor: 'pointer' } : {}),
       }}
@@ -38,9 +38,9 @@ export function Badge({ children, variant = 'default', style = {} }: {
   const styles: Record<BadgeVariant, React.CSSProperties> = {
     default: { background: 'var(--muted)', color: 'var(--muted-foreground)' },
     success: { background: 'hsl(142 50% 94%)', color: 'hsl(142 71% 28%)' },
-    warning: { background: 'hsl(38 70% 93%)', color: 'hsl(38 92% 34%)' },
-    error:   { background: 'hsl(0 50% 95%)',  color: 'hsl(0 72% 45%)' },
-    accent:  { background: 'hsl(220 90% 56% / 0.1)', color: 'var(--accent)', border: '1px solid hsl(220 90% 56% / 0.2)' },
+    warning: { background: 'hsl(38 70% 93%)',  color: 'hsl(38 92% 34%)' },
+    error:   { background: 'hsl(0 50% 95%)',   color: 'hsl(0 72% 45%)' },
+    accent:  { background: 'var(--accent-subtle)', color: 'var(--accent)', border: '1px solid var(--accent-subtle-border)' },
     muted:   { background: 'var(--muted)', color: 'var(--muted-foreground)' },
     info:    { background: 'hsl(200 80% 94%)', color: 'hsl(200 80% 32%)' },
   }
@@ -72,22 +72,23 @@ export function Button({
   children, variant = 'primary', size = 'md',
   style = {}, loading, disabled, ...props
 }: ButtonProps) {
-  const heights = { xs: 26, sm: 32, md: 38, lg: 44 }
+  const heights  = { xs: 26, sm: 30, md: 36, lg: 42 }
   const paddings = { xs: '0 10px', sm: '0 12px', md: '0 16px', lg: '0 20px' }
   const fontSizes = { xs: 11, sm: 12, md: 13, lg: 14 }
 
   const base: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    gap: 6, borderRadius: 8, fontWeight: 600, cursor: disabled || loading ? 'not-allowed' : 'pointer',
+    gap: 6, borderRadius: 'var(--radius)', fontWeight: 600,
+    cursor: disabled || loading ? 'not-allowed' : 'pointer',
     border: 'none', fontFamily: 'inherit', whiteSpace: 'nowrap',
     height: heights[size], padding: paddings[size], fontSize: fontSizes[size],
-    transition: 'all 0.15s ease',
-    opacity: disabled || loading ? 0.55 : 1,
+    transition: 'all 0.13s ease',
+    opacity: disabled || loading ? 0.5 : 1,
     letterSpacing: '-0.01em',
   }
   const variants: Record<ButtonVariant, React.CSSProperties> = {
     primary:     { background: 'var(--foreground)', color: 'var(--background)', boxShadow: 'var(--shadow-xs)' },
-    accent:      { background: 'var(--accent)', color: 'var(--accent-foreground)', boxShadow: '0 1px 3px hsl(220 90% 56% / 0.35)' },
+    accent:      { background: 'var(--accent)', color: 'var(--accent-foreground)', boxShadow: '0 1px 3px hsl(221 83% 53% / 0.3)' },
     secondary:   { background: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' },
     ghost:       { background: 'transparent', color: 'var(--muted-foreground)' },
     destructive: { background: 'var(--destructive)', color: 'var(--destructive-foreground)', boxShadow: 'var(--shadow-xs)' },
@@ -100,8 +101,7 @@ export function Button({
       onMouseEnter={e => {
         if (disabled || loading) return
         const el = e.currentTarget as HTMLElement
-        el.style.filter = 'brightness(0.92)'
-        el.style.transform = 'translateY(-1px)'
+        el.style.filter = 'brightness(0.9)'
       }}
       onMouseLeave={e => {
         const el = e.currentTarget as HTMLElement
@@ -109,8 +109,13 @@ export function Button({
         el.style.transform = ''
       }}
       onMouseDown={e => {
+        if (disabled || loading) return
         const el = e.currentTarget as HTMLElement
-        el.style.transform = 'translateY(0)'
+        el.style.transform = 'scale(0.97)'
+      }}
+      onMouseUp={e => {
+        const el = e.currentTarget as HTMLElement
+        el.style.transform = ''
       }}
     >
       {loading ? <Spinner size={size === 'xs' || size === 'sm' ? 12 : 14} /> : null}
@@ -159,13 +164,14 @@ export function Tabs({
             onClick={() => onChange(tab.id)}
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 14px', borderRadius: 7,
+              padding: '5px 13px', borderRadius: 7,
               border: 'none', cursor: 'pointer', fontFamily: 'inherit',
               fontSize: 13, fontWeight: 600,
-              transition: 'all 0.15s ease',
+              transition: 'all 0.13s ease',
               background: isActive ? 'var(--card)' : 'transparent',
               color: isActive ? 'var(--foreground)' : 'var(--muted-foreground)',
               boxShadow: isActive ? 'var(--shadow-xs)' : 'none',
+              letterSpacing: '-0.15px',
             }}
           >
             {tab.icon}
@@ -202,22 +208,36 @@ export function StatCard({
   return (
     <Card style={{ padding: '16px 20px' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+        <div style={{
+          fontSize: 11, fontWeight: 600,
+          color: 'var(--muted-foreground)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.07em',
+        }}>
           {label}
         </div>
         {icon && (
-          <div style={{ color: 'var(--muted-foreground)', opacity: 0.6 }}>{icon}</div>
+          <div style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}>{icon}</div>
         )}
       </div>
-      <div style={{ fontSize: 26, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.7px', lineHeight: 1 }}>
+      <div style={{
+        fontSize: 28, fontWeight: 800,
+        color: 'var(--foreground)',
+        letterSpacing: '-0.8px',
+        lineHeight: 1,
+        fontFamily: 'var(--font-display)',
+      }}>
         {value}
       </div>
       {(sub || trend != null) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
           {trend != null && (
             <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 2,
               fontSize: 11, fontWeight: 700,
               color: trend >= 0 ? 'hsl(142 71% 35%)' : 'hsl(0 72% 51%)',
+              background: trend >= 0 ? 'hsl(142 50% 94%)' : 'hsl(0 50% 95%)',
+              padding: '2px 6px', borderRadius: 5,
             }}>
               {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
             </span>
@@ -246,7 +266,7 @@ export function EmptyState({
     }}>
       {icon && (
         <div style={{
-          width: 52, height: 52, borderRadius: 14,
+          width: 48, height: 48, borderRadius: 12,
           background: 'var(--muted)', border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           marginBottom: 16, color: 'var(--muted-foreground)',
@@ -254,8 +274,17 @@ export function EmptyState({
           {icon}
         </div>
       )}
-      <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', marginBottom: 6 }}>{title}</div>
-      <div style={{ fontSize: 13, color: 'var(--muted-foreground)', maxWidth: 320, lineHeight: 1.6, marginBottom: action ? 20 : 0 }}>
+      <div style={{
+        fontSize: 15, fontWeight: 700, color: 'var(--foreground)',
+        marginBottom: 6, fontFamily: 'var(--font-display)',
+        letterSpacing: '-0.2px',
+      }}>
+        {title}
+      </div>
+      <div style={{
+        fontSize: 13, color: 'var(--muted-foreground)',
+        maxWidth: 320, lineHeight: 1.6, marginBottom: action ? 20 : 0,
+      }}>
         {description}
       </div>
       {action}
@@ -275,7 +304,12 @@ export function PageHeader({
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
       <div>
-        <h1 style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.4px', lineHeight: 1.2 }}>
+        <h1 style={{
+          fontSize: 20, fontWeight: 800,
+          color: 'var(--foreground)',
+          letterSpacing: '-0.5px', lineHeight: 1.2,
+          fontFamily: 'var(--font-display)',
+        }}>
           {title}
         </h1>
         {description && (
@@ -291,11 +325,17 @@ export function PageHeader({
 
 // ─── Section Label ────────────────────────────────────────────────────────────
 
-export function SectionLabel({ children, style = {} }: { children: React.ReactNode; style?: React.CSSProperties }) {
+export function SectionLabel({ children, style = {} }: {
+  children: React.ReactNode
+  style?: React.CSSProperties
+}) {
   return (
     <div style={{
-      fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)',
-      textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10,
+      fontSize: 11, fontWeight: 700,
+      color: 'var(--muted-foreground)',
+      textTransform: 'uppercase',
+      letterSpacing: '0.08em',
+      marginBottom: 10,
       ...style,
     }}>
       {children}
@@ -320,12 +360,14 @@ export function Skeleton({ width = '100%', height = 16, rounded = false, style =
   style?: React.CSSProperties
 }) {
   return (
-    <div style={{
-      width, height, borderRadius: rounded ? 999 : 6,
-      background: 'var(--muted)',
-      animation: 'pulse 1.5s ease-in-out infinite',
-      ...style,
-    }} />
+    <div
+      className="skeleton-shimmer"
+      style={{
+        width, height,
+        borderRadius: rounded ? 999 : 6,
+        ...style,
+      }}
+    />
   )
 }
 
@@ -337,7 +379,8 @@ export function InputLabel({ children, htmlFor }: { children: React.ReactNode; h
       htmlFor={htmlFor}
       style={{
         display: 'block', fontSize: 12, fontWeight: 600,
-        color: 'var(--foreground)', marginBottom: 6, letterSpacing: '-0.01em',
+        color: 'var(--foreground)', marginBottom: 6,
+        letterSpacing: '-0.01em',
       }}
     >
       {children}
@@ -345,7 +388,7 @@ export function InputLabel({ children, htmlFor }: { children: React.ReactNode; h
   )
 }
 
-// ─── Toast-style alert ────────────────────────────────────────────────────────
+// ─── Alert ────────────────────────────────────────────────────────────────────
 
 export function Alert({
   type = 'info', children,
@@ -354,7 +397,7 @@ export function Alert({
   children: React.ReactNode
 }) {
   const colors = {
-    info:    { bg: 'hsl(220 90% 97%)', border: 'hsl(220 90% 86%)', text: 'hsl(220 80% 40%)' },
+    info:    { bg: 'var(--accent-subtle)', border: 'var(--accent-subtle-border)', text: 'var(--accent)' },
     success: { bg: 'hsl(142 50% 96%)', border: 'hsl(142 50% 80%)', text: 'hsl(142 71% 28%)' },
     warning: { bg: 'hsl(38 90% 95%)',  border: 'hsl(38 90% 78%)',  text: 'hsl(38 80% 32%)' },
     error:   { bg: 'hsl(0 50% 96%)',   border: 'hsl(0 50% 84%)',   text: 'hsl(0 72% 40%)' },

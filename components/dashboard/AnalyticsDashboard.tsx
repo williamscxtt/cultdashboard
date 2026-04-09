@@ -10,6 +10,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line,
 } from 'recharts'
 import { Card } from '@/components/ui'
+import { useSyncProgress } from '@/components/dashboard/SyncProgress'
 import type { ClientReel, FollowerSnapshot } from '@/lib/types'
 
 // ─── Instagram icon ───────────────────────────────────────────────────────────
@@ -487,6 +488,7 @@ interface Props {
 interface SyncResult { synced: number; total: number; classified?: number; warning?: string }
 
 export default function AnalyticsDashboard({ profileId, followersCount, igUsername, followerHistory = [], profileName, dashboardBio, focusThisWeek }: Props) {
+  const { startSync, updateProgress, finishSync } = useSyncProgress()
   const [reels, setReels] = useState<ClientReel[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -519,6 +521,40 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
     setSyncing(true)
     setSyncResult(null)
     setSyncError(null)
+
+    // Staged fake-progress that mirrors the real sync pipeline:
+    // 0-12%  → boot + Apify start
+    // 12-65% → Apify scraping (longest phase, ~2-3 min)
+    // 65-85% → Whisper transcription
+    // 85-98% → Claude format classification
+    const STAGES = [
+      { at: 5,  label: 'Connecting to Instagram…' },
+      { at: 12, label: 'Scraping reels…' },
+      { at: 65, label: 'Transcribing content…' },
+      { at: 85, label: 'Classifying formats…' },
+      { at: 96, label: 'Almost done…' },
+    ]
+    startSync('Connecting to Instagram…')
+
+    // Advance through stages over expected 3-min sync duration
+    // Each stage occupies a slice of time proportional to its % range.
+    // Total simulated time ≈ 180 s. We tick every 800 ms.
+    const TOTAL_MS = 180_000
+    const TICK_MS  = 800
+    const ticks = TOTAL_MS / TICK_MS  // 225 ticks ≈ 3 min
+    let tick = 0
+    const interval = setInterval(() => {
+      tick++
+      const rawPct = (tick / ticks) * 98  // approach 98% asymptotically
+      // Ease: fast start, slow finish
+      const eased = 98 * (1 - Math.pow(1 - rawPct / 98, 1.6))
+      const pct = Math.min(eased, 97)
+
+      // Pick label from stages
+      const stage = [...STAGES].reverse().find(s => pct >= s.at)
+      updateProgress(pct, stage?.label)
+    }, TICK_MS)
+
     try {
       const res = await fetch('/api/instagram/sync', {
         method: 'POST',
@@ -526,13 +562,17 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
         body: JSON.stringify({ profileId }),
       })
       const data = await res.json()
+      clearInterval(interval)
+
       if (data.error) {
+        finishSync()
         if (data.error === 'token_expired') setSyncError('Instagram session expired. Reconnect in Settings.')
         else if (data.error === 'rate_limited') setSyncError('Rate limit hit. Try again in a few minutes.')
         else setSyncError(data.error)
       } else {
         setSyncResult({ synced: data.synced, total: data.total, warning: data.warning })
-        // Auto-refresh thumbnails after every sync
+        finishSync()
+        // Refresh thumbnails in background
         fetch('/api/instagram/sync', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -541,6 +581,8 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
         await fetchReels()
       }
     } catch {
+      clearInterval(interval)
+      finishSync()
       setSyncError('Network error. Check your connection.')
     } finally {
       setSyncing(false)

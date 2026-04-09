@@ -206,14 +206,16 @@ function buildInitialForm(profile: Profile): Record<string, string> {
 
 // ─── sub-components ───────────────────────────────────────────────────────────
 
-function FieldInput({ field, value, onChange }: {
-  field: FieldDef; value: string; onChange: (v: string) => void
+function FieldInput({ field, value, onChange, readOnly = false }: {
+  field: FieldDef; value: string; onChange: (v: string) => void; readOnly?: boolean
 }) {
   const inputStyle: React.CSSProperties = {
     width: '100%', padding: '10px 12px', fontSize: 14, boxSizing: 'border-box',
-    background: 'var(--background)', border: '1px solid var(--border)',
+    background: readOnly ? 'var(--muted)' : 'var(--background)',
+    border: '1px solid var(--border)',
     borderRadius: 8, color: 'var(--foreground)', fontFamily: 'inherit',
     outline: 'none', transition: 'border-color 0.15s',
+    cursor: readOnly ? 'default' : undefined,
   }
 
   return (
@@ -228,32 +230,35 @@ function FieldInput({ field, value, onChange }: {
         <textarea
           value={value}
           onChange={e => onChange(e.target.value)}
-          placeholder={field.placeholder}
+          placeholder={readOnly && !value ? '—' : field.placeholder}
           rows={3}
-          style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
-          onFocus={e => { (e.target as HTMLElement).style.borderColor = 'var(--accent)' }}
-          onBlur={e => { (e.target as HTMLElement).style.borderColor = 'var(--border)' }}
+          readOnly={readOnly}
+          style={{ ...inputStyle, resize: readOnly ? 'none' : 'vertical', lineHeight: 1.6 }}
+          onFocus={readOnly ? undefined : e => { (e.target as HTMLElement).style.borderColor = 'var(--accent)' }}
+          onBlur={readOnly ? undefined : e => { (e.target as HTMLElement).style.borderColor = 'var(--border)' }}
         />
       ) : (
         <input
           type={field.type === 'number' ? 'number' : 'text'}
           value={value}
           onChange={e => onChange(e.target.value)}
-          placeholder={field.placeholder}
+          placeholder={readOnly && !value ? '—' : field.placeholder}
+          readOnly={readOnly}
           style={inputStyle}
-          onFocus={e => { (e.target as HTMLElement).style.borderColor = 'var(--accent)' }}
-          onBlur={e => { (e.target as HTMLElement).style.borderColor = 'var(--border)' }}
+          onFocus={readOnly ? undefined : e => { (e.target as HTMLElement).style.borderColor = 'var(--accent)' }}
+          onBlur={readOnly ? undefined : e => { (e.target as HTMLElement).style.borderColor = 'var(--border)' }}
         />
       )}
     </div>
   )
 }
 
-function AccordionSection({ section, form, onChange, completedCount }: {
+function AccordionSection({ section, form, onChange, completedCount, readOnly = false }: {
   section: SectionDef
   form: Record<string, string>
   onChange: (key: string, value: string) => void
   completedCount: number
+  readOnly?: boolean
 }) {
   const [open, setOpen] = useState(section.number <= 2)
   const total = section.fields.length
@@ -309,7 +314,8 @@ function AccordionSection({ section, form, onChange, completedCount }: {
               key={field.key}
               field={field}
               value={form[field.key] ?? ''}
-              onChange={v => onChange(field.key, v)}
+              onChange={readOnly ? () => {} : (v => onChange(field.key, v))}
+              readOnly={readOnly}
             />
           ))}
         </div>
@@ -320,9 +326,9 @@ function AccordionSection({ section, form, onChange, completedCount }: {
 
 // ─── main component ───────────────────────────────────────────────────────────
 
-interface Props { profile: Profile }
+interface Props { profile: Profile; adminView?: boolean }
 
-export default function OnboardingHub({ profile }: Props) {
+export default function OnboardingHub({ profile, adminView = false }: Props) {
   const [form, setForm] = useState<Record<string, string>>(() => buildInitialForm(profile))
   const [saving, setSaving] = useState(false)
   const [savedMsg, setSavedMsg] = useState(false)
@@ -400,13 +406,27 @@ export default function OnboardingHub({ profile }: Props) {
   return (
     <div style={{ padding: '24px', maxWidth: 800, margin: '0 auto' }}>
 
+      {/* Admin read-only notice */}
+      {adminView && (
+        <div style={{
+          marginBottom: 20, padding: '10px 14px', borderRadius: 8,
+          background: 'var(--accent-subtle)', border: '1px solid var(--accent-subtle-border)',
+          fontSize: 13, color: 'var(--accent)', fontWeight: 500, lineHeight: 1.5,
+        }}>
+          <strong>Read-only view.</strong> To edit this client&apos;s profile, use <strong>View as Client</strong> from the client list.
+        </div>
+      )}
+
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.5px', margin: '0 0 6px' }}>
-          Onboarding Hub
+          {adminView ? `${profile.name || 'Client'}'s Profile` : 'Onboarding Hub'}
         </h1>
         <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.5 }}>
-          The more you put in, the better your AI gets. Come back and update whenever something changes.
+          {adminView
+            ? 'Client profile data — all onboarding fields.'
+            : 'The more you put in, the better your AI gets. Come back and update whenever something changes.'
+          }
         </p>
       </div>
 
@@ -430,26 +450,28 @@ export default function OnboardingHub({ profile }: Props) {
         </div>
       </div>
 
-      {/* Save button */}
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        style={{
-          width: '100%', padding: '14px', marginBottom: 20,
-          background: 'var(--foreground)', color: 'var(--background)',
-          border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
-          cursor: saving ? 'not-allowed' : 'pointer',
-          opacity: saving ? 0.7 : 1, fontFamily: 'inherit',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-          transition: 'opacity 0.15s',
-        }}
-      >
-        {saving ? 'Saving…' : savedMsg ? (
-          <><CheckCircle size={16} /> Saved — AI Updated</>
-        ) : (
-          <><Save size={16} /> Save &amp; Update My AI</>
-        )}
-      </button>
+      {/* Save button — hidden in admin read-only view */}
+      {!adminView && (
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          style={{
+            width: '100%', padding: '14px', marginBottom: 20,
+            background: 'var(--foreground)', color: 'var(--background)',
+            border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
+            cursor: saving ? 'not-allowed' : 'pointer',
+            opacity: saving ? 0.7 : 1, fontFamily: 'inherit',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            transition: 'opacity 0.15s',
+          }}
+        >
+          {saving ? 'Saving…' : savedMsg ? (
+            <><CheckCircle size={16} /> Saved — AI Updated</>
+          ) : (
+            <><Save size={16} /> Save &amp; Update My AI</>
+          )}
+        </button>
+      )}
 
       {/* AI Personalised card */}
       {hasAiData && (
@@ -507,24 +529,28 @@ export default function OnboardingHub({ profile }: Props) {
           form={form}
           onChange={handleChange}
           completedCount={sectionCompleted(section)}
+          readOnly={adminView}
         />
       ))}
 
-      {/* Bottom save */}
-      <button
-        onClick={handleSave}
-        disabled={saving}
-        style={{
-          width: '100%', padding: '14px', marginTop: 16,
-          background: 'var(--foreground)', color: 'var(--background)',
-          border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
-          cursor: saving ? 'not-allowed' : 'pointer',
-          opacity: saving ? 0.7 : 1, fontFamily: 'inherit',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-        }}
-      >
-        {saving ? 'Saving…' : <><Save size={16} /> Save &amp; Update My AI</>}
-      </button>
+      {/* Bottom save — hidden in admin read-only view */}
+
+      {!adminView && (
+        <button
+          onClick={handleSave}
+          disabled={saving}
+          style={{
+            width: '100%', padding: '14px', marginTop: 16,
+            background: 'var(--foreground)', color: 'var(--background)',
+            border: 'none', borderRadius: 10, fontSize: 15, fontWeight: 700,
+            cursor: saving ? 'not-allowed' : 'pointer',
+            opacity: saving ? 0.7 : 1, fontFamily: 'inherit',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+          }}
+        >
+          {saving ? 'Saving…' : <><Save size={16} /> Save &amp; Update My AI</>}
+        </button>
+      )}
     </div>
   )
 }

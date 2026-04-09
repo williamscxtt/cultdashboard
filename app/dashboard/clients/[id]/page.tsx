@@ -6,7 +6,8 @@ import Link from 'next/link'
 import AnalyticsCharts from '@/components/dashboard/AnalyticsCharts'
 import ScriptCards from '@/components/dashboard/ScriptCards'
 import ClientDetailActions from '@/components/dashboard/ClientDetailActions'
-import { Card, Badge, StatCard, PageHeader, EmptyState } from '@/components/ui'
+import ClientDetailTabs from '@/components/dashboard/ClientDetailTabs'
+import { Card, Badge, StatCard, EmptyState } from '@/components/ui'
 import { ArrowLeft, FileText } from 'lucide-react'
 
 const adminClient = createAdmin(
@@ -80,47 +81,10 @@ export default async function ClientDetailPage({
 
   const profile = clientProfile as Profile
 
-  return (
-    <div style={{ padding: '24px', maxWidth: 1024, margin: '0 auto' }}>
-      {/* Admin banner */}
-      <Card style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        <Link
-          href="/dashboard/clients"
-          style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--muted-foreground)', textDecoration: 'none', fontSize: 13, fontWeight: 500 }}
-        >
-          <ArrowLeft size={13} />
-          Back
-        </Link>
-        <div style={{ width: 1, height: 14, background: 'var(--border)' }} />
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-          Admin View
-        </div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>
-          {profile.name || 'Unnamed Client'}
-        </div>
-        {profile.ig_username && (
-          <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>@{profile.ig_username}</div>
-        )}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <Badge variant={profile.is_active ? 'success' : 'muted'}>
-            {profile.is_active ? 'Active' : 'Inactive'}
-          </Badge>
-          {/* Client actions: view as, toggle active, delete */}
-          <ClientDetailActions
-            clientId={profile.id}
-            clientName={profile.name || profile.email || 'Client'}
-            isActive={profile.is_active}
-          />
-        </div>
-      </Card>
-
-      <PageHeader
-        title={`${profile.name || 'Client'}'s Dashboard`}
-        description={profile.email ?? undefined}
-      />
-
+  const overviewContent = (
+    <>
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 24 }}>
         <StatCard label="Total Reels" value={totalReels.toString()} />
         <StatCard label="Avg Views" value={totalReels ? avgViews.toLocaleString() : '—'} />
         <StatCard label="Avg Engagement" value={totalReels ? `${avgEngagement}%` : '—'} />
@@ -131,12 +95,16 @@ export default async function ClientDetailPage({
 
       {/* Scripts */}
       <div style={{ marginTop: 28 }}>
-        <PageHeader
-          title="Latest Scripts"
-          description={weeklyScript
-            ? `Week of ${new Date(weeklyScript.week_start).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`
-            : 'No scripts generated yet.'}
-        />
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', letterSpacing: '-0.3px', fontFamily: 'var(--font-display)' }}>
+            Latest Scripts
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>
+            {weeklyScript
+              ? `Week of ${new Date(weeklyScript.week_start).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`
+              : 'No scripts generated yet.'}
+          </div>
+        </div>
         {weeklyScript ? (
           <ScriptCards scriptsMd={weeklyScript.scripts_md} />
         ) : (
@@ -149,6 +117,41 @@ export default async function ClientDetailPage({
           </Card>
         )}
       </div>
+    </>
+  )
+
+  return (
+    <div style={{ padding: '16px', maxWidth: 1024, margin: '0 auto' }}>
+      {/* Admin banner */}
+      <Card style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+        <Link
+          href="/dashboard/clients"
+          style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--muted-foreground)', textDecoration: 'none', fontSize: 13, fontWeight: 500 }}
+        >
+          <ArrowLeft size={13} />
+          Clients
+        </Link>
+        <div style={{ width: 1, height: 14, background: 'var(--border)' }} />
+        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', fontFamily: 'var(--font-display)' }}>
+          {profile.name || 'Unnamed Client'}
+        </div>
+        {profile.ig_username && (
+          <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>@{profile.ig_username}</div>
+        )}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Badge variant={profile.is_active ? 'success' : 'muted'}>
+            {profile.is_active ? 'Active' : 'Inactive'}
+          </Badge>
+          <ClientDetailActions
+            clientId={profile.id}
+            clientName={profile.name || profile.email || 'Client'}
+            isActive={profile.is_active}
+          />
+        </div>
+      </Card>
+
+      {/* Tabbed content */}
+      <ClientDetailTabs profile={profile} overviewContent={overviewContent} />
     </div>
   )
 }

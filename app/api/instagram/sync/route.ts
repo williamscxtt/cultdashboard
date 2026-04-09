@@ -36,7 +36,7 @@ async function apifyStartRun(username: string): Promise<string> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       username: [username],
-      resultsLimit: 30,
+      resultsLimit: 150,        // Capture ~5 months of posting history
       includeComments: true,
       maxCommentsPerPost: 30,
     }),
@@ -349,10 +349,25 @@ export async function POST(req: NextRequest) {
   }
 
   // ── 4. Transcribe + persist thumbnails for new reels (max 5 at a time) ─
+  // Only transcribe the 20 most recent new reels to avoid Vercel timeout
+  const MAX_TRANSCRIBE = 20
+  const reelsToTranscribe = newReels
+    .sort((a, b) => new Date(b.timestamp || 0).getTime() - new Date(a.timestamp || 0).getTime())
+    .slice(0, MAX_TRANSCRIBE)
+  const noTranscribeIds = new Set(newReels.filter(r => !reelsToTranscribe.includes(r)).map(r => r.reel_id))
+
   const BATCH = 5
   for (let i = 0; i < newReels.length; i += BATCH) {
     await Promise.all(
       newReels.slice(i, i + BATCH).map(async (r) => {
+        if (noTranscribeIds.has(r.reel_id)) {
+          // Skip transcription for older reels — just persist thumbnail
+          if (r.thumbnail_url) {
+            const storedThumb = await persistThumbnail(profileId, r.reel_id, r.thumbnail_url)
+            if (storedThumb) r.thumbnail_url = storedThumb
+          }
+          return
+        }
         r.caption = r.caption || '' // ensure string
         const [transcript, storedThumb] = await Promise.all([
           transcribeReel(r.video_url),
