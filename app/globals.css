@@ -7,7 +7,7 @@
 
 /* ── Design Tokens ────────────────────────────────────────────────────── */
 :root {
-  /* Light palette */
+  /* Light palette (fallback — dashboard always runs in dark mode) */
   --background:          hsl(0 0% 98%);
   --foreground:          hsl(0 0% 6%);
   --card:                hsl(0 0% 100%);
@@ -16,12 +16,12 @@
   --muted-foreground:    hsl(0 0% 44%);
   --border:              hsl(0 0% 90%);
   --input:               hsl(0 0% 100%);
-  --ring:                hsl(0 84% 40%);
-  --accent:              hsl(0 84% 40%);
-  --accent-foreground:   hsl(0 0% 100%);
-  --accent-subtle:       hsl(0 84% 40% / 0.08);
-  --accent-subtle-border:hsl(0 84% 40% / 0.2);
-  --accent-glow:         hsl(0 84% 40% / 0.25);
+  --ring:                #3B82F6;
+  --accent:              #3B82F6;
+  --accent-foreground:   #ffffff;
+  --accent-subtle:       rgba(59, 130, 246, 0.12);
+  --accent-subtle-border:rgba(59, 130, 246, 0.25);
+  --accent-glow:         rgba(59, 130, 246, 0.25);
   --destructive:         hsl(0 72% 51%);
   --destructive-foreground: hsl(0 0% 100%);
   --success:             hsl(142 71% 35%);
@@ -33,52 +33,53 @@
   --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
   /* Geometry */
-  --radius:    8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius:    6px;
+  --radius-lg: 10px;
+  --radius-xl: 14px;
 
-  /* Shadows */
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.05);
-  --shadow-glow: 0 0 20px hsl(0 84% 40% / 0.15);
+  /* No decorative shadows — borders define structure */
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+  --shadow-glow: none;
 
   /* Layout */
-  --sidebar-width:           224px;
-  --sidebar-width-collapsed: 56px;
+  --sidebar-width:           220px;
+  --sidebar-width-collapsed: 52px;
   --topbar-height:           48px;
 }
 
-/* ── Dark Mode — Brand: Black + Red ──────────────────────────────────── */
+/* ── Dark Mode — Pure black, Resend-style ───────────────────────────────── */
 .dark {
-  --background:          #080404;
-  --foreground:          hsl(0 5% 94%);
-  --card:                #0f0b0b;
-  --card-foreground:     hsl(0 5% 94%);
-  --muted:               #1a1212;
-  --muted-foreground:    hsl(0 5% 52%);
-  --border:              #231818;
-  --input:               #120d0d;
-  --accent:              hsl(0 84% 44%);
-  --accent-foreground:   hsl(0 0% 100%);
-  --accent-subtle:       hsl(0 84% 44% / 0.14);
-  --accent-subtle-border:hsl(0 84% 44% / 0.28);
-  --accent-glow:         hsl(0 84% 44% / 0.3);
+  --background:          #000000;
+  --foreground:          #ffffff;
+  --card:                #000000;
+  --card-foreground:     #ffffff;
+  --muted:               rgba(255, 255, 255, 0.04);
+  --muted-foreground:    #888888;
+  --border:              rgba(255, 255, 255, 0.12);
+  --input:               rgba(255, 255, 255, 0.04);
+  --accent:              #3B82F6;
+  --accent-foreground:   #ffffff;
+  --accent-subtle:       rgba(59, 130, 246, 0.15);
+  --accent-subtle-border:rgba(59, 130, 246, 0.3);
+  --accent-glow:         rgba(59, 130, 246, 0.3);
   --destructive:         hsl(0 72% 51%);
-  --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.4);
-  --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.5), 0 1px 2px -1px rgb(0 0 0 / 0.4);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.5), 0 2px 4px -2px rgb(0 0 0 / 0.4);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.6), 0 4px 6px -4px rgb(0 0 0 / 0.5);
-  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.6), 0 8px 10px -6px rgb(0 0 0 / 0.5);
-  --shadow-glow: 0 0 24px hsl(0 84% 44% / 0.2), 0 0 48px hsl(0 84% 44% / 0.08);
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+  --shadow-glow: none;
 }
 
 /* ── Reset ────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { color-scheme: dark; }
+html.dark { color-scheme: dark; }
+html:not(.dark) { color-scheme: light; }
 
 body {
   background-color: var(--background);
@@ -89,8 +90,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
-  /* Subtle noise grain for premium feel */
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
 }
 
 /* Display font for headings */
@@ -103,28 +102,15 @@ h1, h2, h3, h4, .font-display {
   position: relative;
   background: var(--card);
   border-radius: var(--radius-lg);
-}
-.gradient-border::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1px;
-  background: linear-gradient(135deg, hsl(0 84% 44% / 0.4), transparent 50%, hsl(0 84% 44% / 0.15));
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
+  border: 1px solid var(--border);
 }
 
-/* ── Glow card hover ──────────────────────────────────────────────────── */
+/* ── Card hover ───────────────────────────────────────────────────────── */
 .card-hover {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  will-change: transform;
+  transition: border-color 0.2s ease;
 }
 .card-hover:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-md), 0 0 0 1px hsl(0 84% 44% / 0.15), var(--shadow-glow);
+  border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* ── Scrollbar ────────────────────────────────────────────────────────── */
@@ -136,7 +122,7 @@ h1, h2, h3, h4, .font-display {
 /* ── Form elements ────────────────────────────────────────────────────── */
 input, textarea, select {
   background: var(--input);
-  border: 1.5px solid var(--border);
+  border: 1px solid var(--border);
   color: var(--foreground);
   border-radius: var(--radius);
   padding: 0 12px;
@@ -150,7 +136,7 @@ input, textarea, select {
 }
 input:focus, textarea:focus, select:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px hsl(0 84% 44% / 0.12);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
 }
 input::placeholder, textarea::placeholder { color: var(--muted-foreground); opacity: 0.65; }
 textarea { height: auto; padding: 10px 12px; line-height: 1.6; }
@@ -207,8 +193,8 @@ select { padding-right: 32px; appearance: none; cursor: pointer; }
   100% { background-position: 200% 0; }
 }
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 8px hsl(0 84% 44% / 0.3); }
-  50%       { box-shadow: 0 0 20px hsl(0 84% 44% / 0.5), 0 0 40px hsl(0 84% 44% / 0.15); }
+  0%, 100% { box-shadow: 0 0 8px rgba(59, 130, 246, 0.3); }
+  50%       { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.15); }
 }
 @keyframes border-spin {
   to { --angle: 360deg; }
@@ -234,7 +220,7 @@ select { padding-right: 32px; appearance: none; cursor: pointer; }
 
 /* Skeleton shimmer */
 .skeleton-shimmer {
-  background: linear-gradient(90deg, var(--muted) 25%, hsl(0 5% 20%) 50%, var(--muted) 75%);
+  background: linear-gradient(90deg, var(--muted) 25%, rgba(255, 255, 255, 0.06) 50%, var(--muted) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.6s infinite linear;
 }
@@ -245,22 +231,21 @@ select { padding-right: 32px; appearance: none; cursor: pointer; }
 /* Sidebar transition */
 .sidebar-transition { transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
 
-/* ── Sidebar active glow ──────────────────────────────────────────────── */
+/* ── Sidebar active state ─────────────────────────────────────────────── */
 .nav-item-active {
-  background: hsl(0 84% 44% / 0.1) !important;
-  color: hsl(0 84% 60%) !important;
-  box-shadow: inset 0 0 0 1px hsl(0 84% 44% / 0.2);
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ededed !important;
 }
 
-/* ── Red accent on focus rings ────────────────────────────────────────── */
+/* ── Violet focus rings ───────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid hsl(0 84% 44% / 0.7);
+  outline: 2px solid rgba(59, 130, 246, 0.7);
   outline-offset: 2px;
 }
 
-/* ── Accent line (hero gradient) ─────────────────────────────────────── */
+/* ── Accent gradient text ─────────────────────────────────────────────── */
 .accent-underline {
-  background: linear-gradient(90deg, hsl(0 84% 44%), hsl(0 84% 60%));
+  background: linear-gradient(90deg, #3B82F6, #93C5FD);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;

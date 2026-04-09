@@ -42,8 +42,8 @@ export function Badge({ children, variant = 'default', style = {} }: {
 }) {
   const styles: Record<BadgeVariant, React.CSSProperties> = {
     default: { background: 'var(--muted)', color: 'var(--muted-foreground)' },
-    success: { background: 'hsl(142 50% 94%)', color: 'hsl(142 71% 28%)' },
-    warning: { background: 'hsl(38 70% 93%)',  color: 'hsl(38 92% 34%)' },
+    success: { background: 'rgba(255,255,255,0.5)', color: 'rgba(255,255,255,0.5)' },
+    warning: { background: 'rgba(255,255,255,0.35)',  color: 'rgba(255,255,255,0.35)' },
     error:   { background: 'hsl(0 50% 95%)',   color: 'hsl(0 72% 45%)' },
     accent:  { background: 'var(--accent-subtle)', color: 'var(--accent)', border: '1px solid var(--accent-subtle-border)' },
     muted:   { background: 'var(--muted)', color: 'var(--muted-foreground)' },
@@ -93,7 +93,7 @@ export function Button({
   }
   const variants: Record<ButtonVariant, React.CSSProperties> = {
     primary:     { background: 'var(--foreground)', color: 'var(--background)', boxShadow: 'var(--shadow-sm)' },
-    accent:      { background: 'var(--accent)', color: 'var(--accent-foreground)', boxShadow: '0 1px 8px hsl(0 84% 44% / 0.35), 0 0 20px hsl(0 84% 44% / 0.15)' },
+    accent:      { background: 'var(--accent)', color: 'var(--accent-foreground)', boxShadow: '0 1px 8px rgba(59, 130, 246, 0.35), 0 0 20px rgba(59, 130, 246, 0.15)' },
     secondary:   { background: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' },
     ghost:       { background: 'transparent', color: 'var(--muted-foreground)' },
     destructive: { background: 'var(--destructive)', color: 'var(--destructive-foreground)', boxShadow: 'var(--shadow-xs)' },
@@ -226,7 +226,7 @@ export function StatCard({
       <div style={{
         position: 'absolute', top: -20, right: -20,
         width: 80, height: 80, borderRadius: '50%',
-        background: 'hsl(0 84% 44% / 0.06)',
+        background: 'rgba(59, 130, 246, 0.06)',
         filter: 'blur(20px)',
         pointerEvents: 'none',
       }} />
@@ -243,10 +243,10 @@ export function StatCard({
         {icon && (
           <div style={{
             width: 28, height: 28, borderRadius: 8,
-            background: 'hsl(0 84% 44% / 0.1)',
-            border: '1px solid hsl(0 84% 44% / 0.2)',
+            background: 'rgba(59, 130, 246, 0.1)',
+            border: '1px solid rgba(59, 130, 246, 0.2)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: 'hsl(0 84% 60%)',
+            color: '#93C5FD',
           }}>
             {icon}
           </div>
@@ -275,9 +275,9 @@ export function StatCard({
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 2,
               fontSize: 11, fontWeight: 700,
-              color: isUp ? 'hsl(142 71% 45%)' : 'hsl(0 72% 55%)',
-              background: isUp ? 'hsl(142 50% 12%)' : 'hsl(0 50% 12%)',
-              border: `1px solid ${isUp ? 'hsl(142 50% 25%)' : 'hsl(0 50% 25%)'}`,
+              color: isUp ? 'rgba(255,255,255,0.5)' : 'hsl(0 72% 55%)',
+              background: isUp ? 'rgba(255,255,255,0.04)' : 'hsl(0 50% 12%)',
+              border: `1px solid ${isUp ? 'rgba(255,255,255,0.09)' : 'hsl(0 50% 25%)'}`,
               padding: '2px 7px', borderRadius: 5,
             }}>
               {isUp ? '↑' : '↓'} {Math.abs(trend)}%
@@ -438,10 +438,10 @@ export function Alert({
   children: React.ReactNode
 }) {
   const colors = {
-    info:    { bg: 'var(--accent-subtle)', border: 'var(--accent-subtle-border)', text: 'var(--accent)' },
-    success: { bg: 'hsl(142 50% 96%)', border: 'hsl(142 50% 80%)', text: 'hsl(142 71% 28%)' },
-    warning: { bg: 'hsl(38 90% 95%)',  border: 'hsl(38 90% 78%)',  text: 'hsl(38 80% 32%)' },
-    error:   { bg: 'hsl(0 50% 96%)',   border: 'hsl(0 50% 84%)',   text: 'hsl(0 72% 40%)' },
+    info:    { bg: 'rgba(59, 130, 246, 0.1)', border: 'rgba(59, 130, 246, 0.25)', text: '#93C5FD' },
+    success: { bg: 'rgba(255,255,255,0.03)',  border: 'rgba(255,255,255,0.08)', text: 'rgba(74, 222, 128, 0.8)' },
+    warning: { bg: 'rgba(255,255,255,0.03)',   border: 'rgba(255,255,255,0.08)',  text: 'rgba(255,255,255,0.45)' },
+    error:   { bg: 'hsl(0 50% 10%)',   border: 'hsl(0 50% 22%)',   text: 'hsl(0 72% 65%)' },
   }
   const c = colors[type]
   return (
@@ -451,6 +451,117 @@ export function Alert({
       color: c.text, fontSize: 13, fontWeight: 500, lineHeight: 1.5,
     }}>
       {children}
+    </div>
+  )
+}
+
+// ─── Page Loading Skeleton ────────────────────────────────────────────────────
+
+export function PageLoading({ rows = 3, cards = 4 }: { rows?: number; cards?: number }) {
+  return (
+    <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto' }}>
+      <style>{`
+        @keyframes shimmer {
+          0%   { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        .page-skeleton {
+          background: linear-gradient(90deg, var(--muted) 25%, hsl(0 5% 16%) 50%, var(--muted) 75%);
+          background-size: 200% 100%;
+          animation: shimmer 1.5s infinite linear;
+          border-radius: 8px;
+        }
+      `}</style>
+
+      {/* Header skeleton */}
+      <div style={{ marginBottom: 28 }}>
+        <div className="page-skeleton" style={{ height: 28, width: 200, marginBottom: 10 }} />
+        <div className="page-skeleton" style={{ height: 14, width: 160 }} />
+      </div>
+
+      {/* Cards grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(cards, 4)}, 1fr)`, gap: 12, marginBottom: 16 }}>
+        {Array.from({ length: cards }).map((_, i) => (
+          <div key={i} style={{ borderRadius: 14, overflow: 'hidden', border: '1px solid var(--border)' }}>
+            <div className="page-skeleton" style={{ height: 3, borderRadius: 0 }} />
+            <div style={{ padding: '18px 20px', background: 'var(--card)' }}>
+              <div className="page-skeleton" style={{ height: 10, width: 80, marginBottom: 12 }} />
+              <div className="page-skeleton" style={{ height: 32, width: 120, marginBottom: 12 }} />
+              <div className="page-skeleton" style={{ height: 20, width: 100, borderRadius: 6 }} />
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Content rows */}
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="page-skeleton" style={{ height: 200, borderRadius: 14, marginBottom: 12 }} />
+      ))}
+    </div>
+  )
+}
+
+// ─── Loading Overlay ──────────────────────────────────────────────────────────
+
+export function LoadingOverlay({
+  label = 'Loading…', visible,
+}: {
+  label?: string
+  visible: boolean
+}) {
+  if (!visible) return null
+  return (
+    <div style={{
+      position: 'absolute', inset: 0, zIndex: 10,
+      background: 'hsl(0 0% 0% / 0.6)', backdropFilter: 'blur(4px)',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      borderRadius: 'inherit', gap: 12,
+    }}>
+      <Spinner size={28} color="#3B82F6" />
+      <span style={{ fontSize: 13, fontWeight: 600, color: 'hsl(0 5% 80%)' }}>{label}</span>
+    </div>
+  )
+}
+
+// ─── Generating State ─────────────────────────────────────────────────────────
+
+export function GeneratingState({
+  label = 'Generating with AI…',
+  sub,
+}: {
+  label?: string
+  sub?: string
+}) {
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      padding: '48px 24px', gap: 16, textAlign: 'center',
+    }}>
+      {/* Animated rings */}
+      <div style={{ position: 'relative', width: 56, height: 56 }}>
+        <div style={{
+          position: 'absolute', inset: 0, borderRadius: '50%',
+          border: '2px solid rgba(59, 130, 246, 0.2)',
+          animation: 'spin 2s linear infinite',
+        }} />
+        <div style={{
+          position: 'absolute', inset: 4, borderRadius: '50%',
+          border: '2px solid rgba(59, 130, 246, 0.4)',
+          borderTopColor: '#3B82F6',
+          animation: 'spin 0.9s linear infinite',
+        }} />
+        <div style={{
+          position: 'absolute', inset: 12, borderRadius: '50%',
+          background: 'rgba(59, 130, 246, 0.15)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <span style={{ fontSize: 14 }}>✦</span>
+        </div>
+      </div>
+      <div>
+        <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', marginBottom: 4, fontFamily: 'var(--font-display)' }}>{label}</div>
+        {sub && <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>{sub}</div>}
+      </div>
     </div>
   )
 }

@@ -255,10 +255,10 @@ function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
         {tempPassword ? (
           <div>
             <div style={{
-              background: 'hsl(142 50% 95%)', border: '1px solid hsl(142 50% 85%)',
+              background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.5)',
               borderRadius: 8, padding: 16, marginBottom: 16,
             }}>
-              <div style={{ fontSize: 13, color: 'hsl(142 71% 35%)', fontWeight: 600, marginBottom: 8 }}>
+              <div style={{ fontSize: 13, color: '#3B82F6', fontWeight: 600, marginBottom: 8 }}>
                 Client created successfully!
               </div>
               <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 8 }}>

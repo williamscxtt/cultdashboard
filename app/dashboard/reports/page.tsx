@@ -40,8 +40,8 @@ interface ProgressReport {
 }
 
 const HEALTH_COLORS = {
-  green: 'hsl(142 76% 36%)',
-  amber: 'hsl(38 92% 50%)',
+  green: 'rgba(255,255,255,0.12)',
+  amber: 'rgba(255,255,255,0.35)',
   red:   'hsl(0 72% 51%)',
 }
 
@@ -107,28 +107,28 @@ function ReportView({ report }: { report: ProgressReport }) {
 
       {/* What worked / Needs work */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <Card style={{ padding: 18, background: 'hsl(142 50% 97%)' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'hsl(142 71% 35%)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <Card style={{ padding: 18, background: 'rgba(255,255,255,0.5)' }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: '#3B82F6', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             What Worked
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {d.what_worked.map((point, i) => (
               <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <CheckCircle size={14} style={{ color: 'hsl(142 71% 35%)', flexShrink: 0, marginTop: 1 }} />
+                <CheckCircle size={14} style={{ color: '#3B82F6', flexShrink: 0, marginTop: 1 }} />
                 <span style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5 }}>{point}</span>
               </div>
             ))}
           </div>
         </Card>
 
-        <Card style={{ padding: 18, background: 'hsl(38 70% 97%)' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'hsl(38 92% 40%)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <Card style={{ padding: 18, background: 'rgba(255,255,255,0.35)' }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.35)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Needs Work
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {d.what_needs_work.map((point, i) => (
               <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <AlertTriangle size={14} style={{ color: 'hsl(38 92% 40%)', flexShrink: 0, marginTop: 1 }} />
+                <AlertTriangle size={14} style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0, marginTop: 1 }} />
                 <span style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5 }}>{point}</span>
               </div>
             ))}

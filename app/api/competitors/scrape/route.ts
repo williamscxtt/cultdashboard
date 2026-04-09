@@ -246,7 +246,7 @@ export async function POST(req: NextRequest) {
   // Upsert into competitor_reels
   const { error: upsertError, data: upserted } = await adminClient
     .from('competitor_reels')
-    .upsert(rows, { onConflict: 'account,reel_id', ignoreDuplicates: false })
+    .upsert(rows, { onConflict: 'reel_id', ignoreDuplicates: false })
     .select('id')
 
   if (upsertError) {

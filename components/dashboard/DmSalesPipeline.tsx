@@ -35,11 +35,11 @@ interface Lead {
 
 const STAGES = [
   { key: 'Call Booked',  color: 'hsl(220 90% 56%)',  label: 'Call Booked' },
-  { key: 'On Call',      color: 'hsl(280 60% 55%)',  label: 'On Call' },
+  { key: 'On Call',      color: '#3B82F6',  label: 'On Call' },
   { key: 'No Show',      color: 'hsl(0 60% 55%)',    label: 'No Show' },
-  { key: 'Follow Up',    color: 'hsl(38 90% 50%)',   label: 'Follow Up' },
+  { key: 'Follow Up',    color: 'rgba(255,255,255,0.35)',   label: 'Follow Up' },
   { key: 'Offer Made',   color: 'hsl(200 70% 50%)',  label: 'Offer Made' },
-  { key: 'Closed Won',   color: 'hsl(142 60% 40%)',  label: 'Closed Won 🎉' },
+  { key: 'Closed Won',   color: 'rgba(255,255,255,0.5)',  label: 'Closed Won 🎉' },
   { key: 'Closed Lost',  color: 'hsl(0 40% 55%)',    label: 'Closed Lost' },
 ]
 
@@ -292,8 +292,8 @@ function LeadPanel({ lead, onUpdate, onClose, onDelete }: {
         style={{
           display: 'flex', alignItems: 'center', gap: 5, padding: '4px 10px',
           fontSize: 11, fontWeight: 600, borderRadius: 6, border: '1px solid var(--border)',
-          background: savedIdea ? 'hsl(142 60% 40% / 0.1)' : 'var(--muted)',
-          color: savedIdea ? 'hsl(142 60% 40%)' : 'var(--muted-foreground)',
+          background: savedIdea ? 'rgba(255,255,255,0.15)' : 'var(--muted)',
+          color: savedIdea ? 'rgba(255,255,255,0.5)' : 'var(--muted-foreground)',
           cursor: painPoints.trim() ? 'pointer' : 'not-allowed', fontFamily: 'inherit',
           marginBottom: 16,
         }}
@@ -402,18 +402,18 @@ export default function DmSalesPipeline({ initialLeads }: Props) {
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         <Stat label="Leads This Month" value={callsThisMonth} />
-        <Stat label="Overdue Follow-ups" value={overdueFollowUps} color={overdueFollowUps > 0 ? 'hsl(38 90% 50%)' : undefined} />
+        <Stat label="Overdue Follow-ups" value={overdueFollowUps} color={overdueFollowUps > 0 ? 'rgba(255,255,255,0.35)' : undefined} />
         <Stat label="Open Deals" value={openDeals} />
-        <Stat label="Close Rate" value={`${closeRate}%`} color={closeRate >= 50 ? 'hsl(142 60% 40%)' : undefined} />
+        <Stat label="Close Rate" value={`${closeRate}%`} color={closeRate >= 50 ? 'rgba(255,255,255,0.5)' : undefined} />
       </div>
 
       {/* Closed revenue */}
       {closedRevenue > 0 && (
         <div style={{
           display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 16,
-          padding: '8px 16px', borderRadius: 8, background: 'hsl(142 60% 40% / 0.1)',
-          border: '1px solid hsl(142 60% 40% / 0.25)',
-          fontSize: 13, fontWeight: 700, color: 'hsl(142 60% 35%)',
+          padding: '8px 16px', borderRadius: 8, background: 'rgba(255,255,255,0.15)',
+          border: '1px solid rgba(255,255,255,0.15)',
+          fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.09)',
         }}>
           £{closedRevenue.toLocaleString()} closed revenue
         </div>
@@ -430,7 +430,7 @@ export default function DmSalesPipeline({ initialLeads }: Props) {
           }}>
             {f}
             {f === 'Needs Follow Up' && overdueFollowUps > 0 && (
-              <span style={{ marginLeft: 6, background: 'hsl(38 90% 50%)', color: '#fff', borderRadius: 9999, fontSize: 10, fontWeight: 700, padding: '0 5px' }}>
+              <span style={{ marginLeft: 6, background: 'rgba(255,255,255,0.35)', color: '#fff', borderRadius: 9999, fontSize: 10, fontWeight: 700, padding: '0 5px' }}>
                 {overdueFollowUps}
               </span>
             )}
@@ -481,7 +481,7 @@ export default function DmSalesPipeline({ initialLeads }: Props) {
                     <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>{lead.lead_name || 'Unnamed'}</span>
                     {lead.contact_info && <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>{lead.contact_info}</span>}
                     <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 4, background: `${color}22`, color }}>{lead.stage}</span>
-                    {lead.deal_value != null && <span style={{ fontSize: 12, fontWeight: 600, color: 'hsl(142 60% 40%)' }}>£{lead.deal_value.toLocaleString()}</span>}
+                    {lead.deal_value != null && <span style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)' }}>£{lead.deal_value.toLocaleString()}</span>}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     {lead.source && <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{lead.source}</span>}
@@ -491,7 +491,7 @@ export default function DmSalesPipeline({ initialLeads }: Props) {
                       </span>
                     )}
                     {overdue && (
-                      <span style={{ fontSize: 11, color: 'hsl(38 90% 50%)', display: 'flex', alignItems: 'center', gap: 3, fontWeight: 600 }}>
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)', display: 'flex', alignItems: 'center', gap: 3, fontWeight: 600 }}>
                         <AlertCircle size={10} /> Follow-up overdue
                       </span>
                     )}

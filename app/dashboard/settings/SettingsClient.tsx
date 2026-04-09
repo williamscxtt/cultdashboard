@@ -223,8 +223,8 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
                     @{profile.ig_username}
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 2 }}>
-                    <RefreshCw size={10} style={{ color: 'hsl(142 50% 45%)' }} />
-                    <span style={{ fontSize: 12, color: 'hsl(142 50% 45%)', fontWeight: 600 }}>
+                    <RefreshCw size={10} style={{ color: 'rgba(255,255,255,0.55)' }} />
+                    <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontWeight: 600 }}>
                       Synced automatically every day
                     </span>
                   </div>

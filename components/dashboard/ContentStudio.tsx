@@ -475,9 +475,9 @@ export default function ContentStudio({ profileId, recentReels }: Props) {
         {scrapeMsg && (
           <div style={{
             padding: '10px 14px', borderRadius: 8, marginBottom: 12,
-            background: scrapeMsg.startsWith('✅') ? 'hsl(142 60% 95%)' : 'hsl(48 96% 95%)',
-            color: scrapeMsg.startsWith('✅') ? 'hsl(142 60% 30%)' : 'hsl(32 95% 30%)',
-            fontSize: 13, border: `1px solid ${scrapeMsg.startsWith('✅') ? 'hsl(142 60% 85%)' : 'hsl(48 96% 80%)'}`,
+            background: scrapeMsg.startsWith('✅') ? 'rgba(255,255,255,0.5)' : 'hsl(48 96% 95%)',
+            color: scrapeMsg.startsWith('✅') ? 'rgba(255,255,255,0.5)' : 'hsl(32 95% 30%)',
+            fontSize: 13, border: `1px solid ${scrapeMsg.startsWith('✅') ? 'rgba(255,255,255,0.5)' : 'hsl(48 96% 80%)'}`,
           }}>
             {scrapeMsg}
           </div>

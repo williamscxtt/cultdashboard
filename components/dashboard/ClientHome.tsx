@@ -222,7 +222,7 @@ function Syncing({ activeStep }: { activeStep: number }) {
                   width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   background: done
-                    ? 'hsl(142 50% 95%)'
+                    ? 'rgba(255,255,255,0.5)'
                     : active
                     ? 'hsl(220 90% 56% / 0.1)'
                     : 'var(--muted)',
@@ -230,7 +230,7 @@ function Syncing({ activeStep }: { activeStep: number }) {
                 }}>
                   {done ? (
                     <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
-                      <path d="M2 6l3 3 5-5" stroke="hsl(142 71% 35%)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M2 6l3 3 5-5" stroke="#3B82F6" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
                   ) : active ? (
                     <div style={{
@@ -246,7 +246,7 @@ function Syncing({ activeStep }: { activeStep: number }) {
                   fontSize: 13,
                   fontWeight: active ? 600 : 500,
                   color: done
-                    ? 'hsl(142 71% 35%)'
+                    ? '#3B82F6'
                     : active
                     ? 'var(--foreground)'
                     : 'var(--muted-foreground)',

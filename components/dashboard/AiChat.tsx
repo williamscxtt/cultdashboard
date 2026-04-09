@@ -189,11 +189,11 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
             <span style={{
               width: 7, height: 7, borderRadius: '50%',
-              background: 'hsl(142 71% 45%)',
-              boxShadow: '0 0 0 2px hsl(142 71% 45% / 0.25)',
+              background: 'rgba(255,255,255,0.5)',
+              boxShadow: '0 0 0 2px rgba(255,255,255,0.15)',
               display: 'inline-block',
             }} />
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'hsl(142 71% 35%)' }}>Online</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: '#3B82F6' }}>Online</span>
           </div>
         </div>
 

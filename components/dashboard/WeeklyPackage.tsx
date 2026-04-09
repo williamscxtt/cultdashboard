@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { ChevronDown, ChevronUp, Copy, Check, Zap, TrendingUp, Users, RefreshCw, Clock } from 'lucide-react'
-import { Card, Button, PageHeader } from '@/components/ui'
+import { Card, Button, PageHeader, GeneratingState } from '@/components/ui'
 import { toast } from 'sonner'
 
 interface WeeklyScript {
@@ -107,7 +107,7 @@ function CopyButton({ text }: { text: string }) {
     <button onClick={copy} style={{
       display: 'flex', alignItems: 'center', gap: 5,
       padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-      background: copied ? 'hsl(142 50% 45%)' : 'var(--muted)',
+      background: copied ? 'rgba(255,255,255,0.55)' : 'var(--muted)',
       color: copied ? '#fff' : 'var(--foreground)',
       border: '1px solid var(--border)', cursor: 'pointer', transition: 'all 0.15s',
     }}>
@@ -120,8 +120,8 @@ function CopyButton({ text }: { text: string }) {
 // ── Reel script card ──────────────────────────────────────────────────────────
 
 const DAY_COLORS = [
-  'hsl(220 90% 56%)', 'hsl(270 60% 55%)', 'hsl(142 50% 45%)',
-  'hsl(38 92% 45%)', 'hsl(0 65% 50%)', 'hsl(195 80% 45%)', 'hsl(310 60% 50%)',
+  'hsl(220 90% 56%)', 'hsl(270 60% 55%)', 'rgba(255,255,255,0.55)',
+  'rgba(255,255,255,0.35)', 'hsl(0 65% 50%)', 'hsl(195 80% 45%)', 'hsl(310 60% 50%)',
 ]
 
 function ReelCard({ reel, index }: { reel: ParsedReel; index: number }) {
@@ -316,11 +316,27 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
         </Button>
       </div>
 
+      {generating && (
+        <Card style={{ marginBottom: 16, position: 'relative', overflow: 'hidden' }}>
+          <GeneratingState
+            label="Generating your weekly package…"
+            sub="Analysing your reels, competitor data, and brand voice. This takes 30–60 seconds."
+          />
+        </Card>
+      )}
+
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {[1, 2, 3].map(i => <div key={i} style={{ height: 48, background: 'var(--muted)', borderRadius: 8 }} />)}
+          {[1, 2, 3].map(i => (
+            <div key={i} style={{
+              height: 56, background: 'var(--muted)', borderRadius: 10,
+              backgroundImage: 'linear-gradient(90deg, var(--muted) 25%, hsl(0 5% 16%) 50%, var(--muted) 75%)',
+              backgroundSize: '200% 100%',
+              animation: 'shimmer 1.5s infinite linear',
+            }} />
+          ))}
         </div>
-      ) : packages.length === 0 ? (
+      ) : !generating && packages.length === 0 ? (
         <Card style={{ padding: 56, textAlign: 'center' }}>
           <Zap size={28} style={{ color: 'var(--accent)', margin: '0 auto 16px', display: 'block' }} />
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)', marginBottom: 8 }}>
@@ -333,7 +349,7 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
             {generating ? 'Generating…' : 'Generate Now'}
           </Button>
         </Card>
-      ) : (
+      ) : !generating ? (
         <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 20, alignItems: 'flex-start' }}>
 
           {/* History sidebar */}
@@ -468,7 +484,7 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
             </div>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

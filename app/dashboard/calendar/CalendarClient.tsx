@@ -28,6 +28,7 @@ interface PostedReel {
   reel_id: string
   date: string
   caption: string | null
+  transcript: string | null
   thumbnail_url: string | null
   views: number | null
   likes: number | null
@@ -91,10 +92,10 @@ function getMonthDays(date: Date): WeekRow[] {
 
 function getFormatStyle(format: string): React.CSSProperties {
   const map: Record<string, React.CSSProperties> = {
-    'RAW STORY':      { background: 'hsl(38 92% 50%)',   color: '#fff' },
+    'RAW STORY':      { background: 'rgba(255,255,255,0.35)',   color: '#fff' },
     'LISTICLE':       { background: 'var(--accent)',       color: '#fff' },
     'COMPARISON':     { background: 'hsl(270 70% 50%)',   color: '#fff' },
-    'TUTORIAL':       { background: 'hsl(142 76% 36%)',   color: '#fff' },
+    'TUTORIAL':       { background: 'rgba(255,255,255,0.12)',   color: '#fff' },
     'POV':            { background: 'var(--foreground)',   color: 'var(--background)' },
     'TRANSFORMATION': { background: 'hsl(25 95% 55%)',    color: '#fff' },
     'MYTH BUST':      { background: 'hsl(0 72% 51%)',     color: '#fff' },
@@ -340,7 +341,7 @@ function PlannedDetail({
   )
 }
 
-function PostedDetail({ reel, onClose }: { reel: PostedReel; onClose: () => void }) {
+function PostedDetail({ reels, onClose }: { reels: PostedReel[]; onClose: () => void }) {
   return (
     <div style={{
       background: 'var(--card)', border: '1px solid var(--border)',
@@ -351,33 +352,51 @@ function PostedDetail({ reel, onClose }: { reel: PostedReel; onClose: () => void
         border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)',
         fontSize: 18, lineHeight: 1, padding: '2px 6px', borderRadius: 4, fontFamily: 'inherit',
       }}>×</button>
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-        {reel.thumbnail_url && (
-          <img src={reel.thumbnail_url} alt="Reel thumbnail" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
-        )}
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'hsl(142 50% 95%)', color: 'hsl(142 71% 35%)' }}>✓ Posted {reel.date}</span>
-            {reel.permalink && (
-              <a href={reel.permalink} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>
-                <ExternalLink size={11} /> View on Instagram
-              </a>
-            )}
-          </div>
-          <div style={{ display: 'flex', gap: 16, marginBottom: 10 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>
-              <Eye size={13} style={{ color: 'var(--muted-foreground)' }} /> {fmtNum(reel.views)}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>
-              <Heart size={13} style={{ color: 'var(--muted-foreground)' }} /> {fmtNum(reel.likes)}
-            </div>
-          </div>
-          {reel.caption && (
-            <div style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-              {reel.caption}
-            </div>
-          )}
+
+      {reels.length > 1 && (
+        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 14 }}>
+          {reels.length} videos posted this day
         </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        {reels.map((reel, i) => (
+          <div key={reel.reel_id} style={reels.length > 1 ? { paddingTop: i > 0 ? 16 : 0, borderTop: i > 0 ? '1px solid var(--border)' : 'none' } : undefined}>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              {reel.thumbnail_url && (
+                <img src={reel.thumbnail_url} alt="Reel thumbnail" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, flexShrink: 0 }} />
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 999, background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)' }}>✓ Posted {reel.date}</span>
+                  {reel.permalink && (
+                    <a href={reel.permalink} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, fontWeight: 600, color: 'var(--accent)', textDecoration: 'none' }}>
+                      <ExternalLink size={11} /> View on Instagram
+                    </a>
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 16, marginBottom: 10 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>
+                    <Eye size={13} style={{ color: 'var(--muted-foreground)' }} /> {fmtNum(reel.views)}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>
+                    <Heart size={13} style={{ color: 'var(--muted-foreground)' }} /> {fmtNum(reel.likes)}
+                  </div>
+                </div>
+                {(reel.transcript || reel.caption) && (
+                  <div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>
+                      {reel.transcript ? 'Script' : 'Caption'}
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.5, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                      {reel.transcript || reel.caption}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -392,7 +411,7 @@ interface Props {
 
 type Selected =
   | { type: 'planned'; entry: PlannedEntry }
-  | { type: 'posted'; reel: PostedReel }
+  | { type: 'posted'; reels: PostedReel[] }
 
 export default function CalendarClient({ profileId, reels }: Props) {
   const [currentMonth, setCurrentMonth] = useState(new Date())
@@ -411,11 +430,11 @@ export default function CalendarClient({ profileId, reels }: Props) {
   const plannedByDate: Record<string, PlannedEntry> = {}
   planned.forEach(e => { plannedByDate[e.date] = e })
 
-  const reelsByDate: Record<string, PostedReel> = {}
+  const reelsByDate: Record<string, PostedReel[]> = {}
   reels.forEach(r => {
     if (!r.date) return
-    const existing = reelsByDate[r.date]
-    if (!existing || (r.views ?? 0) > (existing.views ?? 0)) reelsByDate[r.date] = r
+    if (!reelsByDate[r.date]) reelsByDate[r.date] = []
+    reelsByDate[r.date].push(r)
   })
 
   const fetchPlanned = useCallback(async (month: Date) => {
@@ -536,7 +555,7 @@ export default function CalendarClient({ profileId, reels }: Props) {
   const allDates = new Set([...Object.keys(plannedByDate), ...monthReels.map(r => r.date)])
   const listItems = [...allDates].sort().map(date => ({
     date,
-    posted: reelsByDate[date] ?? null,
+    posted: reelsByDate[date] ?? [],
     plan: plannedByDate[date] ?? null,
   }))
 
@@ -610,7 +629,7 @@ export default function CalendarClient({ profileId, reels }: Props) {
       {/* Legend */}
       <div style={{ display: 'flex', gap: 16, marginBottom: 16, flexWrap: 'wrap' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted-foreground)' }}>
-          <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'hsl(142 71% 45%)', display: 'inline-block' }} />
+          <span style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,255,255,0.5)', display: 'inline-block' }} />
           Posted
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted-foreground)' }}>
@@ -662,11 +681,11 @@ export default function CalendarClient({ profileId, reels }: Props) {
 
                   const dateStr = toISODate(day)
                   const plan = plannedByDate[dateStr]
-                  const reel = reelsByDate[dateStr]
+                  const dayReels = reelsByDate[dateStr] ?? []
                   const isToday = dateStr === today
                   const isPast = dateStr < today
                   const isFuture = dateStr > today
-                  const selKey = selected?.type === 'planned' ? selected.entry.date : selected?.type === 'posted' ? selected.reel.date : null
+                  const selKey = selected?.type === 'planned' ? selected.entry.date : selected?.type === 'posted' ? selected.reels[0]?.date : null
                   const isSelected = selKey === dateStr
                   const isUserEntry = plan?.source === 'user'
 
@@ -674,8 +693,8 @@ export default function CalendarClient({ profileId, reels }: Props) {
                     // Don't trigger cell click if clicking action buttons
                     const target = e.target as HTMLElement
                     if (target.closest('.cal-cell-actions') || target.closest('.cal-cell-add')) return
-                    if (reel) {
-                      setSelected(isSelected && selected?.type === 'posted' ? null : { type: 'posted', reel })
+                    if (dayReels.length > 0) {
+                      setSelected(isSelected && selected?.type === 'posted' ? null : { type: 'posted', reels: dayReels })
                     } else if (plan) {
                       setSelected(isSelected && selected?.type === 'planned' ? null : { type: 'planned', entry: plan })
                     }
@@ -689,13 +708,13 @@ export default function CalendarClient({ profileId, reels }: Props) {
                       style={{
                         minHeight: 80, padding: 7,
                         background: isSelected ? 'hsl(220 90% 56% / 0.06)' : 'var(--card)',
-                        cursor: (reel || plan) ? 'pointer' : isFuture ? 'default' : 'default',
+                        cursor: (dayReels.length > 0 || plan) ? 'pointer' : isFuture ? 'default' : 'default',
                         borderRight: di < 6 ? '1px solid var(--border)' : 'none',
                         borderTop: isToday ? '2px solid var(--accent)' : undefined,
                         borderLeft: isUserEntry ? '2px solid hsl(250 60% 55%)' : plan ? '2px solid var(--accent)' : undefined,
                         transition: 'background 0.15s',
                         position: 'relative',
-                        opacity: isPast && !reel && !plan ? 0.45 : 1,
+                        opacity: isPast && dayReels.length === 0 && !plan ? 0.45 : 1,
                       }}
                     >
                       {/* Date number + action buttons row */}
@@ -705,7 +724,7 @@ export default function CalendarClient({ profileId, reels }: Props) {
                         </div>
 
                         {/* Edit/Delete on planned entries */}
-                        {plan && !reel && (
+                        {plan && dayReels.length === 0 && (
                           <div className="cal-cell-actions" style={{ display: 'flex', gap: 2 }}>
                             <button
                               onClick={e => { e.stopPropagation(); openEdit(plan) }}
@@ -725,7 +744,7 @@ export default function CalendarClient({ profileId, reels }: Props) {
                         )}
 
                         {/* Add idea on future empty days */}
-                        {!plan && !reel && !isPast && (
+                        {!plan && dayReels.length === 0 && !isPast && (
                           <div className="cal-cell-add">
                             <button
                               onClick={e => { e.stopPropagation(); openAdd(dateStr) }}
@@ -738,24 +757,34 @@ export default function CalendarClient({ profileId, reels }: Props) {
                         )}
                       </div>
 
-                      {/* Posted reel */}
-                      {reel && (
+                      {/* Posted reels */}
+                      {dayReels.length > 0 && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                          {reel.thumbnail_url ? (
-                            <img src={reel.thumbnail_url} alt="" style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', borderRadius: 4 }} />
-                          ) : (
-                            <div style={{ width: '100%', aspectRatio: '1', borderRadius: 4, background: 'hsl(142 50% 92%)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <span style={{ fontSize: 16 }}>📹</span>
-                            </div>
-                          )}
-                          <div style={{ fontSize: 10, color: 'hsl(142 71% 35%)', fontWeight: 700 }}>
-                            {fmtNum(reel.views)} views
+                          {/* Stack thumbnails side-by-side if multiple */}
+                          <div style={{ display: 'flex', gap: 2, position: 'relative' }}>
+                            {dayReels.slice(0, 2).map((reel, i) => (
+                              reel.thumbnail_url ? (
+                                <img key={reel.reel_id} src={reel.thumbnail_url} alt="" style={{ flex: 1, aspectRatio: '1', objectFit: 'cover', borderRadius: 4, minWidth: 0 }} />
+                              ) : (
+                                <div key={reel.reel_id} style={{ flex: 1, aspectRatio: '1', borderRadius: 4, background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                  <span style={{ fontSize: 14 }}>📹</span>
+                                </div>
+                              )
+                            ))}
+                            {dayReels.length > 2 && (
+                              <div style={{ position: 'absolute', bottom: 2, right: 2, background: 'rgba(0,0,0,0.7)', borderRadius: 3, padding: '1px 4px', fontSize: 9, fontWeight: 700, color: '#fff' }}>
+                                +{dayReels.length - 2}
+                              </div>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>
+                            {fmtNum(dayReels.reduce((a, r) => a + (r.views ?? 0), 0))} views{dayReels.length > 1 ? ` · ${dayReels.length} videos` : ''}
                           </div>
                         </div>
                       )}
 
                       {/* Planned entry */}
-                      {!reel && plan && (
+                      {dayReels.length === 0 && plan && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
                             <FormatBadge format={plan.format} />
@@ -775,7 +804,7 @@ export default function CalendarClient({ profileId, reels }: Props) {
 
           {/* Detail panel */}
           {selected?.type === 'posted' && (
-            <PostedDetail reel={selected.reel} onClose={() => setSelected(null)} />
+            <PostedDetail reels={selected.reels} onClose={() => setSelected(null)} />
           )}
           {selected?.type === 'planned' && (
             <PlannedDetail
@@ -809,48 +838,56 @@ export default function CalendarClient({ profileId, reels }: Props) {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {listItems.map(({ date, posted, plan }) => {
-              const isSelDate = selected?.type === 'posted' ? selected.reel.date === date : selected?.type === 'planned' ? selected.entry.date === date : false
+              const isSelDate = selected?.type === 'posted' ? selected.reels[0]?.date === date : selected?.type === 'planned' ? selected.entry.date === date : false
               const isUserEntry = plan?.source === 'user'
+              const firstReel = posted[0] ?? null
               return (
                 <div key={date}>
                   <div
                     className="cal-list-row"
                     onClick={() => {
-                      if (posted) setSelected(isSelDate ? null : { type: 'posted', reel: posted })
+                      if (posted.length > 0) setSelected(isSelDate ? null : { type: 'posted', reels: posted })
                       else if (plan) setSelected(isSelDate ? null : { type: 'planned', entry: plan })
                     }}
                     style={{
                       background: 'var(--card)',
                       border: `1px solid ${isSelDate ? 'var(--accent)' : isUserEntry ? 'hsl(250 60% 55% / 0.4)' : 'var(--border)'}`,
-                      borderLeft: plan && !posted ? `3px solid ${isUserEntry ? 'hsl(250 60% 55%)' : 'var(--accent)'}` : undefined,
-                      borderRadius: 8, padding: '12px 16px', cursor: (posted || plan) ? 'pointer' : 'default',
+                      borderLeft: plan && posted.length === 0 ? `3px solid ${isUserEntry ? 'hsl(250 60% 55%)' : 'var(--accent)'}` : undefined,
+                      borderRadius: 8, padding: '12px 16px', cursor: (posted.length > 0 || plan) ? 'pointer' : 'default',
                       transition: 'border-color 0.15s',
                       display: 'flex', alignItems: 'flex-start', gap: 12,
                     }}
                   >
-                    {posted?.thumbnail_url && (
-                      <img src={posted.thumbnail_url} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6, flexShrink: 0 }} />
+                    {firstReel?.thumbnail_url && (
+                      <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <img src={firstReel.thumbnail_url} alt="" style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6 }} />
+                        {posted.length > 1 && (
+                          <span style={{ position: 'absolute', top: -4, right: -4, background: 'var(--accent)', color: '#fff', borderRadius: '50%', width: 16, height: 16, fontSize: 9, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {posted.length}
+                          </span>
+                        )}
+                      </div>
                     )}
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4, flexWrap: 'wrap' }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--muted-foreground)' }}>{date}</span>
-                        {posted && <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: 'hsl(142 50% 95%)', color: 'hsl(142 71% 35%)' }}>✓ Posted</span>}
-                        {plan && !posted && <FormatBadge format={plan.format} />}
-                        {isUserEntry && !posted && <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: 'hsl(250 80% 96%)', color: 'hsl(250 60% 50%)' }}>✏ Your idea</span>}
+                        {posted.length > 0 && <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)' }}>✓ Posted{posted.length > 1 ? ` · ${posted.length} videos` : ''}</span>}
+                        {plan && posted.length === 0 && <FormatBadge format={plan.format} />}
+                        {isUserEntry && posted.length === 0 && <span style={{ fontSize: 10, fontWeight: 700, padding: '1px 6px', borderRadius: 999, background: 'hsl(250 80% 96%)', color: 'hsl(250 60% 50%)' }}>✏ Your idea</span>}
                       </div>
-                      {posted && (
+                      {firstReel && (
                         <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 4 }}>
-                          <span><Eye size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />{fmtNum(posted.views)}</span>
-                          <span><Heart size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />{fmtNum(posted.likes)}</span>
+                          <span><Eye size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />{fmtNum(posted.reduce((a, r) => a + (r.views ?? 0), 0))}</span>
+                          <span><Heart size={11} style={{ verticalAlign: 'middle', marginRight: 3 }} />{fmtNum(posted.reduce((a, r) => a + (r.likes ?? 0), 0))}</span>
                         </div>
                       )}
                       <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500, lineHeight: 1.4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                        {posted ? (posted.caption || '—') : plan?.hook}
+                        {firstReel ? (firstReel.transcript || firstReel.caption || '—') : plan?.hook}
                       </div>
                     </div>
 
                     {/* Edit/Delete buttons on list rows */}
-                    {plan && !posted && (
+                    {plan && posted.length === 0 && (
                       <div className="cal-list-actions" style={{ display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                         <button
                           onClick={() => openEdit(plan)}
@@ -872,7 +909,7 @@ export default function CalendarClient({ profileId, reels }: Props) {
 
                   {/* Expanded detail below selected row */}
                   {isSelDate && selected?.type === 'posted' && (
-                    <PostedDetail reel={selected.reel} onClose={() => setSelected(null)} />
+                    <PostedDetail reels={selected.reels} onClose={() => setSelected(null)} />
                   )}
                   {isSelDate && selected?.type === 'planned' && (
                     <PlannedDetail

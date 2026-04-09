@@ -29,17 +29,17 @@ interface IdeaBankEntry {
 type Mode = 'url' | 'paste' | 'audio'
 
 const VERDICT_COLORS: Record<string, { bg: string; text: string; border: string }> = {
-  Exceptional: { bg: 'hsl(142 50% 95%)', text: 'hsl(142 71% 30%)', border: 'hsl(142 50% 80%)' },
+  Exceptional: { bg: 'rgba(255,255,255,0.5)', text: 'rgba(255,255,255,0.5)', border: 'rgba(255,255,255,0.5)' },
   Strong:      { bg: 'hsl(220 90% 96%)', text: 'hsl(220 90% 40%)', border: 'hsl(220 70% 85%)' },
-  Average:     { bg: 'hsl(38 90% 95%)',  text: 'hsl(38 80% 35%)',  border: 'hsl(38 90% 75%)' },
+  Average:     { bg: 'rgba(255,255,255,0.35)',  text: 'rgba(255,255,255,0.35)',  border: 'rgba(255,255,255,0.35)' },
   Weak:        { bg: 'hsl(25 90% 95%)',  text: 'hsl(25 80% 40%)',  border: 'hsl(25 90% 80%)' },
   Poor:        { bg: 'hsl(0 50% 96%)',   text: 'hsl(0 72% 40%)',   border: 'hsl(0 70% 85%)' },
 }
 
 function scoreColor(score: number) {
-  if (score >= 80) return 'hsl(142 71% 36%)'
+  if (score >= 80) return 'rgba(255,255,255,0.5)'
   if (score >= 65) return 'var(--accent)'
-  if (score >= 50) return 'hsl(38 92% 50%)'
+  if (score >= 50) return 'rgba(255,255,255,0.35)'
   return 'hsl(0 72% 51%)'
 }
 

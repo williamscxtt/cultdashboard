@@ -90,7 +90,7 @@ function fmtLabel(fmt: string) {
 }
 
 function pillarColor(idx: number): string {
-  const colors = ['var(--accent)', 'hsl(142 71% 35%)', 'hsl(38 92% 40%)', 'hsl(270 60% 55%)', 'hsl(195 80% 40%)']
+  const colors = ['var(--accent)', '#3B82F6', 'rgba(255,255,255,0.35)', 'hsl(270 60% 55%)', 'hsl(195 80% 40%)']
   return colors[idx % colors.length]
 }
 
@@ -121,7 +121,7 @@ function EmptyIntel() {
 // ─── main ─────────────────────────────────────────────────────────────────────
 
 function ContentAnalysisPanel({ analysis }: { analysis: ContentAnalysis }) {
-  const scoreColor = analysis.content_score >= 75 ? 'hsl(142 71% 35%)' : analysis.content_score >= 50 ? 'hsl(38 92% 45%)' : 'hsl(0 65% 50%)'
+  const scoreColor = analysis.content_score >= 75 ? '#3B82F6' : analysis.content_score >= 50 ? 'rgba(255,255,255,0.35)' : 'hsl(0 65% 50%)'
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
       {/* Score + headline */}
@@ -152,19 +152,19 @@ function ContentAnalysisPanel({ analysis }: { analysis: ContentAnalysis }) {
       {/* What's working / not working */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(142 50% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>What&apos;s working</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>What&apos;s working</div>
           {analysis.what_is_working?.map((point, i) => (
             <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginBottom: 5 }}>
-              <CheckCircle size={12} style={{ color: 'hsl(142 50% 45%)', flexShrink: 0, marginTop: 2 }} />
+              <CheckCircle size={12} style={{ color: 'rgba(255,255,255,0.55)', flexShrink: 0, marginTop: 2 }} />
               <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>{point}</span>
             </div>
           ))}
         </div>
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(38 92% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Needs work</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>Needs work</div>
           {analysis.what_is_not_working?.map((point, i) => (
             <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginBottom: 5 }}>
-              <AlertTriangle size={12} style={{ color: 'hsl(38 92% 45%)', flexShrink: 0, marginTop: 2 }} />
+              <AlertTriangle size={12} style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0, marginTop: 2 }} />
               <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>{point}</span>
             </div>
           ))}
@@ -265,7 +265,7 @@ function CommentAnalysisPanel({ analysis }: { analysis: CommentAnalysis }) {
                 }}>{q.frequency}</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: 5 }}>
-                <Lightbulb size={11} style={{ color: 'hsl(38 92% 45%)', flexShrink: 0, marginTop: 2 }} />
+                <Lightbulb size={11} style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0, marginTop: 2 }} />
                 <span style={{ fontSize: 11, color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
                   Video idea: {q.content_idea}
                 </span>
@@ -278,12 +278,12 @@ function CommentAnalysisPanel({ analysis }: { analysis: CommentAnalysis }) {
       {/* Objections */}
       {analysis.objections_or_doubts?.filter(Boolean).length > 0 && (
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(38 92% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
             Objections / Doubts
           </div>
           {analysis.objections_or_doubts.map((obj, i) => (
             <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'flex-start', marginBottom: 5 }}>
-              <AlertTriangle size={11} style={{ color: 'hsl(38 92% 45%)', flexShrink: 0, marginTop: 2 }} />
+              <AlertTriangle size={11} style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0, marginTop: 2 }} />
               <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>{obj}</span>
             </div>
           ))}
@@ -293,14 +293,14 @@ function CommentAnalysisPanel({ analysis }: { analysis: CommentAnalysis }) {
       {/* Content opportunities */}
       {analysis.content_opportunities?.length > 0 && (
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(142 50% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
             Content Opportunities
           </div>
           {analysis.content_opportunities.map((opp, i) => (
             <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 6 }}>
               <span style={{
                 width: 18, height: 18, borderRadius: '50%', flexShrink: 0,
-                background: 'hsl(142 50% 45%)', color: '#fff',
+                background: 'rgba(255,255,255,0.55)', color: '#fff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 10, fontWeight: 700, marginTop: 1,
               }}>{i + 1}</span>
@@ -738,7 +738,7 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
             </div>
 
             {commentError && (
-              <div style={{ padding: '12px 20px', fontSize: 13, color: 'hsl(38 92% 45%)', background: 'hsl(38 92% 45% / 0.08)' }}>
+              <div style={{ padding: '12px 20px', fontSize: 13, color: 'rgba(255,255,255,0.35)', background: 'hsl(38 92% 45% / 0.08)' }}>
                 {commentError}
               </div>
             )}
@@ -955,7 +955,7 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
               <div style={{
                 padding: '10px 14px', borderRadius: 8,
                 background: 'hsl(38 92% 45% / 0.08)', border: '1px solid hsl(38 92% 45% / 0.2)',
-                fontSize: 13, color: 'hsl(38 92% 40%)',
+                fontSize: 13, color: 'rgba(255,255,255,0.35)',
               }}>
                 {intelError}
               </div>
@@ -1049,13 +1049,13 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
                 {/* Big hits */}
                 {intelReport.big_hits && intelReport.big_hits.length > 0 && (
                   <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(38 92% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
                       Big Hits This Week
                     </div>
                     {intelReport.big_hits.map((hit, i) => (
-                      <div key={i} style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--muted)', marginBottom: 8, borderLeft: '3px solid hsl(38 92% 45%)' }}>
+                      <div key={i} style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--muted)', marginBottom: 8, borderLeft: '3px solid rgba(255,255,255,0.35)' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                          <span style={{ fontSize: 11, fontWeight: 700, color: 'hsl(38 92% 45%)' }}>{hit.account}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.35)' }}>{hit.account}</span>
                           <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>— {hit.views?.toLocaleString()} views</span>
                         </div>
                         <div style={{ fontSize: 12, fontStyle: 'italic', color: 'var(--foreground)', marginBottom: 4 }}>&ldquo;{hit.hook}&rdquo;</div>
@@ -1068,10 +1068,10 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
                 {/* What's working + content gaps */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                   <div>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(142 50% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>What&apos;s Working</div>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>What&apos;s Working</div>
                     {intelReport.what_is_working?.map((w, i) => (
                       <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 5 }}>
-                        <CheckCircle size={11} style={{ color: 'hsl(142 50% 45%)', flexShrink: 0, marginTop: 2 }} />
+                        <CheckCircle size={11} style={{ color: 'rgba(255,255,255,0.55)', flexShrink: 0, marginTop: 2 }} />
                         <span style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>{w}</span>
                       </div>
                     ))}

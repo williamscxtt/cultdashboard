@@ -2,8 +2,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
-import { Button } from '@/components/ui'
-import { Zap } from 'lucide-react'
+import { Zap, Check } from 'lucide-react'
 
 type Mode = 'login' | 'signup' | 'forgot'
 
@@ -38,10 +37,7 @@ export default function LoginPage() {
       options: { data: { name } },
     })
     if (error) { setError(error.message); setLoading(false); return }
-
-    // Create profile row via server
     if (data.session) {
-      // Immediately signed in (email confirmation disabled)
       await fetch('/api/auth/create-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -49,7 +45,6 @@ export default function LoginPage() {
       })
       router.push('/onboarding')
     } else {
-      // Email confirmation required
       setSuccess("Account created — check your email to confirm, then come back and log in.")
       setLoading(false)
     }
@@ -75,184 +70,231 @@ export default function LoginPage() {
   ]
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: 'var(--background)' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', background: '#000000' }}>
       <style>{`
-        @media (max-width: 640px) {
-          .login-brand-panel { display: none !important; }
-          .login-form-panel { padding: 32px 24px !important; align-items: flex-start !important; }
-          .login-form-panel > div { max-width: 100% !important; padding-top: 20px; }
+        @keyframes loginFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes glowPulse { 0%,100% { opacity: 0.15; } 50% { opacity: 0.25; } }
+        .login-input {
+          width: 100%;
+          background: rgba(255,255,255,0.04);
+          border: 1px solid rgba(255,255,255,0.1);
+          color: #F0F0F0;
+          border-radius: 6px;
+          padding: 0 14px;
+          height: 42px;
+          outline: none;
+          font-size: 14px;
+          font-weight: 500;
+          font-family: inherit;
+          box-sizing: border-box;
+          transition: border-color 0.15s, box-shadow 0.15s;
         }
+        .login-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12); }
+        .login-input::placeholder { color: #A1A4A5; }
+        .login-btn-primary {
+          width: 100%;
+          height: 44px;
+          background: #3B82F6;
+          color: #fff;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          font-weight: 700;
+          cursor: pointer;
+          font-family: inherit;
+          letter-spacing: -0.1px;
+          transition: background 0.15s, opacity 0.15s;
+        }
+        .login-btn-primary:hover { background: #60A5FA; }
+        .login-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+        @media (max-width: 640px) { .login-brand-panel { display: none !important; } }
       `}</style>
 
-      {/* ── Left brand panel ─────────────────────────────────────────────── */}
+      {/* ── Left brand panel ─────────────────────────────────────────────────── */}
       <div className="login-brand-panel" style={{
-        width: 420, flexShrink: 0,
-        background: 'var(--foreground)',
+        width: 440, flexShrink: 0,
+        background: 'linear-gradient(160deg, #03050d 0%, #060a14 60%, #080d1a 100%)',
+        borderRight: '1px solid rgba(255,255,255,0.08)',
         display: 'flex', flexDirection: 'column',
         justifyContent: 'center', padding: '0 52px',
+        position: 'relative', overflow: 'hidden',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 36 }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: 'var(--accent)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
-            <Zap size={18} color="white" fill="white" />
-          </div>
-          <div style={{ fontSize: 20, fontWeight: 800, color: 'white', letterSpacing: '-0.4px' }}>
-            Creator Cult
-          </div>
-        </div>
+        {/* Ambient glow blobs */}
+        <div style={{
+          position: 'absolute', top: -60, right: -80, width: 300, height: 300,
+          background: '#3B82F6', borderRadius: '50%',
+          filter: 'blur(100px)', opacity: 0.1, animation: 'glowPulse 4s ease-in-out infinite',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute', bottom: 20, left: -60, width: 200, height: 200,
+          background: '#3B82F6', borderRadius: '50%',
+          filter: 'blur(80px)', opacity: 0.06,
+          pointerEvents: 'none',
+        }} />
 
-        <h2 style={{
-          fontSize: 28, fontWeight: 800, color: 'white',
-          letterSpacing: '-0.6px', lineHeight: 1.2, marginBottom: 12,
-        }}>
-          Your personal brand command centre.
-        </h2>
-        <p style={{ color: 'hsl(0 0% 55%)', fontSize: 14, lineHeight: 1.7, marginBottom: 40 }}>
-          Scripts, analytics, and AI coaching — all in one place, built around your content.
-        </p>
-
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {features.map(f => (
-            <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <div style={{
-                width: 20, height: 20, borderRadius: 6, flexShrink: 0,
-                background: 'hsl(220 90% 56% / 0.2)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
-                  <path d="M2 5l2.5 2.5 3.5-4" stroke="var(--accent)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-              <span style={{ color: 'hsl(0 0% 70%)', fontSize: 13, fontWeight: 500 }}>{f}</span>
+        {/* Content */}
+        <div style={{ position: 'relative', zIndex: 1, animation: 'loginFadeIn 0.5s ease both' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
+            <div style={{
+              width: 38, height: 38, borderRadius: 11,
+              background: '#3B82F6',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <Zap size={18} color="white" fill="white" />
             </div>
-          ))}
+            <div style={{ fontSize: 18, fontWeight: 800, color: 'hsl(0 5% 94%)', letterSpacing: '-0.4px', fontFamily: 'var(--font-display)' }}>
+              Creator Cult
+            </div>
+          </div>
+
+          <h2 style={{
+            fontSize: 30, fontWeight: 800, color: 'hsl(0 5% 95%)',
+            letterSpacing: '-0.7px', lineHeight: 1.15, marginBottom: 14,
+            fontFamily: 'var(--font-display)',
+          }}>
+            Your personal brand<br />command centre.
+          </h2>
+          <p style={{ color: 'hsl(0 5% 52%)', fontSize: 14, lineHeight: 1.7, marginBottom: 44 }}>
+            Scripts, analytics, and AI coaching — all in one place, built around your content.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
+            {features.map(f => (
+              <div key={f} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                  background: 'rgba(59, 130, 246, 0.15)',
+                  border: '1px solid rgba(59, 130, 246, 0.3)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Check size={11} color="#3B82F6" strokeWidth={2.5} />
+                </div>
+                <span style={{ color: 'hsl(0 5% 72%)', fontSize: 13, fontWeight: 500 }}>{f}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* ── Right form panel ─────────────────────────────────────────────── */}
-      <div className="login-form-panel" style={{
+      {/* ── Right form panel ──────────────────────────────────────────────────── */}
+      <div style={{
         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '0 32px',
+        padding: '0 32px', background: '#000000',
       }}>
-        <div style={{ width: '100%', maxWidth: 380 }}>
+        <div style={{ width: '100%', maxWidth: 380, animation: 'loginFadeIn 0.5s 0.1s ease both', opacity: 0 }}>
 
-          {/* ── Login ── */}
           {mode === 'login' && (
             <>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', marginBottom: 4, letterSpacing: '-0.4px' }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: 'hsl(0 5% 94%)', marginBottom: 4, letterSpacing: '-0.5px', fontFamily: 'var(--font-display)' }}>
                 Welcome back
               </h1>
-              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 28 }}>
+              <p style={{ fontSize: 13, color: 'hsl(0 5% 45%)', marginBottom: 32 }}>
                 Sign in to your dashboard
               </p>
 
-              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Email address</label>
-                  <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
+                  <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Email address</label>
+                  <input className="login-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
                 </div>
                 <div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                    <label style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>Password</label>
-                    <button type="button" onClick={() => reset('forgot')} style={{ fontSize: 12, color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
+                    <label style={{ fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)' }}>Password</label>
+                    <button type="button" onClick={() => reset('forgot')} style={{ fontSize: 12, color: '#3B82F6', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontWeight: 600 }}>
                       Forgot password?
                     </button>
                   </div>
-                  <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
+                  <input className="login-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
                 </div>
 
                 {error && <ErrorBox>{error}</ErrorBox>}
 
-                <Button type="submit" variant="primary" disabled={loading} style={{ width: '100%', marginTop: 4, height: 44, fontSize: 14 }}>
+                <button type="submit" className="login-btn-primary" disabled={loading} style={{ marginTop: 4 }}>
                   {loading ? 'Signing in…' : 'Sign in →'}
-                </Button>
+                </button>
               </form>
 
-              <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted-foreground)', marginTop: 24 }}>
+              <p style={{ textAlign: 'center', fontSize: 13, color: 'hsl(0 5% 40%)', marginTop: 28 }}>
                 Don&apos;t have an account?{' '}
-                <button onClick={() => reset('signup')} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
+                <button onClick={() => reset('signup')} style={{ color: '#3B82F6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
                   Sign up
                 </button>
               </p>
             </>
           )}
 
-          {/* ── Sign up ── */}
           {mode === 'signup' && (
             <>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', marginBottom: 4, letterSpacing: '-0.4px' }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: 'hsl(0 5% 94%)', marginBottom: 4, letterSpacing: '-0.5px', fontFamily: 'var(--font-display)' }}>
                 Create your account
               </h1>
-              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 28 }}>
+              <p style={{ fontSize: 13, color: 'hsl(0 5% 45%)', marginBottom: 32 }}>
                 Join Creator Cult and start growing.
               </p>
 
               {success ? (
                 <SuccessBox>{success}</SuccessBox>
               ) : (
-                <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Full name</label>
-                    <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Will Scott" required />
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Full name</label>
+                    <input className="login-input" type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Will Scott" required />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Email address</label>
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Email address</label>
+                    <input className="login-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Password</label>
-                    <input type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" minLength={8} required />
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Password</label>
+                    <input className="login-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" minLength={8} required />
                   </div>
 
                   {error && <ErrorBox>{error}</ErrorBox>}
 
-                  <Button type="submit" variant="primary" disabled={loading} style={{ width: '100%', marginTop: 4, height: 44, fontSize: 14 }}>
+                  <button type="submit" className="login-btn-primary" disabled={loading} style={{ marginTop: 4 }}>
                     {loading ? 'Creating account…' : 'Create account →'}
-                  </Button>
+                  </button>
                 </form>
               )}
 
-              <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted-foreground)', marginTop: 24 }}>
+              <p style={{ textAlign: 'center', fontSize: 13, color: 'hsl(0 5% 40%)', marginTop: 28 }}>
                 Already have an account?{' '}
-                <button onClick={() => reset('login')} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
+                <button onClick={() => reset('login')} style={{ color: '#3B82F6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
                   Sign in
                 </button>
               </p>
             </>
           )}
 
-          {/* ── Forgot password ── */}
           {mode === 'forgot' && (
             <>
-              <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', marginBottom: 4, letterSpacing: '-0.4px' }}>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: 'hsl(0 5% 94%)', marginBottom: 4, letterSpacing: '-0.5px', fontFamily: 'var(--font-display)' }}>
                 Reset your password
               </h1>
-              <p style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 28 }}>
+              <p style={{ fontSize: 13, color: 'hsl(0 5% 45%)', marginBottom: 32 }}>
                 Enter your email and we&apos;ll send you a reset link.
               </p>
 
               {success ? (
                 <SuccessBox>{success}</SuccessBox>
               ) : (
-                <form onSubmit={handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <form onSubmit={handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 6 }}>Email address</label>
-                    <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Email address</label>
+                    <input className="login-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
                   </div>
 
                   {error && <ErrorBox>{error}</ErrorBox>}
 
-                  <Button type="submit" variant="primary" disabled={loading} style={{ width: '100%', marginTop: 4, height: 44, fontSize: 14 }}>
+                  <button type="submit" className="login-btn-primary" disabled={loading} style={{ marginTop: 4 }}>
                     {loading ? 'Sending…' : 'Send reset link →'}
-                  </Button>
+                  </button>
                 </form>
               )}
 
-              <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--muted-foreground)', marginTop: 24 }}>
-                <button onClick={() => reset('login')} style={{ color: 'var(--accent)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
+              <p style={{ textAlign: 'center', fontSize: 13, color: 'hsl(0 5% 40%)', marginTop: 28 }}>
+                <button onClick={() => reset('login')} style={{ color: '#3B82F6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
                   ← Back to sign in
                 </button>
               </p>
@@ -266,7 +308,7 @@ export default function LoginPage() {
 
 function ErrorBox({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ background: 'hsl(0 50% 96%)', border: '1px solid hsl(0 70% 88%)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'hsl(0 72% 45%)' }}>
+    <div style={{ background: 'hsl(0 50% 12%)', border: '1px solid hsl(0 70% 28%)', borderRadius: 8, padding: '10px 14px', fontSize: 13, color: 'hsl(0 72% 70%)' }}>
       {children}
     </div>
   )
@@ -274,7 +316,7 @@ function ErrorBox({ children }: { children: React.ReactNode }) {
 
 function SuccessBox({ children }: { children: React.ReactNode }) {
   return (
-    <div style={{ background: 'hsl(142 50% 96%)', border: '1px solid hsl(142 60% 80%)', borderRadius: 8, padding: '12px 16px', fontSize: 13, color: 'hsl(142 72% 28%)', lineHeight: 1.5 }}>
+    <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '12px 16px', fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
       {children}
     </div>
   )

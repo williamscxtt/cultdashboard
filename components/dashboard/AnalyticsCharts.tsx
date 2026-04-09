@@ -72,7 +72,7 @@ export default function AnalyticsCharts({ reels, formatGroups }: Props) {
           <span style={{
             display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 600,
             padding: '2px 8px', borderRadius: 999,
-            background: 'hsl(38 70% 95%)', color: 'hsl(38 92% 40%)',
+            background: 'rgba(255,255,255,0.35)', color: 'rgba(255,255,255,0.35)',
           }}>
             Connect Instagram to unlock
           </span>

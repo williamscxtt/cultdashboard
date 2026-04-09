@@ -49,6 +49,7 @@ export async function GET() {
     .from('competitor_reels')
     .select('account, views, likes, comments, hook, caption, format_type, date, duration_sec, reel_url')
     .in('account', handles)
+    .or(`profile_id.is.null,profile_id.eq.${profileId}`)
     .order('views', { ascending: false })
     .limit(50)
 
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
     .from('competitor_reels')
     .select('account, views, likes, comments, hook, caption, format_type, date, duration_sec')
     .in('account', handles)
+    .or(`profile_id.is.null,profile_id.eq.${profileId}`)
     .order('views', { ascending: false })
     .limit(60)
 

@@ -50,9 +50,9 @@ const ELEMENT_LABELS: Record<string, string> = {
 }
 
 function scoreColor(score: number) {
-  if (score >= 8) return 'hsl(142 71% 36%)'
+  if (score >= 8) return 'rgba(255,255,255,0.5)'
   if (score >= 7) return 'var(--accent)'
-  if (score >= 5) return 'hsl(38 92% 50%)'
+  if (score >= 5) return 'rgba(255,255,255,0.35)'
   return 'hsl(0 72% 51%)'
 }
 
@@ -288,13 +288,13 @@ export default function ProfileAuditPage() {
                     <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 10, borderTop: '1px solid var(--border)' }}>
                       {fb.what_works && (
                         <div style={{ display: 'flex', gap: 10, paddingTop: 14 }}>
-                          <CheckCircle2 size={15} style={{ color: 'hsl(142 71% 45%)', flexShrink: 0, marginTop: 1 }} />
+                          <CheckCircle2 size={15} style={{ color: 'rgba(255,255,255,0.5)', flexShrink: 0, marginTop: 1 }} />
                           <span style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6 }}>{fb.what_works}</span>
                         </div>
                       )}
                       {fb.what_to_fix && (
                         <div style={{ display: 'flex', gap: 10 }}>
-                          <AlertTriangle size={15} style={{ color: 'hsl(38 92% 50%)', flexShrink: 0, marginTop: 1 }} />
+                          <AlertTriangle size={15} style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0, marginTop: 1 }} />
                           <span style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6 }}>{fb.what_to_fix}</span>
                         </div>
                       )}

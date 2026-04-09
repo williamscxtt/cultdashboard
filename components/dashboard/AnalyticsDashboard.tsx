@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { motion } from 'framer-motion'
 import {
   RefreshCw, TrendingUp, TrendingDown,
   Play, Eye, Heart, MessageCircle, Bookmark, Zap, ExternalLink,
@@ -51,12 +52,12 @@ const TIME_RANGES = [
 ]
 
 const IG_GRADIENTS = [
-  'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)',
-  'linear-gradient(135deg,#405de6,#5851db,#833ab4)',
-  'linear-gradient(135deg,#fd1d1d,#fcb045)',
-  'linear-gradient(135deg,#833ab4,#405de6)',
-  'linear-gradient(135deg,#f77737,#e1306c)',
-  'linear-gradient(135deg,#5851db,#833ab4)',
+  'linear-gradient(135deg,rgba(255,255,255,0.5),rgba(255,255,255,0.6),rgba(255,255,255,0.2))',
+  'linear-gradient(135deg,rgba(255,255,255,0.3),rgba(255,255,255,0.35),rgba(255,255,255,0.5))',
+  'linear-gradient(135deg,rgba(255,255,255,0.6),rgba(255,255,255,0.2))',
+  'linear-gradient(135deg,rgba(255,255,255,0.5),rgba(255,255,255,0.3))',
+  'linear-gradient(135deg,rgba(255,255,255,0.4),rgba(255,255,255,0.75))',
+  'linear-gradient(135deg,rgba(255,255,255,0.35),rgba(255,255,255,0.5))',
 ]
 
 const tooltipStyle = {
@@ -114,51 +115,111 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   )
 }
 
+// ─── animated number (count-up) ──────────────────────────────────────────────
+function AnimatedValue({ value }: { value: string }) {
+  const [display, setDisplay] = useState(value)
+  const prevRef = useRef(value)
+  const rafRef = useRef<number | null>(null)
+
+  useEffect(() => {
+    if (prevRef.current === value) return
+    // Parse numbers like "17.3M", "1.4K", "123"
+    const parse = (s: string) => {
+      const m = s.match(/([\d.]+)([MKmk]?)/)
+      if (!m) return { n: 0, suffix: '', prefix: '' }
+      const n = parseFloat(m[1])
+      const mult = m[2]?.toUpperCase() === 'M' ? 1e6 : m[2]?.toUpperCase() === 'K' ? 1e3 : 1
+      return { n: n * mult, suffix: m[2] || '', prefix: s.replace(m[0], '') }
+    }
+    const from = parse(prevRef.current)
+    const to = parse(value)
+    const start = performance.now()
+    const dur = 600
+    function fmt(n: number): string {
+      if (n >= 1e6) return `${(n / 1e6).toFixed(1)}M`
+      if (n >= 1e3) return `${(n / 1e3).toFixed(1)}K`
+      return Math.round(n).toLocaleString()
+    }
+    function tick(now: number) {
+      const t = Math.min((now - start) / dur, 1)
+      const ease = 1 - Math.pow(1 - t, 3)
+      const cur = from.n + (to.n - from.n) * ease
+      setDisplay(fmt(cur))
+      if (t < 1) rafRef.current = requestAnimationFrame(tick)
+      else { setDisplay(value); prevRef.current = value }
+    }
+    rafRef.current = requestAnimationFrame(tick)
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current) }
+  }, [value])
+
+  return <>{display}</>
+}
+
 // ─── stat card ────────────────────────────────────────────────────────────────
 function StatCard({
-  label, value, change, sparkData, accentColor = 'var(--accent)', nullLabel = 'no prior data',
+  label, value, change, sparkData, accentColor = 'var(--accent)', nullLabel = 'no prior data', delay = 0,
 }: {
-  label: string; value: string; change: number | null; sparkData: number[]; accentColor?: string; nullLabel?: string
+  label: string; value: string; change: number | null; sparkData: number[]; accentColor?: string; nullLabel?: string; delay?: number
 }) {
   const up = change !== null && change >= 0
   return (
-    <div style={{
-      background: 'var(--card)', border: '1px solid var(--border)',
-      borderRadius: 12, padding: '20px 20px 16px',
-      boxShadow: 'var(--shadow-sm)',
-      display: 'flex', flexDirection: 'column', gap: 0,
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 6 }}>
-        <span style={{
-          fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)',
-          textTransform: 'uppercase', letterSpacing: '0.08em',
-        }}>
-          {label}
-        </span>
-        <Sparkline data={sparkData} color={accentColor} />
-      </div>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut', delay }}
+      style={{
+        background: 'var(--card)', border: '1px solid var(--border)',
+        borderRadius: 14, overflow: 'hidden', position: 'relative',
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
+      {/* Accent top line */}
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${accentColor}, transparent)` }} />
+
+      {/* Ambient glow */}
       <div style={{
-        fontSize: 30, fontWeight: 800, color: 'var(--foreground)',
-        letterSpacing: '-0.5px', lineHeight: 1.1, marginBottom: 8,
-      }}>
-        {value}
-      </div>
-      {change !== null ? (
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 3,
-          fontSize: 12, fontWeight: 600,
-          color: up ? 'hsl(142 50% 45%)' : 'hsl(0 65% 50%)',
-        }}>
-          {up ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-          {up ? '+' : ''}{change}%
-          <span style={{ fontWeight: 400, color: 'var(--muted-foreground)', marginLeft: 2 }}>
-            vs prev period
+        position: 'absolute', top: -30, left: -30, width: 120, height: 120,
+        background: accentColor, opacity: 0.06, borderRadius: '50%',
+        filter: 'blur(30px)', pointerEvents: 'none',
+      }} />
+
+      <div style={{ padding: '18px 20px 16px', position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+          <span style={{
+            fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)',
+            textTransform: 'uppercase', letterSpacing: '0.09em',
+          }}>
+            {label}
           </span>
+          <Sparkline data={sparkData} color={accentColor} />
         </div>
-      ) : (
-        <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{nullLabel}</div>
-      )}
-    </div>
+
+        <div style={{
+          fontSize: 32, fontWeight: 800, color: 'var(--foreground)',
+          letterSpacing: '-0.8px', lineHeight: 1, marginBottom: 10,
+          fontFamily: 'var(--font-display)',
+        }}>
+          <AnimatedValue value={value} />
+        </div>
+
+        {change !== null ? (
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4,
+            fontSize: 11, fontWeight: 700,
+            background: up ? 'rgba(255,255,255,0.03)' : 'hsl(0 50% 10%)',
+            border: `1px solid ${up ? 'rgba(255,255,255,0.08)' : 'hsl(0 50% 20%)'}`,
+            color: up ? 'rgba(74, 222, 128, 0.8)' : 'hsl(0 72% 60%)',
+            padding: '3px 8px', borderRadius: 6,
+          }}>
+            {up ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+            {up ? '+' : ''}{change}%
+            <span style={{ fontWeight: 500, opacity: 0.65, marginLeft: 1 }}>prev period</span>
+          </div>
+        ) : (
+          <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontStyle: 'italic' }}>{nullLabel}</div>
+        )}
+      </div>
+    </motion.div>
   )
 }
 
@@ -194,17 +255,35 @@ function ChartHeader({
   title: string; sub: string; toggle?: React.ReactNode
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
       <div>
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 2 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 3 }}>
           {title}
         </div>
-        <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.3px', lineHeight: 1 }}>
+        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.4px', lineHeight: 1, fontFamily: 'var(--font-display)' }}>
           {sub}
         </div>
       </div>
       {toggle}
     </div>
+  )
+}
+
+// ─── chart card wrapper ───────────────────────────────────────────────────────
+function ChartCard({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut', delay }}
+      style={{
+        background: 'var(--card)', border: '1px solid var(--border)',
+        borderRadius: 14, padding: '22px 22px 16px',
+        boxShadow: 'var(--shadow-sm)',
+      }}
+    >
+      {children}
+    </motion.div>
   )
 }
 
@@ -221,9 +300,9 @@ interface ReelAnalysis {
 }
 
 const VERDICT_COLORS: Record<string, string> = {
-  Exceptional: 'hsl(142 71% 35%)',
-  Strong:      'hsl(142 50% 45%)',
-  Average:     'hsl(38 92% 45%)',
+  Exceptional: '#3B82F6',
+  Strong:      'rgba(255,255,255,0.55)',
+  Average:     'rgba(255,255,255,0.35)',
   Weak:        'hsl(0 65% 50%)',
   Poor:        'hsl(0 72% 40%)',
 }
@@ -255,9 +334,9 @@ function AnalysisPanel({ analysis }: { analysis: ReelAnalysis }) {
       {/* What worked */}
       {analysis.what_worked?.length > 0 && (
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(142 50% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>What worked</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>What worked</div>
           {analysis.what_worked.map((point, i) => (
-            <div key={i} style={{ fontSize: 11, color: 'var(--foreground)', lineHeight: 1.5, paddingLeft: 10, borderLeft: '2px solid hsl(142 50% 45%)', marginBottom: 4 }}>
+            <div key={i} style={{ fontSize: 11, color: 'var(--foreground)', lineHeight: 1.5, paddingLeft: 10, borderLeft: '2px solid rgba(255,255,255,0.55)', marginBottom: 4 }}>
               {point}
             </div>
           ))}
@@ -267,9 +346,9 @@ function AnalysisPanel({ analysis }: { analysis: ReelAnalysis }) {
       {/* What to improve */}
       {analysis.what_to_improve?.length > 0 && (
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'hsl(38 92% 45%)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>Improve</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>Improve</div>
           {analysis.what_to_improve.map((point, i) => (
-            <div key={i} style={{ fontSize: 11, color: 'var(--foreground)', lineHeight: 1.5, paddingLeft: 10, borderLeft: '2px solid hsl(38 92% 45%)', marginBottom: 4 }}>
+            <div key={i} style={{ fontSize: 11, color: 'var(--foreground)', lineHeight: 1.5, paddingLeft: 10, borderLeft: '2px solid rgba(255,255,255,0.35)', marginBottom: 4 }}>
               {point}
             </div>
           ))}
@@ -287,10 +366,10 @@ function AnalysisPanel({ analysis }: { analysis: ReelAnalysis }) {
       {analysis.suggested_hook && (
         <div style={{
           padding: '8px 10px', borderRadius: 6,
-          background: 'hsl(220 90% 56% / 0.08)',
-          border: '1px solid hsl(220 90% 56% / 0.2)',
+          background: 'rgba(59, 130, 246, 0.08)',
+          border: '1px solid rgba(59, 130, 246, 0.25)',
         }}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: 'hsl(220 90% 56%)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Stronger hook</div>
+          <div style={{ fontSize: 9, fontWeight: 700, color: '#3B82F6', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 3 }}>Stronger hook</div>
           <div style={{ fontSize: 11, color: 'var(--foreground)', lineHeight: 1.5, fontStyle: 'italic' }}>
             &ldquo;{analysis.suggested_hook}&rdquo;
           </div>
@@ -390,10 +469,14 @@ function ReelCard({ reel, idx, profileId }: { reel: ClientReel; idx: number; pro
   )
 
   return (
-    <div style={{
-      background: 'var(--card)', border: '1px solid var(--border)',
-      borderRadius: 12, overflow: 'hidden', transition: 'border-color 0.15s',
-    }}>
+    <motion.div
+      whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
+      transition={{ duration: 0.15 }}
+      style={{
+        background: 'var(--card)', border: '1px solid var(--border)',
+        borderRadius: 12, overflow: 'hidden', cursor: 'default',
+      }}
+    >
       {/* Thumbnail — links to reel */}
       {reelLink ? (
         <a href={reelLink} target="_blank" rel="noopener noreferrer" style={{ display: 'block', textDecoration: 'none' }}>
@@ -463,7 +546,8 @@ function ReelCard({ reel, idx, profileId }: { reel: ClientReel; idx: number; pro
       {showAnalysis && (
         <div style={{ borderTop: '1px solid var(--border)', padding: '12px 14px', background: 'var(--muted)' }}>
           {analysing && !analysis ? (
-            <div style={{ fontSize: 12, color: 'var(--muted-foreground)', textAlign: 'center', padding: '8px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '12px 0', fontSize: 12, color: 'var(--muted-foreground)' }}>
+              <span style={{ display: 'inline-block', width: 14, height: 14, border: '2px solid rgba(59, 130, 246, 0.3)', borderTopColor: '#3B82F6', borderRadius: '50%', animation: 'spin 0.7s linear infinite' }} />
               Analysing with AI…
             </div>
           ) : analysis ? (
@@ -471,7 +555,7 @@ function ReelCard({ reel, idx, profileId }: { reel: ClientReel; idx: number; pro
           ) : null}
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 
@@ -595,7 +679,8 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
   // ── aggregate stats ───────────────────────────────────────────────────────
   const stats = useMemo(() => {
-    const curViews  = currentReels.reduce((a, r) => a + (r.views ?? 0), 0)
+    // Views: sum ALL reels (older videos keep accumulating views regardless of post date)
+    const curViews  = reels.reduce((a, r) => a + (r.views ?? 0), 0)
     const prvViews  = prevReels.reduce((a, r) => a + (r.views ?? 0), 0)
     const curEng    = currentReels.reduce((a, r) => a + (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0), 0)
     const prvEng    = prevReels.reduce((a, r) => a + (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0), 0)
@@ -608,11 +693,11 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       : null
 
     return {
-      views:     { value: fmtNum(curViews), change: pct(curViews, prvViews),    spark: currentReels.map(r => r.views ?? 0) },
+      views:     { value: fmtNum(curViews), change: null,    spark: [...reels].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(r => r.views ?? 0) },
       eng:       { value: fmtNum(curEng),   change: pct(curEng, prvEng),        spark: currentReels.map(r => (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0)) },
       followers: { value: followersCount != null ? fmtNum(followersCount) : '—', change: followerChange, spark: followerSpark },
     }
-  }, [currentReels, prevReels, followersCount, followerHistory, days])
+  }, [reels, currentReels, prevReels, followersCount, followerHistory, days])
 
   // ── views over time ───────────────────────────────────────────────────────
   const viewsChart = useMemo(() => {
@@ -647,10 +732,9 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   const formatData = useMemo(() => {
     const g: Record<string, number[]> = {}
     currentReels.forEach(r => {
-      if (r.format_type) {
-        g[r.format_type] = g[r.format_type] ?? []
-        g[r.format_type].push(r.views ?? 0)
-      }
+      const fmt = r.format_type ?? 'Unknown'
+      g[fmt] = g[fmt] ?? []
+      g[fmt].push(r.views ?? 0)
     })
     return Object.entries(g)
       .map(([fmt, views]) => ({
@@ -682,10 +766,10 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
   // ── engagement breakdown ──────────────────────────────────────────────────
   const engBreakdown = useMemo(() => [
-    { label: 'Likes',    value: currentReels.reduce((a, r) => a + (r.likes ?? 0), 0),    color: '#e1306c' },
-    { label: 'Comments', value: currentReels.reduce((a, r) => a + (r.comments ?? 0), 0), color: '#833ab4' },
-    { label: 'Saves',    value: currentReels.reduce((a, r) => a + (r.saves ?? 0), 0),    color: '#405de6' },
-    { label: 'Shares',   value: currentReels.reduce((a, r) => a + (r.shares ?? 0), 0),   color: '#fcb045' },
+    { label: 'Likes',    value: currentReels.reduce((a, r) => a + (r.likes ?? 0), 0),    color: 'rgba(255,255,255,0.75)' },
+    { label: 'Comments', value: currentReels.reduce((a, r) => a + (r.comments ?? 0), 0), color: 'rgba(255,255,255,0.5)' },
+    { label: 'Saves',    value: currentReels.reduce((a, r) => a + (r.saves ?? 0), 0),    color: 'rgba(255,255,255,0.3)' },
+    { label: 'Shares',   value: currentReels.reduce((a, r) => a + (r.shares ?? 0), 0),   color: 'rgba(255,255,255,0.2)' },
   ], [currentReels])
 
   if (loading) {
@@ -754,11 +838,11 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
             {focusThisWeek && (
               <div style={{
                 flex: '0 1 280px', padding: '14px 18px', borderRadius: 10,
-                background: 'hsl(var(--accent-hsl, 25 100% 55%) / 0.08)',
-                border: '1px solid hsl(var(--accent-hsl, 25 100% 55%) / 0.25)',
+                background: 'rgba(59, 130, 246, 0.08)',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
               }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-                  🎯 This Week's Focus
+                  This Week's Focus
                 </div>
                 <p style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
                   {focusThisWeek}
@@ -788,8 +872,8 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                 style={{
                   display: 'flex', alignItems: 'center', gap: 5,
                   padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                  border: isActive ? '2px solid var(--accent)' : '1px solid var(--border)',
-                  background: isActive ? 'hsl(220 90% 56% / 0.08)' : 'var(--card)',
+                  border: isActive ? '1.5px solid rgba(59, 130, 246, 0.6)' : '1px solid var(--border)',
+                  background: isActive ? 'rgba(59, 130, 246, 0.1)' : 'var(--card)',
                   color: enabled ? 'var(--foreground)' : 'var(--muted-foreground)',
                   cursor: enabled ? 'pointer' : 'default',
                   opacity: enabled ? 1 : 0.5,
@@ -833,12 +917,12 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       {syncResult && (
         <div style={{
           marginBottom: 16, padding: '10px 14px', borderRadius: 8,
-          background: 'hsl(142 50% 10%)', color: 'hsl(142 50% 55%)',
-          fontSize: 13, fontWeight: 500, border: '1px solid hsl(142 50% 20%)',
+          background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)',
+          fontSize: 13, fontWeight: 500, border: '1px solid rgba(255,255,255,0.08)',
         }}>
           Synced {syncResult.synced} new reel{syncResult.synced !== 1 ? 's' : ''} of {syncResult.total} found.
           {syncResult.classified ? <span style={{ marginLeft: 8 }}>Classified {syncResult.classified} reel{syncResult.classified !== 1 ? 's' : ''}.</span> : null}
-          {syncResult.warning && <span style={{ color: 'hsl(38 92% 55%)', marginLeft: 8 }}>{syncResult.warning}</span>}
+          {syncResult.warning && <span style={{ color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>{syncResult.warning}</span>}
         </div>
       )}
       {syncError && (
@@ -853,15 +937,16 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
       {/* ── Stat cards ──────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 16 }}>
-        <StatCard label="Views" value={stats.views.value} change={stats.views.change} sparkData={stats.views.spark} accentColor="hsl(220 90% 56%)" />
-        <StatCard label="Engagements" value={stats.eng.value} change={stats.eng.change} sparkData={stats.eng.spark} accentColor="hsl(280 70% 56%)" />
+        <StatCard label="Total Views" value={stats.views.value} change={stats.views.change} sparkData={stats.views.spark} accentColor="#3B82F6" delay={0} />
+        <StatCard label="Engagements" value={stats.eng.value} change={stats.eng.change} sparkData={stats.eng.spark} accentColor="#3B82F6" delay={0.05} />
         <StatCard
           label="Followers"
           value={stats.followers.value}
           change={stats.followers.change}
           sparkData={stats.followers.spark}
-          accentColor="hsl(38 90% 55%)"
+          accentColor="#3B82F6"
           nullLabel="synced on connect"
+          delay={0.1}
         />
       </div>
 
@@ -886,7 +971,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
 
             {/* Views Over Time */}
-            <Card style={{ padding: 20 }}>
+            <ChartCard delay={0.15}>
               <ChartHeader
                 title="Views Over Time"
                 sub={fmtNum(totalViews)}
@@ -896,21 +981,21 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                 <AreaChart data={viewsChart} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="vGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(220 90% 56%)" stopOpacity={0.25} />
-                      <stop offset="100%" stopColor="hsl(220 90% 56%)" stopOpacity={0} />
+                      <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="date" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} interval="preserveStartEnd" />
                   <YAxis stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v: number) => fmtNum(v)} width={40} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [typeof v === 'number' ? v.toLocaleString() : String(v), viewsMode + ' Views']} />
-                  <Area type="monotone" dataKey={viewsMode} stroke="hsl(220 90% 56%)" strokeWidth={2} fill="url(#vGrad)" dot={false} />
+                  <Area type="monotone" dataKey={viewsMode} stroke="#3B82F6" strokeWidth={2} fill="url(#vGrad)" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
-            </Card>
+            </ChartCard>
 
             {/* Engagements Over Time */}
-            <Card style={{ padding: 20 }}>
+            <ChartCard delay={0.2}>
               <ChartHeader
                 title="Engagements Over Time"
                 sub={fmtNum(totalEng)}
@@ -920,71 +1005,81 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                 <AreaChart data={engChart} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="eGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="hsl(280 70% 56%)" stopOpacity={0.25} />
-                      <stop offset="100%" stopColor="hsl(280 70% 56%)" stopOpacity={0} />
+                      <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                   <XAxis dataKey="date" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} interval="preserveStartEnd" />
                   <YAxis stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v: number) => fmtNum(v)} width={40} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [typeof v === 'number' ? v.toLocaleString() : String(v), engMode + ' Engagements']} />
-                  <Area type="monotone" dataKey={engMode} stroke="hsl(280 70% 56%)" strokeWidth={2} fill="url(#eGrad)" dot={false} />
+                  <Area type="monotone" dataKey={engMode} stroke="#3B82F6" strokeWidth={2} fill="url(#eGrad)" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
-            </Card>
+            </ChartCard>
 
             {/* Engagement Breakdown */}
-            <Card style={{ padding: 20 }}>
+            <ChartCard delay={0.25}>
               <ChartHeader title="Engagement Breakdown" sub={fmtNum(totalEng) + ' total'} />
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14, marginTop: 4 }}>
                 {engBreakdown.map(({ label, value, color }) => {
                   const pctVal = totalEng > 0 ? (value / totalEng) * 100 : 0
                   return (
                     <div key={label}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 5 }}>
                         <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>{label}</span>
-                        <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
-                          {fmtNum(value)} <span style={{ color, fontWeight: 700 }}>({pctVal.toFixed(0)}%)</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color }}>
+                          {fmtNum(value)} <span style={{ fontWeight: 500, color: 'var(--muted-foreground)' }}>({pctVal.toFixed(0)}%)</span>
                         </span>
                       </div>
-                      <div style={{ height: 6, borderRadius: 3, background: 'var(--muted)', overflow: 'hidden' }}>
-                        <div style={{ height: '100%', width: `${pctVal}%`, borderRadius: 3, background: color, transition: 'width 0.6s ease' }} />
+                      <div style={{ height: 5, borderRadius: 999, background: 'var(--muted)', overflow: 'hidden' }}>
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pctVal}%` }}
+                          transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
+                          style={{ height: '100%', borderRadius: 999, background: `linear-gradient(90deg, ${color}, ${color}aa)` }}
+                        />
                       </div>
                     </div>
                   )
                 })}
               </div>
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Top Reel</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Top Reel</div>
                 {(() => {
                   const top = [...currentReels].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0]
                   if (!top) return null
                   return (
                     <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>
-                      <span style={{ fontWeight: 700, color: 'hsl(220 90% 60%)' }}>{fmtNum(top.views ?? 0)} views</span>
+                      <span style={{ fontWeight: 700, color: '#3B82F6' }}>{fmtNum(top.views ?? 0)} views</span>
                       {' · '}{top.hook?.slice(0, 60) || top.caption?.slice(0, 60) || '(no hook)'}
                     </div>
                   )
                 })()}
               </div>
-            </Card>
+            </ChartCard>
 
             {/* Format Performance */}
-            <Card style={{ padding: 20 }}>
+            <ChartCard delay={0.3}>
               <ChartHeader
                 title="Format Performance"
                 sub={formatData[0] ? formatData[0].format : '—'}
               />
               {formatData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={170}>
-                  <BarChart data={formatData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                    <XAxis dataKey="format" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 9 }} />
-                    <YAxis stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v: number) => fmtNum(v)} width={40} />
+                  <BarChart data={formatData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} layout="vertical">
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                    <XAxis type="number" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v: number) => fmtNum(v)} />
+                    <YAxis type="category" dataKey="format" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 9 }} width={80} />
                     <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [typeof v === 'number' ? v.toLocaleString() : String(v), 'Avg Views']} />
-                    <Bar dataKey="avgViews" radius={[5, 5, 0, 0]}>
+                    <Bar dataKey="avgViews" radius={[0, 5, 5, 0]}>
                       {formatData.map((entry, idx) => (
-                        <Cell key={idx} fill={entry.avgViews === maxFmtV ? 'hsl(38 90% 55%)' : 'var(--border)'} />
+                        <Cell
+                          key={idx}
+                          fill={entry.avgViews === maxFmtV
+                            ? '#3B82F6'
+                            : `rgba(146, 129, 247, ${Math.max(0.2, 0.65 - idx * 0.1)})`}
+                        />
                       ))}
                     </Bar>
                   </BarChart>
@@ -994,15 +1089,20 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                   <span style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>No format data yet — sync to classify reels</span>
                 </div>
               )}
-            </Card>
+            </ChartCard>
 
           </div>
 
           {/* ── Content Library ───────────────────────────────────────────── */}
-          <div style={{
-            background: 'var(--card)', border: '1px solid var(--border)',
-            borderRadius: 12, overflow: 'hidden',
-          }}>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut', delay: 0.35 }}
+            style={{
+              background: 'var(--card)', border: '1px solid var(--border)',
+              borderRadius: 14, overflow: 'hidden',
+            }}
+          >
             <div style={{
               padding: '18px 20px',
               borderBottom: '1px solid var(--border)',
@@ -1031,14 +1131,14 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
             <div style={{
               padding: 20,
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-              gap: 14,
+              gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
+              gap: 12,
             }}>
               {libraryReels.map((reel, idx) => (
                 <ReelCard key={reel.reel_id || reel.id || idx} reel={reel} idx={idx} profileId={profileId} />
               ))}
             </div>
-          </div>
+          </motion.div>
         </>
       )}
 

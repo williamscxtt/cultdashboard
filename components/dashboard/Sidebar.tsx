@@ -7,10 +7,11 @@ import {
   Settings, Users, LogOut, Calendar, Copy, Search,
   BookOpen, TrendingUp, PhoneCall,
   ChevronDown, ChevronUp, Send, Zap, PanelLeft, User, X,
+  Sun, Moon,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 // ─── nav definitions ──────────────────────────────────────────────────────────
 
@@ -80,9 +81,9 @@ function NavItem({
         fontWeight: active ? 700 : 500,
         marginBottom: 1,
         transition: 'background 0.12s, color 0.12s',
-        background: active ? 'hsl(0 84% 44% / 0.1)' : 'transparent',
-        color: active ? 'hsl(0 84% 62%)' : 'var(--muted-foreground)',
-        boxShadow: active ? 'inset 0 0 0 1px hsl(0 84% 44% / 0.2)' : 'none',
+        background: active ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+        color: active ? '#ededed' : 'var(--muted-foreground)',
+        boxShadow: 'none',
         position: 'relative',
         overflow: 'hidden',
         flexShrink: 0,
@@ -91,8 +92,8 @@ function NavItem({
       onMouseEnter={e => {
         if (!active) {
           const el = e.currentTarget as HTMLElement
-          el.style.background = 'hsl(0 84% 44% / 0.06)'
-          el.style.color = 'var(--foreground)'
+          el.style.background = 'rgba(255, 255, 255, 0.05)'
+          el.style.color = '#ededed'
         }
       }}
       onMouseLeave={e => {
@@ -103,22 +104,12 @@ function NavItem({
         }
       }}
     >
-      {active && (
-        <span style={{
-          position: 'absolute',
-          left: 0, top: 4, bottom: 4,
-          width: 2,
-          borderRadius: 999,
-          background: 'linear-gradient(180deg, hsl(0 84% 60%), hsl(0 84% 44%))',
-          boxShadow: '0 0 8px hsl(0 84% 44% / 0.7)',
-        }} />
-      )}
       <span style={{
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         flexShrink: 0,
-        paddingLeft: collapsed ? 0 : (active ? 4 : 0),
+        paddingLeft: 0,
       }}>
         <Icon size={14} />
       </span>
@@ -164,8 +155,20 @@ function SidebarContent({
 
   const isAdmin = realProfile.role === 'admin'
   const displayProfile = isImpersonating ? effectiveProfile : realProfile
-  // Everyone gets "My Profile" — admin uses it for their own account, same as clients
   const toolsNav = [...toolsNavBase, clientOnboardingItem]
+
+  const [isDark, setIsDark] = useState(true)
+
+  useEffect(() => {
+    setIsDark(document.documentElement.classList.contains('dark'))
+  }, [])
+
+  function toggleTheme() {
+    const next = !isDark
+    setIsDark(next)
+    document.documentElement.classList.toggle('dark', next)
+    localStorage.setItem('theme', next ? 'dark' : 'light')
+  }
 
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + '/')
@@ -198,10 +201,9 @@ function SidebarContent({
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
               width: 28, height: 28, borderRadius: 8,
-              background: 'linear-gradient(135deg, hsl(0 84% 44%), hsl(0 84% 32%))',
+              background: 'rgba(255,255,255,0.1)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
-              boxShadow: '0 0 12px hsl(0 84% 44% / 0.4)',
             }}>
               <Zap size={14} color="white" fill="white" />
             </div>
@@ -360,6 +362,32 @@ function SidebarContent({
         )}
 
         <button
+          onClick={toggleTheme}
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          style={{
+            display: 'flex', alignItems: 'center',
+            justifyContent: collapsed ? 'center' : 'flex-start',
+            gap: 9, padding: collapsed ? '0' : '0 10px', height: 32, borderRadius: 7,
+            width: '100%', background: 'transparent', border: 'none', cursor: 'pointer',
+            color: 'var(--muted-foreground)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit',
+            transition: 'background 0.12s, color 0.12s',
+          }}
+          onMouseEnter={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.background = 'rgba(255,255,255,0.06)'
+            el.style.color = 'var(--foreground)'
+          }}
+          onMouseLeave={e => {
+            const el = e.currentTarget as HTMLElement
+            el.style.background = 'transparent'
+            el.style.color = 'var(--muted-foreground)'
+          }}
+        >
+          {isDark ? <Sun size={14} /> : <Moon size={14} />}
+          {!collapsed && (isDark ? 'Light mode' : 'Dark mode')}
+        </button>
+
+        <button
           onClick={signOut}
           title={collapsed ? 'Sign out' : undefined}
           style={{
@@ -372,8 +400,8 @@ function SidebarContent({
           }}
           onMouseEnter={e => {
             const el = e.currentTarget as HTMLElement
-            el.style.background = 'hsl(0 50% 96%)'
-            el.style.color = 'hsl(0 72% 51%)'
+            el.style.background = 'rgba(248,113,113,0.1)'
+            el.style.color = '#f87171'
           }}
           onMouseLeave={e => {
             const el = e.currentTarget as HTMLElement

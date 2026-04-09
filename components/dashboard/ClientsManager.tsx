@@ -18,8 +18,8 @@ interface Props {
 }
 
 const healthColor = {
-  green: { bg: 'hsl(142 50% 95%)', border: 'hsl(142 50% 80%)', dot: 'hsl(142 71% 45%)', text: 'hsl(142 71% 30%)', label: 'On Track' },
-  amber: { bg: 'hsl(38 90% 95%)', border: 'hsl(38 90% 75%)', dot: 'hsl(38 92% 50%)', text: 'hsl(38 80% 35%)', label: 'Slipping' },
+  green: { bg: 'rgba(255,255,255,0.5)', border: 'rgba(255,255,255,0.5)', dot: 'rgba(255,255,255,0.5)', text: 'rgba(255,255,255,0.5)', label: 'On Track' },
+  amber: { bg: 'rgba(255,255,255,0.35)', border: 'rgba(255,255,255,0.35)', dot: 'rgba(255,255,255,0.35)', text: 'rgba(255,255,255,0.35)', label: 'Slipping' },
   red: { bg: 'hsl(0 50% 96%)', border: 'hsl(0 70% 85%)', dot: 'hsl(0 72% 51%)', text: 'hsl(0 72% 40%)', label: 'At Risk' },
   unknown: { bg: 'var(--muted)', border: 'var(--border)', dot: 'var(--muted-foreground)', text: 'var(--muted-foreground)', label: 'No Data' },
 }
@@ -120,8 +120,8 @@ export default function ClientsManager({ initialClients }: Props) {
           {slipping > 0 && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              background: 'hsl(38 90% 95%)', border: '1px solid hsl(38 90% 75%)',
-              borderRadius: 8, padding: '6px 12px', fontSize: 12, color: 'hsl(38 80% 35%)', fontWeight: 600,
+              background: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.35)',
+              borderRadius: 8, padding: '6px 12px', fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 600,
             }}>
               <AlertTriangle size={13} />
               {slipping} client{slipping > 1 ? 's' : ''} slipping — declining engagement
@@ -327,12 +327,12 @@ function ClientRow({ client, onToggleActive }: { client: Profile; onToggleActive
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
             fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999,
-            background: client.is_active ? 'hsl(142 50% 95%)' : 'var(--muted)',
-            color: client.is_active ? 'hsl(142 71% 35%)' : 'var(--muted-foreground)',
+            background: client.is_active ? 'rgba(255,255,255,0.5)' : 'var(--muted)',
+            color: client.is_active ? '#3B82F6' : 'var(--muted-foreground)',
           }}>
             <span style={{
               width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
-              background: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)',
+              background: client.is_active ? 'rgba(255,255,255,0.5)' : 'var(--muted-foreground)',
             }} />
             {client.is_active ? 'Active' : 'Inactive'}
           </span>
@@ -382,10 +382,10 @@ function ClientCard({ client, onToggleActive }: { client: Profile; onToggleActiv
           <span style={{
             display: 'inline-flex', alignItems: 'center', gap: 5,
             fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999,
-            background: client.is_active ? 'hsl(142 50% 95%)' : 'var(--muted)',
-            color: client.is_active ? 'hsl(142 71% 35%)' : 'var(--muted-foreground)',
+            background: client.is_active ? 'rgba(255,255,255,0.5)' : 'var(--muted)',
+            color: client.is_active ? '#3B82F6' : 'var(--muted-foreground)',
           }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)', flexShrink: 0 }} />
+            <span style={{ width: 5, height: 5, borderRadius: '50%', background: client.is_active ? 'rgba(255,255,255,0.5)' : 'var(--muted-foreground)', flexShrink: 0 }} />
             {client.is_active ? 'Active' : 'Inactive'}
           </span>
         </button>
@@ -540,10 +540,10 @@ function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
         {tempPassword ? (
           <div>
             <div style={{
-              background: 'hsl(142 50% 95%)', border: '1px solid hsl(142 50% 85%)',
+              background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.5)',
               borderRadius: 8, padding: 16, marginBottom: 16,
             }}>
-              <div style={{ fontSize: 13, color: 'hsl(142 71% 35%)', fontWeight: 600, marginBottom: 8 }}>
+              <div style={{ fontSize: 13, color: '#3B82F6', fontWeight: 600, marginBottom: 8 }}>
                 Client created successfully!
               </div>
               <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 8 }}>

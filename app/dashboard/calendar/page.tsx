@@ -23,7 +23,7 @@ export default async function CalendarPage() {
   // Fetch all reels so the calendar can show actual posting history
   const { data: reels } = await adminClient
     .from('client_reels')
-    .select('reel_id, date, caption, thumbnail_url, views, likes, permalink')
+    .select('reel_id, date, caption, transcript, thumbnail_url, views, likes, permalink')
     .eq('profile_id', profileId)
     .not('date', 'is', null)
     .order('date', { ascending: false })

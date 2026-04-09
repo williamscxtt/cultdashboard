@@ -328,7 +328,7 @@ function AccordionSection({ section, form, onChange, completedCount, readOnly = 
         {/* Number bubble */}
         <div style={{
           width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-          background: completedCount === total ? 'hsl(142 60% 40%)' : 'var(--muted)',
+          background: completedCount === total ? 'rgba(255,255,255,0.5)' : 'var(--muted)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           fontSize: 12, fontWeight: 700,
           color: completedCount === total ? '#fff' : 'var(--muted-foreground)',
@@ -523,45 +523,45 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
       {/* AI Personalised card */}
       {hasAiData && (
         <div style={{
-          border: '1px solid hsl(142 50% 75%)',
+          border: '1px solid rgba(255,255,255,0.5)',
           borderRadius: 10, padding: 20, marginBottom: 20,
-          background: 'hsl(142 50% 97%)',
+          background: 'rgba(255,255,255,0.5)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
-            <CheckCircle size={14} color="hsl(142 60% 40%)" />
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'hsl(142 60% 35%)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <CheckCircle size={14} color="rgba(255,255,255,0.5)" />
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.09)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               AI Personalised
             </span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px' }}>
             {aiNiche && (
               <div>
-                <div style={{ fontSize: 11, color: 'hsl(142 40% 50%)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Niche</div>
-                <div style={{ fontSize: 13, color: 'hsl(142 60% 25%)', lineHeight: 1.5 }}>{aiNiche}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Niche</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.08)', lineHeight: 1.5 }}>{aiNiche}</div>
               </div>
             )}
             {aiIdealClient && (
               <div>
-                <div style={{ fontSize: 11, color: 'hsl(142 40% 50%)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Ideal client</div>
-                <div style={{ fontSize: 13, color: 'hsl(142 60% 25%)', lineHeight: 1.5 }}>{aiIdealClient}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Ideal client</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.08)', lineHeight: 1.5 }}>{aiIdealClient}</div>
               </div>
             )}
             {aiTransformation && (
               <div>
-                <div style={{ fontSize: 11, color: 'hsl(142 40% 50%)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Transformation</div>
-                <div style={{ fontSize: 13, color: 'hsl(142 60% 25%)', lineHeight: 1.5 }}>{aiTransformation}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Transformation</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.08)', lineHeight: 1.5 }}>{aiTransformation}</div>
               </div>
             )}
             {aiContentAngle && (
               <div>
-                <div style={{ fontSize: 11, color: 'hsl(142 40% 50%)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Content angle</div>
-                <div style={{ fontSize: 13, color: 'hsl(142 60% 25%)', lineHeight: 1.5 }}>{aiContentAngle}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Content angle</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.08)', lineHeight: 1.5 }}>{aiContentAngle}</div>
               </div>
             )}
             {insights?.strengths && insights.strengths.length > 0 && (
               <div style={{ gridColumn: '1 / -1' }}>
-                <div style={{ fontSize: 11, color: 'hsl(142 40% 50%)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Strengths</div>
-                <div style={{ fontSize: 13, color: 'hsl(142 60% 25%)', lineHeight: 1.5 }}>{insights.strengths.join(' · ')}</div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Strengths</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.08)', lineHeight: 1.5 }}>{insights.strengths.join(' · ')}</div>
               </div>
             )}
           </div>

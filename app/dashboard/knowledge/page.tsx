@@ -26,13 +26,13 @@ const CATEGORIES = ['Hook Writing', 'Offer Building', 'Personal Branding', 'Mind
 function categoryStyle(category: string): React.CSSProperties {
   const map: Record<string, React.CSSProperties> = {
     'Hook Writing':       { background: 'hsl(220 90% 56% / 0.12)', color: 'hsl(220 90% 56%)' },
-    'Offer Building':     { background: 'hsl(142 50% 45% / 0.12)', color: 'hsl(142 50% 45%)' },
+    'Offer Building':     { background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.55)' },
     'Personal Branding':  { background: 'hsl(270 60% 55% / 0.12)', color: 'hsl(270 60% 55%)' },
-    'Mindset':            { background: 'hsl(38 92% 45% / 0.12)', color: 'hsl(38 92% 45%)' },
+    'Mindset':            { background: 'hsl(38 92% 45% / 0.12)', color: 'rgba(255,255,255,0.35)' },
     'Sales':              { background: 'hsl(20 80% 45% / 0.12)', color: 'hsl(20 80% 45%)' },
     'Content Strategy':   { background: 'hsl(180 60% 35% / 0.12)', color: 'hsl(180 70% 40%)' },
     'Coaching Framework': { background: 'hsl(300 50% 50% / 0.12)', color: 'hsl(300 50% 55%)' },
-    'Case Study':         { background: 'hsl(142 60% 35% / 0.12)', color: 'hsl(142 60% 40%)' },
+    'Case Study':         { background: 'rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.5)' },
     'Script':             { background: 'hsl(50 90% 45% / 0.12)', color: 'hsl(50 90% 40%)' },
   }
   return map[category] || { background: 'var(--muted)', color: 'var(--muted-foreground)' }

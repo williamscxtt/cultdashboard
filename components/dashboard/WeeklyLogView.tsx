@@ -218,7 +218,7 @@ export default function WeeklyLogView({ profileName, logs }: Props) {
         action={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {savedMsg && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'hsl(142 71% 35%)', fontWeight: 600 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: '#3B82F6', fontWeight: 600 }}>
                 <CheckCircle size={14} /> Saved
               </div>
             )}

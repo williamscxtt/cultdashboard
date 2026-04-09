@@ -18,7 +18,16 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* Sync theme before first paint — prevents flash */}
+        <script dangerouslySetInnerHTML={{ __html: `
+          try {
+            var t = localStorage.getItem('theme') || 'dark';
+            document.documentElement.classList.toggle('dark', t === 'dark');
+          } catch(e) { document.documentElement.classList.add('dark'); }
+        ` }} />
+      </head>
       <body className={inter.className} style={{ minHeight: '100vh' }}>
         {children}
         <SpeedInsights />

@@ -84,6 +84,8 @@ interface ApifyReel {
   views: number
   likes: number
   comments: number
+  saves: number
+  shares: number
   caption: string
   timestamp: string
   duration_sec: number
@@ -124,6 +126,8 @@ function normalise(item: Record<string, unknown>): ApifyReel {
     views:          Number(getFirst(item, ['videoPlayCount', 'playCount', 'videoViewCount', 'views', 'playsCount'], 0)),
     likes:          Number(getFirst(item, ['likesCount', 'likes', 'diggCount'], 0)),
     comments:       Number(getFirst(item, ['commentsCount', 'comments', 'commentCount'], 0)),
+    saves:          Number(getFirst(item, ['savesCount', 'saved', 'bookmarkCount', 'saveCount'], 0)),
+    shares:         Number(getFirst(item, ['sharesCount', 'shares', 'reshareCount', 'repostsCount', 'shareCount'], 0)),
     caption,
     timestamp:      String(getFirst(item, ['timestamp', 'takenAt', 'createTimeISO'], '')),
     duration_sec:   Number(getFirst(item, ['videoDuration', 'duration'], 0)),
@@ -210,27 +214,71 @@ async function persistThumbnail(profileId: string, reelId: string, cdnUrl: strin
 
 // ── Format classification ─────────────────────────────────────────────────────
 
-async function classifyFormats(reels: Array<{ reel_id: string; transcript: string; caption: string }>): Promise<Record<string, string>> {
+async function classifyFormats(reels: Array<{ reel_id: string; transcript: string; caption: string; duration_sec?: number }>): Promise<Record<string, string>> {
   if (!reels.length) return {}
-  const FORMATS = ['talking_head','story_time','tutorial','list','transformation','rant','trend','pov','other']
-  const items = reels.map((r, i) => `${i + 1}. [${r.reel_id}] ${(r.transcript || r.caption).slice(0, 200)}`)
-  try {
-    const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 512,
-      messages: [{
-        role: 'user',
-        content: `Classify each reel into ONE format: ${FORMATS.join(', ')}.\n\n${items.join('\n')}\n\nReply ONLY with JSON: [{"index":1,"format_type":"tutorial"},...]`,
-      }],
+
+  const FORMATS = [
+    'Talking Head',    // Direct-to-camera, speaking to audience
+    'Story Time',      // Personal narrative / what happened to me
+    'Tutorial',        // Step-by-step how-to
+    'Listicle',        // "X things / X reasons / X mistakes"
+    'Transformation',  // Before/after, progress reveal
+    'Rant/Hot Take',   // Contrarian opinion, calling something out
+    'Trend/Meme',      // Riding an audio trend or viral format
+    'POV',             // Point-of-view scenario
+    'Workout/Training',// Exercise demo, training footage
+    'Physique/Aesthetic', // Physique check, body transformation reveal
+    'Q&A',             // Answering questions from audience
+    'Behind Scenes',   // Day in the life, behind the scenes
+    'Testimonial',     // Client results, success story
+  ]
+
+  // Batch into groups of 20 to avoid token limits
+  const BATCH = 20
+  const result: Record<string, string> = {}
+
+  for (let i = 0; i < reels.length; i += BATCH) {
+    const batch = reels.slice(i, i + BATCH)
+    const items = batch.map((r, idx) => {
+      const text = (r.transcript || r.caption || '').slice(0, 250)
+      const dur = r.duration_sec ? ` [${r.duration_sec}s]` : ''
+      return `${idx + 1}. [${r.reel_id}]${dur} ${text}`
     })
-    const text = msg.content[0].type === 'text' ? msg.content[0].text : ''
-    const match = text.match(/\[[\s\S]*\]/)
-    if (!match) return {}
-    const arr = JSON.parse(match[0]) as Array<{ index: number; format_type: string }>
-    return Object.fromEntries(arr.map(c => [reels[c.index - 1]?.reel_id ?? '', c.format_type]))
-  } catch {
-    return {}
+    try {
+      const msg = await anthropic.messages.create({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 600,
+        messages: [{
+          role: 'user',
+          content: `Classify each Instagram reel into ONE format from this list:
+${FORMATS.join(', ')}
+
+Rules:
+- Physique/Aesthetic = shirtless body reveal, physique check, before/after body
+- Workout/Training = exercise demos, training clips, gym footage
+- Transformation = client results, weight loss/gain journey
+- Rant/Hot Take = strong opinion, calling BS on something, controversial take
+- Listicle = "X things", "X reasons", "X mistakes" structure
+- Story Time = personal story with beginning/middle/end
+- Talking Head = everything else that's direct-to-camera speaking
+
+${items.join('\n')}
+
+Reply ONLY with JSON array: [{"index":1,"format_type":"Talking Head"},...]`,
+        }],
+      })
+      const text = msg.content[0].type === 'text' ? msg.content[0].text : ''
+      const match = text.match(/\[[\s\S]*\]/)
+      if (!match) continue
+      const arr = JSON.parse(match[0]) as Array<{ index: number; format_type: string }>
+      for (const c of arr) {
+        const reel = batch[c.index - 1]
+        if (reel) result[reel.reel_id] = c.format_type
+      }
+    } catch { /* continue */ }
   }
+
+  return result
 }
 
 // ── Status helper ─────────────────────────────────────────────────────────────
@@ -338,8 +386,9 @@ export async function POST(req: NextRequest) {
     const storedThumb = r.thumbnail_url ? await persistThumbnail(profileId, r.reel_id, r.thumbnail_url) : null
     return adminClient.from('client_reels').update({
       views: r.views, likes: r.likes, comments: r.comments,
+      ...(r.saves > 0 ? { saves: r.saves } : {}),
+      ...(r.shares > 0 ? { shares: r.shares } : {}),
       ...(storedThumb ? { thumbnail_url: storedThumb } : {}),
-      // Refresh comments_text if Apify returned them
       ...(r.comments_text?.length ? { comments_text: r.comments_text } : {}),
     }).eq('reel_id', r.reel_id).eq('profile_id', profileId)
   }))
@@ -380,13 +429,46 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // ── 5. Classify format types ─────────────────────────────────────────────
-  const toClassify = newReels.map(r => ({
+  // ── 5. Classify format types (new reels + existing with NULL format) ────
+  const toClassifyNew = newReels.map(r => ({
     reel_id: r.reel_id,
     transcript: (r as ApifyReel & { transcript?: string }).transcript ?? '',
     caption: r.caption,
+    duration_sec: r.duration_sec,
   }))
-  const formatMap = await classifyFormats(toClassify)
+
+  // Also re-classify existing reels that have no format_type
+  const { data: unclassified } = await adminClient
+    .from('client_reels')
+    .select('reel_id, transcript, caption, duration_sec')
+    .eq('profile_id', profileId)
+    .is('format_type', null)
+    .limit(50)
+
+  const toClassifyExisting = (unclassified ?? []).map(r => ({
+    reel_id: r.reel_id as string,
+    transcript: (r.transcript as string) ?? '',
+    caption: (r.caption as string) ?? '',
+    duration_sec: r.duration_sec as number | undefined,
+  }))
+
+  const [formatMapNew, formatMapExisting] = await Promise.all([
+    classifyFormats(toClassifyNew),
+    classifyFormats(toClassifyExisting),
+  ])
+  const formatMap = { ...formatMapNew }
+
+  // Update existing reels with newly classified format_type
+  if (Object.keys(formatMapExisting).length > 0) {
+    await Promise.allSettled(
+      Object.entries(formatMapExisting).map(([reelId, fmt]) =>
+        adminClient.from('client_reels')
+          .update({ format_type: fmt })
+          .eq('reel_id', reelId)
+          .eq('profile_id', profileId)
+      )
+    )
+  }
 
   // ── 6. Insert new reels ──────────────────────────────────────────────────
   const today = new Date().toISOString().slice(0, 10)
@@ -400,6 +482,8 @@ export async function POST(req: NextRequest) {
       views:         r.views,
       likes:         r.likes,
       comments:      r.comments,
+      saves:         r.saves || null,
+      shares:        r.shares || null,
       caption:       r.caption,
       duration_sec:  r.duration_sec || null,
       transcript:    ext.transcript ?? '',
