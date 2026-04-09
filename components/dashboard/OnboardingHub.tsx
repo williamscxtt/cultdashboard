@@ -134,72 +134,119 @@ const ALL_KEYS = SECTIONS.flatMap(s => s.fields.map(f => f.key))
 function buildInitialForm(profile: Profile): Record<string, string> {
   const intro = (profile.intro_structured ?? {}) as IntroStructured
 
+  // Read a string value — tries keys in order, returns first non-empty
   function iVal(...keys: string[]): string {
     for (const k of keys) {
       const v = intro[k]
-      if (v && String(v).trim()) return String(v).trim()
+      if (!v) continue
+      if (typeof v === 'string' && v.trim()) return v.trim()
+    }
+    return ''
+  }
+
+  // Read a value that may be stored as an array (old system stored some fields as string[])
+  function iArr(...keys: string[]): string {
+    for (const k of keys) {
+      const v = intro[k]
+      if (!v) continue
+      if (Array.isArray(v) && v.length > 0) return v.filter(Boolean).join('\n')
+      if (typeof v === 'string' && v.trim()) return v.trim()
     }
     return ''
   }
 
   return {
-    full_name:             profile.name || iVal('name', 'full_name') || '',
+    // ── Section 1: Who You Are ───────────────────────────────────────────────
+    full_name:             profile.name || iVal('full_name', 'name') || '',
     age:                   iVal('age') || '',
-    location:              iVal('location', 'country', 'city') || '',
-    occupation_before:     iVal('occupation_before', 'previous_job', 'what_did_you_do_before') || '',
+    location:              iVal('location', 'country', 'city', 'accent_background') || '',
+    // Old system: 'before_coaching'
+    occupation_before:     iVal('occupation_before', 'before_coaching', 'previous_job', 'what_did_you_do_before') || '',
     how_long_coaching:     iVal('how_long_coaching', 'coaching_experience', 'years_coaching') || '',
     active_clients:        iVal('active_clients', 'current_clients', 'clients_now') || (profile.starting_active_clients?.toString() ?? ''),
-    monthly_revenue_current: profile.monthly_revenue || iVal('monthly_revenue', 'current_revenue', 'revenue') || (profile.starting_revenue ?? ''),
+    // Old system: 'monthly_revenue' (same key, but no '_current' suffix)
+    monthly_revenue_current: profile.monthly_revenue || iVal('monthly_revenue_current', 'monthly_revenue', 'current_revenue', 'revenue') || (profile.starting_revenue ?? ''),
     highest_revenue:       iVal('highest_revenue', 'best_month_revenue', 'max_revenue') || '',
-    offer_price:           iVal('offer_price', 'price', 'programme_price') || '',
-    offer_description:     iVal('offer_description', 'offer', 'what_you_offer') || '',
-    personality_type:      iVal('personality_type', 'personality') || '',
-    fun_fact:              iVal('fun_fact', 'random_fact', 'interesting_fact') || '',
-    values:                iVal('values', 'core_values', 'personal_values') || '',
+    // Old system: 'offer_cost'
+    offer_price:           iVal('offer_price', 'offer_cost', 'price', 'programme_price') || '',
+    // Old system: 'current_offer'
+    offer_description:     iVal('offer_description', 'current_offer', 'offer', 'what_you_offer') || '',
+    // Old system: 'three_words'
+    personality_type:      iVal('personality_type', 'three_words', 'personality') || '',
+    // Old system: 'fun_outside_work', 'something_unknown'
+    fun_fact:              iVal('fun_fact', 'fun_outside_work', 'something_unknown', 'random_fact', 'interesting_fact') || '',
+    // Old system: 'worldview'
+    values:                iVal('values', 'worldview', 'core_values', 'personal_values') || '',
 
+    // ── Section 2: Your Business ─────────────────────────────────────────────
     specific_niche:        profile.niche || iVal('specific_niche', 'niche', 'your_niche') || '',
     what_you_coach:        iVal('what_you_coach', 'coaching_on', 'i_help') || '',
     ideal_client:          profile.target_audience || iVal('ideal_client', 'target_audience', 'dream_client') || '',
     client_transformation: iVal('client_transformation', 'transformation', 'result', 'outcome') || '',
     unique_mechanism:      iVal('unique_mechanism', 'framework', 'method', 'system') || '',
+    // Old system: 'what_makes_you_different'
     why_different:         iVal('why_different', 'what_makes_you_different', 'differentiator') || '',
-    main_platforms:        iVal('main_platforms', 'platforms', 'social_media', 'where_you_post') || '',
-    revenue_goal_90:       profile.revenue_goal || profile.ninety_day_revenue_goal || iVal('revenue_goal', 'goal_revenue', 'revenue_goal_90') || '',
+    // Old system: 'primary_platform'
+    main_platforms:        iVal('main_platforms', 'primary_platform', 'platforms', 'social_media', 'where_you_post') || '',
+    revenue_goal_90:       profile.revenue_goal || profile.ninety_day_revenue_goal?.toString() || iVal('revenue_goal_90', 'revenue_goal', 'goal_revenue') || '',
     revenue_goal_12m:      iVal('revenue_goal_12m', 'goal_12_months_revenue', 'twelve_month_revenue') || '',
-    follower_goal_90:      profile.ninety_day_follower_goal?.toString() || iVal('follower_goal', 'follower_goal_90', 'ninety_day_follower_goal') || '',
+    follower_goal_90:      profile.ninety_day_follower_goal?.toString() || iVal('follower_goal_90', 'follower_goal', 'ninety_day_follower_goal') || '',
 
+    // ── Section 3: Your Content ──────────────────────────────────────────────
     posts_per_week:        profile.posts_per_week?.toString() || iVal('posts_per_week', 'posting_frequency') || '',
     avg_views:             iVal('avg_views', 'average_views', 'current_avg_views') || (profile.starting_avg_views?.toString() ?? ''),
-    best_performing_content: iVal('best_performing_content', 'top_content', 'what_works') || '',
-    content_style:         iVal('content_style', 'my_style') || '',
+    // Old system: 'best_content', 'current_content_type'
+    best_performing_content: iVal('best_performing_content', 'best_content', 'current_content_type', 'top_content', 'what_works') || '',
+    // Old system: 'brand_description', 'engagement_type'
+    content_style:         iVal('content_style', 'brand_description', 'engagement_type', 'my_style') || '',
     hook_style:            iVal('hook_style', 'hooks') || '',
-    brand_voice:           iVal('brand_voice', 'voice', 'tone') || '',
+    // Old system: 'brand_description'
+    brand_voice:           iVal('brand_voice', 'brand_description', 'voice', 'tone') || '',
     topics_covered:        iVal('topics_covered', 'content_topics', 'pillars') || (profile.content_pillars?.join(', ') ?? ''),
     content_frequency_goal: iVal('content_frequency_goal', 'posting_goal') || '',
 
+    // ── Section 4: Where You're Stuck ────────────────────────────────────────
     biggest_problem:       profile.biggest_challenge || iVal('biggest_problem', 'main_problem', 'challenge') || '',
-    what_tried_before:     iVal('what_tried_before', 'tried_before', 'previous_attempts') || '',
-    what_held_back:        iVal('what_held_back', 'held_back', 'what_stops_you') || '',
-    previous_coaches:      iVal('previous_coaches', 'coaching_before', 'programmes') || '',
-    content_consistency:   iVal('content_consistency', 'consistency', 'posting_history') || '',
-    dm_sales_experience:   iVal('dm_sales_experience', 'dm_experience', 'sales_experience') || '',
+    // Old system: 'tried_to_fix', 'why_not_worked'
+    what_tried_before:     iVal('what_tried_before', 'tried_to_fix', 'why_not_worked', 'tried_before', 'previous_attempts') || '',
+    // Old system: 'content_missing', 'thing_avoiding'
+    what_held_back:        iVal('what_held_back', 'content_missing', 'thing_avoiding', 'held_back', 'what_stops_you') || '',
+    // Old system: 'mentor_story'
+    previous_coaches:      iVal('previous_coaches', 'mentor_story', 'coaching_before', 'programmes') || '',
+    // Old system: 'posting_consistency'
+    content_consistency:   iVal('content_consistency', 'posting_consistency', 'consistency', 'posting_history') || '',
+    // Old system: 'getting_clients', 'dms_from_content'
+    dm_sales_experience:   iVal('dm_sales_experience', 'getting_clients', 'dms_from_content', 'dm_experience', 'sales_experience') || '',
 
-    goal_90_days:          profile.ninety_day_goal || iVal('goal_90_days', '90_day_goal') || '',
+    // ── Section 5: What You Want ─────────────────────────────────────────────
+    goal_90_days:          profile.ninety_day_goal || iVal('goal_90_days', '90_day_goal', 'one_thing_6months') || '',
     goal_12_months:        iVal('goal_12_months', 'one_year_goal', '12_month_goal') || '',
-    what_success_looks_like: iVal('what_success_looks_like', 'success_definition', 'what_success_means') || '',
-    why_now:               iVal('why_now', 'why_this_time') || '',
-    why_cult:              profile.why_joined || iVal('why_cult', 'why_coaching', 'why_joined') || '',
+    // Old system: 'what_changes', 'perfect_business', 'financial_freedom'
+    what_success_looks_like: iVal('what_success_looks_like', 'what_changes', 'perfect_business', 'financial_freedom', 'success_definition') || '',
+    // Old system: 'motivation'
+    why_now:               iVal('why_now', 'motivation', 'why_this_time') || '',
+    // Old system: 'why_creator_cult'
+    why_cult:              profile.why_joined || iVal('why_cult', 'why_creator_cult', 'why_coaching', 'why_joined') || '',
 
-    controversial_opinion: iVal('controversial_opinion', 'hot_take', 'controversial_take') || '',
-    what_you_hate:         iVal('what_you_hate', 'hate_in_industry', 'industry_frustration') || '',
-    what_you_believe:      iVal('what_you_believe', 'unpopular_opinion', 'belief') || '',
-    philosophy:            iVal('philosophy', 'coaching_philosophy', 'beliefs') || '',
+    // ── Section 6: Mindset & Opinions ────────────────────────────────────────
+    // Old system: 'niche_bullshit', 'take_on_career', 'take_on_social_media'
+    controversial_opinion: iVal('controversial_opinion', 'niche_bullshit', 'take_on_career', 'take_on_social_media', 'hot_take', 'controversial_take') || '',
+    what_you_hate:         iVal('what_you_hate', 'hate_in_industry', 'industry_frustration', 'angry_frustrated_by') || '',
+    // Old system: 'contrarian_beliefs' (array), 'worldview'
+    what_you_believe:      iArr('contrarian_beliefs', 'what_you_believe') || iVal('worldview', 'unpopular_opinion', 'belief', 'inner_critic') || '',
+    // Old system: 'relationship_with_failure', 'take_on_money', 'take_on_relationships'
+    philosophy:            iVal('philosophy', 'relationship_with_failure', 'take_on_money', 'coaching_philosophy', 'beliefs') || '',
 
-    origin_story:          iVal('origin_story', 'background_story', 'my_story') || '',
-    lowest_point:          iVal('lowest_point', 'rock_bottom', 'hardest_moment') || '',
-    turning_point:         iVal('turning_point', 'breakthrough', 'when_things_changed') || '',
+    // ── Section 7: Your Story ────────────────────────────────────────────────
+    // Old system: 'transformation_story'
+    origin_story:          iVal('origin_story', 'transformation_story', 'background_story', 'my_story') || '',
+    // Old system: 'moments_wanted_to_quit', 'hard_times_personal' (arrays)
+    lowest_point:          iVal('lowest_point', 'rock_bottom', 'hardest_moment') || iArr('moments_wanted_to_quit', 'hard_times_personal') || '',
+    // Old system: 'moments_changed_perspective' (array)
+    turning_point:         iVal('turning_point', 'breakthrough', 'when_things_changed') || iArr('moments_changed_perspective') || '',
     best_client_result:    iVal('best_client_result', 'client_result', 'case_study', 'best_result') || '',
     proof_results:         iVal('proof_results', 'proof', 'results', 'testimonials') || '',
+    // Old system: 'brand_description' (sometimes used as content angle)
     content_angle:         iVal('content_angle', 'character', 'story_angle', 'brand_story') || '',
   }
 }

@@ -47,10 +47,13 @@ export async function POST(req: NextRequest) {
     const intro = (profile?.intro_structured ?? {}) as Record<string, string>
 
     // Helper: read a field from intro_structured, trying multiple possible key names
+    // Handles both string values and old-system array values (joins with newline)
     function iGet(...keys: string[]): string {
       for (const k of keys) {
         const v = intro[k]
-        if (v && String(v).trim()) return String(v).trim()
+        if (!v) continue
+        if (Array.isArray(v) && v.length > 0) return (v as string[]).filter(Boolean).join('\n')
+        if (typeof v === 'string' && v.trim()) return v.trim()
       }
       return ''
     }
@@ -58,44 +61,48 @@ export async function POST(req: NextRequest) {
     // ── Core identity ──────────────────────────────────────────────────────
     const name        = profile?.name || iGet('full_name') || 'Client'
     const niche       = iGet('specific_niche', 'niche') || onboarding?.niche || profile?.niche || ''
-    const whatCoach   = iGet('what_you_coach') || ''
-    const offerDesc   = iGet('offer_description') || ''
-    const offerPrice  = iGet('offer_price') || ''
+    const whatCoach   = iGet('what_you_coach', 'coaching_on') || ''
+    const offerDesc   = iGet('offer_description', 'current_offer', 'offer') || ''
+    const offerPrice  = iGet('offer_price', 'offer_cost', 'price') || ''
     const idealClient = iGet('ideal_client', 'target_audience') || onboarding?.target_audience || profile?.target_audience || ''
-    const clientXform = iGet('client_transformation') || ''
-    const mechanism   = iGet('unique_mechanism') || ''
-    const whyDiff     = iGet('why_different') || ''
+    const clientXform = iGet('client_transformation', 'transformation') || ''
+    const mechanism   = iGet('unique_mechanism', 'framework', 'method', 'system') || ''
+    const whyDiff     = iGet('why_different', 'what_makes_you_different', 'differentiator') || ''
     const revenue     = iGet('monthly_revenue_current', 'monthly_revenue') || onboarding?.monthly_revenue || profile?.monthly_revenue || ''
-    const goal90      = iGet('goal_90_days') || profile?.ninety_day_goal || onboarding?.main_goal || ''
-    const challenge   = iGet('biggest_problem') || profile?.biggest_challenge || onboarding?.biggest_challenge || ''
-    const brandVoiceStr = iGet('brand_voice') || onboarding?.brand_voice || ''
-    const contentStyle  = iGet('content_style') || ''
-    const hookStyle     = iGet('hook_style') || ''
-    const topics        = iGet('topics_covered') || profile?.content_pillars?.join(', ') || ''
-    const personality   = iGet('personality_type') || ''
-    const values        = iGet('values') || ''
-    const platforms     = iGet('main_platforms') || ''
+    const goal90      = iGet('goal_90_days', 'one_thing_6months') || profile?.ninety_day_goal || onboarding?.main_goal || ''
+    const challenge   = iGet('biggest_problem', 'main_problem') || profile?.biggest_challenge || onboarding?.biggest_challenge || ''
+    const brandVoiceStr = iGet('brand_voice', 'brand_description') || onboarding?.brand_voice || ''
+    const contentStyle  = iGet('content_style', 'brand_description', 'engagement_type') || ''
+    const hookStyle     = iGet('hook_style', 'hooks') || ''
+    const topics        = iGet('topics_covered', 'content_topics') || profile?.content_pillars?.join(', ') || ''
+    const personality   = iGet('personality_type', 'three_words') || ''
+    const values        = iGet('values', 'worldview', 'core_values') || ''
+    const platforms     = iGet('main_platforms', 'primary_platform', 'platforms') || ''
 
     // ── Story ──────────────────────────────────────────────────────────────
-    // Note: form saves as 'origin_story' — older imports may use 'transformation_story' or 'your_story'
-    const originStory   = iGet('origin_story', 'transformation_story', 'your_story') || onboarding?.unique_story || ''
-    const lowestPoint   = iGet('lowest_point', 'rock_bottom') || ''
-    const turningPoint  = iGet('turning_point', 'breakthrough') || ''
-    const contentAngle  = iGet('content_angle', 'character') || ''
-    const funFact       = iGet('fun_fact') || ''
-    const occupBefore   = iGet('occupation_before') || ''
+    // Old system used 'transformation_story' for origin story
+    const originStory   = iGet('origin_story', 'transformation_story', 'your_story', 'background_story') || onboarding?.unique_story || ''
+    // Old system: 'moments_wanted_to_quit', 'hard_times_personal' (arrays)
+    const lowestPoint   = iGet('lowest_point', 'rock_bottom', 'moments_wanted_to_quit', 'hard_times_personal') || ''
+    // Old system: 'moments_changed_perspective' (array)
+    const turningPoint  = iGet('turning_point', 'breakthrough', 'moments_changed_perspective', 'when_things_changed') || ''
+    const contentAngle  = iGet('content_angle', 'character', 'story_angle') || ''
+    const funFact       = iGet('fun_fact', 'fun_outside_work', 'something_unknown') || ''
+    const occupBefore   = iGet('occupation_before', 'before_coaching', 'previous_job') || ''
 
     // ── Proof & results ────────────────────────────────────────────────────
-    // Note: form saves as 'proof_results' — older imports may use 'proof_points'
     const bestResult    = iGet('best_client_result', 'client_result') || ''
-    const proof         = iGet('proof_results', 'proof_points', 'proof') || ''
+    const proof         = iGet('proof_results', 'proof_points', 'proof', 'results') || ''
 
     // ── Opinions & beliefs (content goldmines) ─────────────────────────────
-    const hotTake       = iGet('controversial_opinion', 'hot_take') || ''
-    const whatHates     = iGet('what_you_hate', 'hate_in_industry') || ''
-    const belief        = iGet('what_you_believe', 'unpopular_opinion') || ''
-    const philosophy    = iGet('philosophy', 'coaching_philosophy') || ''
-    const whyCult       = iGet('why_cult', 'why_joined') || onboarding?.why_joined_cult || profile?.why_joined || ''
+    // Old system: 'niche_bullshit', 'take_on_career', 'take_on_social_media'
+    const hotTake       = iGet('controversial_opinion', 'niche_bullshit', 'take_on_career', 'take_on_social_media', 'hot_take') || ''
+    const whatHates     = iGet('what_you_hate', 'hate_in_industry', 'angry_frustrated_by') || ''
+    // Old system: 'contrarian_beliefs' (array), 'worldview'
+    const belief        = iGet('contrarian_beliefs', 'what_you_believe', 'worldview', 'unpopular_opinion') || ''
+    // Old system: 'relationship_with_failure', 'take_on_money'
+    const philosophy    = iGet('philosophy', 'relationship_with_failure', 'take_on_money', 'coaching_philosophy') || ''
+    const whyCult       = iGet('why_cult', 'why_creator_cult', 'why_joined') || onboarding?.why_joined_cult || profile?.why_joined || ''
 
     // ── Assemble client profile section ────────────────────────────────────
     const clientSection = [
