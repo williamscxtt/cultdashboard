@@ -1,8 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { ChevronDown, ChevronUp, Copy, Check, Zap, TrendingUp, Users, RefreshCw, Clock } from 'lucide-react'
-import { Card, Button, PageHeader, GeneratingState } from '@/components/ui'
+import { ChevronDown, ChevronUp, Copy, Check, Zap, TrendingUp, Users, RefreshCw, Clock, Eye } from 'lucide-react'
+import { Card, Button, PageHeader, GeneratingState, Spinner } from '@/components/ui'
+import CompetitorManager from '@/components/dashboard/CompetitorManager'
 import { toast } from 'sonner'
 
 interface WeeklyScript {
@@ -32,6 +33,20 @@ interface ParsedPackage {
   performanceNote: string
   accountsToWatch: string
   reels: ParsedReel[]
+}
+
+interface CompReel {
+  account: string
+  views: number | null
+  hook: string | null
+  format_type: string | null
+  date: string | null
+}
+
+function fmtK(n: number): string {
+  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
+  if (n >= 1_000) return (n / 1_000).toFixed(0) + 'K'
+  return String(n)
 }
 
 // ── Markdown parser — mirrors ScriptCards.tsx but with full intel extraction ──
@@ -246,6 +261,11 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
   const [generating, setGenerating] = useState(false)
   const [loading, setLoading] = useState(true)
   const [intelOpen, setIntelOpen] = useState(true)
+  const [competitorOpen, setCompetitorOpen] = useState(false)
+  const [scraping, setScraping] = useState(false)
+  const [scrapeMsg, setScrapeMsg] = useState<string | null>(null)
+  const [scrapeOk, setScrapeOk] = useState(false)
+  const [compReels, setCompReels] = useState<CompReel[]>([])
 
   const loadPackages = useCallback(async () => {
     setLoading(true)
@@ -262,6 +282,43 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
       setLoading(false)
     }
   }, [profileId])
+
+  const loadCompReels = useCallback(async () => {
+    try {
+      const res = await fetch('/api/competitor-intel')
+      const data = await res.json()
+      if (data.reels) setCompReels(data.reels.slice(0, 30))
+    } catch { /* silent */ }
+  }, [])
+
+  async function handleScrape() {
+    setScraping(true)
+    setScrapeMsg(null)
+    setScrapeOk(false)
+    try {
+      const res = await fetch('/api/competitors/scrape', { method: 'POST' })
+      const json = await res.json()
+      if (!res.ok) {
+        if (res.status === 503) {
+          setScrapeMsg('Apify not configured — add APIFY_API_TOKEN to Vercel env vars.')
+        } else if (json.error === 'no_competitors') {
+          setScrapeMsg('No competitor accounts added yet. Add some below.')
+        } else {
+          setScrapeMsg(json.message || json.error || 'Scrape failed.')
+        }
+      } else {
+        setScrapeMsg(`Scraped ${json.accounts_scraped} accounts — ${json.added} new reels added.`)
+        setScrapeOk(true)
+        toast.success(`Scraped ${json.accounts_scraped} accounts — ${json.added} new reels added`)
+        await loadCompReels()
+      }
+    } catch {
+      setScrapeMsg('Network error — scrape failed.')
+      toast.error('Scrape failed')
+    } finally {
+      setScraping(false)
+    }
+  }
 
   useEffect(() => { loadPackages() }, [loadPackages])
 
@@ -315,6 +372,104 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
           }
         </Button>
       </div>
+
+      {/* ── Competitor Intelligence ───────────────────────────────────── */}
+      <Card style={{ marginBottom: 20, overflow: 'hidden' }}>
+        <button
+          onClick={() => setCompetitorOpen(o => !o)}
+          style={{
+            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '14px 18px', background: 'none', border: 'none', cursor: 'pointer',
+            fontFamily: 'inherit',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Users size={14} style={{ color: 'var(--muted-foreground)' }} />
+            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>Competitor Intelligence</span>
+            {compReels.length > 0 && (
+              <span style={{ fontSize: 11, color: 'var(--muted-foreground)', marginLeft: 4 }}>
+                {compReels.length} reels in DB
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <button
+              onClick={(e) => { e.stopPropagation(); handleScrape() }}
+              disabled={scraping}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
+                background: 'var(--muted)', color: 'var(--foreground)',
+                border: '1px solid var(--border)', cursor: scraping ? 'not-allowed' : 'pointer',
+                opacity: scraping ? 0.6 : 1, fontFamily: 'inherit',
+              }}
+            >
+              {scraping ? <Spinner size={10} /> : <RefreshCw size={10} />}
+              {scraping ? 'Scraping…' : 'Scrape Now'}
+            </button>
+            {competitorOpen ? <ChevronUp size={14} style={{ color: 'var(--muted-foreground)' }} /> : <ChevronDown size={14} style={{ color: 'var(--muted-foreground)' }} />}
+          </div>
+        </button>
+
+        {competitorOpen && (
+          <div style={{ borderTop: '1px solid var(--border)', padding: '16px 18px' }}>
+            {scrapeMsg && (
+              <div style={{
+                padding: '9px 13px', borderRadius: 7, marginBottom: 14, fontSize: 12,
+                background: scrapeOk ? 'rgba(74, 222, 128, 0.08)' : 'rgba(255,255,255,0.04)',
+                color: scrapeOk ? 'rgba(74, 222, 128, 0.9)' : 'var(--muted-foreground)',
+                border: `1px solid ${scrapeOk ? 'rgba(74, 222, 128, 0.2)' : 'var(--border)'}`,
+              }}>
+                {scrapeMsg}
+              </div>
+            )}
+
+            {/* Competitor reels from DB */}
+            {compReels.length > 0 && (
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                  Top Competitor Reels
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {compReels.slice(0, 15).map((r, i) => (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '8px 10px', borderRadius: 7, background: 'var(--muted)',
+                      fontSize: 12,
+                    }}>
+                      <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, flexShrink: 0, width: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        @{r.account}
+                      </span>
+                      <span style={{
+                        flex: 1, color: 'var(--foreground)', fontWeight: 500,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {r.hook || '(no hook)'}
+                      </span>
+                      {r.format_type && (
+                        <span style={{ fontSize: 10, color: 'var(--muted-foreground)', flexShrink: 0 }}>
+                          {r.format_type}
+                        </span>
+                      )}
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)', flexShrink: 0 }}>
+                        <Eye size={9} /> {fmtK(r.views ?? 0)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Manage competitor accounts */}
+            <div>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                Manage Accounts
+              </div>
+              <CompetitorManager />
+            </div>
+          </div>
+        )}
+      </Card>
 
       {generating && (
         <Card style={{ marginBottom: 16, position: 'relative', overflow: 'hidden' }}>

@@ -42,12 +42,12 @@ export function Badge({ children, variant = 'default', style = {} }: {
 }) {
   const styles: Record<BadgeVariant, React.CSSProperties> = {
     default: { background: 'var(--muted)', color: 'var(--muted-foreground)' },
-    success: { background: 'rgba(255,255,255,0.5)', color: 'rgba(255,255,255,0.5)' },
-    warning: { background: 'rgba(255,255,255,0.35)',  color: 'rgba(255,255,255,0.35)' },
-    error:   { background: 'hsl(0 50% 95%)',   color: 'hsl(0 72% 45%)' },
+    success: { background: 'rgba(74, 222, 128, 0.12)', color: 'rgba(74, 222, 128, 0.9)', border: '1px solid rgba(74, 222, 128, 0.2)' },
+    warning: { background: 'rgba(251, 191, 36, 0.12)', color: 'rgba(251, 191, 36, 0.9)', border: '1px solid rgba(251, 191, 36, 0.2)' },
+    error:   { background: 'rgba(248, 113, 113, 0.12)', color: '#f87171', border: '1px solid rgba(248, 113, 113, 0.2)' },
     accent:  { background: 'var(--accent-subtle)', color: 'var(--accent)', border: '1px solid var(--accent-subtle-border)' },
     muted:   { background: 'var(--muted)', color: 'var(--muted-foreground)' },
-    info:    { background: 'hsl(200 80% 94%)', color: 'hsl(200 80% 32%)' },
+    info:    { background: 'rgba(59, 130, 246, 0.12)', color: '#93C5FD', border: '1px solid rgba(59, 130, 246, 0.25)' },
   }
   return (
     <span style={{
