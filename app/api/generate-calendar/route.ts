@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       { data: topReels },
     ] = await Promise.all([
       db.from('onboarding').select('*').eq('profile_id', profileId).single(),
-      db.from('profiles').select('name, niche, target_audience, ninety_day_goal, biggest_challenge, intro_structured, content_pillars').eq('id', profileId).single(),
+      db.from('profiles').select('name, niche, target_audience, ninety_day_goal, biggest_challenge, intro_structured, content_pillars, monthly_revenue, why_joined').eq('id', profileId).single(),
       db.from('brand_voice').select('core_voice, hook_frameworks, script_examples, content_pillars_doc, key_phrases').eq('profile_id', profileId).single(),
       db.from('content_pillars').select('pillar_name, avg_views, sample_hooks').eq('profile_id', profileId).order('avg_views', { ascending: false }).limit(6),
       db.from('client_reels').select('hook, views, format_type').eq('profile_id', profileId).not('hook', 'is', null).neq('hook', '').order('views', { ascending: false }).limit(10),
@@ -46,18 +46,96 @@ export async function POST(req: NextRequest) {
     // ── Build rich context ──────────────────────────────────────────────────
     const intro = (profile?.intro_structured ?? {}) as Record<string, string>
 
+    // Helper: read a field from intro_structured, trying multiple possible key names
+    function iGet(...keys: string[]): string {
+      for (const k of keys) {
+        const v = intro[k]
+        if (v && String(v).trim()) return String(v).trim()
+      }
+      return ''
+    }
+
+    // ── Core identity ──────────────────────────────────────────────────────
+    const name        = profile?.name || iGet('full_name') || 'Client'
+    const niche       = iGet('specific_niche', 'niche') || onboarding?.niche || profile?.niche || ''
+    const whatCoach   = iGet('what_you_coach') || ''
+    const offerDesc   = iGet('offer_description') || ''
+    const offerPrice  = iGet('offer_price') || ''
+    const idealClient = iGet('ideal_client', 'target_audience') || onboarding?.target_audience || profile?.target_audience || ''
+    const clientXform = iGet('client_transformation') || ''
+    const mechanism   = iGet('unique_mechanism') || ''
+    const whyDiff     = iGet('why_different') || ''
+    const revenue     = iGet('monthly_revenue_current', 'monthly_revenue') || onboarding?.monthly_revenue || profile?.monthly_revenue || ''
+    const goal90      = iGet('goal_90_days') || profile?.ninety_day_goal || onboarding?.main_goal || ''
+    const challenge   = iGet('biggest_problem') || profile?.biggest_challenge || onboarding?.biggest_challenge || ''
+    const brandVoiceStr = iGet('brand_voice') || onboarding?.brand_voice || ''
+    const contentStyle  = iGet('content_style') || ''
+    const hookStyle     = iGet('hook_style') || ''
+    const topics        = iGet('topics_covered') || profile?.content_pillars?.join(', ') || ''
+    const personality   = iGet('personality_type') || ''
+    const values        = iGet('values') || ''
+    const platforms     = iGet('main_platforms') || ''
+
+    // ── Story ──────────────────────────────────────────────────────────────
+    // Note: form saves as 'origin_story' — older imports may use 'transformation_story' or 'your_story'
+    const originStory   = iGet('origin_story', 'transformation_story', 'your_story') || onboarding?.unique_story || ''
+    const lowestPoint   = iGet('lowest_point', 'rock_bottom') || ''
+    const turningPoint  = iGet('turning_point', 'breakthrough') || ''
+    const contentAngle  = iGet('content_angle', 'character') || ''
+    const funFact       = iGet('fun_fact') || ''
+    const occupBefore   = iGet('occupation_before') || ''
+
+    // ── Proof & results ────────────────────────────────────────────────────
+    // Note: form saves as 'proof_results' — older imports may use 'proof_points'
+    const bestResult    = iGet('best_client_result', 'client_result') || ''
+    const proof         = iGet('proof_results', 'proof_points', 'proof') || ''
+
+    // ── Opinions & beliefs (content goldmines) ─────────────────────────────
+    const hotTake       = iGet('controversial_opinion', 'hot_take') || ''
+    const whatHates     = iGet('what_you_hate', 'hate_in_industry') || ''
+    const belief        = iGet('what_you_believe', 'unpopular_opinion') || ''
+    const philosophy    = iGet('philosophy', 'coaching_philosophy') || ''
+    const whyCult       = iGet('why_cult', 'why_joined') || onboarding?.why_joined_cult || profile?.why_joined || ''
+
+    // ── Assemble client profile section ────────────────────────────────────
     const clientSection = [
-      `Name: ${profile?.name || 'Client'}`,
-      `Niche: ${onboarding?.niche || intro.specific_niche || intro.what_you_coach || profile?.niche || 'Not specified'}`,
-      `Target audience: ${onboarding?.target_audience || intro.ideal_client || profile?.target_audience || 'Not specified'}`,
-      `Monthly revenue: ${onboarding?.monthly_revenue || intro.monthly_revenue || 'Not specified'}`,
-      `90-day goal: ${profile?.ninety_day_goal || intro.goal_90_days || onboarding?.main_goal || 'Not specified'}`,
-      `Biggest challenge: ${onboarding?.biggest_challenge || intro.biggest_problem || profile?.biggest_challenge || 'Not specified'}`,
-      `Brand voice: ${onboarding?.brand_voice || intro.brand_voice || 'Not specified'}`,
-      `Unique story/background: ${onboarding?.unique_story || intro.transformation_story || intro.your_story || 'Not specified'}`,
-      `Why they joined CULT: ${onboarding?.why_joined_cult || intro.why_joined || 'Not specified'}`,
-      intro.client_transformation ? `Client transformation: ${intro.client_transformation}` : null,
-      intro.proof_points ? `Proof / results: ${intro.proof_points}` : null,
+      `Name: ${name}`,
+      niche         ? `Niche: ${niche}` : null,
+      whatCoach     ? `What they coach: ${whatCoach}` : null,
+      offerDesc     ? `Offer: ${offerDesc}${offerPrice ? ` (${offerPrice})` : ''}` : null,
+      idealClient   ? `Ideal client: ${idealClient}` : null,
+      clientXform   ? `#1 client transformation: ${clientXform}` : null,
+      mechanism     ? `Unique method/framework: ${mechanism}` : null,
+      whyDiff       ? `Why they're different: ${whyDiff}` : null,
+      revenue       ? `Current monthly revenue: ${revenue}` : null,
+      goal90        ? `90-day goal: ${goal90}` : null,
+      challenge     ? `Biggest challenge right now: ${challenge}` : null,
+      brandVoiceStr ? `Brand voice: ${brandVoiceStr}` : null,
+      contentStyle  ? `Content style: ${contentStyle}` : null,
+      hookStyle     ? `Preferred hook style: ${hookStyle}` : null,
+      topics        ? `Topics/content pillars: ${topics}` : null,
+      personality   ? `Personality: ${personality}` : null,
+      values        ? `Personal values: ${values}` : null,
+      platforms     ? `Platforms: ${platforms}` : null,
+      occupBefore   ? `Background before coaching: ${occupBefore}` : null,
+      funFact       ? `Fun fact: ${funFact}` : null,
+      whyCult       ? `Why they joined CULT: ${whyCult}` : null,
+
+      // Story section
+      originStory  ? `\nTHEIR STORY:\n${originStory}` : null,
+      lowestPoint  ? `Lowest point: ${lowestPoint}` : null,
+      turningPoint ? `Turning point: ${turningPoint}` : null,
+      contentAngle ? `Content angle/character: ${contentAngle}` : null,
+
+      // Proof
+      bestResult   ? `\nBEST CLIENT RESULT: ${bestResult}` : null,
+      proof        ? `Other proof/results: ${proof}` : null,
+
+      // Opinions — these are goldmines for hooks
+      hotTake      ? `\nCONTROVERSIAL OPINION (use for HOT TAKE content): "${hotTake}"` : null,
+      whatHates    ? `What they hate in their industry: "${whatHates}"` : null,
+      belief       ? `Contrarian belief: "${belief}"` : null,
+      philosophy   ? `Coaching philosophy: "${philosophy}"` : null,
     ].filter(Boolean).join('\n')
 
     const brandVoiceSection = brandVoice ? [
@@ -82,8 +160,11 @@ export async function POST(req: NextRequest) {
 Your job is to generate a personalised month of Instagram Reel ideas for a CULT client.
 
 RULES:
-- Every hook must be specific to THIS client's niche, audience, and story. No generic content.
+- Every hook must be specific to THIS client's niche, audience, story, and opinions. No generic content.
 - Hooks must stop the scroll. Use the client's brand voice, language, and hook frameworks if provided.
+- Use their origin story, lowest point, turning point — these are storytelling gold. Reference specific details.
+- Use their controversial opinion, contrarian belief, what they hate — these power the best HOT TAKE hooks.
+- Reference their unique method/framework by name if provided.
 - Mirror the style of their best performing hooks where possible.
 - Spread formats across the month. Don't repeat the same format back-to-back.
 - CTAs should rotate: push for coaching DMs, lead magnets, or growth.
