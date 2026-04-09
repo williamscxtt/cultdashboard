@@ -172,7 +172,15 @@ Return ONLY valid JSON:
   "top_hooks": ["Top 3 actual hook lines from competitor content worth studying"],
   "what_is_working": ["3-4 specific things working well in this niche right now"],
   "big_hits": [
-    {"account": "@handle", "hook": "hook line", "views": 0, "why_it_worked": "brief reason"}
+    {
+      "account": "@handle",
+      "hook": "exact hook line from the reel",
+      "views": 0,
+      "why_it_worked": "1-2 sentence psychological reason this hook/premise grabbed attention",
+      "premise": "What the video is actually about — the core idea or argument in one sentence",
+      "niche_adaptation": "How ${clientName} could adapt this exact premise for their niche (${clientNiche}) — be specific, not generic",
+      "replication_angle": "The exact script angle ${clientName} should take — a concrete one-liner they could use as their hook today"
+    }
   ],
   "content_gaps": ["2-3 content territories competitors are NOT covering that ${clientName} could own"],
   "weekly_verdict": "2-3 sentences of direct coaching — what should ${clientName} focus on this week?",

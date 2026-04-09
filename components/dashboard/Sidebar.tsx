@@ -18,7 +18,7 @@ import { useState } from 'react'
 const mainNav = [
   { href: '/dashboard/analytics',   label: 'Dashboard',        icon: BarChart2 },
   { href: '/dashboard/scripts',     label: 'This Week',        icon: Zap },
-  { href: '/dashboard/content',     label: 'Content Intel',    icon: Lightbulb },
+  { href: '/dashboard/content',     label: 'Content Studio',   icon: Lightbulb },
   { href: '/dashboard/calendar',    label: 'Content Calendar', icon: Calendar },
   { href: '/dashboard/dm-sales',    label: 'DM Sales',         icon: PhoneCall },
   { href: '/dashboard/ai',          label: 'Ask Will AI',      icon: MessageSquare },

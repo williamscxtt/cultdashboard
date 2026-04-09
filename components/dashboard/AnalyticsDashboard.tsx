@@ -504,7 +504,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   const fetchReels = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/instagram/reels?profileId=${profileId}&limit=200&offset=0`)
+      const res = await fetch(`/api/instagram/reels?profileId=${profileId}&limit=500&offset=0`)
       if (res.ok) {
         const data = await res.json()
         setReels(data.reels ?? [])

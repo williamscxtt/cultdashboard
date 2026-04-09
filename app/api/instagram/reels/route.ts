@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const profileId = searchParams.get('profileId')
-  const limit = Math.min(parseInt(searchParams.get('limit') ?? '20', 10), 100)
+  const limit = Math.min(parseInt(searchParams.get('limit') ?? '20', 10), 500)
   const offset = parseInt(searchParams.get('offset') ?? '0', 10)
 
   if (!profileId) {

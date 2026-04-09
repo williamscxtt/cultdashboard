@@ -2,8 +2,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
-import ContentDashboard from '@/components/dashboard/ContentDashboard'
-import type { WeeklyReport, ClientReel } from '@/lib/types'
+import ContentStudio from '@/components/dashboard/ContentStudio'
+import type { ClientReel } from '@/lib/types'
 
 const adminClient = createAdmin(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!)
 
@@ -18,45 +18,22 @@ export default async function ContentPage() {
   const impersonatingAs = realProfile?.role === 'admin' ? await getImpersonatedId() : null
   const profileId = effectiveId(user.id, realProfile?.role === 'admin', impersonatingAs)
 
-  const [{ data: report }, { data: reels }, { data: profileData }] = await Promise.all([
-    // Latest weekly intel report — global, same for all users
-    adminClient
-      .from('weekly_reports')
-      .select('*')
-      .order('week_start', { ascending: false })
-      .limit(1)
-      .single(),
+  // Fetch last 30 days of own reels (client-side will filter to 7 days)
+  const thirtyDaysAgo = new Date()
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-    // Client's own reels for pillar analysis
-    adminClient
-      .from('client_reels')
-      .select('id, reel_id, date, views, likes, hook, format_type, caption, permalink')
-      .eq('profile_id', profileId)
-      .order('date', { ascending: false })
-      .limit(200),
-
-    // Profile for content analysis lock status + cached comment analysis
-    adminClient
-      .from('profiles')
-      .select('content_analysis_unlocks_at, comment_analysis_unlocks_at, comment_analysis_json')
-      .eq('id', profileId)
-      .single(),
-  ])
-
-  const pd = profileData as {
-    content_analysis_unlocks_at?: string | null
-    comment_analysis_unlocks_at?: string | null
-    comment_analysis_json?: Record<string, unknown> | null
-  } | null
+  const { data: reels } = await adminClient
+    .from('client_reels')
+    .select('id, reel_id, date, views, likes, comments, hook, format_type, caption, permalink')
+    .eq('profile_id', profileId)
+    .gte('date', thirtyDaysAgo.toISOString().split('T')[0])
+    .order('date', { ascending: false })
+    .limit(100)
 
   return (
-    <ContentDashboard
-      report={(report ?? null) as WeeklyReport | null}
-      reels={(reels ?? []) as ClientReel[]}
+    <ContentStudio
       profileId={profileId}
-      contentAnalysisUnlocksAt={pd?.content_analysis_unlocks_at ?? null}
-      commentAnalysisUnlocksAt={pd?.comment_analysis_unlocks_at ?? null}
-      cachedCommentAnalysis={pd?.comment_analysis_json ?? null}
+      recentReels={(reels ?? []) as ClientReel[]}
     />
   )
 }
