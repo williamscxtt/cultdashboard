@@ -80,9 +80,9 @@ function NavItem({
         fontWeight: active ? 700 : 500,
         marginBottom: 1,
         transition: 'background 0.12s, color 0.12s',
-        background: active ? 'var(--accent-subtle)' : 'transparent',
-        color: active ? 'var(--accent)' : 'var(--muted-foreground)',
-        boxShadow: active ? 'inset 0 0 0 1px var(--accent-subtle-border)' : 'none',
+        background: active ? 'hsl(0 84% 44% / 0.1)' : 'transparent',
+        color: active ? 'hsl(0 84% 62%)' : 'var(--muted-foreground)',
+        boxShadow: active ? 'inset 0 0 0 1px hsl(0 84% 44% / 0.2)' : 'none',
         position: 'relative',
         overflow: 'hidden',
         flexShrink: 0,
@@ -91,7 +91,7 @@ function NavItem({
       onMouseEnter={e => {
         if (!active) {
           const el = e.currentTarget as HTMLElement
-          el.style.background = 'var(--muted)'
+          el.style.background = 'hsl(0 84% 44% / 0.06)'
           el.style.color = 'var(--foreground)'
         }
       }}
@@ -106,10 +106,11 @@ function NavItem({
       {active && (
         <span style={{
           position: 'absolute',
-          left: 0, top: 6, bottom: 6,
+          left: 0, top: 4, bottom: 4,
           width: 2,
           borderRadius: 999,
-          background: 'var(--accent)',
+          background: 'linear-gradient(180deg, hsl(0 84% 60%), hsl(0 84% 44%))',
+          boxShadow: '0 0 8px hsl(0 84% 44% / 0.7)',
         }} />
       )}
       <span style={{
@@ -197,9 +198,10 @@ function SidebarContent({
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
               width: 28, height: 28, borderRadius: 8,
-              background: 'var(--accent)',
+              background: 'linear-gradient(135deg, hsl(0 84% 44%), hsl(0 84% 32%))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
+              boxShadow: '0 0 12px hsl(0 84% 44% / 0.4)',
             }}>
               <Zap size={14} color="white" fill="white" />
             </div>

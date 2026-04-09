@@ -2,24 +2,29 @@ import React from 'react'
 
 // ─── Card ─────────────────────────────────────────────────────────────────────
 
-export function Card({ children, className = '', style = {}, onClick }: {
+export function Card({ children, className = '', style = {}, onClick, glow = false }: {
   children: React.ReactNode
   className?: string
   style?: React.CSSProperties
   onClick?: () => void
+  glow?: boolean
 }) {
   return (
     <div
       onClick={onClick}
+      className={[
+        'gradient-border',
+        onClick ? 'card-hover' : '',
+        glow ? 'animate-glow-pulse' : '',
+        className,
+      ].filter(Boolean).join(' ')}
       style={{
         background: 'var(--card)',
-        border: '1px solid var(--border)',
         borderRadius: 'var(--radius-lg)',
         boxShadow: 'var(--shadow-xs)',
         ...style,
         ...(onClick ? { cursor: 'pointer' } : {}),
       }}
-      className={className}
     >
       {children}
     </div>
@@ -87,8 +92,8 @@ export function Button({
     letterSpacing: '-0.01em',
   }
   const variants: Record<ButtonVariant, React.CSSProperties> = {
-    primary:     { background: 'var(--foreground)', color: 'var(--background)', boxShadow: 'var(--shadow-xs)' },
-    accent:      { background: 'var(--accent)', color: 'var(--accent-foreground)', boxShadow: '0 1px 3px hsl(221 83% 53% / 0.3)' },
+    primary:     { background: 'var(--foreground)', color: 'var(--background)', boxShadow: 'var(--shadow-sm)' },
+    accent:      { background: 'var(--accent)', color: 'var(--accent-foreground)', boxShadow: '0 1px 8px hsl(0 84% 44% / 0.35), 0 0 20px hsl(0 84% 44% / 0.15)' },
     secondary:   { background: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' },
     ghost:       { background: 'transparent', color: 'var(--muted-foreground)' },
     destructive: { background: 'var(--destructive)', color: 'var(--destructive-foreground)', boxShadow: 'var(--shadow-xs)' },
@@ -205,47 +210,83 @@ export function StatCard({
   trend?: number | null
   icon?: React.ReactNode
 }) {
+  const isUp = trend != null && trend >= 0
   return (
-    <Card style={{ padding: '16px 20px' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 10 }}>
+    <div
+      className="gradient-border card-hover"
+      style={{
+        background: 'var(--card)',
+        borderRadius: 'var(--radius-lg)',
+        padding: '18px 20px',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Ambient glow spot */}
+      <div style={{
+        position: 'absolute', top: -20, right: -20,
+        width: 80, height: 80, borderRadius: '50%',
+        background: 'hsl(0 84% 44% / 0.06)',
+        filter: 'blur(20px)',
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{
-          fontSize: 11, fontWeight: 600,
+          fontSize: 11, fontWeight: 700,
           color: 'var(--muted-foreground)',
           textTransform: 'uppercase',
-          letterSpacing: '0.07em',
+          letterSpacing: '0.08em',
         }}>
           {label}
         </div>
         {icon && (
-          <div style={{ color: 'var(--muted-foreground)', opacity: 0.5 }}>{icon}</div>
+          <div style={{
+            width: 28, height: 28, borderRadius: 8,
+            background: 'hsl(0 84% 44% / 0.1)',
+            border: '1px solid hsl(0 84% 44% / 0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            color: 'hsl(0 84% 60%)',
+          }}>
+            {icon}
+          </div>
         )}
       </div>
-      <div style={{
-        fontSize: 28, fontWeight: 800,
-        color: 'var(--foreground)',
-        letterSpacing: '-0.8px',
-        lineHeight: 1,
-        fontFamily: 'var(--font-display)',
-      }}>
+
+      <div
+        className="animate-number-up"
+        style={{
+          fontSize: 30, fontWeight: 800,
+          background: 'linear-gradient(135deg, var(--foreground) 60%, hsl(0 5% 65%))',
+          backgroundClip: 'text',
+          WebkitBackgroundClip: 'text',
+          color: 'transparent',
+          letterSpacing: '-1px',
+          lineHeight: 1,
+          fontFamily: 'var(--font-display)',
+        }}
+      >
         {value}
       </div>
+
       {(sub || trend != null) && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 10 }}>
           {trend != null && (
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 2,
               fontSize: 11, fontWeight: 700,
-              color: trend >= 0 ? 'hsl(142 71% 35%)' : 'hsl(0 72% 51%)',
-              background: trend >= 0 ? 'hsl(142 50% 94%)' : 'hsl(0 50% 95%)',
-              padding: '2px 6px', borderRadius: 5,
+              color: isUp ? 'hsl(142 71% 45%)' : 'hsl(0 72% 55%)',
+              background: isUp ? 'hsl(142 50% 12%)' : 'hsl(0 50% 12%)',
+              border: `1px solid ${isUp ? 'hsl(142 50% 25%)' : 'hsl(0 50% 25%)'}`,
+              padding: '2px 7px', borderRadius: 5,
             }}>
-              {trend >= 0 ? '↑' : '↓'} {Math.abs(trend)}%
+              {isUp ? '↑' : '↓'} {Math.abs(trend)}%
             </span>
           )}
           {sub && <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{sub}</span>}
         </div>
       )}
-    </Card>
+    </div>
   )
 }
 
