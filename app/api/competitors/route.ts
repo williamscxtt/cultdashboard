@@ -52,19 +52,20 @@ export async function GET() {
   const competitors = data || []
 
   // Fetch per-account stats from competitor_reels
-  let stats: Record<string, { reel_count: number; last_scraped: string | null }> = {}
+  let stats: Record<string, { reel_count: number; last_scraped: string | null; total_views: number }> = {}
   if (competitors.length > 0) {
     const handles = competitors.map((c: { ig_username: string }) => c.ig_username)
-    // Get count + latest scraped_week per account
+    // Get count + latest scraped_week + views per account
     const { data: reelRows } = await adminClient
       .from('competitor_reels')
-      .select('account, scraped_week')
+      .select('account, scraped_week, views')
       .in('account', handles)
 
     if (reelRows) {
-      for (const row of reelRows as Array<{ account: string; scraped_week: string }>) {
-        if (!stats[row.account]) stats[row.account] = { reel_count: 0, last_scraped: null }
+      for (const row of reelRows as Array<{ account: string; scraped_week: string; views: number }>) {
+        if (!stats[row.account]) stats[row.account] = { reel_count: 0, last_scraped: null, total_views: 0 }
         stats[row.account].reel_count++
+        stats[row.account].total_views += row.views ?? 0
         if (!stats[row.account].last_scraped || row.scraped_week > stats[row.account].last_scraped!) {
           stats[row.account].last_scraped = row.scraped_week
         }
@@ -73,11 +74,18 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    competitors: competitors.map((c: { ig_username: string }) => ({
-      ...c,
-      reel_count: stats[c.ig_username]?.reel_count ?? 0,
-      last_scraped: stats[c.ig_username]?.last_scraped ?? null,
-    })),
+    competitors: competitors.map((c: { ig_username: string; insight?: string; insight_updated_at?: string }) => {
+      const s = stats[c.ig_username]
+      const reel_count = s?.reel_count ?? 0
+      return {
+        ...c,
+        reel_count,
+        last_scraped: s?.last_scraped ?? null,
+        avg_views: reel_count > 0 ? Math.round((s?.total_views ?? 0) / reel_count) : 0,
+        insight: c.insight ?? null,
+        insight_updated_at: c.insight_updated_at ?? null,
+      }
+    }),
   })
 }
 

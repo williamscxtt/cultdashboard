@@ -14,6 +14,7 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
 import Anthropic from '@anthropic-ai/sdk'
+import { generateInsightForAccount } from '../insight/route'
 
 export const maxDuration = 300
 
@@ -302,6 +303,22 @@ export async function POST(req: NextRequest) {
           .eq('reel_id', r.reel_id)
       ))
       updated = metricUpdates.length
+    }
+
+    // ── Generate / refresh insights for all scraped accounts ─────────────────
+    try {
+      await Promise.allSettled(handles.map(async handle => {
+        const insight = await generateInsightForAccount(handle)
+        if (insight) {
+          await adminClient
+            .from('client_competitors')
+            .update({ insight, insight_updated_at: new Date().toISOString() })
+            .eq('ig_username', handle)
+            .eq('profile_id', profileId)
+        }
+      }))
+    } catch (insightErr) {
+      console.error('[competitors/scrape] Insight generation error:', String(insightErr))
     }
 
     return NextResponse.json({
