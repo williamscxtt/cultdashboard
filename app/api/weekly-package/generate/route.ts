@@ -346,9 +346,9 @@ function buildKnowledgeContext(
   // Only show openings from real transcripts — not captions
   const thisWeekWithTranscript = thisWeekComp.filter(r => r.transcript && r.transcript.trim().length > 50)
   if (thisWeekWithTranscript.length > 0) {
-    lines.push('=== TOP OPENINGS THIS WEEK — what high-performing creators say in the first few seconds ===')
+    lines.push('=== TOP TRANSCRIPT OPENINGS THIS WEEK — what high-performing creators say ===')
     for (const r of thisWeekWithTranscript) {
-      const opening = r.transcript!.slice(0, 120).split(/[.!?]/)[0]?.trim()
+      const opening = r.transcript!.slice(0, 300).trim()
       lines.push(`• [@${r.account} | ${(r.views ?? 0).toLocaleString()} views] "${opening}"`)
     }
     lines.push('')
@@ -413,21 +413,22 @@ function buildCompetitorReport(compReels: CompReel[], weekStart: string): string
     lines.push('Transcripts pending — run a scrape to fetch video URLs, then transcription will run automatically.')
   } else {
     for (const r of thisWeekWithTranscript.slice(0, 20)) {
-      const opening = r.transcript!.slice(0, 150).split(/[.!?]/)[0]?.trim()
       lines.push(`### @${r.account} — ${(r.views ?? 0).toLocaleString()} views [${r.format_type ?? 'unknown'}]`)
-      lines.push(`Opening (what they say first): "${opening}"`)
-      lines.push(`Full transcript excerpt: ${r.transcript!.slice(0, 500)}`)
+      lines.push(`Full transcript:`)
+      lines.push(r.transcript!.trim())
       lines.push('')
     }
   }
   lines.push('')
 
-  lines.push('## All-Time Top Reels (30 days, by views)')
+  lines.push('## All-Time Top Reels (7 days, by views)')
   const allWithTranscript = allSorted.filter(r => r.transcript && r.transcript.trim().length > 50)
   if (allWithTranscript.length > 0) {
     for (const r of allWithTranscript.slice(0, 15)) {
-      const opening = r.transcript!.slice(0, 100).split(/[.!?]/)[0]?.trim()
-      lines.push(`- @${r.account}: "${opening}" — ${(r.views ?? 0).toLocaleString()} views [${r.format_type ?? '?'}]`)
+      lines.push(`### @${r.account} — ${(r.views ?? 0).toLocaleString()} views [${r.format_type ?? '?'}]`)
+      lines.push(`Full transcript:`)
+      lines.push(r.transcript!.trim())
+      lines.push('')
     }
   } else {
     lines.push('No transcripts yet — pending first transcription run after scrape.')
@@ -491,18 +492,18 @@ function buildTranscriptContext(reels: Reel[]): string {
   const withTranscripts = reels
     .filter(r => r.transcript && r.transcript.trim().length > 80)
     .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
-    .slice(0, 6)
+    .slice(0, 10)
 
   if (!withTranscripts.length) return ''
 
-  const lines = ['=== HOW THIS CREATOR ACTUALLY SPEAKS (transcripts from their top reels) ===',
+  const lines = ['=== HOW THIS CREATOR ACTUALLY SPEAKS (full transcripts from their top reels) ===',
     'Study these carefully — their pacing, vocabulary, sentence length, energy, and natural speech patterns are the voice to replicate.',
     '',
   ]
   for (const r of withTranscripts) {
     const hook = r.hook || r.caption?.slice(0, 60) || '(no hook)'
     lines.push(`--- ${(r.views ?? 0).toLocaleString()} views | "${hook}" ---`)
-    lines.push(r.transcript!.slice(0, 700).trim())
+    lines.push(r.transcript!.trim())
     lines.push('')
   }
 
@@ -569,7 +570,7 @@ STEP 1 — WHAT'S WORKING IN THE NICHE RIGHT NOW (your primary source for ideas)
 ===================================================================
 Study these competitor reels. These are the angles, hooks, and structures that are actually getting views this week. This is where the ideas come from.
 
-${competitorReport.slice(0, 18000)}
+${competitorReport.slice(0, 60000)}
 
 ===================================================================
 STEP 2 — HOW ${name.toUpperCase()} ACTUALLY SOUNDS (your primary source for voice)
