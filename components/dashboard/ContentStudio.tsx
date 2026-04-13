@@ -18,6 +18,7 @@ export default function ContentStudio({ profileId }: Props) {
   const [scraping, setScraping] = useState(false)
   const [scrapeMsg, setScrapeMsg] = useState<string | null>(null)
   const [scrapeOk, setScrapeOk] = useState(false)
+  const [transcribing, setTranscribing] = useState(false)
   const isMobile = useIsMobile()
 
   async function handleScrape() {
@@ -55,7 +56,7 @@ export default function ContentStudio({ profileId }: Props) {
 
         // Fire-and-forget background jobs after scrape completes
         fetch('/api/competitors/insight/refresh-all', { method: 'POST' }).catch(() => {})
-        fetch('/api/competitors/transcribe', { method: 'POST' }).catch(() => {})
+        handleTranscribe()
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Network error'
@@ -63,6 +64,31 @@ export default function ContentStudio({ profileId }: Props) {
       toast.error(`Scrape failed: ${msg}`)
     } finally {
       setScraping(false)
+    }
+  }
+
+  async function handleTranscribe() {
+    setTranscribing(true)
+    try {
+      // Transcription endpoint handles 30 reels per call — loop until done
+      let totalTranscribed = 0
+      for (let i = 0; i < 10; i++) {
+        const res = await fetch('/api/competitors/transcribe', { method: 'POST' })
+        if (!res.ok) break
+        const json = await res.json() as { transcribed?: number; total?: number }
+        totalTranscribed += json.transcribed ?? 0
+        // If fewer reels were returned than the batch limit, we're done
+        if ((json.total ?? 0) < 30) break
+      }
+      if (totalTranscribed > 0) {
+        toast.success(`Transcribed ${totalTranscribed} reel${totalTranscribed !== 1 ? 's' : ''}`)
+      } else {
+        toast.success('All reels already transcribed')
+      }
+    } catch {
+      toast.error('Transcription failed')
+    } finally {
+      setTranscribing(false)
     }
   }
 
@@ -80,18 +106,32 @@ export default function ContentStudio({ profileId }: Props) {
       <section style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <SectionLabel style={{ marginBottom: 0 }}>My Competitors</SectionLabel>
-          <Button
-            size="sm"
-            variant="secondary"
-            onClick={handleScrape}
-            disabled={scraping}
-            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-          >
-            {scraping
-              ? <><Spinner size={12} /> Scraping...</>
-              : <><RefreshCw size={12} /> Scrape Now</>
-            }
-          </Button>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleTranscribe}
+              disabled={scraping || transcribing}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              {transcribing
+                ? <><Spinner size={12} /> Transcribing...</>
+                : <><RefreshCw size={12} /> Transcribe</>
+              }
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={handleScrape}
+              disabled={scraping || transcribing}
+              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              {scraping
+                ? <><Spinner size={12} /> Scraping...</>
+                : <><RefreshCw size={12} /> Scrape Now</>
+              }
+            </Button>
+          </div>
         </div>
 
         <TaskProgress
