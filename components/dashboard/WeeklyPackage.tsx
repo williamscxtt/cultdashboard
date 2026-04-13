@@ -95,10 +95,10 @@ function parsePackage(md: string, weekStart: string): ParsedPackage {
   const reels: ParsedReel[] = []
 
   for (let i = 0; i < reelBlocks.length; i++) {
-    const block = reelBlocks[i]
-    if (accountsMarker > 0 && i === reelBlocks.length - 1 && block.includes('Accounts to Watch')) {
-      break
-    }
+    // Strip any trailing "Accounts to Watch" section from the last block
+    const accountsIdx = reelBlocks[i].search(/\n###\s*Accounts to Watch/)
+    const block = accountsIdx > 0 ? reelBlocks[i].slice(0, accountsIdx) : reelBlocks[i]
+    if (!block.trim()) continue
 
     // Parse header: "— Monday | FORMAT TYPE"
     const headerMatch = block.match(/^[^\n]*—\s*([A-Za-z]+)\s*[|·]\s*([^\n]+)/)
