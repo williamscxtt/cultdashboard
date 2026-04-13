@@ -69,10 +69,16 @@ export async function PATCH(req: NextRequest) {
   if (profile?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const adminClient = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!)
-  const { id, is_active } = await req.json()
+  const body = await req.json()
+  const { id, is_active, dm_keyword } = body
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
-  const { error } = await adminClient.from('profiles').update({ is_active }).eq('id', id)
+  // Build update object — only include fields that were explicitly sent
+  const updates: Record<string, unknown> = {}
+  if (is_active !== undefined) updates.is_active = is_active
+  if (dm_keyword !== undefined) updates.dm_keyword = dm_keyword || null
+
+  const { error } = await adminClient.from('profiles').update(updates).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ ok: true })

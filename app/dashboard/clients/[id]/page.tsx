@@ -152,6 +152,7 @@ export default async function ClientDetailPage({
             clientId={profile.id}
             clientName={profile.name || profile.email || 'Client'}
             isActive={profile.is_active}
+            dmKeyword={(clientProfile as Record<string, unknown>).dm_keyword as string | null}
           />
         </div>
       </Card>
