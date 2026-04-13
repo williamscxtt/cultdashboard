@@ -1,10 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { RefreshCw } from 'lucide-react'
 import { Button, SectionLabel, PageHeader, Spinner } from '@/components/ui'
-import { TaskProgress } from '@/components/ui/task-progress'
 import CompetitorManager from '@/components/dashboard/CompetitorManager'
 import WeeklyPackage from '@/components/dashboard/WeeklyPackage'
 import ContentInsights from '@/components/dashboard/ContentInsights'
@@ -14,83 +13,98 @@ interface Props {
   profileId: string
 }
 
+type StepStatus = 'pending' | 'running' | 'done' | 'error'
+
+interface Step {
+  id: string
+  label: string
+  sublabel: string
+  status: StepStatus
+  detail?: string
+}
+
 export default function ContentStudio({ profileId }: Props) {
-  const [scraping, setScraping] = useState(false)
-  const [scrapeMsg, setScrapeMsg] = useState<string | null>(null)
-  const [scrapeOk, setScrapeOk] = useState(false)
-  const [transcribing, setTranscribing] = useState(false)
+  const [analysing, setAnalysing] = useState(false)
+  const [steps, setSteps] = useState<Step[]>([])
+  const [elapsedSec, setElapsedSec] = useState(0)
+  const startRef = useRef<number | null>(null)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const isMobile = useIsMobile()
 
-  async function handleScrape() {
-    setScraping(true)
-    setScrapeMsg(null)
-    setScrapeOk(false)
-    try {
-      const res = await fetch('/api/competitors/scrape', { method: 'POST' })
-      // Guard against HTML error pages (500s) which would throw on .json()
-      const text = await res.text()
-      let json: Record<string, unknown> = {}
-      try { json = JSON.parse(text) } catch { /* non-JSON — likely 500 HTML */ }
-
-      if (!res.ok) {
-        if (res.status === 503) {
-          setScrapeMsg('Apify not configured — add APIFY_API_TOKEN to Vercel env vars.')
-        } else if (json.error === 'no_competitors') {
-          setScrapeMsg('Add competitor accounts below before scraping.')
-        } else {
-          const msg = (json.message || json.error) as string | undefined
-          setScrapeMsg(msg || `Scrape failed (status ${res.status}).`)
-          toast.error(msg || `Scrape failed (${res.status})`)
-        }
-      } else {
-        const added   = (json.added   as number) ?? 0
-        const updated = (json.updated as number) ?? 0
-        const parts = [`${json.accounts_scraped} accounts scraped`]
-        if (added > 0)   parts.push(`${added} new reel${added !== 1 ? 's' : ''} added`)
-        if (updated > 0) parts.push(`${updated} existing updated`)
-        if (added === 0 && updated === 0) parts.push('no new reels found')
-        const msg = parts.join(' · ')
-        setScrapeMsg(msg)
-        setScrapeOk(true)
-        toast.success(msg)
-
-        // Fire-and-forget background jobs after scrape completes
-        fetch('/api/competitors/insight/refresh-all', { method: 'POST' }).catch(() => {})
-        handleTranscribe()
-      }
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Network error'
-      setScrapeMsg(`Scrape failed: ${msg}`)
-      toast.error(`Scrape failed: ${msg}`)
-    } finally {
-      setScraping(false)
+  useEffect(() => {
+    if (analysing) {
+      startRef.current = Date.now()
+      timerRef.current = setInterval(() => {
+        setElapsedSec(Math.floor((Date.now() - (startRef.current ?? Date.now())) / 1000))
+      }, 1000)
+    } else {
+      if (timerRef.current) clearInterval(timerRef.current)
     }
+    return () => { if (timerRef.current) clearInterval(timerRef.current) }
+  }, [analysing])
+
+  function setStepStatus(id: string, status: StepStatus, detail?: string) {
+    setSteps(prev => prev.map(s => s.id === id ? { ...s, status, ...(detail !== undefined ? { detail } : {}) } : s))
   }
 
-  async function handleTranscribe() {
-    setTranscribing(true)
+  async function handleAnalyse() {
+    setAnalysing(true)
+    setElapsedSec(0)
+    setSteps([
+      { id: 'scrape',     label: 'Pulling competitor reels',  sublabel: 'Apify scrapes the last 7 days for each account',  status: 'running' },
+      { id: 'transcribe', label: 'Transcribing videos',       sublabel: 'OpenAI Whisper converts audio to text',           status: 'pending' },
+      { id: 'insights',   label: 'Refreshing insights',       sublabel: 'Claude analyses each account\'s content patterns', status: 'pending' },
+    ])
+
     try {
-      // Transcription endpoint handles 30 reels per call — loop until done
+      // ── Step 1: Scrape ─────────────────────────────────────────────
+      const scrapeRes = await fetch('/api/competitors/scrape', { method: 'POST' })
+      const scrapeText = await scrapeRes.text()
+      let scrapeJson: Record<string, unknown> = {}
+      try { scrapeJson = JSON.parse(scrapeText) } catch { /* non-JSON 500 */ }
+
+      if (!scrapeRes.ok) {
+        const msg = scrapeRes.status === 503 ? 'Apify not configured — add APIFY_API_TOKEN to Vercel env vars'
+          : scrapeJson.error === 'no_competitors' ? 'No competitor accounts tracked yet'
+          : ((scrapeJson.message || scrapeJson.error) as string | undefined) ?? `Failed (${scrapeRes.status})`
+        setStepStatus('scrape', 'error', msg)
+        toast.error(msg)
+        setAnalysing(false)
+        return
+      }
+
+      const reelsAdded = (scrapeJson.added as number) ?? 0
+      setStepStatus('scrape', 'done', `${scrapeJson.accounts_scraped} accounts · ${reelsAdded} reel${reelsAdded !== 1 ? 's' : ''} added`)
+
+      // ── Step 2: Transcribe (loop batches of 30 until done) ─────────
+      setStepStatus('transcribe', 'running', 'Starting…')
       let totalTranscribed = 0
-      for (let i = 0; i < 10; i++) {
+      for (let batch = 0; batch < 10; batch++) {
         const res = await fetch('/api/competitors/transcribe', { method: 'POST' })
         if (!res.ok) break
-        const json = await res.json() as { transcribed?: number; total?: number }
+        const json = await res.json() as { transcribed?: number; skipped?: number; total?: number }
         totalTranscribed += json.transcribed ?? 0
-        // If fewer reels were returned than the batch limit, we're done
+        setStepStatus('transcribe', 'running', `${totalTranscribed} transcribed…`)
         if ((json.total ?? 0) < 30) break
       }
-      if (totalTranscribed > 0) {
-        toast.success(`Transcribed ${totalTranscribed} reel${totalTranscribed !== 1 ? 's' : ''}`)
-      } else {
-        toast.success('All reels already transcribed')
-      }
-    } catch {
-      toast.error('Transcription failed')
+      setStepStatus('transcribe', 'done', `${totalTranscribed} reel${totalTranscribed !== 1 ? 's' : ''} transcribed`)
+
+      // ── Step 3: Refresh insights (fire-and-forget) ─────────────────
+      setStepStatus('insights', 'running', 'Queuing…')
+      fetch('/api/competitors/insight/refresh-all', { method: 'POST' }).catch(() => {})
+      await new Promise(r => setTimeout(r, 1500))
+      setStepStatus('insights', 'done', 'Running in background')
+
+      toast.success('Analysis complete — scripts are ready to generate')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Network error'
+      toast.error(`Analysis failed: ${msg}`)
     } finally {
-      setTranscribing(false)
+      setAnalysing(false)
     }
   }
+
+  const fmt = (s: number) => s >= 60 ? `${Math.floor(s / 60)}m ${s % 60}s` : `${s}s`
 
   return (
     <div style={{ maxWidth: 860, margin: '0 auto', padding: isMobile ? '12px 12px 60px' : '0 0 60px' }}>
@@ -99,56 +113,77 @@ export default function ContentStudio({ profileId }: Props) {
         description="AI-powered insights from your reels, plus competitor intelligence and weekly scripts."
       />
 
-      {/* ── AI Content Insights ───────────────────────────────────────── */}
+      {/* ── AI Content Insights ──────────────────────────────────────── */}
       <ContentInsights profileId={profileId} />
 
-      {/* ── Competitors ───────────────────────────────────────────────── */}
+      {/* ── Competitors ──────────────────────────────────────────────── */}
       <section style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <SectionLabel style={{ marginBottom: 0 }}>My Competitors</SectionLabel>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={handleTranscribe}
-              disabled={scraping || transcribing}
-              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-            >
-              {transcribing
-                ? <><Spinner size={12} /> Transcribing...</>
-                : <><RefreshCw size={12} /> Transcribe</>
-              }
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={handleScrape}
-              disabled={scraping || transcribing}
-              style={{ display: 'flex', alignItems: 'center', gap: 6 }}
-            >
-              {scraping
-                ? <><Spinner size={12} /> Scraping...</>
-                : <><RefreshCw size={12} /> Scrape Now</>
-              }
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={handleAnalyse}
+            disabled={analysing}
+            style={{ display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            {analysing
+              ? <><Spinner size={12} /> Analysing…</>
+              : <><RefreshCw size={12} /> Analyse</>}
+          </Button>
         </div>
 
-        <TaskProgress
-          active={scraping}
-          estimatedMs={90000}
-          label="Scraping competitor accounts…"
-          sublabel="Apify is pulling the latest reels"
-        />
-
-        {scrapeMsg && !scraping && (
+        {/* ── Multi-step progress panel ─────────────────────────────── */}
+        {steps.length > 0 && (
           <div style={{
-            padding: '10px 14px', borderRadius: 8, marginBottom: 12, fontSize: 13,
-            background: scrapeOk ? 'rgba(74, 222, 128, 0.08)' : 'rgba(255,255,255,0.04)',
-            color: scrapeOk ? 'rgba(74, 222, 128, 0.9)' : 'var(--muted-foreground)',
-            border: `1px solid ${scrapeOk ? 'rgba(74, 222, 128, 0.2)' : 'var(--border)'}`,
+            border: '1px solid var(--border)',
+            borderRadius: 10,
+            padding: '14px 16px',
+            marginBottom: 14,
+            background: 'rgba(255,255,255,0.02)',
           }}>
-            {scrapeMsg}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>
+                {analysing ? 'Analysing competitors…' : 'Analysis complete'}
+              </span>
+              <span style={{ fontSize: 11, color: 'var(--muted-foreground)', fontVariantNumeric: 'tabular-nums' }}>
+                {analysing ? fmt(elapsedSec) : `Done in ${fmt(elapsedSec)}`}
+              </span>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {steps.map(step => (
+                <div key={step.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <div style={{ flexShrink: 0, marginTop: 1 }}>
+                    <StepIcon status={step.status} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{
+                      fontSize: 12,
+                      fontWeight: step.status === 'running' ? 600 : 500,
+                      color: step.status === 'pending' ? 'var(--muted-foreground)'
+                        : step.status === 'error' ? 'rgba(239,68,68,0.9)'
+                        : 'var(--foreground)',
+                    }}>
+                      {step.label}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 2 }}>
+                      {step.detail ?? step.sublabel}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {analysing && (
+              <div style={{
+                marginTop: 14, paddingTop: 12,
+                borderTop: '1px solid var(--border)',
+                fontSize: 11, color: 'var(--muted-foreground)',
+              }}>
+                This takes around 10 minutes. Keep this tab open.
+              </div>
+            )}
           </div>
         )}
 
@@ -163,5 +198,40 @@ export default function ContentStudio({ profileId }: Props) {
         <WeeklyPackage profileId={profileId} embedded />
       </section>
     </div>
+  )
+}
+
+function StepIcon({ status }: { status: StepStatus }) {
+  if (status === 'done') {
+    return (
+      <svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" fill="rgba(74,222,128,0.12)" stroke="rgba(74,222,128,0.6)" strokeWidth="1.5" />
+        <path d="M8 12l3 3 5-5" stroke="rgba(74,222,128,0.9)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )
+  }
+  if (status === 'running') {
+    return (
+      <svg width={14} height={14} viewBox="0 0 24 24" fill="none"
+        style={{ animation: 'spin 0.7s linear infinite' }}>
+        <circle cx="12" cy="12" r="10" stroke="var(--accent)" strokeWidth="2" strokeOpacity="0.2" />
+        <path d="M12 2a10 10 0 0 1 10 10" stroke="var(--accent)" strokeWidth="2" strokeLinecap="round" />
+        <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+      </svg>
+    )
+  }
+  if (status === 'error') {
+    return (
+      <svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="10" stroke="rgba(239,68,68,0.5)" strokeWidth="1.5" />
+        <path d="M12 8v4m0 4h.01" stroke="rgba(239,68,68,0.8)" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    )
+  }
+  // pending
+  return (
+    <svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+      <circle cx="12" cy="12" r="10" stroke="var(--border)" strokeWidth="1.5" />
+    </svg>
   )
 }
