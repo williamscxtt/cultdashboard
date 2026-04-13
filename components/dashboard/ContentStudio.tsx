@@ -53,9 +53,9 @@ export default function ContentStudio({ profileId }: Props) {
         setScrapeOk(true)
         toast.success(msg)
 
-        // Fire-and-forget: trigger insight refresh after scrape completes
-        // (does not block the UI — runs quietly in background)
+        // Fire-and-forget background jobs after scrape completes
         fetch('/api/competitors/insight/refresh-all', { method: 'POST' }).catch(() => {})
+        fetch('/api/competitors/transcribe', { method: 'POST' }).catch(() => {})
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Network error'

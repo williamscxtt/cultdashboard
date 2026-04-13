@@ -243,6 +243,7 @@ interface CompReel {
   comments?: number | null
   hook?: string | null
   caption?: string | null
+  transcript?: string | null
   format_type?: string | null
   date?: string | null
   scraped_week?: string | null
@@ -345,10 +346,13 @@ function buildKnowledgeContext(
     .slice(0, 15)
 
   if (thisWeekComp.length > 0) {
-    lines.push('=== TOP HOOKS THIS WEEK (by views) ===')
+    lines.push('=== TOP OPENINGS THIS WEEK (by views) ===')
     for (const r of thisWeekComp) {
-      const hook = r.hook || r.caption?.slice(0, 100) || '(no hook)'
-      lines.push(`• [@${r.account} | ${(r.views ?? 0).toLocaleString()} views] "${hook}"`)
+      const opening = r.transcript
+        ? r.transcript.slice(0, 100).split(/[.!?]/)[0]?.trim()
+        : (r.hook || r.caption?.slice(0, 100) || '(no hook)')
+      const src = r.transcript ? 'transcript' : 'caption'
+      lines.push(`• [@${r.account} | ${(r.views ?? 0).toLocaleString()} views | ${src}] "${opening}"`)
     }
     lines.push('')
   }
@@ -407,17 +411,26 @@ function buildCompetitorReport(compReels: CompReel[], weekStart: string): string
 
   lines.push('## Top Performing Reels This Week')
   for (const r of thisWeek.slice(0, 20)) {
-    const hook = r.hook || r.caption?.slice(0, 100) || '(no hook)'
+    const openingLine = r.transcript
+      ? r.transcript.slice(0, 120).split(/[.!?]/)[0]?.trim()
+      : (r.hook || r.caption?.slice(0, 100) || '(no hook)')
     lines.push(`### @${r.account} — ${(r.views ?? 0).toLocaleString()} views [${r.format_type ?? 'unknown'}]`)
-    lines.push(`Hook: "${hook}"`)
-    if (r.caption && r.caption !== hook) lines.push(`Caption: ${r.caption.slice(0, 200)}`)
+    lines.push(`Opening: "${openingLine}"`)
+    if (r.transcript) {
+      lines.push(`Transcript: ${r.transcript.slice(0, 400)}`)
+    } else if (r.caption) {
+      lines.push(`Caption: ${r.caption.slice(0, 200)}`)
+    }
     lines.push('')
   }
 
   lines.push('## All-Time Top Reels (30 days)')
   for (const r of allSorted.slice(0, 15)) {
-    const hook = r.hook || r.caption?.slice(0, 80) || '(no hook)'
-    lines.push(`- @${r.account}: "${hook}" — ${(r.views ?? 0).toLocaleString()} views [${r.format_type ?? '?'}]`)
+    const opening = r.transcript
+      ? r.transcript.slice(0, 80).split(/[.!?]/)[0]?.trim()
+      : (r.hook || r.caption?.slice(0, 80) || '(no hook)')
+    const hasTranscript = r.transcript ? ' [transcript]' : ''
+    lines.push(`- @${r.account}: "${opening}"${hasTranscript} — ${(r.views ?? 0).toLocaleString()} views [${r.format_type ?? '?'}]`)
   }
 
   return lines.join('\n')
@@ -678,7 +691,7 @@ export async function POST(req: NextRequest) {
   const { data: compReels } = handles.length > 0
     ? await adminClient
         .from('competitor_reels')
-        .select('account, views, likes, comments, hook, caption, format_type, date, scraped_week')
+        .select('account, views, likes, comments, hook, caption, transcript, format_type, date, scraped_week')
         .in('account', handles)
         .gte('date', thirtyDaysAgoStr)
         .order('views', { ascending: false })

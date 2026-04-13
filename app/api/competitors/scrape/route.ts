@@ -250,6 +250,7 @@ export async function POST(req: NextRequest) {
       // FIX: videoDuration is a float (e.g. 30.066) — round to int for DB column
       duration_sec: p.videoDuration != null ? Math.round(p.videoDuration) : null,
       reel_url:     p.url ?? null,
+      video_url:    p.videoUrl ?? null,
       thumbnail_url: p.displayUrl ?? null,
     }
   }
