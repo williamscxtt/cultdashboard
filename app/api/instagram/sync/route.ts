@@ -371,7 +371,60 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ synced: 0, total: 0, message: 'No reels found on this account.' })
   }
 
+  // ── 3. Save follower snapshot ────────────────────────────────────────────
+  // Extract follower count from the FULL unfiltered reel set — must happen before
+  // the date filter below, because incremental syncs only keep last 7 days and if
+  // the client hasn't posted recently the filtered array will be empty (count = 0).
+  let followerCount = reels.reduce((max, r) => Math.max(max, r.follower_count), 0)
+
+  // Fallback: reel scraper often omits follower data — use async profile scraper
+  if (followerCount === 0) {
+    try {
+      const token = process.env.APIFY_API_TOKEN!
+      // Start an async run (more reliable than run-sync which times out at 30s)
+      const startRes = await fetch(
+        `${APIFY_BASE}/acts/apify~instagram-profile-scraper/runs?token=${token}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ usernames: [igUsername], resultsLimit: 1 }),
+        }
+      )
+      if (startRes.ok) {
+        const startData = await startRes.json() as { data?: { id?: string } }
+        const profileRunId = startData.data?.id
+        if (profileRunId) {
+          // Poll for up to 60s
+          const deadline = Date.now() + 60_000
+          let profileDatasetId: string | null = null
+          while (Date.now() < deadline) {
+            await new Promise(r => setTimeout(r, 5000))
+            const pollRes = await fetch(`${APIFY_BASE}/actor-runs/${profileRunId}?token=${token}`)
+            if (pollRes.ok) {
+              const run = (await pollRes.json()).data
+              if (run.status === 'SUCCEEDED') { profileDatasetId = run.defaultDatasetId; break }
+              if (['FAILED','ABORTED','TIMED-OUT'].includes(run.status)) break
+            }
+          }
+          if (profileDatasetId) {
+            const dlRes = await fetch(`${APIFY_BASE}/datasets/${profileDatasetId}/items?token=${token}&clean=true`)
+            if (dlRes.ok) {
+              const profiles = await dlRes.json() as Array<Record<string, unknown>>
+              if (profiles[0]) {
+                followerCount = Number(
+                  profiles[0].followersCount ?? profiles[0].followerCount ??
+                  profiles[0].followers ?? profiles[0].edge_followed_by?.count ?? 0
+                )
+              }
+            }
+          }
+        }
+      }
+    } catch { /* silent — don't block sync */ }
+  }
+
   // For incremental syncs, discard anything older than 7 days — we only want new content
+  // (date filter happens AFTER follower extraction above)
   if (!isInitialSync) {
     const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
     reels = reels.filter(r => {
@@ -379,33 +432,6 @@ export async function POST(req: NextRequest) {
       const posted = new Date(r.timestamp)
       return isNaN(posted.getTime()) || posted >= cutoff
     })
-  }
-
-  // ── 3. Save follower snapshot ────────────────────────────────────────────
-  let followerCount = reels.reduce((max, r) => Math.max(max, r.follower_count), 0)
-
-  // Fallback: if reel scraper didn't include follower count, hit the profile scraper directly
-  if (followerCount === 0) {
-    try {
-      const token = process.env.APIFY_API_TOKEN!
-      const profileRes = await fetch(
-        `${APIFY_BASE}/acts/apify~instagram-profile-scraper/run-sync-get-dataset-items?token=${token}&timeout=30`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ usernames: [igUsername], resultsLimit: 1 }),
-          signal: AbortSignal.timeout(35_000),
-        }
-      )
-      if (profileRes.ok) {
-        const profiles = await profileRes.json() as Array<Record<string, unknown>>
-        if (profiles[0]) {
-          followerCount = Number(
-            profiles[0].followersCount ?? profiles[0].followerCount ?? profiles[0].followers ?? 0
-          )
-        }
-      }
-    } catch { /* silent — don't block sync */ }
   }
 
   if (followerCount > 0) {
