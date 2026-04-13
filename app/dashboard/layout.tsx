@@ -66,11 +66,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
     )
   }
 
-  // New users skip the old 5-step flow — they go straight to the OnboardingHub
-  // (onboarding_completed is set to true on signup, so this is only a safety net for legacy rows)
-  if (!impersonatingAs && !realProfile.onboarding_completed && realProfile.role === 'client') {
-    redirect('/dashboard/onboarding')
-  }
+  // No redirect needed — new signups land on /dashboard/onboarding via auth callback,
+  // and the sidebar lock handles the profile completion requirement.
+  // Removing the old redirect prevents an infinite loop since /dashboard/onboarding
+  // is itself inside this layout.
 
   return (
     <SyncProgressProvider>
