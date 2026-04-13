@@ -8,9 +8,24 @@ interface Competitor {
   id: string
   ig_username: string
   added_at: string
+  reel_count: number
+  last_scraped: string | null
 }
 
 const MAX_COMPETITORS = 10
+
+/** Converts "2026-04-W16" → "Apr 2026" for display */
+function formatScrapedWeek(raw: string): string {
+  try {
+    // raw is like "2026-04-W16" — grab the year+month part
+    const [year, month] = raw.split('-')
+    if (!year || !month) return raw
+    const d = new Date(Number(year), Number(month) - 1, 1)
+    return d.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+  } catch {
+    return raw
+  }
+}
 
 export default function CompetitorManager() {
   const [competitors, setCompetitors] = useState<Competitor[]>([])
@@ -55,7 +70,7 @@ export default function CompetitorManager() {
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Failed to add')
-      setCompetitors(prev => [json.competitor, ...prev])
+      setCompetitors(prev => [{ ...json.competitor, reel_count: 0, last_scraped: null }, ...prev])
       setInput('')
       toast.success(`@${username} added`)
     } catch (err: unknown) {
@@ -145,25 +160,43 @@ export default function CompetitorManager() {
           No competitors added yet. Start tracking up to 10 accounts.
         </div>
       ) : (
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {competitors.map(c => (
             <div
               key={c.id}
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                background: 'var(--muted)', borderRadius: 999,
-                padding: '6px 12px', fontSize: 13, fontWeight: 600,
-                color: 'var(--foreground)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                background: 'var(--muted)', borderRadius: 8,
+                padding: '8px 12px', gap: 8,
               }}
             >
-              @{c.ig_username}
+              {/* Left: handle */}
+              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', flexShrink: 0 }}>
+                @{c.ig_username}
+              </span>
+
+              {/* Centre: stats */}
+              <span style={{ fontSize: 11, color: 'var(--muted-foreground)', flex: 1 }}>
+                {c.reel_count > 0 ? (
+                  <>
+                    {c.reel_count} reel{c.reel_count !== 1 ? 's' : ''}
+                    {c.last_scraped && (
+                      <> · last scraped {formatScrapedWeek(c.last_scraped)}</>
+                    )}
+                  </>
+                ) : (
+                  <span style={{ opacity: 0.5 }}>not scraped yet</span>
+                )}
+              </span>
+
+              {/* Right: remove */}
               <button
                 onClick={() => handleRemove(c.id, c.ig_username)}
                 disabled={removingId === c.id}
                 style={{
                   background: 'transparent', border: 'none', cursor: 'pointer',
                   color: 'var(--muted-foreground)', padding: 0, display: 'flex',
-                  alignItems: 'center', lineHeight: 1,
+                  alignItems: 'center', lineHeight: 1, flexShrink: 0,
                   transition: 'color 0.15s',
                 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'hsl(0 72% 51%)' }}

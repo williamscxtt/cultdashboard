@@ -7,15 +7,16 @@ import type { ClientReel } from '@/lib/types'
 import { Card, EmptyState } from '@/components/ui'
 import { BarChart2 } from 'lucide-react'
 
+interface FollowerSnapshot {
+  date: string
+  count: number
+}
+
 interface Props {
   reels: ClientReel[]
   formatGroups: Record<string, number[]>
+  followerSnapshots?: FollowerSnapshot[]
 }
-
-const DUMMY_FOLLOWER_DATA = Array.from({ length: 12 }, (_, i) => ({
-  month: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][i],
-  followers: 0,
-}))
 
 const tooltipStyle = {
   backgroundColor: 'var(--card)',
@@ -26,7 +27,7 @@ const tooltipStyle = {
   boxShadow: 'none',
 }
 
-export default function AnalyticsCharts({ reels, formatGroups }: Props) {
+export default function AnalyticsCharts({ reels, formatGroups, followerSnapshots = [] }: Props) {
   const formatData = Object.entries(formatGroups)
     .map(([fmt, views]) => ({
       format: fmt || 'Unknown',
@@ -62,30 +63,61 @@ export default function AnalyticsCharts({ reels, formatGroups }: Props) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      {/* Follower growth — placeholder */}
+      {/* Follower growth */}
       <Card style={{ padding: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', letterSpacing: '-0.2px' }}>Follower Growth</div>
-            <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>Monthly follower count</div>
+            <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>
+              {followerSnapshots.length > 0
+                ? `${followerSnapshots[followerSnapshots.length - 1].count.toLocaleString()} followers · updated each sync`
+                : 'Synced automatically when Instagram is scraped'}
+            </div>
           </div>
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 600,
-            padding: '2px 8px', borderRadius: 999,
-            background: 'rgba(255,255,255,0.35)', color: 'rgba(255,255,255,0.35)',
-          }}>
-            Connect Instagram to unlock
-          </span>
+          {followerSnapshots.length > 0 && followerSnapshots.length >= 2 && (() => {
+            const first = followerSnapshots[0].count
+            const last  = followerSnapshots[followerSnapshots.length - 1].count
+            const delta = last - first
+            const pct   = first > 0 ? ((delta / first) * 100).toFixed(1) : null
+            return (
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 600,
+                padding: '2px 8px', borderRadius: 999,
+                background: delta >= 0 ? 'rgba(34,197,94,0.12)' : 'rgba(239,68,68,0.12)',
+                color: delta >= 0 ? 'hsl(142 71% 45%)' : 'hsl(0 84% 60%)',
+              }}>
+                {delta >= 0 ? '+' : ''}{delta.toLocaleString()}{pct ? ` (${pct}%)` : ''}
+              </span>
+            )
+          })()}
+          {followerSnapshots.length === 0 && (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', fontSize: 11, fontWeight: 600,
+              padding: '2px 8px', borderRadius: 999,
+              background: 'var(--muted)', color: 'var(--muted-foreground)',
+            }}>
+              Sync Instagram to populate
+            </span>
+          )}
         </div>
-        <ResponsiveContainer width="100%" height={180}>
-          <LineChart data={DUMMY_FOLLOWER_DATA}>
-            <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-            <XAxis dataKey="month" stroke="var(--border)" tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} />
-            <YAxis stroke="var(--border)" tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} />
-            <Tooltip contentStyle={tooltipStyle} />
-            <Line type="monotone" dataKey="followers" stroke="var(--accent)" strokeWidth={2} dot={false} />
-          </LineChart>
-        </ResponsiveContainer>
+        {followerSnapshots.length > 0 ? (
+          <ResponsiveContainer width="100%" height={180}>
+            <LineChart data={followerSnapshots.map(s => ({
+              date: new Date(s.date + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' }),
+              followers: s.count,
+            }))}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
+              <XAxis dataKey="date" stroke="var(--border)" tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} />
+              <YAxis stroke="var(--border)" tick={{ fill: 'var(--muted-foreground)', fontSize: 11 }} tickFormatter={v => v >= 1000 ? `${(v/1000).toFixed(0)}k` : String(v)} />
+              <Tooltip contentStyle={tooltipStyle} formatter={(v) => [typeof v === 'number' ? v.toLocaleString() : v, 'Followers']} />
+              <Line type="monotone" dataKey="followers" stroke="var(--accent)" strokeWidth={2} dot={{ fill: 'var(--accent)', r: 3 }} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div style={{ height: 180, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--muted-foreground)', fontSize: 13 }}>
+            No follower data yet — run a sync to start tracking growth.
+          </div>
+        )}
       </Card>
 
       {/* Format performance */}

@@ -1,9 +1,9 @@
 'use client'
 import { useState, useEffect, useCallback } from 'react'
-import { Card, Button, PageHeader, SectionLabel, StatCard } from '@/components/ui'
+import { Card, Button, PageHeader, SectionLabel } from '@/components/ui'
 import { createClient } from '@/lib/supabase'
 import { toast } from 'sonner'
-import { CheckCircle, AlertTriangle, ChevronRight } from 'lucide-react'
+import { CheckCircle, AlertTriangle, ChevronRight, Trash2 } from 'lucide-react'
 
 interface Profile {
   id: string
@@ -40,8 +40,8 @@ interface ProgressReport {
 }
 
 const HEALTH_COLORS = {
-  green: 'rgba(255,255,255,0.12)',
-  amber: 'rgba(255,255,255,0.35)',
+  green: 'hsl(142 71% 45%)',
+  amber: 'hsl(43 96% 56%)',
   red:   'hsl(0 72% 51%)',
 }
 
@@ -52,14 +52,50 @@ const HEALTH_LABELS = {
 }
 
 function formatWeek(dateStr: string) {
-  const d = new Date(dateStr + 'T00:00:00')
-  return `Week of ${d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`
+  // dateStr is the 7-days-ago anchor; show it as "Apr 6 – Apr 13" style
+  const from = new Date(dateStr + 'T00:00:00Z')
+  const to = new Date(dateStr + 'T00:00:00Z')
+  to.setUTCDate(to.getUTCDate() + 7)
+  const fmt = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+  return `${fmt(from)} – ${fmt(to)}`
 }
 
 function fmtNum(n: number) {
   if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M`
   if (n >= 1000) return `${(n / 1000).toFixed(1)}K`
   return String(n)
+}
+
+function MiniStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div style={{
+      background: 'var(--card)',
+      border: '1px solid var(--border)',
+      borderRadius: 10,
+      padding: '12px 10px',
+      textAlign: 'center',
+    }}>
+      <div style={{
+        fontSize: 9, fontWeight: 700,
+        color: 'var(--muted-foreground)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.07em',
+        whiteSpace: 'nowrap',
+        marginBottom: 6,
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: 22, fontWeight: 800,
+        color: 'var(--foreground)',
+        letterSpacing: '-0.5px',
+        lineHeight: 1,
+        fontFamily: 'var(--font-display)',
+      }}>
+        {value}
+      </div>
+    </div>
+  )
 }
 
 function ReportView({ report }: { report: ProgressReport }) {
@@ -73,16 +109,16 @@ function ReportView({ report }: { report: ProgressReport }) {
         <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>
           {formatWeek(report.week_start)}
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'nowrap' }}>
           <div style={{
             width: 10, height: 10, borderRadius: '50%',
             background: healthColor, flexShrink: 0,
             boxShadow: `0 0 6px ${healthColor}`,
           }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: healthColor }}>
+          <span style={{ fontSize: 13, fontWeight: 600, color: healthColor, whiteSpace: 'nowrap' }}>
             {HEALTH_LABELS[d.health_status]}
           </span>
-          <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>— {d.health_reason}</span>
+          <span style={{ fontSize: 12, color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: 240 }}>— {d.health_reason}</span>
         </div>
       </div>
 
@@ -94,41 +130,41 @@ function ReportView({ report }: { report: ProgressReport }) {
       </Card>
 
       {/* Metrics row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 10 }}>
-        <StatCard label="Posts" value={d.metrics.posts_count} />
-        <StatCard label="Avg Views" value={fmtNum(d.metrics.avg_views)} />
-        <StatCard label="Top Reel" value={fmtNum(d.metrics.top_reel_views)} />
-        <StatCard label="Engagement" value={`${d.metrics.engagement_rate}%`} />
-        <StatCard
-          label="Followers"
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+        <MiniStat label="Posts" value={d.metrics.posts_count} />
+        <MiniStat label="Avg Views" value={fmtNum(d.metrics.avg_views)} />
+        <MiniStat label="Top Reel" value={fmtNum(d.metrics.top_reel_views)} />
+        <MiniStat label="Engagement" value={`${d.metrics.engagement_rate}%`} />
+        <MiniStat
+          label="Followers ±"
           value={d.metrics.follower_change >= 0 ? `+${fmtNum(d.metrics.follower_change)}` : fmtNum(d.metrics.follower_change)}
         />
       </div>
 
       {/* What worked / Needs work */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
-        <Card style={{ padding: 18, background: 'rgba(255,255,255,0.5)' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: '#3B82F6', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <Card style={{ padding: 18 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'hsl(142 71% 45%)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             What Worked
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {d.what_worked.map((point, i) => (
               <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <CheckCircle size={14} style={{ color: '#3B82F6', flexShrink: 0, marginTop: 1 }} />
+                <CheckCircle size={14} style={{ color: 'hsl(142 71% 45%)', flexShrink: 0, marginTop: 1 }} />
                 <span style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5 }}>{point}</span>
               </div>
             ))}
           </div>
         </Card>
 
-        <Card style={{ padding: 18, background: 'rgba(255,255,255,0.35)' }}>
-          <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.35)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+        <Card style={{ padding: 18 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: 'hsl(43 96% 56%)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             Needs Work
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {d.what_needs_work.map((point, i) => (
               <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                <AlertTriangle size={14} style={{ color: 'rgba(255,255,255,0.35)', flexShrink: 0, marginTop: 1 }} />
+                <AlertTriangle size={14} style={{ color: 'hsl(43 96% 56%)', flexShrink: 0, marginTop: 1 }} />
                 <span style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5 }}>{point}</span>
               </div>
             ))}
@@ -137,11 +173,11 @@ function ReportView({ report }: { report: ProgressReport }) {
       </div>
 
       {/* Coach feedback */}
-      <Card style={{ padding: 20, background: 'var(--foreground)' }}>
-        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--background)', opacity: 0.6, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
+      <Card style={{ padding: 20, borderLeft: '3px solid var(--accent)' }}>
+        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 10 }}>
           Coach Notes — Use in your check-in
         </div>
-        <p style={{ fontSize: 14, color: 'var(--background)', lineHeight: 1.75 }}>
+        <p style={{ fontSize: 14, color: 'var(--foreground)', lineHeight: 1.75 }}>
           {d.coach_feedback}
         </p>
       </Card>
@@ -180,6 +216,8 @@ export default function ReportsPage() {
   const [generating, setGenerating] = useState(false)
   const [loadingClients, setLoadingClients] = useState(true)
   const [loadingReports, setLoadingReports] = useState(false)
+  const [hoveredReportId, setHoveredReportId] = useState<string | null>(null)
+  const [deletingReportId, setDeletingReportId] = useState<string | null>(null)
 
   // Load current user's profile
   useEffect(() => {
@@ -241,18 +279,12 @@ export default function ReportsPage() {
     }
     setGenerating(true)
     try {
-      // Week start = most recent Monday
-      const now = new Date()
-      const day = now.getDay()
-      const diff = (day === 0 ? 6 : day - 1)
-      const monday = new Date(now)
-      monday.setDate(now.getDate() - diff)
-      const weekStart = monday.toISOString().split('T')[0]
-
+      // Let the SERVER compute weekStart — avoids all browser timezone issues.
+      // The API will use today-7 in UTC (Vercel always runs UTC).
       const res = await fetch('/api/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId: selectedClientId, weekStart }),
+        body: JSON.stringify({ profileId: selectedClientId }),
       })
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Failed to generate report')
@@ -264,6 +296,26 @@ export default function ReportsPage() {
       toast.error(err instanceof Error ? err.message : 'Failed to generate report')
     } finally {
       setGenerating(false)
+    }
+  }
+
+  async function deleteReport(id: string) {
+    setDeletingReportId(id)
+    try {
+      const res = await fetch(`/api/reports?id=${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
+      setReports(prev => {
+        const next = prev.filter(r => r.id !== id)
+        if (activeReport?.id === id) {
+          setActiveReport(next.length > 0 ? next[0] : null)
+        }
+        return next
+      })
+      toast.success('Report deleted')
+    } catch {
+      toast.error('Failed to delete report')
+    } finally {
+      setDeletingReportId(null)
     }
   }
 
@@ -342,33 +394,57 @@ export default function ReportsPage() {
             ) : (
               reports.map(r => {
                 const isActive = activeReport?.id === r.id
+                const isHovered = hoveredReportId === r.id
+                const isDeleting = deletingReportId === r.id
                 const healthColor = HEALTH_COLORS[r.report_data?.health_status] || HEALTH_COLORS.green
                 return (
-                  <button
+                  <div
                     key={r.id}
-                    onClick={() => setActiveReport(r)}
-                    style={{
-                      display: 'flex', alignItems: 'center', gap: 8,
-                      padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
-                      background: isActive ? 'var(--muted)' : 'transparent',
-                      border: isActive ? '1px solid var(--border)' : '1px solid transparent',
-                      fontFamily: 'inherit', textAlign: 'left', width: '100%',
-                      transition: 'background 0.15s',
-                    }}
-                    onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'var(--muted)' }}
-                    onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+                    style={{ position: 'relative' }}
+                    onMouseEnter={() => setHoveredReportId(r.id)}
+                    onMouseLeave={() => setHoveredReportId(null)}
                   >
-                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: healthColor, flexShrink: 0 }} />
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {formatWeek(r.week_start)}
+                    <button
+                      onClick={() => setActiveReport(r)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: 8,
+                        padding: '10px 12px', borderRadius: 8, cursor: 'pointer',
+                        background: isActive ? 'var(--muted)' : isHovered ? 'var(--muted)' : 'transparent',
+                        border: isActive ? '1px solid var(--border)' : '1px solid transparent',
+                        fontFamily: 'inherit', textAlign: 'left', width: '100%',
+                        transition: 'background 0.15s',
+                        paddingRight: isHovered ? 36 : 12,
+                      }}
+                    >
+                      <div style={{ width: 8, height: 8, borderRadius: '50%', background: healthColor, flexShrink: 0 }} />
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {formatWeek(r.week_start)}
+                        </div>
+                        <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+                          {new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
-                        {new Date(r.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      </div>
-                    </div>
-                    <ChevronRight size={12} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
-                  </button>
+                      {!isHovered && <ChevronRight size={12} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />}
+                    </button>
+                    {isHovered && (
+                      <button
+                        onClick={e => { e.stopPropagation(); deleteReport(r.id) }}
+                        disabled={isDeleting}
+                        title="Delete report"
+                        style={{
+                          position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                          width: 24, height: 24, borderRadius: 6, cursor: 'pointer',
+                          background: 'transparent', border: 'none', padding: 0,
+                          color: isDeleting ? 'var(--muted-foreground)' : 'hsl(0 72% 51%)',
+                          transition: 'color 0.15s',
+                        }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
                 )
               })
             )}

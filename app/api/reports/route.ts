@@ -12,13 +12,22 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
 export async function POST(request: NextRequest) {
   const body = await request.json()
-  const { profileId, weekStart } = body
-  if (!profileId || !weekStart) {
-    return NextResponse.json({ error: 'profileId and weekStart are required' }, { status: 400 })
+  const { profileId, weekStart: weekStartIn } = body
+  if (!profileId) {
+    return NextResponse.json({ error: 'profileId is required' }, { status: 400 })
   }
 
-  const weekEnd = new Date(weekStart)
-  weekEnd.setDate(weekEnd.getDate() + 7)
+  // Compute weekStart SERVER-SIDE (Vercel runs UTC — always correct).
+  // Rolling 7-day window so recent reels are never missed.
+  const weekStart = weekStartIn ?? (() => {
+    const d = new Date()
+    d.setUTCDate(d.getUTCDate() - 7)
+    return d.toISOString().split('T')[0]
+  })()
+
+  // +9 day upper bound so reels posted today are always included
+  const weekEnd = new Date(weekStart + 'T00:00:00Z')
+  weekEnd.setUTCDate(weekEnd.getUTCDate() + 9)
   const weekEndStr = weekEnd.toISOString().split('T')[0]
 
   // Fetch 30 days of reels so we have an avg baseline
@@ -221,4 +230,18 @@ export async function GET(request: NextRequest) {
   // Map report_json → report_data for frontend consistency
   const reports = (data || []).map(r => ({ ...r, report_data: r.report_json }))
   return NextResponse.json({ reports })
+}
+
+export async function DELETE(request: NextRequest) {
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+  const { error } = await adminClient
+    .from('client_progress_reports')
+    .delete()
+    .eq('id', id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
 }

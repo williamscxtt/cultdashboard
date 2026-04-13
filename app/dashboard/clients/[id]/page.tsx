@@ -42,7 +42,7 @@ export default async function ClientDetailPage({
 
   if (!clientProfile || clientProfile.role !== 'client') redirect('/dashboard/clients')
 
-  const [{ data: reels }, { data: weeklyScript }] = await Promise.all([
+  const [{ data: reels }, { data: weeklyScript }, { data: followerSnapshots }] = await Promise.all([
     adminClient
       .from('client_reels')
       .select('*')
@@ -55,6 +55,12 @@ export default async function ClientDetailPage({
       .order('week_start', { ascending: false })
       .limit(1)
       .single(),
+    adminClient
+      .from('follower_snapshots')
+      .select('date, count')
+      .eq('profile_id', id)
+      .order('date', { ascending: true })
+      .limit(90),
   ])
 
   const reelData = (reels ?? []) as ClientReel[]
@@ -91,7 +97,7 @@ export default async function ClientDetailPage({
         <StatCard label="Best Format" value={bestFormat} />
       </div>
 
-      <AnalyticsCharts reels={reelData} formatGroups={formatGroups} />
+      <AnalyticsCharts reels={reelData} formatGroups={formatGroups} followerSnapshots={followerSnapshots ?? []} />
 
       {/* Scripts */}
       <div style={{ marginTop: 28 }}>

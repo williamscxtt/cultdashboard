@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
 import { Card, Badge, Button, PageHeader, EmptyState, StatCard } from '@/components/ui'
-import { Users, Grid3X3, Table2, AlertTriangle, LayoutGrid, Mail } from 'lucide-react'
+import { Users, Grid3X3, Table2, AlertTriangle, LayoutGrid, Mail, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ClientHealth {
@@ -30,6 +30,8 @@ export default function ClientsManager({ initialClients }: Props) {
   const [showModal, setShowModal] = useState(false)
   const [view, setView] = useState<'cards' | 'table' | 'heatmap'>('cards')
   const [healthData, setHealthData] = useState<Record<string, ClientHealth>>({})
+  const [syncingAll, setSyncingAll] = useState(false)
+  const [syncingId, setSyncingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (view === 'heatmap') {
@@ -100,6 +102,69 @@ export default function ClientsManager({ initialClients }: Props) {
     }
   }
 
+  async function syncIG(client: Profile) {
+    setSyncingId(client.id)
+    try {
+      const res = await fetch('/api/instagram/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId: client.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(`${client.name || client.email}: ${data.error || res.status}`)
+      } else {
+        const followers = data.followers ? ` · ${data.followers.toLocaleString()} followers` : ''
+        toast.success(`${client.name || client.email}: ${data.synced} new reels${followers}`)
+        if (data.followers) {
+          setClients(prev => prev.map(c => c.id === client.id ? { ...c, followers_count: data.followers } : c))
+        }
+      }
+    } catch {
+      toast.error(`Network error syncing ${client.name || client.email}`)
+    } finally {
+      setSyncingId(null)
+    }
+  }
+
+  async function syncAllIG() {
+    const toSync = clients.filter(c => c.is_active && c.ig_username)
+    if (toSync.length === 0) { toast.error('No active clients with Instagram usernames'); return }
+    setSyncingAll(true)
+    let done = 0
+    let errors = 0
+    toast.loading(`Syncing Instagram (0/${toSync.length})…`, { id: 'sync-all' })
+    for (const client of toSync) {
+      setSyncingId(client.id)
+      try {
+        const res = await fetch('/api/instagram/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ profileId: client.id }),
+        })
+        const data = await res.json()
+        done++
+        if (!res.ok) {
+          errors++
+          console.error(`Sync failed for ${client.ig_username}:`, data.error)
+        } else if (data.followers) {
+          setClients(prev => prev.map(c => c.id === client.id ? { ...c, followers_count: data.followers } : c))
+        }
+      } catch {
+        errors++
+      }
+      toast.loading(`Syncing Instagram (${done}/${toSync.length})…`, { id: 'sync-all' })
+    }
+    setSyncingId(null)
+    setSyncingAll(false)
+    toast.dismiss('sync-all')
+    if (errors > 0) {
+      toast.success(`Synced ${done - errors}/${toSync.length} accounts (${errors} failed — check console)`)
+    } else {
+      toast.success(`All ${toSync.length} Instagram accounts synced`)
+    }
+  }
+
   async function sendAllInvites() {
     const activeEmails = clients.filter(c => c.is_active && c.email).map(c => c.email as string)
     if (activeEmails.length === 0) { toast.error('No active clients with emails'); return }
@@ -126,8 +191,18 @@ export default function ClientsManager({ initialClients }: Props) {
         action={
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <Badge variant="accent">{clients.length}</Badge>
-            <Button size="sm" variant="secondary" onClick={sendAllInvites} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Button size="sm" variant="secondary" onClick={sendAllInvites} style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap' }}>
               <Mail size={12} /> Invite all
+            </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={syncAllIG}
+              disabled={syncingAll}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', opacity: syncingAll ? 0.6 : 1 }}
+            >
+              <RefreshCw size={12} style={syncingAll ? { opacity: 0.5 } : {}} />
+              {syncingAll ? 'Syncing…' : 'Sync all IG'}
             </Button>
             <Button size="sm" onClick={() => setShowModal(true)}>+ Add Client</Button>
           </div>
@@ -281,7 +356,7 @@ export default function ClientsManager({ initialClients }: Props) {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              {['Name', 'Niche', 'Instagram', 'Joined', 'Status', 'Actions'].map(h => (
+              {['Name', 'Niche', 'Instagram', 'Followers', 'Joined', 'Status', 'Actions'].map(h => (
                 <th key={h} style={{
                   padding: '10px 16px', textAlign: 'left',
                   fontSize: 11, color: 'var(--muted-foreground)',
@@ -297,7 +372,7 @@ export default function ClientsManager({ initialClients }: Props) {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={6}>
+                <td colSpan={7}>
                   <EmptyState
                     icon={<Users size={18} />}
                     title={search ? 'No results' : 'No clients yet'}
@@ -307,7 +382,7 @@ export default function ClientsManager({ initialClients }: Props) {
               </tr>
             ) : (
               filtered.map(client => (
-                <ClientRow key={client.id} client={client} onToggleActive={toggleActive} onSendInvite={sendInvite} />
+                <ClientRow key={client.id} client={client} onToggleActive={toggleActive} onSendInvite={sendInvite} onSyncIG={syncIG} isSyncing={syncingId === client.id} />
               ))
             )}
           </tbody>
@@ -324,7 +399,13 @@ export default function ClientsManager({ initialClients }: Props) {
   )
 }
 
-function ClientRow({ client, onToggleActive, onSendInvite }: { client: Profile; onToggleActive: (c: Profile) => void; onSendInvite: (email: string, name?: string | null) => void }) {
+function ClientRow({ client, onToggleActive, onSendInvite, onSyncIG, isSyncing }: {
+  client: Profile
+  onToggleActive: (c: Profile) => void
+  onSendInvite: (email: string, name?: string | null) => void
+  onSyncIG: (c: Profile) => void
+  isSyncing: boolean
+}) {
   const [inviting, setInviting] = useState(false)
   return (
     <tr style={{ borderBottom: '1px solid var(--border)' }}>
@@ -352,6 +433,9 @@ function ClientRow({ client, onToggleActive, onSendInvite }: { client: Profile; 
       <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--muted-foreground)' }}>
         {client.ig_username ? `@${client.ig_username}` : '—'}
       </td>
+      <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
+        {client.followers_count ? client.followers_count.toLocaleString() : '—'}
+      </td>
       <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--muted-foreground)' }}>
         {client.date_joined
           ? new Date(client.date_joined).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -377,7 +461,24 @@ function ClientRow({ client, onToggleActive, onSendInvite }: { client: Profile; 
         </button>
       </td>
       <td style={{ padding: '12px 16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {client.ig_username && (
+            <button
+              onClick={() => onSyncIG(client)}
+              disabled={isSyncing}
+              title="Sync Instagram data"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap', flexShrink: 0,
+                padding: '4px 10px', borderRadius: 5, border: '1px solid var(--border)',
+                background: 'transparent', cursor: isSyncing ? 'wait' : 'pointer',
+                color: 'var(--muted-foreground)', fontSize: 11, fontFamily: 'inherit',
+                opacity: isSyncing ? 0.5 : 1,
+              }}
+            >
+              <RefreshCw size={11} style={isSyncing ? { opacity: 0.5 } : {}} />
+              {isSyncing ? '…' : 'Sync'}
+            </button>
+          )}
           <button
             onClick={async () => {
               if (!client.email) return

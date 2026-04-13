@@ -48,7 +48,37 @@ export async function GET() {
     .order('added_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ competitors: data || [] })
+
+  const competitors = data || []
+
+  // Fetch per-account stats from competitor_reels
+  let stats: Record<string, { reel_count: number; last_scraped: string | null }> = {}
+  if (competitors.length > 0) {
+    const handles = competitors.map((c: { ig_username: string }) => c.ig_username)
+    // Get count + latest scraped_week per account
+    const { data: reelRows } = await adminClient
+      .from('competitor_reels')
+      .select('account, scraped_week')
+      .in('account', handles)
+
+    if (reelRows) {
+      for (const row of reelRows as Array<{ account: string; scraped_week: string }>) {
+        if (!stats[row.account]) stats[row.account] = { reel_count: 0, last_scraped: null }
+        stats[row.account].reel_count++
+        if (!stats[row.account].last_scraped || row.scraped_week > stats[row.account].last_scraped!) {
+          stats[row.account].last_scraped = row.scraped_week
+        }
+      }
+    }
+  }
+
+  return NextResponse.json({
+    competitors: competitors.map((c: { ig_username: string }) => ({
+      ...c,
+      reel_count: stats[c.ig_username]?.reel_count ?? 0,
+      last_scraped: stats[c.ig_username]?.last_scraped ?? null,
+    })),
+  })
 }
 
 export async function POST(request: Request) {

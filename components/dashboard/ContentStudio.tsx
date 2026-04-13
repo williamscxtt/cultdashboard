@@ -26,23 +26,37 @@ export default function ContentStudio({ profileId }: Props) {
     setScrapeOk(false)
     try {
       const res = await fetch('/api/competitors/scrape', { method: 'POST' })
-      const json = await res.json()
+      // Guard against HTML error pages (500s) which would throw on .json()
+      const text = await res.text()
+      let json: Record<string, unknown> = {}
+      try { json = JSON.parse(text) } catch { /* non-JSON — likely 500 HTML */ }
+
       if (!res.ok) {
         if (res.status === 503) {
           setScrapeMsg('Apify not configured — add APIFY_API_TOKEN to Vercel env vars.')
         } else if (json.error === 'no_competitors') {
           setScrapeMsg('Add competitor accounts below before scraping.')
         } else {
-          setScrapeMsg(json.message || json.error || 'Scrape failed.')
+          const msg = (json.message || json.error) as string | undefined
+          setScrapeMsg(msg || `Scrape failed (status ${res.status}).`)
+          toast.error(msg || `Scrape failed (${res.status})`)
         }
       } else {
-        setScrapeMsg(`Scraped ${json.accounts_scraped} accounts — ${json.added} new reels added.`)
+        const added   = (json.added   as number) ?? 0
+        const updated = (json.updated as number) ?? 0
+        const parts = [`${json.accounts_scraped} accounts scraped`]
+        if (added > 0)   parts.push(`${added} new reel${added !== 1 ? 's' : ''} added`)
+        if (updated > 0) parts.push(`${updated} existing updated`)
+        if (added === 0 && updated === 0) parts.push('no new reels found')
+        const msg = parts.join(' · ')
+        setScrapeMsg(msg)
         setScrapeOk(true)
-        toast.success(`Scraped ${json.accounts_scraped} accounts — ${json.added} new reels added`)
+        toast.success(msg)
       }
-    } catch {
-      setScrapeMsg('Network error — scrape failed.')
-      toast.error('Scrape failed')
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Network error'
+      setScrapeMsg(`Scrape failed: ${msg}`)
+      toast.error(`Scrape failed: ${msg}`)
     } finally {
       setScraping(false)
     }

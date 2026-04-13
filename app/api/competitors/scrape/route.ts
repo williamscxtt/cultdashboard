@@ -210,83 +210,111 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // All results from resultsType:'reels' are videos — no filter needed
-  const videoPosts = allPosts
+  // Drop posts with no shortCode (can't deduplicate without it)
+  const validPosts = allPosts.filter(p => p.shortCode)
 
-  if (videoPosts.length === 0) {
-    return NextResponse.json({ ok: true, added: 0, accounts_scraped: handles.length, message: 'No posts found in scrape results.' })
+  if (validPosts.length === 0) {
+    return NextResponse.json({ ok: true, added: 0, updated: 0, accounts_scraped: handles.length, message: 'No posts found in scrape results.' })
   }
 
-  // Check for missing shortCodes before building rows
-  const missingShortCode = videoPosts.filter(p => !p.shortCode).length
-  if (missingShortCode > 0) {
-    console.warn(`[competitors/scrape] ${missingShortCode}/${videoPosts.length} posts have no shortCode — checking alternate fields`)
-    if (videoPosts[0]) console.warn('[competitors/scrape] First post keys:', JSON.stringify(Object.keys(videoPosts[0])))
-  }
+  // ── Deduplication: find which reel_ids already exist ──────────────────────
+  const scrapedIds = validPosts.map(p => p.shortCode as string)
+  const { data: existingRows } = await adminClient
+    .from('competitor_reels')
+    .select('reel_id')
+    .in('reel_id', scrapedIds)
 
-  // Build reel records
-  const weekStr = new Date().toISOString().split('T')[0].slice(0, 7) // YYYY-MM
+  const existingSet = new Set((existingRows ?? []).map((r: { reel_id: string }) => r.reel_id))
+  const newPosts    = validPosts.filter(p => !existingSet.has(p.shortCode as string))
+  const oldPosts    = validPosts.filter(p =>  existingSet.has(p.shortCode as string))
 
-  const reelInputs = videoPosts.map(p => {
-    const caption = p.caption ?? ''
-    const hook = caption.split(/[.!?\n]/)[0]?.trim().slice(0, 200) ?? ''
-    return { caption, hook }
-  })
+  const scraped_week = `${new Date().toISOString().slice(0, 7)}-W${getISOWeek(new Date())}`
+  const today        = new Date().toISOString().split('T')[0]
 
-  // Classify in batches of 20 to avoid huge prompts
-  const formats: string[] = []
-  for (let i = 0; i < reelInputs.length; i += 20) {
-    const batch = reelInputs.slice(i, i + 20)
-    const batchFormats = await classifyFormats(batch)
-    formats.push(...batchFormats)
-  }
-
-  const scraped_week = `${weekStr}-W${getISOWeek(new Date())}`
-
-  const rows = videoPosts.map((p, i) => {
-    const caption = p.caption ?? ''
-    const hook = caption.split(/[.!?\n]/)[0]?.trim().slice(0, 200) ?? ''
-    const hashtags = (caption.match(/#\w+/g) ?? []).map(h => h.slice(1))
-
+  function buildRow(p: ApifyPost, format_type: string) {
+    const caption   = p.caption ?? ''
+    const hook      = caption.split(/[.!?\n]/)[0]?.trim().slice(0, 200) ?? ''
+    const hashtags  = (caption.match(/#\w+/g) ?? []).map(h => h.slice(1))
     return {
-      account: (p.ownerUsername ?? '').toLowerCase(),
-      reel_id: p.shortCode ?? '',
+      account:      (p.ownerUsername ?? '').toLowerCase(),
+      reel_id:      p.shortCode ?? '',
       scraped_week,
-      date: p.timestamp ? p.timestamp.split('T')[0] : new Date().toISOString().split('T')[0],
-      views: p.videoViewCount ?? 0,
-      likes: p.likesCount ?? 0,
-      comments: p.commentsCount ?? 0,
-      caption: caption.slice(0, 2000),
+      date:         p.timestamp ? p.timestamp.split('T')[0] : today,
+      views:        p.videoViewCount ?? 0,
+      likes:        p.likesCount ?? 0,
+      comments:     p.commentsCount ?? 0,
+      caption:      caption.slice(0, 2000),
       hook,
       hashtags,
-      format_type: formats[i] ?? 'Unknown',
-      duration_sec: p.videoDuration ?? null,
-      reel_url: p.url ?? null,
+      format_type,
+      // FIX: videoDuration is a float (e.g. 30.066) — round to int for DB column
+      duration_sec: p.videoDuration != null ? Math.round(p.videoDuration) : null,
+      reel_url:     p.url ?? null,
       thumbnail_url: p.displayUrl ?? null,
     }
-  }).filter(r => r.account && r.reel_id)
-
-  if (rows.length === 0) {
-    return NextResponse.json({ ok: true, added: 0, accounts_scraped: handles.length, message: 'No valid reels to store.' })
   }
 
-  // Upsert into competitor_reels
-  const { error: upsertError, data: upserted } = await adminClient
-    .from('competitor_reels')
-    .upsert(rows, { onConflict: 'reel_id', ignoreDuplicates: false })
-    .select('id')
-
-  if (upsertError) {
-    console.error('[competitors/scrape] Upsert error:', upsertError)
-    return NextResponse.json({ error: upsertError.message }, { status: 500 })
+  // ── Classify only NEW reels (skip re-classification of existing ones) ──────
+  const newFormats: string[] = []
+  if (newPosts.length > 0) {
+    const reelInputs = newPosts.map(p => ({
+      caption: p.caption ?? '',
+      hook: (p.caption ?? '').split(/[.!?\n]/)[0]?.trim().slice(0, 200) ?? '',
+    }))
+    try {
+      for (let i = 0; i < reelInputs.length; i += 20) {
+        const batch = reelInputs.slice(i, i + 20)
+        const batchFormats = await classifyFormats(batch)
+        newFormats.push(...batchFormats)
+      }
+    } catch (classifyErr) {
+      console.error('[competitors/scrape] classifyFormats error:', String(classifyErr))
+      while (newFormats.length < newPosts.length) newFormats.push('other')
+    }
   }
 
-  return NextResponse.json({
-    ok: true,
-    added: upserted?.length ?? rows.length,
-    accounts_scraped: handles.length,
-    reels_found: videoPosts.length,
-  })
+  const newRows  = newPosts.map((p, i) => buildRow(p, newFormats[i] ?? 'other'))
+  // Existing rows — update metrics only, keep existing format_type (pass placeholder, overridden below)
+  const metricUpdates = oldPosts.map(p => buildRow(p, 'KEEP_EXISTING'))
+
+  try {
+    // Insert new reels
+    let added = 0
+    if (newRows.length > 0) {
+      const { error: insertErr } = await adminClient
+        .from('competitor_reels')
+        .insert(newRows)
+      if (insertErr) {
+        console.error('[competitors/scrape] Insert error:', insertErr.message)
+        // Don't abort — proceed to metric updates
+      } else {
+        added = newRows.length
+      }
+    }
+
+    // Refresh metrics on existing reels (views/likes/comments may have changed)
+    let updated = 0
+    if (metricUpdates.length > 0) {
+      await Promise.allSettled(metricUpdates.map(r =>
+        adminClient
+          .from('competitor_reels')
+          .update({ views: r.views, likes: r.likes, comments: r.comments, scraped_week })
+          .eq('reel_id', r.reel_id)
+      ))
+      updated = metricUpdates.length
+    }
+
+    return NextResponse.json({
+      ok: true,
+      added,
+      updated,
+      accounts_scraped: handles.length,
+      reels_found: validPosts.length,
+    })
+  } catch (err) {
+    console.error('[competitors/scrape] Unexpected error:', String(err))
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
 }
 
 function getISOWeek(date: Date): number {
