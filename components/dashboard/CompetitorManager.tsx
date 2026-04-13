@@ -15,7 +15,7 @@ interface Competitor {
   insight_updated_at: string | null
 }
 
-const MAX_COMPETITORS = 10
+const DEFAULT_MAX = 10 // fallback; real limit comes from API
 
 /** Converts "2026-04-W16" → "Apr '26" for display */
 function formatScrapedWeek(raw: string): string {
@@ -63,6 +63,7 @@ function StatPill({ value, label }: { value: string; label: string }) {
 
 export default function CompetitorManager() {
   const [competitors, setCompetitors] = useState<Competitor[]>([])
+  const [limit, setLimit] = useState<number | null>(DEFAULT_MAX)
   const [loading, setLoading] = useState(true)
   const [input, setInput] = useState('')
   const [adding, setAdding] = useState(false)
@@ -70,12 +71,16 @@ export default function CompetitorManager() {
   const [refreshingInsight, setRefreshingInsight] = useState<string | null>(null)
   const [generatingAll, setGeneratingAll] = useState(false)
 
+  const maxCompetitors = limit ?? DEFAULT_MAX
+  const atLimit = limit !== null && competitors.length >= maxCompetitors
+
   async function fetchCompetitors() {
     try {
       const res = await fetch('/api/competitors')
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Failed to load')
       setCompetitors(json.competitors || [])
+      setLimit(json.limit ?? null) // null = unlimited (admin)
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed to load competitors')
     } finally {
@@ -89,8 +94,8 @@ export default function CompetitorManager() {
     e.preventDefault()
     const username = input.replace(/^@/, '').trim()
     if (!username) return
-    if (competitors.length >= MAX_COMPETITORS) {
-      toast.error(`Maximum ${MAX_COMPETITORS} competitors allowed`)
+    if (atLimit) {
+      toast.error(`You can track up to ${maxCompetitors} competitor accounts.`)
       return
     }
     if (competitors.some(c => c.ig_username.toLowerCase() === username.toLowerCase())) {
@@ -210,13 +215,13 @@ export default function CompetitorManager() {
             onChange={e => setInput(e.target.value)}
             placeholder="username"
             style={{ paddingLeft: 28 }}
-            disabled={adding || competitors.length >= MAX_COMPETITORS}
+            disabled={adding || atLimit}
           />
         </div>
         <Button
           type="submit"
           size="sm"
-          disabled={adding || !input.trim() || competitors.length >= MAX_COMPETITORS}
+          disabled={adding || !input.trim() || atLimit}
           style={{ flexShrink: 0 }}
         >
           <Plus size={13} />
@@ -230,7 +235,7 @@ export default function CompetitorManager() {
           fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)',
           textTransform: 'uppercase', letterSpacing: '0.06em',
         }}>
-          {loading ? '— / 10 accounts tracked' : `${competitors.length} / ${MAX_COMPETITORS} accounts tracked`}
+          {loading ? '—' : limit !== null ? `${competitors.length} / ${maxCompetitors} accounts tracked` : `${competitors.length} accounts tracked`}
         </div>
         {!loading && competitors.some(c => c.reel_count > 0) && (
           <button
@@ -261,7 +266,7 @@ export default function CompetitorManager() {
           padding: '16px 0', fontSize: 13, color: 'var(--muted-foreground)',
           textAlign: 'center',
         }}>
-          No competitors added yet. Start tracking up to 10 accounts.
+          No competitors added yet. {limit !== null ? `You can track up to ${maxCompetitors} accounts.` : 'Start tracking competitor accounts.'}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

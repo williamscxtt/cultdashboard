@@ -103,8 +103,19 @@ export default async function AnalyticsPage() {
 
   // Only generate AI fields for clients who have completed onboarding
   const onboarded = Boolean(profile.onboarding_completed)
-  const needsBio = onboarded && !dashboardBio
-  const needsFocus = onboarded && !focusThisWeek
+  const intro = (profile.intro_structured ?? {}) as Record<string, unknown>
+  const firstName = String(profile.name || '').split(' ')[0].toLowerCase()
+  const niche = String(intro.specific_niche || intro.what_you_coach || profile.niche || '').toLowerCase()
+
+  // Bio: regenerate if missing, OR if it looks generic (doesn't mention the person's name or niche)
+  const bioIsGeneric = dashboardBio && firstName && !dashboardBio.toLowerCase().includes(firstName)
+  const needsBio = onboarded && (!dashboardBio || !!bioIsGeneric)
+
+  // Focus: regenerate if missing, OR if it was last updated more than 6 days ago (it's a weekly thing)
+  const focusUpdatedAt = profile.focus_updated_at ? new Date(String(profile.focus_updated_at)) : null
+  const focusAgeMs = focusUpdatedAt ? Date.now() - focusUpdatedAt.getTime() : Infinity
+  const focusIsStale = focusAgeMs > 6 * 24 * 60 * 60 * 1000
+  const needsFocus = onboarded && (!focusThisWeek || focusIsStale)
 
   if (needsBio || needsFocus) {
     const [bio, focus] = await Promise.all([
@@ -118,7 +129,10 @@ export default async function AnalyticsPage() {
     // Store back to DB (fire and forget) — skip caching fallback "insufficient data" messages
     const updates: Record<string, string> = {}
     if (needsBio && bio && !bio.startsWith('Honestly ')) updates.dashboard_bio = bio
-    if (needsFocus && focus && !focus.startsWith("I can't set a focus")) updates.focus_this_week = focus
+    if (needsFocus && focus && !focus.startsWith("I can't set a focus")) {
+      updates.focus_this_week = focus
+      updates.focus_updated_at = new Date().toISOString()
+    }
     if (Object.keys(updates).length > 0) {
       adminClient.from('profiles').update(updates).eq('id', profileId).then(() => {})
     }
