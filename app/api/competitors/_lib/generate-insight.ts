@@ -11,16 +11,25 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 export async function generateInsightForAccount(handle: string): Promise<string> {
   const { data: reels } = await adminClient
     .from('competitor_reels')
-    .select('hook, caption, views, format_type')
+    .select('transcript, views, format_type, date')
     .eq('account', handle)
+    .not('transcript', 'is', null)
     .order('views', { ascending: false })
     .limit(15)
 
   if (!reels?.length) return ''
 
   const topReels = reels
-    .map(r => `- "${r.hook || (r.caption ?? '').slice(0, 80)}" [${r.format_type ?? 'unknown'}] — ${(r.views ?? 0).toLocaleString()} views`)
+    .map(r => {
+      // Use the actual opening line from transcript — what they say in the first few seconds
+      const opening = r.transcript?.slice(0, 200).split(/[.!?]/)[0]?.trim() || ''
+      if (!opening) return null
+      return `- "${opening}" [${r.format_type ?? 'unknown'}] — ${(r.views ?? 0).toLocaleString()} views`
+    })
+    .filter(Boolean)
     .join('\n')
+
+  if (!topReels) return ''
 
   const msg = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
@@ -28,12 +37,12 @@ export async function generateInsightForAccount(handle: string): Promise<string>
     messages: [{
       role: 'user',
       content: `You're a content strategist. Analyse these top reels from @${handle} and write exactly 2 sentences:
-1. What content topics/themes drive their biggest numbers.
-2. Which formats they lean on most.
+1. What topics and angles drive their biggest numbers.
+2. Which formats and structures they lean on most.
 
-Be specific, direct, no fluff. Max 35 words total.
+Plain text only — no bullet points, no bold, no asterisks, no markdown. Max 35 words total.
 
-Top reels:
+Top reels (transcript openings):
 ${topReels}`,
     }],
   })

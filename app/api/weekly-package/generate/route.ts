@@ -345,14 +345,13 @@ function buildKnowledgeContext(
     .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
     .slice(0, 15)
 
-  if (thisWeekComp.length > 0) {
-    lines.push('=== TOP OPENINGS THIS WEEK (by views) ===')
-    for (const r of thisWeekComp) {
-      const opening = r.transcript
-        ? r.transcript.slice(0, 100).split(/[.!?]/)[0]?.trim()
-        : (r.hook || r.caption?.slice(0, 100) || '(no hook)')
-      const src = r.transcript ? 'transcript' : 'caption'
-      lines.push(`• [@${r.account} | ${(r.views ?? 0).toLocaleString()} views | ${src}] "${opening}"`)
+  // Only show openings from real transcripts — not captions
+  const thisWeekWithTranscript = thisWeekComp.filter(r => r.transcript && r.transcript.trim().length > 50)
+  if (thisWeekWithTranscript.length > 0) {
+    lines.push('=== TOP OPENINGS THIS WEEK — what high-performing creators say in the first few seconds ===')
+    for (const r of thisWeekWithTranscript) {
+      const opening = r.transcript!.slice(0, 120).split(/[.!?]/)[0]?.trim()
+      lines.push(`• [@${r.account} | ${(r.views ?? 0).toLocaleString()} views] "${opening}"`)
     }
     lines.push('')
   }
@@ -410,27 +409,30 @@ function buildCompetitorReport(compReels: CompReel[], weekStart: string): string
   lines.push('')
 
   lines.push('## Top Performing Reels This Week')
-  for (const r of thisWeek.slice(0, 20)) {
-    const openingLine = r.transcript
-      ? r.transcript.slice(0, 120).split(/[.!?]/)[0]?.trim()
-      : (r.hook || r.caption?.slice(0, 100) || '(no hook)')
-    lines.push(`### @${r.account} — ${(r.views ?? 0).toLocaleString()} views [${r.format_type ?? 'unknown'}]`)
-    lines.push(`Opening: "${openingLine}"`)
-    if (r.transcript) {
-      lines.push(`Transcript: ${r.transcript.slice(0, 400)}`)
-    } else if (r.caption) {
-      lines.push(`Caption: ${r.caption.slice(0, 200)}`)
+  // Only show reels with real transcript data — captions are not useful for script generation
+  const thisWeekWithTranscript = thisWeek.filter(r => r.transcript && r.transcript.trim().length > 50)
+  if (thisWeekWithTranscript.length === 0) {
+    lines.push('Transcripts pending — run a scrape to fetch video URLs, then transcription will run automatically.')
+  } else {
+    for (const r of thisWeekWithTranscript.slice(0, 20)) {
+      const opening = r.transcript!.slice(0, 150).split(/[.!?]/)[0]?.trim()
+      lines.push(`### @${r.account} — ${(r.views ?? 0).toLocaleString()} views [${r.format_type ?? 'unknown'}]`)
+      lines.push(`Opening (what they say first): "${opening}"`)
+      lines.push(`Full transcript excerpt: ${r.transcript!.slice(0, 500)}`)
+      lines.push('')
     }
-    lines.push('')
   }
+  lines.push('')
 
-  lines.push('## All-Time Top Reels (30 days)')
-  for (const r of allSorted.slice(0, 15)) {
-    const opening = r.transcript
-      ? r.transcript.slice(0, 80).split(/[.!?]/)[0]?.trim()
-      : (r.hook || r.caption?.slice(0, 80) || '(no hook)')
-    const hasTranscript = r.transcript ? ' [transcript]' : ''
-    lines.push(`- @${r.account}: "${opening}"${hasTranscript} — ${(r.views ?? 0).toLocaleString()} views [${r.format_type ?? '?'}]`)
+  lines.push('## All-Time Top Reels (30 days, by views)')
+  const allWithTranscript = allSorted.filter(r => r.transcript && r.transcript.trim().length > 50)
+  if (allWithTranscript.length > 0) {
+    for (const r of allWithTranscript.slice(0, 15)) {
+      const opening = r.transcript!.slice(0, 100).split(/[.!?]/)[0]?.trim()
+      lines.push(`- @${r.account}: "${opening}" — ${(r.views ?? 0).toLocaleString()} views [${r.format_type ?? '?'}]`)
+    }
+  } else {
+    lines.push('No transcripts yet — pending first transcription run after scrape.')
   }
 
   return lines.join('\n')

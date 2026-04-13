@@ -299,7 +299,8 @@ export async function POST(req: NextRequest) {
       await Promise.allSettled(metricUpdates.map(r =>
         adminClient
           .from('competitor_reels')
-          .update({ views: r.views, likes: r.likes, comments: r.comments, scraped_week })
+          // Also backfill video_url so transcription can pick up previously-scraped reels
+          .update({ views: r.views, likes: r.likes, comments: r.comments, scraped_week, video_url: r.video_url })
           .eq('reel_id', r.reel_id)
       ))
       updated = metricUpdates.length
