@@ -413,7 +413,7 @@ export async function POST(req: NextRequest) {
               if (profiles[0]) {
                 followerCount = Number(
                   profiles[0].followersCount ?? profiles[0].followerCount ??
-                  profiles[0].followers ?? profiles[0].edge_followed_by?.count ?? 0
+                  profiles[0].followers ?? 0
                 )
               }
             }
