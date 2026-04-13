@@ -14,7 +14,7 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
 import Anthropic from '@anthropic-ai/sdk'
-import { generateInsightForAccount } from '../insight/route'
+import { generateInsightForAccount } from '../_lib/generate-insight'
 
 export const maxDuration = 300
 
