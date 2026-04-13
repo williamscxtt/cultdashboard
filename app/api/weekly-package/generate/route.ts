@@ -382,56 +382,70 @@ function buildKnowledgeContext(
   return lines.join('\n') || 'No historical data yet.'
 }
 
-function buildCompetitorReport(compReels: CompReel[], weekStart: string): string {
+// Detect if a reel is conversion-focused based on transcript content
+function isConversionReel(transcript: string): boolean {
+  const lower = transcript.toLowerCase()
+  return /\b(dm me|message me|link in bio|apply|apply now|programme|program|coaching|1[-–]on[-–]1|one.on.one|work with me|free call|discovery call|book a call|spots|limited spots|comment below|comment .{0,20} below|drop .{0,10} below)\b/.test(lower)
+}
+
+function buildCompetitorReport(compReels: CompReel[]): string {
   if (!compReels.length) return 'No competitor data available yet. Add competitor accounts in the Content page.'
 
-  const sevenDaysAgo = new Date(weekStart)
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
-  const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0]
-
   const lines: string[] = []
-  const thisWeek = compReels
-    .filter(r => r.date && r.date >= sevenDaysAgoStr)
-    .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
 
-  const allSorted = [...compReels].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
-
-  lines.push('## Trending Topics This Week')
+  // Format breakdown overview
   const fmtCount: Record<string, number> = {}
-  for (const r of thisWeek) {
+  for (const r of compReels) {
     if (r.format_type) fmtCount[r.format_type] = (fmtCount[r.format_type] ?? 0) + 1
   }
-  for (const [fmt, n] of Object.entries(fmtCount).sort((a, b) => b[1] - a[1]).slice(0, 5)) {
-    lines.push(`- ${fmt} format dominating (${n} reels this week)`)
+  lines.push('## Format Breakdown This Week')
+  for (const [fmt, n] of Object.entries(fmtCount).sort((a, b) => b[1] - a[1]).slice(0, 8)) {
+    lines.push(`- ${fmt}: ${n} reels`)
   }
   lines.push('')
 
-  lines.push('## Top Performing Reels This Week')
-  // Only show reels with real transcript data — captions are not useful for script generation
-  const thisWeekWithTranscript = thisWeek.filter(r => r.transcript && r.transcript.trim().length > 50)
-  if (thisWeekWithTranscript.length === 0) {
+  // Group all reels by account
+  const byAccount: Record<string, CompReel[]> = {}
+  for (const r of compReels) {
+    if (!byAccount[r.account]) byAccount[r.account] = []
+    byAccount[r.account].push(r)
+  }
+
+  // Sort accounts by their top reel views (most active/performing accounts first)
+  const sortedAccounts = Object.entries(byAccount).sort((a, b) => {
+    const aTop = Math.max(...a[1].map(r => r.views ?? 0))
+    const bTop = Math.max(...b[1].map(r => r.views ?? 0))
+    return bTop - aTop
+  })
+
+  lines.push('## All Competitor Reels This Week (grouped by account)')
+  lines.push('Note: Includes both high-reach content AND conversion-focused content. Study both — the viral reels show what topics/formats get traction; the conversion reels show how they sell.')
+  lines.push('')
+
+  const hasAnyTranscript = compReels.some(r => r.transcript && r.transcript.trim().length > 50)
+  if (!hasAnyTranscript) {
     lines.push('Transcripts pending — run a scrape to fetch video URLs, then transcription will run automatically.')
-  } else {
-    for (const r of thisWeekWithTranscript.slice(0, 20)) {
-      lines.push(`### @${r.account} — ${(r.views ?? 0).toLocaleString()} views [${r.format_type ?? 'unknown'}]`)
-      lines.push(`Full transcript:`)
-      lines.push(r.transcript!.trim())
-      lines.push('')
-    }
+    return lines.join('\n')
   }
-  lines.push('')
 
-  lines.push('## All-Time Top Reels (7 days, by views)')
-  const allWithTranscript = allSorted.filter(r => r.transcript && r.transcript.trim().length > 50)
-  if (allWithTranscript.length > 0) {
-    for (const r of allWithTranscript.slice(0, 15)) {
-      lines.push(`### @${r.account} — ${(r.views ?? 0).toLocaleString()} views [${r.format_type ?? '?'}]`)
-      lines.push(`Full transcript:`)
+  for (const [account, reels] of sortedAccounts) {
+    const reelsWithTranscript = reels
+      .filter(r => r.transcript && r.transcript.trim().length > 50)
+      .sort((a, b) => (b.views ?? 0) - (a.views ?? 0)) // highest views first within each account
+
+    if (!reelsWithTranscript.length) continue
+
+    const topViews = Math.max(...reelsWithTranscript.map(r => r.views ?? 0))
+    lines.push(`### @${account} — ${reelsWithTranscript.length} reels this week (top: ${topViews.toLocaleString()} views)`)
+    lines.push('')
+
+    for (const r of reelsWithTranscript) {
+      const isConversion = r.transcript ? isConversionReel(r.transcript) : false
+      const label = isConversion ? '[CONVERSION REEL]' : `[${r.format_type ?? 'unknown'}]`
+      lines.push(`**${(r.views ?? 0).toLocaleString()} views ${label} | ${r.date ?? ''}**`)
       lines.push(r.transcript!.trim())
       lines.push('')
     }
-  } else {
-    lines.push('No transcripts yet — pending first transcription run after scrape.')
   }
 
   return lines.join('\n')
@@ -489,20 +503,37 @@ function buildCommentContext(reels: Reel[]): string {
 // ── Transcript context — how the client actually speaks ──────────────────────
 
 function buildTranscriptContext(reels: Reel[]): string {
-  const withTranscripts = reels
-    .filter(r => r.transcript && r.transcript.trim().length > 80)
-    .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
-    .slice(0, 10)
-
+  const withTranscripts = reels.filter(r => r.transcript && r.transcript.trim().length > 80)
   if (!withTranscripts.length) return ''
 
-  const lines = ['=== HOW THIS CREATOR ACTUALLY SPEAKS (full transcripts from their top reels) ===',
-    'Study these carefully — their pacing, vocabulary, sentence length, energy, and natural speech patterns are the voice to replicate.',
+  // Top 6 by views — understand what's worked and their best voice moments
+  const topByViews = [...withTranscripts]
+    .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
+    .slice(0, 6)
+
+  // 6 most recent — understand what they're currently talking about and how they're selling
+  const mostRecent = [...withTranscripts]
+    .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+    .slice(0, 6)
+
+  // Combine, deduplicate by transcript content
+  const seen = new Set<string>()
+  const combined = [...topByViews, ...mostRecent].filter(r => {
+    const key = r.transcript!.slice(0, 50)
+    if (seen.has(key)) return false
+    seen.add(key)
+    return true
+  })
+
+  const lines = [
+    '=== HOW THIS CREATOR ACTUALLY SPEAKS (full reel transcripts) ===',
+    'Includes their top performers (voice/style) and most recent posts (current topics, conversion content).',
     '',
   ]
-  for (const r of withTranscripts) {
+  for (const r of combined) {
+    const recency = mostRecent.includes(r) && !topByViews.includes(r) ? 'recent' : `${(r.views ?? 0).toLocaleString()} views`
     const hook = r.hook || r.caption?.slice(0, 60) || '(no hook)'
-    lines.push(`--- ${(r.views ?? 0).toLocaleString()} views | "${hook}" ---`)
+    lines.push(`--- ${recency} | ${r.date ?? ''} | "${hook}" ---`)
     lines.push(r.transcript!.trim())
     lines.push('')
   }
@@ -525,13 +556,18 @@ function buildSystemPrompt(
   return `You are a content strategist and ghostwriter for ${name} (@${igHandle}), who creates short-form video content in the ${niche} space${idealClient ? ` for ${idealClient}` : ''}.
 
 YOUR JOB:
-Write 7 reel scripts each week that take the topics, angles, and hooks that are working for competitors RIGHT NOW — and rewrite them in ${name}'s authentic voice, adapted to their story and audience.
+Write 7 reel scripts each week — a balanced mix of reach content AND conversion content. These are real scripts that will be filmed, so they must be specific, authentic, and immediately filmable.
+
+The 7 scripts should roughly follow this split:
+- 4 reach/awareness reels: hooks, topics, formats that are currently getting views in the niche
+- 2 conversion reels: DM-driving content (offer, results, client stories, objection handling, urgency) — based on how competitors are selling, adapted to ${name}'s offer
+- 1 wild card: a format or angle that stands out from what competitors are doing
 
 HOW TO DO IT:
-1. Look at the competitor reels — identify the specific ideas, hooks, and structures getting the most views this week
-2. Study ${name}'s own transcripts — this is their real voice. Match their rhythm, vocabulary, energy, and natural speech patterns exactly
+1. Study every competitor reel — not just the viral ones. The conversion reels (even low views) show HOW creators in this niche sell. That's as valuable as the high-view content.
+2. Study ${name}'s own transcripts — this is their real voice. Match their rhythm, vocabulary, energy, and natural speech patterns exactly. Also note what topics they already cover so you don't repeat them.
 3. Use the onboarding context only to fill gaps — their story, their audience's pain points, their specific proof points
-4. Combine them: competitor's angle + ${name}'s voice + their own story/data
+4. Combine them: competitor's angle/format + ${name}'s voice + their own story/results/perspective
 
 CONTENT STYLE:
 - Most scripts will be straight-to-camera talking — the creator speaks directly, no props needed
@@ -593,12 +629,14 @@ NOW WRITE THE SCRIPTS
 ===================================================================
 
 RULES:
-- Ideas must come from what competitors are doing that's getting views — do not invent topics from scratch
+- Ideas must come from what competitors are actually posting — both their viral content AND their conversion content. Do not invent topics from scratch.
+- For conversion scripts: look at how competitors pitch their offer, what objections they handle, what results they showcase, what CTAs they use — then write ${name}'s version
 - Voice must match ${name}'s transcripts — not generic coaching language
 - Do NOT copy competitor scripts — take the angle/structure/topic and rewrite it completely in ${name}'s voice with their own story, proof, or perspective
 - If ${name} has performance data, weight towards formats that work for them
 - Do not repeat any format more than twice across the 7 scripts
 - Each script must be a different angle — no two scripts on the same topic
+- Across the 7 scripts, include at least 2 that are explicitly designed to drive DMs/enquiries
 
 OUTPUT FORMAT (follow exactly):
 
@@ -703,7 +741,7 @@ export async function POST(req: NextRequest) {
   const compReelsList = (compReels ?? []) as CompReel[]
 
   // Build all context sections
-  const competitorReport = buildCompetitorReport(compReelsList, weekStart)
+  const competitorReport = buildCompetitorReport(compReelsList)
   const kbContext = buildKnowledgeContext(ownReelsList, compReelsList, weekStart)
   const brandContext = buildBrandContext(intro, profileRow as Record<string, unknown>)
   const transcriptContext = buildTranscriptContext(ownReelsList)
