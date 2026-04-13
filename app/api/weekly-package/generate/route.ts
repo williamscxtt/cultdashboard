@@ -241,8 +241,6 @@ interface CompReel {
   views?: number | null
   likes?: number | null
   comments?: number | null
-  hook?: string | null
-  caption?: string | null
   transcript?: string | null
   format_type?: string | null
   date?: string | null
@@ -269,8 +267,8 @@ function buildKnowledgeContext(
     lines.push('=== OWN TOP PERFORMING REELS (recent) ===')
     for (const r of topOwn) {
       const fmt = r.format_type ? ` [${r.format_type}]` : ''
-      const hook = r.hook || r.caption?.slice(0, 80) || '(no hook)'
-      lines.push(`• ${r.date ?? '?'} | ${(r.views ?? 0).toLocaleString()} views${fmt} — "${hook}"`)
+      const opening = r.transcript ? r.transcript.slice(0, 80).split(/[.!?]/)[0]?.trim() : (r.hook || '(no transcript yet)')
+      lines.push(`• ${r.date ?? '?'} | ${(r.views ?? 0).toLocaleString()} views${fmt} — "${opening}"`)
     }
     lines.push('')
   }
@@ -653,9 +651,9 @@ export async function POST(req: NextRequest) {
   monday.setDate(now.getDate() - diff)
   const weekStart = monday.toISOString().split('T')[0]
 
-  const thirtyDaysAgo = new Date()
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
-  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0]
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0]
 
   const ninetyDaysAgo = new Date()
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
@@ -688,16 +686,16 @@ export async function POST(req: NextRequest) {
     await syncClientOwnReels(profileId, igHandle)
   }
 
-  // Fetch competitor reels
+  // Fetch competitor reels — last 7 days only (matches scrape window)
   const handles = (competitors ?? []).map((c: { ig_username: string }) => c.ig_username)
   const { data: compReels } = handles.length > 0
     ? await adminClient
         .from('competitor_reels')
-        .select('account, views, likes, comments, hook, caption, transcript, format_type, date, scraped_week')
+        .select('account, views, likes, comments, transcript, format_type, date, scraped_week')
         .in('account', handles)
-        .gte('date', thirtyDaysAgoStr)
+        .gte('date', sevenDaysAgoStr)
         .order('views', { ascending: false })
-        .limit(200)
+        .limit(100)
     : { data: [] }
 
   const ownReelsList = (ownReels ?? []) as Reel[]
@@ -750,14 +748,14 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Top hooks for structured data
+  // Top openings for structured data (from transcript)
   const topHooks = compReelsList
-    .filter(r => r.hook && r.views && r.views > 0)
+    .filter(r => r.transcript && r.views && r.views > 0)
     .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
     .slice(0, 15)
     .map(r => ({
       account: r.account,
-      hook: r.hook!,
+      hook: r.transcript!.slice(0, 100).split(/[.!?]/)[0]?.trim() ?? '',
       views: r.views ?? 0,
       format_type: r.format_type ?? null,
       url: null,

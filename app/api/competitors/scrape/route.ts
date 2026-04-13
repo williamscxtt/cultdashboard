@@ -210,31 +210,23 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // Drop posts with no shortCode (can't deduplicate without it)
-  const validPosts = allPosts.filter(p => p.shortCode)
+  // Only keep reels from the last 7 days — fresh snapshot, no accumulation
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const cutoffDate = sevenDaysAgo.toISOString().split('T')[0]
+
+  const validPosts = allPosts
+    .filter(p => p.shortCode)
+    .filter(p => !p.timestamp || p.timestamp.split('T')[0] >= cutoffDate)
 
   if (validPosts.length === 0) {
-    return NextResponse.json({ ok: true, added: 0, updated: 0, accounts_scraped: handles.length, message: 'No posts found in scrape results.' })
+    return NextResponse.json({ ok: true, added: 0, accounts_scraped: handles.length, message: 'No reels found from the last 7 days.' })
   }
-
-  // ── Deduplication: find which reel_ids already exist ──────────────────────
-  const scrapedIds = validPosts.map(p => p.shortCode as string)
-  const { data: existingRows } = await adminClient
-    .from('competitor_reels')
-    .select('reel_id')
-    .in('reel_id', scrapedIds)
-
-  const existingSet = new Set((existingRows ?? []).map((r: { reel_id: string }) => r.reel_id))
-  const newPosts    = validPosts.filter(p => !existingSet.has(p.shortCode as string))
-  const oldPosts    = validPosts.filter(p =>  existingSet.has(p.shortCode as string))
 
   const scraped_week = `${new Date().toISOString().slice(0, 7)}-W${getISOWeek(new Date())}`
   const today        = new Date().toISOString().split('T')[0]
 
   function buildRow(p: ApifyPost, format_type: string) {
-    const caption   = p.caption ?? ''
-    const hook      = caption.split(/[.!?\n]/)[0]?.trim().slice(0, 200) ?? ''
-    const hashtags  = (caption.match(/#\w+/g) ?? []).map(h => h.slice(1))
     return {
       account:      (p.ownerUsername ?? '').toLowerCase(),
       reel_id:      p.shortCode ?? '',
@@ -243,11 +235,7 @@ export async function POST(req: NextRequest) {
       views:        p.videoViewCount ?? 0,
       likes:        p.likesCount ?? 0,
       comments:     p.commentsCount ?? 0,
-      caption:      caption.slice(0, 2000),
-      hook,
-      hashtags,
       format_type,
-      // FIX: videoDuration is a float (e.g. 30.066) — round to int for DB column
       duration_sec: p.videoDuration != null ? Math.round(p.videoDuration) : null,
       reel_url:     p.url ?? null,
       video_url:    p.videoUrl ?? null,
@@ -255,61 +243,39 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // ── Classify only NEW reels (skip re-classification of existing ones) ──────
-  const newFormats: string[] = []
-  if (newPosts.length > 0) {
-    const reelInputs = newPosts.map(p => ({
-      caption: p.caption ?? '',
-      hook: (p.caption ?? '').split(/[.!?\n]/)[0]?.trim().slice(0, 200) ?? '',
-    }))
-    try {
-      for (let i = 0; i < reelInputs.length; i += 20) {
-        const batch = reelInputs.slice(i, i + 20)
-        const batchFormats = await classifyFormats(batch)
-        newFormats.push(...batchFormats)
-      }
-    } catch (classifyErr) {
-      console.error('[competitors/scrape] classifyFormats error:', String(classifyErr))
-      while (newFormats.length < newPosts.length) newFormats.push('other')
+  // Classify all reels for format type
+  const reelInputs = validPosts.map(p => ({
+    caption: p.caption ?? '',
+    hook: (p.caption ?? '').split(/[.!?\n]/)[0]?.trim().slice(0, 200) ?? '',
+  }))
+  const formats: string[] = []
+  try {
+    for (let i = 0; i < reelInputs.length; i += 20) {
+      const batchFormats = await classifyFormats(reelInputs.slice(i, i + 20))
+      formats.push(...batchFormats)
     }
+  } catch (classifyErr) {
+    console.error('[competitors/scrape] classifyFormats error:', String(classifyErr))
+    while (formats.length < validPosts.length) formats.push('other')
   }
 
-  const newRows  = newPosts.map((p, i) => buildRow(p, newFormats[i] ?? 'other'))
-  // Existing rows — update metrics only, keep existing format_type (pass placeholder, overridden below)
-  const metricUpdates = oldPosts.map(p => buildRow(p, 'KEEP_EXISTING'))
-
   try {
-    // Insert new reels
-    let added = 0
-    if (newRows.length > 0) {
-      const { error: insertErr } = await adminClient
-        .from('competitor_reels')
-        .insert(newRows)
-      if (insertErr) {
-        console.error('[competitors/scrape] Insert error:', insertErr.message)
-        // Don't abort — proceed to metric updates
-      } else {
-        added = newRows.length
-      }
-    }
+    // Delete-and-replace: wipe existing reels for these accounts, insert fresh 7-day snapshot
+    await adminClient
+      .from('competitor_reels')
+      .delete()
+      .in('account', handles.map(h => h.toLowerCase()))
 
-    // Refresh metrics on existing reels (views/likes/comments may have changed)
-    let updated = 0
-    if (metricUpdates.length > 0) {
-      await Promise.allSettled(metricUpdates.map(r =>
-        adminClient
-          .from('competitor_reels')
-          // Also backfill video_url so transcription can pick up previously-scraped reels
-          .update({ views: r.views, likes: r.likes, comments: r.comments, scraped_week, video_url: r.video_url })
-          .eq('reel_id', r.reel_id)
-      ))
-      updated = metricUpdates.length
+    const rows = validPosts.map((p, i) => buildRow(p, formats[i] ?? 'other'))
+    const { error: insertErr } = await adminClient.from('competitor_reels').insert(rows)
+    if (insertErr) {
+      console.error('[competitors/scrape] Insert error:', insertErr.message)
+      return NextResponse.json({ error: insertErr.message }, { status: 500 })
     }
 
     return NextResponse.json({
       ok: true,
-      added,
-      updated,
+      added: rows.length,
       accounts_scraped: handles.length,
       reels_found: validPosts.length,
     })
