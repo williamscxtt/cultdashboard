@@ -68,6 +68,7 @@ export default function CompetitorManager() {
   const [adding, setAdding] = useState(false)
   const [removingId, setRemovingId] = useState<string | null>(null)
   const [refreshingInsight, setRefreshingInsight] = useState<string | null>(null)
+  const [generatingAll, setGeneratingAll] = useState(false)
 
   async function fetchCompetitors() {
     try {
@@ -138,6 +139,33 @@ export default function CompetitorManager() {
     }
   }
 
+  async function handleGenerateAll() {
+    const pending = competitors.filter(c => c.reel_count > 0)
+    if (pending.length === 0) return
+    setGeneratingAll(true)
+    let done = 0
+    for (const c of pending) {
+      setRefreshingInsight(c.id)
+      try {
+        const res = await fetch('/api/competitors/insight', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ig_username: c.ig_username }),
+        })
+        const json = await res.json()
+        if (res.ok && json.insight) {
+          setCompetitors(prev => prev.map(x =>
+            x.id === c.id ? { ...x, insight: json.insight, insight_updated_at: new Date().toISOString() } : x
+          ))
+          done++
+        }
+      } catch { /* skip failed accounts */ }
+      setRefreshingInsight(null)
+    }
+    setGeneratingAll(false)
+    toast.success(`Insights generated for ${done} account${done !== 1 ? 's' : ''}`)
+  }
+
   async function handleRefreshInsight(c: Competitor) {
     setRefreshingInsight(c.id)
     try {
@@ -196,13 +224,29 @@ export default function CompetitorManager() {
         </Button>
       </form>
 
-      {/* Count */}
-      <div style={{
-        fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)',
-        textTransform: 'uppercase', letterSpacing: '0.06em',
-        marginBottom: 12,
-      }}>
-        {loading ? '— / 10 accounts tracked' : `${competitors.length} / ${MAX_COMPETITORS} accounts tracked`}
+      {/* Count + generate all */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+        <div style={{
+          fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)',
+          textTransform: 'uppercase', letterSpacing: '0.06em',
+        }}>
+          {loading ? '— / 10 accounts tracked' : `${competitors.length} / ${MAX_COMPETITORS} accounts tracked`}
+        </div>
+        {!loading && competitors.some(c => c.reel_count > 0) && (
+          <button
+            onClick={handleGenerateAll}
+            disabled={generatingAll}
+            style={{
+              background: 'transparent', border: 'none', cursor: generatingAll ? 'default' : 'pointer',
+              fontSize: 11, fontWeight: 600, color: 'var(--accent)',
+              display: 'flex', alignItems: 'center', gap: 4, padding: 0,
+              opacity: generatingAll ? 0.6 : 1, transition: 'opacity 0.15s',
+            }}
+          >
+            <RefreshCw size={11} style={{ animation: generatingAll ? 'spin 1s linear infinite' : 'none' }} />
+            {generatingAll ? 'Generating...' : 'Generate all insights'}
+          </button>
+        )}
       </div>
 
       {/* Competitor cards */}
