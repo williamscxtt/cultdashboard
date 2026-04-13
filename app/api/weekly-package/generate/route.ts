@@ -630,6 +630,8 @@ NOW WRITE THE SCRIPTS
 
 RULES:
 - Ideas must come from what competitors are actually posting — both their viral content AND their conversion content. Do not invent topics from scratch.
+- Draw inspiration from ALL competitors, not just the highest-view accounts. A competitor with lower views may be posting content that's more niche-relevant or closer to the type of content ${name} should make.
+- Spread ideas across competitors — aim for at least one script inspired by each tracked account.
 - For conversion scripts: look at how competitors pitch their offer, what objections they handle, what results they showcase, what CTAs they use — then write ${name}'s version
 - Voice must match ${name}'s transcripts — not generic coaching language
 - Do NOT copy competitor scripts — take the angle/structure/topic and rewrite it completely in ${name}'s voice with their own story, proof, or perspective
@@ -637,15 +639,16 @@ RULES:
 - Do not repeat any format more than twice across the 7 scripts
 - Each script must be a different angle — no two scripts on the same topic
 - Across the 7 scripts, include at least 2 that are explicitly designed to drive DMs/enquiries
+- You MUST write exactly 7 scripts. Count them before you finish. Do not stop at 6.
 
 OUTPUT FORMAT (follow exactly):
 
 ## 📊 Weekly Intel — w/c ${formattedWeek}
 
 ### What's Popping This Week
-[3–4 bullets. For each, describe the trend AND cite the source. Format exactly:]
-- [What's working and why it resonates with this audience]
-  Source: @account_handle — "[exact hook from the reel]" (N,NNN views)
+Write one bullet for EACH competitor account that has reels this week. Every tracked account must be mentioned. For each:
+- [What's working for this account and why it resonates — specific angle, topic, or format]
+  Source: @account_handle — "[exact quote from their reel transcript]" (N,NNN views)
 
 ### ${name}'s Performance Last Week
 [What hit, what didn't — based on their reel data. Skip section if no data.]
@@ -667,12 +670,98 @@ OUTPUT FORMAT (follow exactly):
 
 ---
 
-[Repeat exact format for Reels 2–7]
+### 🎬 Reel 2 — Tuesday | [FORMAT / STYLE]
+
+**Hook:** [Opening line]
+
+**Visual:** [Visual direction]
+
+**Script:**
+[Full script. 120–250 words.]
+
+**Caption:** [2–3 lines.]
+
+**CTA:** [Varied wording]
+
+---
+
+### 🎬 Reel 3 — Wednesday | [FORMAT / STYLE]
+
+**Hook:** [Opening line]
+
+**Visual:** [Visual direction]
+
+**Script:**
+[Full script. 120–250 words.]
+
+**Caption:** [2–3 lines.]
+
+**CTA:** [Varied wording]
+
+---
+
+### 🎬 Reel 4 — Thursday | [FORMAT / STYLE]
+
+**Hook:** [Opening line]
+
+**Visual:** [Visual direction]
+
+**Script:**
+[Full script. 120–250 words.]
+
+**Caption:** [2–3 lines.]
+
+**CTA:** [Varied wording]
+
+---
+
+### 🎬 Reel 5 — Friday | [FORMAT / STYLE]
+
+**Hook:** [Opening line]
+
+**Visual:** [Visual direction]
+
+**Script:**
+[Full script. 120–250 words.]
+
+**Caption:** [2–3 lines.]
+
+**CTA:** [Varied wording]
+
+---
+
+### 🎬 Reel 6 — Saturday | [FORMAT / STYLE]
+
+**Hook:** [Opening line]
+
+**Visual:** [Visual direction]
+
+**Script:**
+[Full script. 120–250 words.]
+
+**Caption:** [2–3 lines.]
+
+**CTA:** [Varied wording]
+
+---
+
+### 🎬 Reel 7 — Sunday | [FORMAT / STYLE]
+
+**Hook:** [Opening line]
+
+**Visual:** [Visual direction]
+
+**Script:**
+[Full script. 120–250 words.]
+
+**Caption:** [2–3 lines.]
+
+**CTA:** [Varied wording]
 
 ---
 
 ### Accounts to Watch This Week
-[1–2 accounts with a breakout week — what specifically to steal from them]`
+[The 1–2 accounts that had the most interesting or unexpected content this week — what specifically to take note of]`
 }
 
 // ── POST: generate a weekly package ──────────────────────────────────────────
@@ -752,7 +841,7 @@ export async function POST(req: NextRequest) {
   try {
     const message = await anthropic.messages.create({
       model: 'claude-opus-4-6',
-      max_tokens: 8192,
+      max_tokens: 16000,
       system: buildSystemPrompt(name, igHandle || 'creator', intro, profileRow as Record<string, unknown>),
       messages: [{
         role: 'user',
