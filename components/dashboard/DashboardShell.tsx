@@ -50,7 +50,7 @@ export default function DashboardShell({
   const displayProfile = isImpersonating ? effectiveProfile : realProfile
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--background)' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--background)' }}>
       <Sidebar
         realProfile={realProfile}
         effectiveProfile={effectiveProfile}
@@ -63,8 +63,10 @@ export default function DashboardShell({
       <div style={{
         flex: 1,
         minWidth: 0,
+        height: '100vh',
         display: 'flex',
         flexDirection: 'column',
+        overflow: 'hidden',
       }}>
         <TopBar
           profile={displayProfile}

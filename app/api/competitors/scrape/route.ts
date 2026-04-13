@@ -89,7 +89,9 @@ interface ApifyPost {
   ownerUsername?: string
   shortCode?: string
   url?: string
-  videoViewCount?: number
+  videoViewCount?: number   // regular videos
+  videoPlayCount?: number   // reels (often the correct field)
+  playCount?: number        // alternate field name used by some scraper versions
   likesCount?: number
   commentsCount?: number
   timestamp?: string
@@ -232,7 +234,8 @@ export async function POST(req: NextRequest) {
       reel_id:      p.shortCode ?? '',
       scraped_week,
       date:         p.timestamp ? p.timestamp.split('T')[0] : today,
-      views:        p.videoViewCount ?? 0,
+      // Reels use videoPlayCount or playCount; fall back to videoViewCount for regular videos
+      views:        p.videoPlayCount ?? p.playCount ?? p.videoViewCount ?? 0,
       likes:        p.likesCount ?? 0,
       comments:     p.commentsCount ?? 0,
       format_type,

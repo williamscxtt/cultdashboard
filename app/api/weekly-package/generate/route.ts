@@ -33,7 +33,7 @@ const APIFY_ACTOR = 'apify~instagram-scraper'
 
 interface ApifyPost {
   ownerUsername?: string; shortCode?: string; url?: string
-  videoViewCount?: number; likesCount?: number; commentsCount?: number
+  videoViewCount?: number; videoPlayCount?: number; playCount?: number; likesCount?: number; commentsCount?: number
   timestamp?: string; caption?: string; videoUrl?: string
   displayUrl?: string; videoDuration?: number
 }
@@ -164,7 +164,7 @@ async function syncClientOwnReels(profileId: string, igHandle: string): Promise<
         reel_id: p.shortCode ?? '',
         scraped_week,
         date: p.timestamp ? p.timestamp.split('T')[0] : new Date().toISOString().split('T')[0],
-        views: p.videoViewCount ?? 0,
+        views: p.videoPlayCount ?? p.playCount ?? p.videoViewCount ?? 0,
         likes: p.likesCount ?? 0,
         comments: p.commentsCount ?? 0,
         caption: caption.slice(0, 2000),
@@ -189,7 +189,7 @@ async function syncClientOwnReels(profileId: string, igHandle: string): Promise<
         adminClient
           .from('client_reels')
           .update({
-            views: p.videoViewCount ?? 0,
+            views: p.videoPlayCount ?? p.playCount ?? p.videoViewCount ?? 0,
             likes: p.likesCount ?? 0,
             comments: p.commentsCount ?? 0,
             scraped_week,
