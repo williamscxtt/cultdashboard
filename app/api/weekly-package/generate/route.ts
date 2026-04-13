@@ -472,7 +472,31 @@ function buildCommentContext(reels: Reel[]): string {
   return lines.join('\n')
 }
 
-// ── System prompt — mirrors build_system_prompt() ────────────────────────────
+// ── Transcript context — how the client actually speaks ──────────────────────
+
+function buildTranscriptContext(reels: Reel[]): string {
+  const withTranscripts = reels
+    .filter(r => r.transcript && r.transcript.trim().length > 80)
+    .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
+    .slice(0, 6)
+
+  if (!withTranscripts.length) return ''
+
+  const lines = ['=== HOW THIS CREATOR ACTUALLY SPEAKS (transcripts from their top reels) ===',
+    'Study these carefully — their pacing, vocabulary, sentence length, energy, and natural speech patterns are the voice to replicate.',
+    '',
+  ]
+  for (const r of withTranscripts) {
+    const hook = r.hook || r.caption?.slice(0, 60) || '(no hook)'
+    lines.push(`--- ${(r.views ?? 0).toLocaleString()} views | "${hook}" ---`)
+    lines.push(r.transcript!.slice(0, 700).trim())
+    lines.push('')
+  }
+
+  return lines.join('\n')
+}
+
+// ── System prompt ─────────────────────────────────────────────────────────────
 
 function buildSystemPrompt(
   name: string,
@@ -480,120 +504,123 @@ function buildSystemPrompt(
   intro: Record<string, unknown>,
   profile: Record<string, unknown>,
 ): string {
-  const niche = (intro.specific_niche as string) || (intro.what_you_coach as string) || (profile.niche as string) || 'coaching'
-  const idealClient = (intro.ideal_client as string) || (profile.target_audience as string) || 'their ideal client'
-  const transformation = (intro.client_transformation as string) || ''
-  const voice = (intro.brand_voice as string) || 'direct, zero fluff, slightly provocative, uses real numbers and client results'
-  const hookStyle = (intro.hook_style as string) || 'Hooks must create immediate tension or curiosity in the first 3 words'
+  const niche = (intro.specific_niche as string) || (intro.what_you_coach as string) || (profile.niche as string) || 'their niche'
+  const idealClient = (intro.ideal_client as string) || (profile.target_audience as string) || ''
+  const ctaKeyword = (intro.dm_keyword as string) || (intro.cta_keyword as string) || (profile.dm_keyword as string) || '[YOUR_KEYWORD]'
 
-  return `You are a content strategist and ghostwriter for ${name} (@${igHandle}).
+  return `You are a content strategist and ghostwriter for ${name} (@${igHandle}), who creates short-form video content in the ${niche} space${idealClient ? ` for ${idealClient}` : ''}.
 
-BRAND:
-- Niche: ${niche}
-- Ideal client: ${idealClient}
-${transformation ? `- Transformation delivered: ${transformation}` : ''}
-- Voice: ${voice}
-- Hook style: ${hookStyle}
-- Posting: talking head reels only (no carousels, no stories)
-- CTAs:
-  • "DM me CULT" → coaching/program CTA
-  • comment "AUDIT" → free profile audit lead magnet
+YOUR JOB:
+Write 7 reel scripts each week that take the topics, angles, and hooks that are working for competitors RIGHT NOW — and rewrite them in ${name}'s authentic voice, adapted to their story and audience.
 
-CONTENT FORMATS:
-- comparison: red flag vs green flag, bad vs good advice, contrasting two approaches
-- list: top reasons, common mistakes, things nobody tells you
-- raw_story: personal story or client story with a lesson
-- client_proof: client result + what specifically changed
-- reaction: reacting to viral/bad advice in their space
-- tutorial: specific tactical breakdown
-- controversy: calls out popular bad advice directly
-- question_hook: opens with a provocative question
-- lead_magnet: hooks with a problem → positions the audit as the fix → "comment AUDIT"
+HOW TO DO IT:
+1. Look at the competitor reels — identify the specific ideas, hooks, and structures getting the most views this week
+2. Study ${name}'s own transcripts — this is their real voice. Match their rhythm, vocabulary, energy, and natural speech patterns exactly
+3. Use the onboarding context only to fill gaps — their story, their audience's pain points, their specific proof points
+4. Combine them: competitor's angle + ${name}'s voice + their own story/data
 
-RULES:
-- Every script must be filmable as a talking head reel (speak direct to camera)
-- Scripts should feel like ${name} talking, not like a LinkedIn post
-- No corporate language, no "in today's video", no filler openers
-- Hooks must create immediate tension or curiosity in the first 3 words
-- Each reel should have ONE clear message
-- Vary the energy: some punchy/fast, some slower and more real
-- Use specific numbers, client results, and language from their niche
-- CTAs: use "DM me CULT" for coaching CTAs, "comment AUDIT below" for lead magnet CTAs`
+CONTENT STYLE:
+- Most scripts will be straight-to-camera talking — the creator speaks directly, no props needed
+- Some scripts can suggest a visual format if it genuinely fits: split screen with a chart/screen recording, green screen behind them, side-by-side comparison, reacting to content (note: the creator will need to find the specific video themselves — just describe the type of content to react to)
+- Every script must be filmable — if it needs a visual element, say what it is
+- 45–90 seconds when spoken aloud (120–250 words)
+- ONE clear message per reel
+- Vary energy: some punchy and fast, some slower and more personal
+- No corporate language. No "in today's video". No filler openers.
+- Hooks must create tension or curiosity immediately
+
+CTAs — ${name}'s own:
+- Coaching/program CTA: "DM me ${ctaKeyword}"
+- Use a natural variation each time — don't repeat the same wording across all 7 scripts`
 }
 
-// ── User prompt — mirrors build_user_prompt() ─────────────────────────────────
+// ── User prompt ───────────────────────────────────────────────────────────────
 
 function buildUserPrompt(
   competitorReport: string,
   kbContext: string,
   brandContext: string,
+  transcriptContext: string,
   commentContext: string,
   weekStart: string,
   name: string,
 ): string {
-  const formattedWeek = new Date(weekStart + 'T00:00:00').toLocaleDateString('en-GB', {
-    day: 'numeric', month: 'short', year: 'numeric',
+  const formattedWeek = new Date(weekStart + 'T00:00:00Z').toLocaleDateString('en-GB', {
+    day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC',
   })
 
-  return `Here is this week's competitor research data and performance context:
+  return `Write ${name}'s content plan for the week of ${formattedWeek}.
 
---- COMPETITOR RESEARCH ---
-${competitorReport.slice(0, 20000)}
+===================================================================
+STEP 1 — WHAT'S WORKING IN THE NICHE RIGHT NOW (your primary source for ideas)
+===================================================================
+Study these competitor reels. These are the angles, hooks, and structures that are actually getting views this week. This is where the ideas come from.
 
---- KNOWLEDGE BASE CONTEXT (accumulated performance data) ---
+${competitorReport.slice(0, 18000)}
+
+===================================================================
+STEP 2 — HOW ${name.toUpperCase()} ACTUALLY SOUNDS (your primary source for voice)
+===================================================================
+${transcriptContext || `No transcripts available yet — use their captions and performance data below to infer their style.`}
+
+===================================================================
+STEP 3 — WHAT HAS WORKED FOR ${name.toUpperCase()} PREVIOUSLY (double down on winners)
+===================================================================
 ${kbContext}
 
---- BRAND KNOWLEDGE BASE ---
+===================================================================
+STEP 4 — CONTEXT ABOUT ${name.toUpperCase()} (use to fill gaps and personalise)
+===================================================================
 ${brandContext}
-${commentContext ? `\n--- COMMENT INTELLIGENCE ---\n${commentContext}` : ''}
+${commentContext ? `\n--- AUDIENCE COMMENTS (what their viewers are saying) ---\n${commentContext}` : ''}
 
----
+===================================================================
+NOW WRITE THE SCRIPTS
+===================================================================
 
-Based on all of the above, write ${name}'s content plan for the week of ${formattedWeek}.
+RULES:
+- Ideas must come from what competitors are doing that's getting views — do not invent topics from scratch
+- Voice must match ${name}'s transcripts — not generic coaching language
+- Do NOT copy competitor scripts — take the angle/structure/topic and rewrite it completely in ${name}'s voice with their own story, proof, or perspective
+- If ${name} has performance data, weight towards formats that work for them
+- Do not repeat any format more than twice across the 7 scripts
+- Each script must be a different angle — no two scripts on the same topic
 
-REQUIREMENTS:
-- Write exactly 7 reel scripts (one per day, Mon–Sun)
-- Include exactly 1 lead magnet reel (comment AUDIT) — can be any day
-- Remaining 6 reels: mix of formats — NO more than 2 of the same format
-- Learn from what competitors are doing that's getting views and adapt it to ${name}'s voice and niche
-- If ${name} has performance data, double down on best formats and avoid what flopped
-- Scripts should be 45–90 seconds when spoken aloud (roughly 120–250 words)
-- Reference specific pain points and language relevant to ${name}'s ideal client
-- Make hooks that would stop their specific audience mid-scroll
-
-OUTPUT FORMAT (follow exactly — do not deviate):
+OUTPUT FORMAT (follow exactly):
 
 ## 📊 Weekly Intel — w/c ${formattedWeek}
 
 ### What's Popping This Week
-[3–4 bullets. For each trend, describe what's working AND include the specific source video from the competitor data. Use EXACTLY this format — do not deviate:]
-- [Describe the trend/angle/format that's working and why it resonates]
-  Source: @account_handle — "[exact hook or opening line from the reel]" (N,NNN views)
+[3–4 bullets. For each, describe the trend AND cite the source. Format exactly:]
+- [What's working and why it resonates with this audience]
+  Source: @account_handle — "[exact hook from the reel]" (N,NNN views)
 
-### Performance Last Week
-[What hit, what didn't — based on their actual reel data above. Skip if no data.]
+### ${name}'s Performance Last Week
+[What hit, what didn't — based on their reel data. Skip section if no data.]
 
 ---
 
-### 🎬 Reel 1 — Monday | [FORMAT TYPE]
+### 🎬 Reel 1 — Monday | [FORMAT / STYLE]
 
-**Hook:** [Opening line — punchy, first 3 words create tension]
+**Hook:** [Opening line]
+
+**Visual:** [Straight to camera / Split screen with X / React to: describe the type of video to find / etc.]
 
 **Script:**
-[Full talking-head script. Natural speech. 120–250 words.]
+[Full script. Written as natural speech — how ${name} actually talks. 120–250 words.]
 
-**Caption:** [2–3 lines. Hook + value + CTA. No hashtag spam.]
+**Caption:** [2–3 lines. No hashtag spam.]
 
-**CTA:** [DM CULT / comment AUDIT]
+**CTA:** [Their specific CTA — varied wording each reel]
 
 ---
 
-[Repeat exact format for Reels 2–7, each with their own ### 🎬 Reel N header]
+[Repeat exact format for Reels 2–7]
 
 ---
 
 ### Accounts to Watch This Week
-[1–2 accounts that had a breakout week and what to steal from them]`
+[1–2 accounts with a breakout week — what specifically to steal from them]`
 }
 
 // ── POST: generate a weekly package ──────────────────────────────────────────
@@ -665,9 +692,10 @@ export async function POST(req: NextRequest) {
   const competitorReport = buildCompetitorReport(compReelsList, weekStart)
   const kbContext = buildKnowledgeContext(ownReelsList, compReelsList, weekStart)
   const brandContext = buildBrandContext(intro, profileRow as Record<string, unknown>)
+  const transcriptContext = buildTranscriptContext(ownReelsList)
   const commentContext = buildCommentContext(ownReelsList)
 
-  // Generate with Claude Opus (same model as weekly_runner.py)
+  // Generate with Claude Opus
   let scriptsMarkdown: string
   try {
     const message = await anthropic.messages.create({
@@ -676,7 +704,7 @@ export async function POST(req: NextRequest) {
       system: buildSystemPrompt(name, igHandle || 'creator', intro, profileRow as Record<string, unknown>),
       messages: [{
         role: 'user',
-        content: buildUserPrompt(competitorReport, kbContext, brandContext, commentContext, weekStart, name),
+        content: buildUserPrompt(competitorReport, kbContext, brandContext, transcriptContext, commentContext, weekStart, name),
       }],
     })
     scriptsMarkdown = message.content[0].type === 'text' ? message.content[0].text : ''
