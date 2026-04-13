@@ -82,14 +82,22 @@ export default function ClientsManager({ initialClients }: Props) {
   }
 
   async function sendInvite(email: string, name?: string | null) {
-    const res = await fetch('/api/admin/invite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    })
-    const data = await res.json()
-    if (data.sent > 0) toast.success(`Invite sent to ${name || email}`)
-    else toast.error(`Failed to send invite to ${name || email}`)
+    try {
+      const res = await fetch('/api/admin/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast.error(`Error: ${data.error || res.status}`)
+        return
+      }
+      if (data.sent > 0) toast.success(`Invite sent to ${name || email}`)
+      else toast.error(`Failed: ${data.failed?.[0]?.error || 'unknown error'}`)
+    } catch (err) {
+      toast.error(`Network error sending invite`)
+    }
   }
 
   async function sendAllInvites() {
@@ -319,9 +327,9 @@ export default function ClientsManager({ initialClients }: Props) {
 function ClientRow({ client, onToggleActive, onSendInvite }: { client: Profile; onToggleActive: (c: Profile) => void; onSendInvite: (email: string, name?: string | null) => void }) {
   const [inviting, setInviting] = useState(false)
   return (
-    <tr style={{ borderBottom: '1px solid var(--border)' }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.04)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
+    <tr style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.1s' }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)' }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
     >
       <td style={{ padding: '12px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -383,8 +391,8 @@ function ClientRow({ client, onToggleActive, onSendInvite }: { client: Profile; 
             disabled={inviting || !client.email}
             title="Send login invite email"
             style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              padding: '4px 8px', borderRadius: 5, border: '1px solid var(--border)',
+              display: 'flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap', flexShrink: 0,
+              padding: '4px 10px', borderRadius: 5, border: '1px solid var(--border)',
               background: 'transparent', cursor: inviting ? 'wait' : 'pointer',
               color: 'var(--muted-foreground)', fontSize: 11, fontFamily: 'inherit',
               opacity: inviting ? 0.5 : 1,
