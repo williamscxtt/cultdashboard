@@ -858,10 +858,7 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
                   padding: '12px 20px',
                   borderBottom: idx < 7 ? '1px solid var(--border)' : 'none',
                   display: 'flex', alignItems: 'flex-start', gap: 14,
-                  transition: 'background 0.1s',
                 }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.04)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                 >
                   <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--border)', minWidth: 20, flexShrink: 0, lineHeight: 1.4 }}>
                     {idx + 1}

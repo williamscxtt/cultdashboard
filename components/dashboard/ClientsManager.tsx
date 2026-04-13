@@ -327,10 +327,7 @@ export default function ClientsManager({ initialClients }: Props) {
 function ClientRow({ client, onToggleActive, onSendInvite }: { client: Profile; onToggleActive: (c: Profile) => void; onSendInvite: (email: string, name?: string | null) => void }) {
   const [inviting, setInviting] = useState(false)
   return (
-    <tr style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.1s' }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.05)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = '' }}
-    >
+    <tr style={{ borderBottom: '1px solid var(--border)' }}>
       <td style={{ padding: '12px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{

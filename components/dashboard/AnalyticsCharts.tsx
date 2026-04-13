@@ -143,10 +143,7 @@ export default function AnalyticsCharts({ reels, formatGroups }: Props) {
               </thead>
               <tbody>
                 {topReels.map((r) => (
-                  <tr key={r.rank} style={{ borderBottom: '1px solid var(--border)' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.04)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
-                  >
+                  <tr key={r.rank} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--muted-foreground)', fontWeight: 700 }}>{r.rank}</td>
                     <td style={{ padding: '12px 16px', fontSize: 13, color: 'var(--foreground)', maxWidth: 320 }}>
                       <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
