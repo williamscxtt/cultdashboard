@@ -12,6 +12,7 @@ import {
 } from 'recharts'
 import { Card } from '@/components/ui'
 import { useSyncProgress } from '@/components/dashboard/SyncProgress'
+import { useIsMobile } from '@/lib/use-mobile'
 import type { ClientReel, FollowerSnapshot } from '@/lib/types'
 
 // ─── Instagram icon ───────────────────────────────────────────────────────────
@@ -573,12 +574,14 @@ interface SyncResult { synced: number; total: number; classified?: number; warni
 
 export default function AnalyticsDashboard({ profileId, followersCount, igUsername, followerHistory = [], profileName, dashboardBio, focusThisWeek }: Props) {
   const { startSync, updateProgress, finishSync } = useSyncProgress()
+  const isMobile = useIsMobile()
   const [reels, setReels] = useState<ClientReel[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null)
   const [syncError, setSyncError] = useState<string | null>(null)
+  const [libraryVisible, setLibraryVisible] = useState(24)
   const [timeRange, setTimeRange] = useState('1m')
   const [viewsMode, setViewsMode] = useState('Daily')
   const [engMode, setEngMode] = useState('Daily')
@@ -747,18 +750,19 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   const maxFmtV = formatData.length ? Math.max(...formatData.map(d => d.avgViews)) : 0
 
   // ── content library ───────────────────────────────────────────────────────
-  const libraryReels = useMemo(() => {
-    const pool = contentSort === 'Recent'
-      ? [...reels].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      : contentSort === 'Top Views'
-      ? [...reels].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
-      : [...reels].sort((a, b) => {
-          const ea = (a.likes ?? 0) + (a.comments ?? 0) + (a.saves ?? 0)
-          const eb = (b.likes ?? 0) + (b.comments ?? 0) + (b.saves ?? 0)
-          return eb - ea
-        })
-    return pool.slice(0, 24)
+  const libraryReelsSorted = useMemo(() => {
+    if (contentSort === 'Recent')
+      return [...reels].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    if (contentSort === 'Top Views')
+      return [...reels].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
+    return [...reels].sort((a, b) => {
+      const ea = (a.likes ?? 0) + (a.comments ?? 0) + (a.saves ?? 0)
+      const eb = (b.likes ?? 0) + (b.comments ?? 0) + (b.saves ?? 0)
+      return eb - ea
+    })
   }, [reels, contentSort])
+
+  const libraryReels = libraryReelsSorted.slice(0, libraryVisible)
 
   // ── totals for chart sub-labels ───────────────────────────────────────────
   const totalViews   = currentReels.reduce((a, r) => a + (r.views ?? 0), 0)
@@ -774,14 +778,14 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
   if (loading) {
     return (
-      <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
-          {[...Array(4)].map((_, i) => (
+      <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1100, margin: '0 auto' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+          {[...Array(isMobile ? 2 : 4)].map((_, i) => (
             <div key={i} style={{ height: 100, borderRadius: 12, background: 'var(--muted)', animation: 'pulse 1.5s ease-in-out infinite' }} />
           ))}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
-          {[...Array(4)].map((_, i) => (
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          {[...Array(isMobile ? 2 : 4)].map((_, i) => (
             <div key={i} style={{ height: 220, borderRadius: 12, background: 'var(--muted)', animation: 'pulse 1.5s ease-in-out infinite' }} />
           ))}
         </div>
@@ -791,7 +795,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1100, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1100, margin: '0 auto' }}>
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div style={{ marginBottom: 24 }}>
@@ -856,7 +860,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       {/* ── Platform + time filters ─────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
         {/* Platform tabs */}
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
           {[
             { label: 'All', icon: null, enabled: true },
             { label: 'Instagram', icon: <IgIcon size={13} />, enabled: true },
@@ -936,7 +940,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       )}
 
       {/* ── Stat cards ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 12, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 12, marginBottom: 16 }}>
         <StatCard label="Total Views" value={stats.views.value} change={stats.views.change} sparkData={stats.views.spark} accentColor="#3B82F6" delay={0} />
         <StatCard label="Engagements" value={stats.eng.value} change={stats.eng.change} sparkData={stats.eng.spark} accentColor="#3B82F6" delay={0.05} />
         <StatCard
@@ -968,7 +972,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       {reels.length > 0 && (
         <>
           {/* ── Charts 2×2 ────────────────────────────────────────────────── */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 12 }}>
 
             {/* Views Over Time */}
             <ChartCard delay={0.15}>
@@ -1113,13 +1117,13 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                 Content Library <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted-foreground)' }}>({total})</span>
               </div>
               <div style={{ display: 'flex', gap: 2, background: 'var(--muted)', borderRadius: 8, padding: 3 }}>
-                {['Recent', 'Top Views', 'Top Engagement'].map(opt => (
-                  <button key={opt} onClick={() => setContentSort(opt)} style={{
-                    padding: '5px 12px', borderRadius: 6, border: 'none', cursor: 'pointer',
-                    fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
+                {(isMobile ? ['Recent', 'Top Views'] : ['Recent', 'Top Views', 'Top Engagement']).map(opt => (
+                  <button key={opt} onClick={() => { setContentSort(opt); setLibraryVisible(24) }} style={{
+                    padding: '5px 10px', borderRadius: 6, border: 'none', cursor: 'pointer',
+                    fontSize: isMobile ? 11 : 12, fontWeight: 600, fontFamily: 'inherit',
                     background: contentSort === opt ? 'var(--card)' : 'transparent',
                     color: contentSort === opt ? 'var(--foreground)' : 'var(--muted-foreground)',
-                    transition: 'all 0.15s',
+                    transition: 'all 0.15s', whiteSpace: 'nowrap',
                     boxShadow: contentSort === opt ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
                   }}>
                     {opt}
@@ -1129,15 +1133,32 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
             </div>
 
             <div style={{
-              padding: 20,
+              padding: isMobile ? 12 : 20,
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))',
+              gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(190px, 1fr))',
               gap: 12,
             }}>
               {libraryReels.map((reel, idx) => (
                 <ReelCard key={reel.reel_id || reel.id || idx} reel={reel} idx={idx} profileId={profileId} />
               ))}
             </div>
+
+            {libraryVisible < libraryReelsSorted.length && (
+              <div style={{ padding: '0 20px 20px', textAlign: 'center' }}>
+                <button
+                  onClick={() => setLibraryVisible(v => v + 24)}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 6,
+                    padding: '8px 20px', borderRadius: 8,
+                    border: '1px solid var(--border)', background: 'var(--muted)',
+                    color: 'var(--muted-foreground)', fontSize: 12, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  Load more ({libraryReelsSorted.length - libraryVisible} remaining)
+                </button>
+              </div>
+            )}
           </motion.div>
         </>
       )}

@@ -463,7 +463,7 @@ function RichDashboard({ profile, reels }: { profile: Profile; reels: ClientReel
                   <tr
                     key={r.reel_id || r.id || idx}
                     style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.1s' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--muted)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.04)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                   >
                     <td style={{ padding: '11px 16px', fontSize: 12, color: 'var(--muted-foreground)', whiteSpace: 'nowrap' }}>

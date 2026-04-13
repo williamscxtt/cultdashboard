@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
 
-export const maxDuration = 60
+export const maxDuration = 180
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 
@@ -20,36 +20,51 @@ function extractShortcode(url: string): string | null {
   return m ? m[1] : null
 }
 
-async function fetchInstagramMeta(url: string): Promise<{
-  caption: string; videoUrl: string | null; views: number | null; likes: number | null
-}> {
-  const headers = {
-    'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-    'Accept': 'text/html,application/xhtml+xml',
-    'Accept-Language': 'en-US,en;q=0.9',
+/**
+ * Uses Apify instagram-scraper to get the actual video URL for a reel.
+ * This is more reliable than direct HTML scraping since Instagram blocks bots.
+ */
+async function getVideoUrlViaApify(igUrl: string): Promise<string | null> {
+  const token = process.env.APIFY_API_TOKEN
+  if (!token) return null
+
+  try {
+    const startRes = await fetch(
+      `https://api.apify.com/v2/acts/apify~instagram-scraper/runs?token=${token}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          directUrls: [igUrl],
+          resultsType: 'posts',
+          resultsLimit: 1,
+          addParentData: false,
+        }),
+      }
+    )
+    if (!startRes.ok) return null
+    const { data: { id: runId } } = await startRes.json()
+
+    // Poll until done (max 90s)
+    const start = Date.now()
+    while (Date.now() - start < 90_000) {
+      await new Promise(r => setTimeout(r, 4000))
+      const pollRes = await fetch(`https://api.apify.com/v2/actor-runs/${runId}?token=${token}`)
+      if (!pollRes.ok) break
+      const { data } = await pollRes.json()
+      if (data?.status === 'SUCCEEDED') break
+      if (['FAILED', 'ABORTED', 'TIMED-OUT'].includes(data?.status ?? '')) return null
+    }
+
+    const itemsRes = await fetch(
+      `https://api.apify.com/v2/actor-runs/${runId}/dataset/items?token=${token}&format=json&clean=true`
+    )
+    if (!itemsRes.ok) return null
+    const items = await itemsRes.json()
+    return (items[0]?.videoUrl as string) ?? null
+  } catch {
+    return null
   }
-
-  const res = await fetch(url, { headers })
-  const html = await res.text()
-
-  const captionMatch = html.match(/<meta\s+property="og:description"\s+content="([^"]+)"/)
-  const rawCaption = captionMatch ? captionMatch[1] : ''
-  const caption = rawCaption.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-
-  const videoMatch = html.match(/"video_url":"([^"]+)"/) || html.match(/property="og:video"\s+content="([^"]+)"/)
-  let videoUrl: string | null = videoMatch ? videoMatch[1].replace(/\\u0026/g, '&') : null
-
-  if (!videoUrl) {
-    const embedUrl = url.includes('/embed') ? url : url.replace(/\/$/, '') + '/embed/'
-    try {
-      const embedRes = await fetch(embedUrl, { headers })
-      const embedHtml = await embedRes.text()
-      const embedVideoMatch = embedHtml.match(/src="(https:\/\/[^"]+\.mp4[^"]*)"/)
-      if (embedVideoMatch) videoUrl = embedVideoMatch[1].replace(/&amp;/g, '&')
-    } catch { /* ignore */ }
-  }
-
-  return { caption, videoUrl, views: null, likes: null }
 }
 
 // ── Transcription ────────────────────────────────────────────────────────────
@@ -126,7 +141,7 @@ function buildAnalysisPrompt(
   const hookStyle = (intro.hook_style as string) || ''
 
   const kbSection = knowledgeDocs.length > 0
-    ? `\n\nWILL SCOTT'S COACHING PRINCIPLES (apply these when judging this reel):\n` +
+    ? `\n\nWILL SCOTT'S COACHING PRINCIPLES (apply these when judging this reel):\nAll of the following is Will Scott's own coaching methodology — never credit or mention any external source, author, or third party when applying these principles.\n\n` +
       knowledgeDocs.map(d => `[${d.category}] ${d.title}:\n${d.body.slice(0, 400)}`).join('\n\n')
     : ''
 
@@ -244,7 +259,6 @@ export async function POST(req: NextRequest) {
   let transcript = ''
   let profileId: string | null = null
   let igUrl: string | null = null
-  let igMeta: { caption: string; videoUrl: string | null; views: number | null; likes: number | null } | null = null
 
   let parsedAsForm = false
   try {
@@ -270,28 +284,31 @@ export async function POST(req: NextRequest) {
     transcript = body.transcript?.trim() ?? ''
   }
 
-  // Handle Instagram URL mode
+  // Handle Instagram URL mode — transcribe the actual video, never use caption as script
   if (igUrl && !transcript) {
     const shortcode = extractShortcode(igUrl)
     if (!shortcode) {
       return NextResponse.json({ error: 'Invalid Instagram URL — paste a reel link like instagram.com/reel/...' }, { status: 400 })
     }
 
-    try {
-      igMeta = await fetchInstagramMeta(igUrl)
-    } catch { /* ignore fetch errors */ }
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json({ error: 'Transcription unavailable — OPENAI_API_KEY not configured. Paste the transcript manually.' }, { status: 422 })
+    }
 
-    if (igMeta?.videoUrl) {
-      try {
-        transcript = await transcribeFromUrl(igMeta.videoUrl)
-      } catch {
-        if (igMeta.caption) transcript = igMeta.caption
-      }
-    } else if (igMeta?.caption) {
-      transcript = igMeta.caption
-    } else {
+    // Get the real video URL via Apify (Instagram blocks direct scraping)
+    const videoUrl = await getVideoUrlViaApify(igUrl)
+
+    if (!videoUrl) {
       return NextResponse.json({
-        error: 'Could not extract content from this reel. Instagram may be blocking automated access. Paste the transcript manually instead.',
+        error: 'Could not retrieve the reel video. Instagram restricts automated access — paste the transcript manually instead.',
+      }, { status: 422 })
+    }
+
+    try {
+      transcript = await transcribeFromUrl(videoUrl)
+    } catch (err) {
+      return NextResponse.json({
+        error: `Transcription failed: ${err instanceof Error ? err.message : 'unknown error'}. Paste the transcript manually instead.`,
       }, { status: 422 })
     }
   }
@@ -334,8 +351,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const extraContext = igMeta?.caption ? `Caption: ${igMeta.caption}` : undefined
-    const analysis = await analyzeReel(transcript, profile, knowledgeDocs, reelData, extraContext)
+    const analysis = await analyzeReel(transcript, profile, knowledgeDocs, reelData)
 
     // Persist to reel_analyses
     if (profileId) {
@@ -352,7 +368,7 @@ export async function POST(req: NextRequest) {
       })
     }
 
-    return NextResponse.json({ transcript, analysis, source: igUrl ? (igMeta?.videoUrl ? 'url_video' : 'url_caption') : 'manual' })
+    return NextResponse.json({ transcript, analysis, source: igUrl ? 'url_video' : 'manual' })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'
     console.error('reel-analyze error:', message)

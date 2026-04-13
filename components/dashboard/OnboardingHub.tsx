@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { ChevronDown, ChevronUp, CheckCircle, Sparkles, Save } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { ChevronDown, ChevronUp, CheckCircle, Sparkles, Save, CalendarCheck } from 'lucide-react'
 import type { Profile, IntroStructured, IntroInsights } from '@/lib/types'
 import { Button } from '@/components/ui'
+import { ONBOARDING_UNLOCK_THRESHOLD } from '@/lib/onboarding-keys'
 
 // ─── Section definitions ──────────────────────────────────────────────────────
 
@@ -123,6 +125,62 @@ const SECTIONS: SectionDef[] = [
       { key: 'best_client_result', label: 'What is your best client result?', placeholder: 'e.g. Sarah went from £1.5K to £12K/month in 4 months', type: 'textarea' },
       { key: 'proof_results', label: 'What proof or results can you talk about publicly?', placeholder: 'e.g. Screenshots, case studies, testimonials, before/after', type: 'textarea' },
       { key: 'content_angle', label: "What's your content angle or 'character'?", placeholder: "e.g. The 'pizza delivery driver turned £50K/month coach' underdog story", type: 'textarea' },
+    ],
+  },
+  {
+    number: 8,
+    title: 'Story Profile',
+    description: 'Powers your Instagram story sequences. Complete this to unlock the Story Generator.',
+    fields: [
+      {
+        key: 'story_transformation',
+        label: 'Your origin story in 3 sentences',
+        type: 'textarea',
+        placeholder: 'Before: what life looked like before you figured this out. Turning point: what changed or what you discovered. After: where you are now as a result.',
+        hint: 'This is the backbone of your story sequences. Be specific — real details beat vague claims every time. Include numbers if you have them.',
+      },
+      {
+        key: 'story_mechanism_name',
+        label: 'What do you call your method or system?',
+        type: 'text',
+        placeholder: 'e.g. The Creator Cult Method, The 5-Step Fitness Framework, The Revenue Reset System',
+        hint: "If you don't have a name yet, describe your process in 4-6 words and we'll use that.",
+      },
+      {
+        key: 'story_best_client_result',
+        label: 'Your single best client result with a specific number',
+        type: 'text',
+        placeholder: 'e.g. Sarah went from £2K to £11K/month in 6 weeks. James lost 22lbs in 9 weeks without cutting carbs.',
+        hint: 'Specific numbers outperform vague claims by a huge margin. If you have multiple results, pick the most specific and relatable one.',
+      },
+      {
+        key: 'story_avg_views',
+        label: 'Approximate average story views per slide',
+        type: 'number',
+        placeholder: 'e.g. 800',
+        hint: 'Rough estimate is fine. This helps calibrate the type of sequences we recommend.',
+      },
+      {
+        key: 'story_primary_keyword',
+        label: 'Your hard CTA keyword — the one that triggers your main offer',
+        type: 'text',
+        placeholder: 'e.g. CULT, APPLY, SCALE, COACH',
+        hint: 'This is the word people DM to get your main offer information. Used on Monday conversion sequences.',
+      },
+      {
+        key: 'story_secondary_keyword',
+        label: 'Your soft CTA keyword — the one that delivers your free resource',
+        type: 'text',
+        placeholder: 'e.g. SYSTEM, FREE, GUIDE, BLUEPRINT',
+        hint: 'This is the word people DM to get your lead magnet. Used on Thursday conversion sequences.',
+      },
+      {
+        key: 'story_lead_magnet',
+        label: 'What do people receive when they DM your soft CTA keyword?',
+        type: 'text',
+        placeholder: 'e.g. A free 5-step content system PDF. A 20-minute strategy video. A free training on [topic].',
+        hint: 'Keep it to one sentence. This gets used in your Thursday soft CTA story slides.',
+      },
     ],
   },
 ]
@@ -248,6 +306,15 @@ function buildInitialForm(profile: Profile): Record<string, string> {
     proof_results:         iVal('proof_results', 'proof', 'results', 'testimonials') || '',
     // Old system: 'brand_description' (sometimes used as content angle)
     content_angle:         iVal('content_angle', 'character', 'story_angle', 'brand_story') || '',
+
+    // ── Section 8: Story Profile ─────────────────────────────────────────────
+    story_transformation:    iVal('story_transformation') || '',
+    story_mechanism_name:    iVal('story_mechanism_name') || iVal('unique_mechanism', 'framework', 'method') || '',
+    story_best_client_result: iVal('story_best_client_result') || iVal('best_client_result', 'client_result') || '',
+    story_avg_views:         iVal('story_avg_views') || '',
+    story_primary_keyword:   iVal('story_primary_keyword') || '',
+    story_secondary_keyword: iVal('story_secondary_keyword') || '',
+    story_lead_magnet:       iVal('story_lead_magnet') || '',
   }
 }
 
@@ -376,9 +443,11 @@ function AccordionSection({ section, form, onChange, completedCount, readOnly = 
 interface Props { profile: Profile; adminView?: boolean }
 
 export default function OnboardingHub({ profile, adminView = false }: Props) {
+  const router = useRouter()
   const [form, setForm] = useState<Record<string, string>>(() => buildInitialForm(profile))
   const [saving, setSaving] = useState(false)
   const [savedMsg, setSavedMsg] = useState(false)
+  const [hubComplete, setHubComplete] = useState(!!profile.onboarding_hub_complete)
 
   const insights = profile.intro_insights as IntroInsights | null
 
@@ -428,6 +497,12 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
       if (!res.ok) throw new Error((await res.json()).error)
       setSavedMsg(true)
       setTimeout(() => setSavedMsg(false), 4000)
+      // Unlock the sidebar if they've hit the threshold
+      if (filledCount >= ONBOARDING_UNLOCK_THRESHOLD) {
+        setHubComplete(true)
+        // Refresh server data so the sidebar unlocks without a full page reload
+        router.refresh()
+      }
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Save failed')
     } finally {
@@ -523,45 +598,45 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
       {/* AI Personalised card */}
       {hasAiData && (
         <div style={{
-          border: '1px solid rgba(255,255,255,0.5)',
+          border: '1px solid var(--accent)',
           borderRadius: 10, padding: 20, marginBottom: 20,
-          background: 'rgba(255,255,255,0.5)',
+          background: 'hsl(var(--accent-hsl, 25 100% 55%) / 0.07)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
-            <CheckCircle size={14} color="rgba(255,255,255,0.5)" />
-            <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.09)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+            <CheckCircle size={14} color="var(--accent)" />
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
               AI Personalised
             </span>
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px' }}>
             {aiNiche && (
               <div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Niche</div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.08)', lineHeight: 1.5 }}>{aiNiche}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Niche</div>
+                <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5 }}>{aiNiche}</div>
               </div>
             )}
             {aiIdealClient && (
               <div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Ideal client</div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.08)', lineHeight: 1.5 }}>{aiIdealClient}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Ideal client</div>
+                <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5 }}>{aiIdealClient}</div>
               </div>
             )}
             {aiTransformation && (
               <div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Transformation</div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.08)', lineHeight: 1.5 }}>{aiTransformation}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Transformation</div>
+                <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5 }}>{aiTransformation}</div>
               </div>
             )}
             {aiContentAngle && (
               <div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Content angle</div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.08)', lineHeight: 1.5 }}>{aiContentAngle}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Content angle</div>
+                <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5 }}>{aiContentAngle}</div>
               </div>
             )}
             {insights?.strengths && insights.strengths.length > 0 && (
               <div style={{ gridColumn: '1 / -1' }}>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Strengths</div>
-                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.08)', lineHeight: 1.5 }}>{insights.strengths.join(' · ')}</div>
+                <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Strengths</div>
+                <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5 }}>{insights.strengths.join(' · ')}</div>
               </div>
             )}
           </div>
@@ -581,7 +656,6 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
       ))}
 
       {/* Bottom save — hidden in admin read-only view */}
-
       {!adminView && (
         <button
           onClick={handleSave}
@@ -597,6 +671,75 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
         >
           {saving ? 'Saving…' : <><Save size={16} /> Save &amp; Update My AI</>}
         </button>
+      )}
+
+      {/* ── Booking CTA — shown once hub is unlocked ─────────────────────────── */}
+      {!adminView && hubComplete && (
+        <div style={{
+          marginTop: 24,
+          padding: '24px',
+          borderRadius: 12,
+          background: 'linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(99,102,241,0.08) 100%)',
+          border: '1px solid rgba(59,130,246,0.3)',
+          textAlign: 'center',
+        }}>
+          <div style={{
+            width: 44, height: 44, borderRadius: 12,
+            background: '#3B82F6',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 14px',
+          }}>
+            <CalendarCheck size={20} color="white" />
+          </div>
+          <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 8px', letterSpacing: '-0.3px' }}>
+            You&apos;ve unlocked the full dashboard 🎉
+          </h3>
+          <p style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.6, margin: '0 0 20px', maxWidth: 380, marginLeft: 'auto', marginRight: 'auto' }}>
+            Next step: book your 1-to-1 onboarding call with Will. You&apos;ll map out your first 90 days, get your content plan set, and hit the ground running.
+          </p>
+          <a
+            href="https://calendly.com/scottvip/mentorship-call"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              padding: '13px 28px',
+              background: '#3B82F6', color: '#fff',
+              borderRadius: 8, fontSize: 14, fontWeight: 700,
+              textDecoration: 'none', letterSpacing: '-0.2px',
+              transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.88' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+          >
+            <CalendarCheck size={15} />
+            Book your onboarding call →
+          </a>
+        </div>
+      )}
+
+      {/* Progress nudge — shown when hub is not yet unlocked and not admin */}
+      {!adminView && !hubComplete && filledCount > 0 && (
+        <div style={{
+          marginTop: 16, padding: '14px 18px',
+          borderRadius: 10, background: 'var(--card)',
+          border: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', gap: 12, fontSize: 13,
+          color: 'var(--muted-foreground)',
+        }}>
+          <div style={{ flex: 1 }}>
+            <span style={{ fontWeight: 600, color: 'var(--foreground)' }}>
+              {ONBOARDING_UNLOCK_THRESHOLD - filledCount > 0
+                ? `${ONBOARDING_UNLOCK_THRESHOLD - filledCount} more fields`
+                : 'Hit Save'
+              }
+            </span>
+            {ONBOARDING_UNLOCK_THRESHOLD - filledCount > 0
+              ? ' to unlock the full dashboard and book your onboarding call.'
+              : ' to unlock the full dashboard and book your onboarding call.'
+            }
+          </div>
+        </div>
       )}
     </div>
   )

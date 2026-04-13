@@ -219,7 +219,7 @@ function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
       ninety_day_follower_goal: null, ninety_day_revenue_goal: null,
       starting_active_clients: null, intro_structured: null,
       intro_freeform: null, intro_insights: null, dashboard_bio: null,
-      weekly_checklist: null,
+      weekly_checklist: null, onboarding_hub_complete: false,
     })
   }
 

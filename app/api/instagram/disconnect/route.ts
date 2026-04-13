@@ -27,6 +27,8 @@ export async function POST() {
         ig_username: null,
         ig_access_token: null,
         comment_analysis_json: null,
+        content_insights_json: null,
+        content_insights_updated_at: null,
         followers_count: null,
       })
       .eq('id', profileId),

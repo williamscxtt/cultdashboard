@@ -343,8 +343,8 @@ export function PageHeader({
   action?: React.ReactNode
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
-      <div>
+    <div className="page-header-row" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 10 }}>
+      <div style={{ minWidth: 0 }}>
         <h1 style={{
           fontSize: 20, fontWeight: 800,
           color: 'var(--foreground)',
@@ -359,7 +359,7 @@ export function PageHeader({
           </p>
         )}
       </div>
-      {action && <div style={{ flexShrink: 0 }}>{action}</div>}
+      {action && <div className="page-header-actions" style={{ flexShrink: 0 }}>{action}</div>}
     </div>
   )
 }

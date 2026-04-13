@@ -15,7 +15,7 @@ import { cookies } from 'next/headers'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
 import Anthropic from '@anthropic-ai/sdk'
 
-export const maxDuration = 120
+export const maxDuration = 300
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -61,7 +61,7 @@ async function startApifyRun(usernames: string[]): Promise<string> {
   return json.data.id as string
 }
 
-async function waitForApifyRun(runId: string, maxWaitMs = 90_000): Promise<void> {
+async function waitForApifyRun(runId: string, maxWaitMs = 250_000): Promise<void> {
   const start = Date.now()
   while (Date.now() - start < maxWaitMs) {
     await new Promise(r => setTimeout(r, 4000))
@@ -102,28 +102,46 @@ interface ApifyPost {
 
 // ─── Format classification via Claude ─────────────────────────────────────────
 
+// Format names match the Python runner's classification scheme exactly
+const FORMAT_OPTIONS = 'talking_head, rant, list, tutorial, story_time, trend, pov, transformation, q_and_a, behind_the_scenes, other'
+
 async function classifyFormats(reels: { caption: string; hook: string }[]): Promise<string[]> {
   if (reels.length === 0) return []
-  const prompt = `Classify each of these Instagram reels into ONE format type. Options: Tutorial, Listicle, Storytime, Contrarian, Tool Discovery, Viewer Callout, Framework, Comparison, Fear/Warning, POV/Meme, Testimonial, Behind the Scenes, Q&A, Rant, Transformation.
+  const prompt = `Classify each Instagram reel into ONE format type.
 
-Return ONLY a JSON array of strings, one per reel, in the same order. Example: ["Tutorial", "Listicle", "Rant"]
+Options (use exactly as written): ${FORMAT_OPTIONS}
+
+Format definitions:
+- talking_head: creator talking directly to camera with an opinion or point
+- rant: strong take, calling something out, hot opinion
+- list: numbered tips, mistakes, things nobody tells you, reasons why
+- tutorial: step-by-step how-to, teach something specific
+- story_time: personal story or client story with a lesson/punchline
+- trend: trending audio, challenge, or meme format
+- pov: "POV: you..." style, viewer imagines themselves in a scenario
+- transformation: before/after, journey, results reveal
+- q_and_a: answering a question (real or rhetorical)
+- behind_the_scenes: showing process, day-in-life, what happens behind camera
+- other: doesn't fit any of the above
+
+Return ONLY a JSON array of strings, one per reel, same order. Example: ["tutorial","rant","list"]
 
 Reels:
-${reels.map((r, i) => `${i + 1}. Hook: "${r.hook}" | Caption: "${r.caption?.slice(0, 120)}"`).join('\n')}`
+${reels.map((r, i) => `${i + 1}. Hook: "${r.hook}" | Caption: "${r.caption?.slice(0, 150)}"`).join('\n')}`
 
   const msg = await anthropic.messages.create({
     model: 'claude-haiku-4-5-20251001',
-    max_tokens: 500,
+    max_tokens: 1500,
     messages: [{ role: 'user', content: prompt }],
   })
   const raw = msg.content[0].type === 'text' ? msg.content[0].text : '[]'
   const match = raw.match(/\[[\s\S]*\]/)
-  if (!match) return reels.map(() => 'Unknown')
+  if (!match) return reels.map(() => 'other')
   try {
     const parsed = JSON.parse(match[0])
-    return Array.isArray(parsed) ? parsed : reels.map(() => 'Unknown')
+    return Array.isArray(parsed) ? parsed : reels.map(() => 'other')
   } catch {
-    return reels.map(() => 'Unknown')
+    return reels.map(() => 'other')
   }
 }
 
@@ -176,25 +194,34 @@ export async function POST(req: NextRequest) {
   }
 
   const allPosts: ApifyPost[] = []
+  console.log(`[competitors/scrape] Starting scrape for handles: ${handles.join(', ')}`)
   for (const batch of batches) {
     try {
+      console.log(`[competitors/scrape] Starting Apify run for batch: ${batch.join(', ')}`)
       const runId = await startApifyRun(batch)
+      console.log(`[competitors/scrape] Apify run started: ${runId}`)
       await waitForApifyRun(runId)
       const posts = await fetchApifyResults(runId)
+      console.log(`[competitors/scrape] Batch returned ${posts.length} posts. Sample fields: ${JSON.stringify(posts[0] ? Object.keys(posts[0]) : [])}`)
       allPosts.push(...posts)
     } catch (err) {
-      console.error('[competitors/scrape] Apify batch error:', err)
+      console.error('[competitors/scrape] Apify batch error:', String(err))
       // Continue with other batches
     }
   }
 
-  // Filter to video posts only
-  const videoPosts = allPosts.filter(p =>
-    p.type === 'Video' || p.type === 'video' || (p.videoUrl && p.videoUrl.length > 0)
-  )
+  // All results from resultsType:'reels' are videos — no filter needed
+  const videoPosts = allPosts
 
   if (videoPosts.length === 0) {
-    return NextResponse.json({ ok: true, added: 0, message: 'No video posts found in scrape results.' })
+    return NextResponse.json({ ok: true, added: 0, accounts_scraped: handles.length, message: 'No posts found in scrape results.' })
+  }
+
+  // Check for missing shortCodes before building rows
+  const missingShortCode = videoPosts.filter(p => !p.shortCode).length
+  if (missingShortCode > 0) {
+    console.warn(`[competitors/scrape] ${missingShortCode}/${videoPosts.length} posts have no shortCode — checking alternate fields`)
+    if (videoPosts[0]) console.warn('[competitors/scrape] First post keys:', JSON.stringify(Object.keys(videoPosts[0])))
   }
 
   // Build reel records
@@ -240,7 +267,7 @@ export async function POST(req: NextRequest) {
   }).filter(r => r.account && r.reel_id)
 
   if (rows.length === 0) {
-    return NextResponse.json({ ok: true, added: 0, message: 'No valid reels to store.' })
+    return NextResponse.json({ ok: true, added: 0, accounts_scraped: handles.length, message: 'No valid reels to store.' })
   }
 
   // Upsert into competitor_reels

@@ -19,6 +19,8 @@ create table public.profiles (
   yt_channel_id text,
   tiktok_handle text,
   onboarding_completed boolean not null default false,
+  content_insights_json jsonb,
+  content_insights_updated_at timestamptz,
   created_at timestamptz not null default now()
 );
 

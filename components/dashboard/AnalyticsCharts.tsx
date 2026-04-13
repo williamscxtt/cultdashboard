@@ -144,7 +144,7 @@ export default function AnalyticsCharts({ reels, formatGroups }: Props) {
               <tbody>
                 {topReels.map((r) => (
                   <tr key={r.rank} style={{ borderBottom: '1px solid var(--border)' }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'hsl(0 0% 96% / 0.5)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.04)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                   >
                     <td style={{ padding: '12px 16px', fontSize: 12, color: 'var(--muted-foreground)', fontWeight: 700 }}>{r.rank}</td>

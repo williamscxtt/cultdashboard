@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
+import { calcHubFilledCount, ONBOARDING_UNLOCK_THRESHOLD } from '@/lib/onboarding-keys'
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -62,6 +63,12 @@ export async function POST(req: NextRequest) {
     // Always store full intro_structured
     if (intro_structured && typeof intro_structured === 'object') {
       updates.intro_structured = intro_structured
+
+      // Auto-unlock the sidebar once ≥75% of hub questions are answered
+      const filledCount = calcHubFilledCount(intro_structured as Record<string, unknown>)
+      if (filledCount >= ONBOARDING_UNLOCK_THRESHOLD) {
+        updates.onboarding_hub_complete = true
+      }
     }
 
     const { error } = await adminClient

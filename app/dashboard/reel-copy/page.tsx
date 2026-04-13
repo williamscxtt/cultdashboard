@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { Copy, Bookmark, Trash2, ChevronDown, ChevronUp, Upload, FileAudio, AlignLeft, Link as LinkIcon } from 'lucide-react'
 import { PageHeader, Card, Button, EmptyState } from '@/components/ui'
+import { useIsMobile } from '@/lib/use-mobile'
 // createClient import removed — using /api/effective-profile instead
 
 interface Analysis {
@@ -44,6 +45,7 @@ function scoreColor(score: number) {
 }
 
 export default function ReelCopyPage() {
+  const isMobile = useIsMobile()
   const [mode, setMode] = useState<Mode>('url')
   const [igUrl, setIgUrl] = useState('')
   const [transcript, setTranscript] = useState('')
@@ -146,18 +148,18 @@ export default function ReelCopyPage() {
   const verdictStyle = VERDICT_COLORS[verdict] ?? VERDICT_COLORS.Average
 
   return (
-    <div style={{ padding: '24px', maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 800, margin: '0 auto' }}>
       <PageHeader
         title="Reel Copy Tool"
         description="Drop an Instagram reel link — get a full AI breakdown, personalised adaptation advice, and a rewritten hook for your niche."
       />
 
       {/* Mode selector */}
-      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>
         {([
-          { key: 'url' as Mode, icon: <LinkIcon size={14} />, label: 'Instagram URL' },
-          { key: 'paste' as Mode, icon: <AlignLeft size={14} />, label: 'Paste Transcript' },
-          { key: 'audio' as Mode, icon: <FileAudio size={14} />, label: 'Upload Audio' },
+          { key: 'url' as Mode, icon: <LinkIcon size={14} />, label: isMobile ? 'URL' : 'Instagram URL' },
+          { key: 'paste' as Mode, icon: <AlignLeft size={14} />, label: isMobile ? 'Paste' : 'Paste Transcript' },
+          { key: 'audio' as Mode, icon: <FileAudio size={14} />, label: isMobile ? 'Audio' : 'Upload Audio' },
         ]).map(({ key, icon, label }) => (
           <button
             key={key}
@@ -165,6 +167,8 @@ export default function ReelCopyPage() {
             style={{
               display: 'flex', alignItems: 'center', gap: 6,
               padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+              flex: isMobile ? '1 1 auto' : undefined,
+              justifyContent: isMobile ? 'center' : undefined,
               border: mode === key ? '2px solid var(--accent)' : '1px solid var(--border)',
               background: mode === key ? 'hsl(220 90% 56% / 0.08)' : 'var(--card)',
               color: mode === key ? 'var(--accent)' : 'var(--muted-foreground)',

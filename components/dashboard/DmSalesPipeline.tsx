@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Plus, Trash2, ChevronRight, X, Save, Lightbulb, Phone, AlertCircle, Clock } from 'lucide-react'
 import { Card, Button, PageHeader } from '@/components/ui'
+import { useIsMobile } from '@/lib/use-mobile'
 
 // ─── types ────────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,7 @@ function NewLeadForm({ onSave, onClose }: { onSave: (data: Partial<Lead>) => Pro
     deal_value: '', call_date: '', call_time: '', how_booked: '', notes: '',
   })
   const [saving, setSaving] = useState(false)
+  const isMobile = useIsMobile()
 
   function s(k: keyof typeof form) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) =>
@@ -105,7 +107,7 @@ function NewLeadForm({ onSave, onClose }: { onSave: (data: Partial<Lead>) => Pro
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>New Lead</div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted-foreground)' }}><X size={16} /></button>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 12 }}>
         <div>{lbl('Name')}<input style={inp} value={form.lead_name} onChange={s('lead_name')} placeholder="John Smith" /></div>
         <div>{lbl('Contact (IG / phone)')}<input style={inp} value={form.contact_info} onChange={s('contact_info')} placeholder="@handle" /></div>
         <div>{lbl('Source')}<input style={inp} value={form.source} onChange={s('source')} placeholder="Reel, Story, Referral..." /></div>
@@ -157,6 +159,7 @@ function LeadPanel({ lead, onUpdate, onClose, onDelete }: {
   onClose: () => void
   onDelete: (id: string) => void
 }) {
+  const isMobile = useIsMobile()
   const [liveNotes, setLiveNotes] = useState(lead.live_call_notes ?? '')
   const [preNotes, setPreNotes] = useState(lead.pre_call_notes ?? '')
   const [painPoints, setPainPoints] = useState(lead.pain_points ?? '')
@@ -232,9 +235,19 @@ function LeadPanel({ lead, onUpdate, onClose, onDelete }: {
 
   return (
     <div style={{
-      position: 'fixed', top: 0, right: 0, bottom: 0, width: 420, zIndex: 50,
-      background: 'var(--card)', borderLeft: '1px solid var(--border)',
-      overflowY: 'auto', padding: 24, boxShadow: '-8px 0 32px rgba(0,0,0,0.15)',
+      position: 'fixed',
+      top: isMobile ? 0 : 0,
+      left: isMobile ? 0 : 'auto',
+      right: 0,
+      bottom: 0,
+      width: isMobile ? '100%' : 420,
+      zIndex: 50,
+      background: 'var(--card)',
+      borderLeft: isMobile ? 'none' : '1px solid var(--border)',
+      borderTop: isMobile ? '1px solid var(--border)' : 'none',
+      overflowY: 'auto',
+      padding: isMobile ? '16px 16px 40px' : 24,
+      boxShadow: isMobile ? '0 -8px 32px rgba(0,0,0,0.25)' : '-8px 0 32px rgba(0,0,0,0.15)',
     }}>
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 20 }}>
@@ -315,7 +328,7 @@ function LeadPanel({ lead, onUpdate, onClose, onDelete }: {
       </div>
 
       {/* Follow-up */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10, marginBottom: 16 }}>
         <div>
           {lbl('Follow-up Date')}
           <input type="date" style={inp} value={followUpDate} onChange={e => setFollowUpDate(e.target.value)} />
@@ -342,6 +355,7 @@ export default function DmSalesPipeline({ initialLeads }: Props) {
   const [showForm, setShowForm] = useState(false)
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
   const [activeFilter, setActiveFilter] = useState('All')
+  const isMobile = useIsMobile()
 
   const now = new Date()
   const thisMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -388,7 +402,7 @@ export default function DmSalesPipeline({ initialLeads }: Props) {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1000, margin: '0 auto', paddingRight: selectedLead ? 444 : 24 }}>
+    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1000, margin: '0 auto', paddingRight: (!isMobile && selectedLead) ? 444 : (isMobile ? 12 : 24) }}>
       <PageHeader
         title="DM Sales"
         description="Track every lead from first message to closed deal."
@@ -400,7 +414,7 @@ export default function DmSalesPipeline({ initialLeads }: Props) {
       />
 
       {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         <Stat label="Leads This Month" value={callsThisMonth} />
         <Stat label="Overdue Follow-ups" value={overdueFollowUps} color={overdueFollowUps > 0 ? 'rgba(255,255,255,0.35)' : undefined} />
         <Stat label="Open Deals" value={openDeals} />

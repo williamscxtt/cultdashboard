@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
 import { Card, Badge, Button, PageHeader, SectionLabel } from '@/components/ui'
 import { Video, LogOut, Eye, EyeOff, RefreshCw, AlertTriangle, Unlink } from 'lucide-react'
+import { useIsMobile } from '@/lib/use-mobile'
 import { toast } from 'sonner'
 
 // Official Instagram gradient logo
@@ -29,6 +30,7 @@ function InstagramLogo({ size = 36 }: { size?: number }) {
 }
 
 export default function SettingsClient({ profile, isImpersonating = false }: { profile: Profile; isImpersonating?: boolean }) {
+  const isMobile = useIsMobile()
   const [name, setName] = useState(profile.name || '')
   const [saving, setSaving] = useState(false)
   const [showPasswordForm, setShowPasswordForm] = useState(false)
@@ -152,7 +154,7 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 640, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 640, margin: '0 auto' }}>
       <PageHeader title="Settings" description="Manage your account and connected channels." />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

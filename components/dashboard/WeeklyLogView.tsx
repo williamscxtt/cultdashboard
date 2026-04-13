@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Save, Plus, CheckCircle, Calendar } from 'lucide-react'
 import type { WeeklyLog } from '@/lib/types'
 import { Card, Button, PageHeader } from '@/components/ui'
+import { useIsMobile } from '@/lib/use-mobile'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -177,6 +178,7 @@ function emptyForm() {
 }
 
 export default function WeeklyLogView({ profileName, logs }: Props) {
+  const isMobile = useIsMobile()
   const [showForm, setShowForm] = useState(logs.length === 0)
   const [form, setForm] = useState(emptyForm())
   const [saving, setSaving] = useState(false)
@@ -211,7 +213,7 @@ export default function WeeklyLogView({ profileName, logs }: Props) {
   const pastLogs = logs.filter(l => l.date !== thisWeek)
 
   return (
-    <div style={{ padding: '24px', maxWidth: 900, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 900, margin: '0 auto' }}>
       <PageHeader
         title="Weekly Log"
         description="Track your numbers every week. Honesty over performance."
@@ -246,7 +248,7 @@ export default function WeeklyLogView({ profileName, logs }: Props) {
             <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
               📊 Your Numbers
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fill, minmax(140px, 1fr))', gap: 12 }}>
               <StatInput label="Reels Posted" value={form.reels_posted} onChange={s('reels_posted')} />
               <StatInput label="Followers Now" value={form.followers_total} onChange={s('followers_total')} placeholder="e.g. 12450" />
               <StatInput label="Avg Views" value={form.avg_reel_views} onChange={s('avg_reel_views')} placeholder="e.g. 3200" />

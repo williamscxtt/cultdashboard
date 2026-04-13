@@ -4,6 +4,16 @@ import { Copy, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { Card, Badge } from '@/components/ui'
 
+function renderMd(text: string): string {
+  return text
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--foreground);font-weight:700;">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^[-•] (.+)$/gm, '<li style="margin:3px 0;padding-left:4px;">$1</li>')
+    .replace(/(<li[^>]*>.*?<\/li>\n?)+/g, '<ul style="padding-left:16px;margin:6px 0;list-style:disc;">$&</ul>')
+    .replace(/\n\n/g, '</p><p style="margin:6px 0;line-height:1.65;">')
+    .replace(/\n/g, '<br/>')
+}
+
 interface ParsedScript {
   day: string
   format: string
@@ -117,9 +127,10 @@ function ScriptCard({ script, index }: { script: ParsedScript; index: number }) 
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
                 Script
               </div>
-              <div style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.8, whiteSpace: 'pre-wrap' }}>
-                {script.body}
-              </div>
+              <div
+                style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.8 }}
+                dangerouslySetInnerHTML={{ __html: renderMd(script.body) }}
+              />
             </div>
           )}
 
@@ -128,12 +139,10 @@ function ScriptCard({ script, index }: { script: ParsedScript; index: number }) 
               <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>
                 Caption
               </div>
-              <div style={{
-                background: 'var(--muted)', borderRadius: 8, padding: '10px 12px',
-                fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.7,
-              }}>
-                {script.caption}
-              </div>
+              <div
+                style={{ background: 'var(--muted)', borderRadius: 8, padding: '10px 12px', fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.7 }}
+                dangerouslySetInnerHTML={{ __html: renderMd(script.caption) }}
+              />
             </div>
           )}
 

@@ -23,7 +23,7 @@ function buildSystemPrompt(
   reels: Array<Record<string, unknown>>,
   competitorReels: Array<Record<string, unknown>>,
   conversationHistory: Array<{ role: string; content: string }>,
-  knowledgeDocs: Array<{ title: string; category: string; source: string; content: string }>
+  knowledgeDocs: Array<{ title: string; category: string; content: string }>
 ): string {
   const intro = (profile.intro_structured ?? {}) as Record<string, unknown>
 
@@ -125,9 +125,11 @@ Top competitor reels this week:
 ${compTopReels.map(r => `- @${safeStr(r.account)}: "${safeStr(r.hook)}" [${safeStr(r.format_type)}] — ${Number(r.views).toLocaleString()} views`).join('\n')}` : ''}
 
 ${knowledgeDocs.length > 0 ? `═══ KNOWLEDGE LIBRARY ═══
-These are frameworks, principles, and strategies that apply to coaching clients. When you use any of these, always translate them to fit ${name}'s specific niche, offer, and audience. NEVER use Will Scott's own offer, results, or brand as examples — ${name} has their own offer and story. Adapt every framework to their world.
+These are Will Scott's coaching frameworks, principles, and strategies. When you use any of these, always translate them to fit ${name}'s specific niche, offer, and audience. NEVER use Will Scott's own offer, results, or brand as examples — ${name} has their own offer and story. Adapt every framework to their world.
 
-${knowledgeDocs.map(d => `【${d.category}】 ${d.title} (${d.source})\n${d.content}`).join('\n\n---\n\n')}` : ''}
+CRITICAL: Never attribute any knowledge, framework, case study, or example to an external source, author, or person. All of this is Will Scott's own coaching methodology. Never mention other coaches, authors, or brands by name when using this knowledge.
+
+${knowledgeDocs.map(d => `【${d.category}】 ${d.title}\n${d.content}`).join('\n\n---\n\n')}` : ''}
 
 ═══ HOW TO RESPOND ═══
 - Speak as Will Scott: direct, no fluff, slightly provocative, big brother energy
@@ -175,7 +177,7 @@ export async function POST(req: NextRequest) {
       .limit(20),
     adminClient
       .from('knowledge_documents')
-      .select('title, category, source, content')
+      .select('title, category, content')
       .order('category', { ascending: true })
       .limit(40),
   ])
@@ -198,7 +200,7 @@ export async function POST(req: NextRequest) {
     (reels ?? []) as Array<Record<string, unknown>>,
     (competitorReels ?? []) as Array<Record<string, unknown>>,
     previousMessages,
-    (knowledgeDocs ?? []) as Array<{ title: string; category: string; source: string; content: string }>
+    (knowledgeDocs ?? []) as Array<{ title: string; category: string; content: string }>
   )
 
   // Build message history for Claude (last 10 messages for context)

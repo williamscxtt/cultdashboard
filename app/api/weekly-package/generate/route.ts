@@ -25,6 +25,187 @@ const adminClient = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 )
 
+// ── Apify helpers (mirrors /api/competitors/scrape) ───────────────────────────
+
+const APIFY_TOKEN = process.env.APIFY_API_TOKEN
+const APIFY_BASE = 'https://api.apify.com/v2'
+const APIFY_ACTOR = 'apify~instagram-scraper'
+
+interface ApifyPost {
+  ownerUsername?: string; shortCode?: string; url?: string
+  videoViewCount?: number; likesCount?: number; commentsCount?: number
+  timestamp?: string; caption?: string; videoUrl?: string
+  displayUrl?: string; videoDuration?: number
+}
+
+async function apifyStartRun(usernames: string[]): Promise<string> {
+  const res = await fetch(`${APIFY_BASE}/acts/${APIFY_ACTOR}/runs?token=${APIFY_TOKEN}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      directUrls: usernames.map(u => `https://www.instagram.com/${u}/`),
+      resultsType: 'reels',
+      resultsLimit: 30,
+      addParentData: false,
+    }),
+  })
+  if (!res.ok) throw new Error(`Apify start failed: ${res.status}`)
+  const json = await res.json()
+  return json.data.id as string
+}
+
+async function apifyWaitForRun(runId: string, maxWaitMs = 250_000): Promise<void> {
+  const start = Date.now()
+  while (Date.now() - start < maxWaitMs) {
+    await new Promise(r => setTimeout(r, 5000))
+    const res = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${APIFY_TOKEN}`)
+    if (!res.ok) throw new Error(`Apify poll failed: ${res.status}`)
+    const json = await res.json()
+    const status = json.data?.status
+    if (status === 'SUCCEEDED') return
+    if (['FAILED', 'ABORTED', 'TIMED-OUT'].includes(status)) throw new Error(`Apify run ${status}`)
+  }
+  throw new Error('Apify run timed out')
+}
+
+async function apifyGetResults(runId: string): Promise<ApifyPost[]> {
+  const res = await fetch(`${APIFY_BASE}/actor-runs/${runId}/dataset/items?token=${APIFY_TOKEN}&format=json&clean=true`)
+  if (!res.ok) throw new Error(`Apify results failed: ${res.status}`)
+  return res.json()
+}
+
+const FORMAT_OPTIONS = 'talking_head, rant, list, tutorial, story_time, trend, pov, transformation, q_and_a, behind_the_scenes, other'
+
+async function classifyFormats(reels: { caption: string; hook: string }[]): Promise<string[]> {
+  if (!reels.length) return []
+  const prompt = `Classify each Instagram reel into ONE format type.
+
+Options (use exactly as written): ${FORMAT_OPTIONS}
+
+Format definitions:
+- talking_head: creator talking directly to camera with an opinion or point
+- rant: strong take, calling something out, hot opinion
+- list: numbered tips, mistakes, things nobody tells you, reasons why
+- tutorial: step-by-step how-to, teach something specific
+- story_time: personal story or client story with a lesson/punchline
+- trend: trending audio, challenge, or meme format
+- pov: "POV: you..." style, viewer imagines themselves in a scenario
+- transformation: before/after, journey, results reveal
+- q_and_a: answering a question (real or rhetorical)
+- behind_the_scenes: showing process, day-in-life, what happens behind camera
+- other: doesn't fit any of the above
+
+Return ONLY a JSON array of strings, one per reel, same order. Example: ["tutorial","rant","list"]
+
+Reels:
+${reels.map((r, i) => `${i + 1}. Hook: "${r.hook}" | Caption: "${r.caption?.slice(0, 150)}"`).join('\n')}`
+  const msg = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001', max_tokens: 1500,
+    messages: [{ role: 'user', content: prompt }],
+  })
+  const raw = msg.content[0].type === 'text' ? msg.content[0].text : '[]'
+  const match = raw.match(/\[[\s\S]*\]/)
+  if (!match) return reels.map(() => 'other')
+  try {
+    const parsed = JSON.parse(match[0])
+    return Array.isArray(parsed) ? parsed : reels.map(() => 'other')
+  } catch { return reels.map(() => 'other') }
+}
+
+/**
+ * Scrape the client's own IG account and upsert into client_reels.
+ * Skips silently if APIFY_API_TOKEN not set or ig_username missing.
+ */
+async function syncClientOwnReels(profileId: string, igHandle: string): Promise<number> {
+  if (!APIFY_TOKEN || !igHandle) return 0
+  try {
+    console.log(`[weekly-package/generate] Syncing own reels for @${igHandle}`)
+    const runId = await apifyStartRun([igHandle])
+    await apifyWaitForRun(runId)
+    const posts = await apifyGetResults(runId)
+    console.log(`[weekly-package/generate] Got ${posts.length} posts for @${igHandle}`)
+    if (!posts.length) return 0
+
+    const weekStr = new Date().toISOString().slice(0, 7)
+    const isoWeek = (() => {
+      const d = new Date(); const day = d.getUTCDay() || 7
+      d.setUTCDate(d.getUTCDate() + 4 - day)
+      const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+      return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7)
+    })()
+    const scraped_week = `${weekStr}-W${isoWeek}`
+
+    // Check which reels already exist BEFORE classifying — only new ones need it
+    const shortCodes = posts.map(p => p.shortCode ?? '').filter(Boolean)
+    const { data: existing } = await adminClient
+      .from('client_reels')
+      .select('reel_id')
+      .eq('profile_id', profileId)
+      .in('reel_id', shortCodes)
+    const existingIds = new Set((existing ?? []).map((r: { reel_id: string }) => r.reel_id))
+
+    const newPosts = posts.filter(p => p.shortCode && !existingIds.has(p.shortCode))
+    const existingPosts = posts.filter(p => p.shortCode && existingIds.has(p.shortCode))
+
+    console.log(`[weekly-package/generate] ${newPosts.length} new reels, ${existingPosts.length} existing (stats update only)`)
+
+    // Classify format only for NEW reels
+    const newInputs = newPosts.map(p => ({
+      caption: p.caption ?? '',
+      hook: (p.caption ?? '').split(/[.!?\n]/)[0]?.trim().slice(0, 200) ?? '',
+    }))
+    const formats = await classifyFormats(newInputs)
+
+    const newRows = newPosts.map((p, i) => {
+      const caption = p.caption ?? ''
+      const hook = caption.split(/[.!?\n]/)[0]?.trim().slice(0, 200) ?? ''
+      return {
+        profile_id: profileId,
+        reel_id: p.shortCode ?? '',
+        scraped_week,
+        date: p.timestamp ? p.timestamp.split('T')[0] : new Date().toISOString().split('T')[0],
+        views: p.videoViewCount ?? 0,
+        likes: p.likesCount ?? 0,
+        comments: p.commentsCount ?? 0,
+        caption: caption.slice(0, 2000),
+        hook,
+        hashtags: (caption.match(/#\w+/g) ?? []).map((h: string) => h.slice(1)),
+        format_type: formats[i] ?? 'other',
+        duration_sec: p.videoDuration ?? null,
+        thumbnail_url: p.displayUrl ?? null,
+        permalink: p.url ?? null,
+      }
+    }).filter(r => r.reel_id)
+
+    // Insert new reels with full data
+    if (newRows.length > 0) {
+      const { error } = await adminClient.from('client_reels').insert(newRows)
+      if (error) console.error('[weekly-package/generate] insert error:', error.message)
+    }
+
+    // Update stats only for existing reels (preserves transcript, format_type, hook, caption, etc.)
+    if (existingPosts.length > 0) {
+      await Promise.all(existingPosts.map(p =>
+        adminClient
+          .from('client_reels')
+          .update({
+            views: p.videoViewCount ?? 0,
+            likes: p.likesCount ?? 0,
+            comments: p.commentsCount ?? 0,
+            scraped_week,
+          })
+          .eq('profile_id', profileId)
+          .eq('reel_id', p.shortCode!)
+      ))
+    }
+
+    return newRows.length + existingPosts.length
+  } catch (err) {
+    console.warn('[weekly-package/generate] Own reel sync failed (non-fatal):', String(err))
+    return 0
+  }
+}
+
 // ── GET: latest package for a profile ────────────────────────────────────────
 
 export async function GET(req: NextRequest) {
@@ -385,7 +566,9 @@ OUTPUT FORMAT (follow exactly — do not deviate):
 ## 📊 Weekly Intel — w/c ${formattedWeek}
 
 ### What's Popping This Week
-[3–4 bullets: formats/angles/hooks getting views right now in their space]
+[3–4 bullets. For each trend, describe what's working AND include the specific source video from the competitor data. Use EXACTLY this format — do not deviate:]
+- [Describe the trend/angle/format that's working and why it resonates]
+  Source: @account_handle — "[exact hook or opening line from the reel]" (N,NNN views)
 
 ### Performance Last Week
 [What hit, what didn't — based on their actual reel data above. Skip if no data.]
@@ -456,7 +639,12 @@ export async function POST(req: NextRequest) {
 
   const intro = (profileRow.intro_structured ?? {}) as Record<string, unknown>
   const name = (profileRow.name as string) || 'Creator'
-  const igHandle = (profileRow.ig_username as string) || 'creator'
+  const igHandle = (profileRow.ig_username as string) || ''
+
+  // Sync own reels from Instagram first (fresh data for generation)
+  if (igHandle) {
+    await syncClientOwnReels(profileId, igHandle)
+  }
 
   // Fetch competitor reels
   const handles = (competitors ?? []).map((c: { ig_username: string }) => c.ig_username)
@@ -485,7 +673,7 @@ export async function POST(req: NextRequest) {
     const message = await anthropic.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 8192,
-      system: buildSystemPrompt(name, igHandle, intro, profileRow as Record<string, unknown>),
+      system: buildSystemPrompt(name, igHandle || 'creator', intro, profileRow as Record<string, unknown>),
       messages: [{
         role: 'user',
         content: buildUserPrompt(competitorReport, kbContext, brandContext, commentContext, weekStart, name),

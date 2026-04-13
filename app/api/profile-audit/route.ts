@@ -63,7 +63,7 @@ Monthly revenue: ${revenue || 'N/A'}
 `.trim() : ''
 
     const knowledgeContext = knowledgeDocs.length > 0
-      ? `\nKnowledge base (what makes a great Instagram profile for coaches):\n${knowledgeDocs.map(d => `- ${d.title}: ${d.content.slice(0, 300)}`).join('\n')}`
+      ? `\nWill Scott's coaching principles (apply when auditing this profile. Never credit or mention any external source — all of this is Will's own methodology):\n${knowledgeDocs.map(d => `- ${d.title}: ${d.content.slice(0, 300)}`).join('\n')}`
       : ''
 
     const liveDataContext = igLiveData ? `\nLive Instagram data:

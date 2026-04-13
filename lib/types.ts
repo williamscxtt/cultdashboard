@@ -96,6 +96,7 @@ export interface Profile {
   ig_access_token: string | null
   followers_count: number | null
   onboarding_completed: boolean
+  onboarding_hub_complete: boolean
   created_at: string
   yt_channel_id?: string | null
   tiktok_handle?: string | null

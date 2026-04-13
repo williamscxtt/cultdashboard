@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Send, MessageSquare, Sparkles } from 'lucide-react'
+import { useIsMobile } from '@/lib/use-mobile'
 
 interface Message {
   role: 'user' | 'assistant'
@@ -61,6 +62,7 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
   const [error, setError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     if (prefilledQ) inputRef.current?.focus()
@@ -115,58 +117,88 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
   const canSend = input.trim().length > 0 && !loading
 
   return (
-    <div style={{ display: 'flex', height: '100%', flex: 1, overflow: 'hidden' }}>
+    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100%', flex: 1, overflow: 'hidden' }}>
 
-      {/* ── Left panel: suggestions ──────────────────────────────────────── */}
-      <div style={{
-        width: 200, minWidth: 200, flexShrink: 0,
-        background: 'var(--card)', borderRight: '1px solid var(--border)',
-        display: 'flex', flexDirection: 'column',
-        padding: '16px 10px',
-        overflowY: 'auto',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, padding: '0 4px' }}>
-          <Sparkles size={12} color="var(--accent)" />
-          <span style={{
-            fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)',
-            textTransform: 'uppercase', letterSpacing: '0.1em',
-          }}>
-            Quick questions
-          </span>
-        </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+      {/* ── Suggestions: left panel on desktop, horizontal strip on mobile ── */}
+      {isMobile ? (
+        // Mobile: horizontal scrollable pill strip above chat
+        <div style={{
+          flexShrink: 0, background: 'var(--card)',
+          borderBottom: '1px solid var(--border)',
+          padding: '10px 12px',
+          display: 'flex', alignItems: 'center', gap: 6,
+          overflowX: 'auto', scrollbarWidth: 'none',
+        }}>
+          <Sparkles size={11} color="var(--accent)" style={{ flexShrink: 0 }} />
           {SUGGESTED_QUESTIONS.map(q => (
             <button
               key={q}
               onClick={() => { setInput(q); inputRef.current?.focus() }}
               disabled={loading}
               style={{
-                background: 'transparent', border: '1px solid var(--border)',
-                borderRadius: 8, padding: '8px 10px',
-                fontSize: 11.5, fontWeight: 500, color: 'var(--muted-foreground)',
-                textAlign: 'left', cursor: loading ? 'not-allowed' : 'pointer',
-                lineHeight: 1.5, transition: 'all 0.12s', fontFamily: 'inherit',
-              }}
-              onMouseEnter={e => {
-                if (!loading) {
-                  const el = e.currentTarget as HTMLElement
-                  el.style.background = 'hsl(220 90% 56% / 0.06)'
-                  el.style.borderColor = 'hsl(220 90% 56% / 0.3)'
-                  el.style.color = 'var(--foreground)'
-                }
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLElement
-                el.style.background = 'transparent'
-                el.style.borderColor = 'var(--border)'
-                el.style.color = 'var(--muted-foreground)'
+                flexShrink: 0, background: 'var(--muted)', border: '1px solid var(--border)',
+                borderRadius: 20, padding: '5px 12px',
+                fontSize: 11, fontWeight: 500, color: 'var(--muted-foreground)',
+                cursor: loading ? 'not-allowed' : 'pointer',
+                whiteSpace: 'nowrap', fontFamily: 'inherit',
               }}
             >
               {q}
             </button>
           ))}
         </div>
-      </div>
+      ) : (
+        // Desktop: vertical left panel
+        <div style={{
+          width: 200, minWidth: 200, flexShrink: 0,
+          background: 'var(--card)', borderRight: '1px solid var(--border)',
+          display: 'flex', flexDirection: 'column',
+          padding: '16px 10px',
+          overflowY: 'auto',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12, padding: '0 4px' }}>
+            <Sparkles size={12} color="var(--accent)" />
+            <span style={{
+              fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)',
+              textTransform: 'uppercase', letterSpacing: '0.1em',
+            }}>
+              Quick questions
+            </span>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {SUGGESTED_QUESTIONS.map(q => (
+              <button
+                key={q}
+                onClick={() => { setInput(q); inputRef.current?.focus() }}
+                disabled={loading}
+                style={{
+                  background: 'transparent', border: '1px solid var(--border)',
+                  borderRadius: 8, padding: '8px 10px',
+                  fontSize: 11.5, fontWeight: 500, color: 'var(--muted-foreground)',
+                  textAlign: 'left', cursor: loading ? 'not-allowed' : 'pointer',
+                  lineHeight: 1.5, transition: 'all 0.12s', fontFamily: 'inherit',
+                }}
+                onMouseEnter={e => {
+                  if (!loading) {
+                    const el = e.currentTarget as HTMLElement
+                    el.style.background = 'hsl(220 90% 56% / 0.06)'
+                    el.style.borderColor = 'hsl(220 90% 56% / 0.3)'
+                    el.style.color = 'var(--foreground)'
+                  }
+                }}
+                onMouseLeave={e => {
+                  const el = e.currentTarget as HTMLElement
+                  el.style.background = 'transparent'
+                  el.style.borderColor = 'var(--border)'
+                  el.style.color = 'var(--muted-foreground)'
+                }}
+              >
+                {q}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* ── Main chat ────────────────────────────────────────────────────── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>

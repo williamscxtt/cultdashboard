@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 
 const adminClient = createAdmin(
@@ -8,21 +7,40 @@ const adminClient = createAdmin(
 )
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  try {
+    const { userId, name, email } = await req.json() as {
+      userId?: string
+      name?: string
+      email?: string
+    }
 
-  const { name } = await req.json().catch(() => ({})) as { name?: string }
+    if (!userId) {
+      return NextResponse.json({ error: 'userId required' }, { status: 400 })
+    }
 
-  const { error } = await adminClient.from('profiles').upsert({
-    id: user.id,
-    email: user.email ?? '',
-    name: name || (user.user_metadata?.name as string) || '',
-    role: 'client',
-    is_active: true,
-    onboarding_completed: false,
-  }, { onConflict: 'id' })
+    // Upsert profile — safe to call even if a trigger already created the row
+    const { error } = await adminClient
+      .from('profiles')
+      .upsert({
+        id: userId,
+        name: name || '',
+        email: email || '',
+        role: 'client',
+        is_active: true,
+        // Mark legacy 5-step onboarding as done — new users go straight to the hub
+        onboarding_completed: true,
+        // Hub not yet complete — they'll unlock it by filling ≥75% of the hub
+        onboarding_hub_complete: false,
+      }, { onConflict: 'id', ignoreDuplicates: false })
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ ok: true })
+    if (error) {
+      console.error('[create-profile]', error.message)
+      return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Unknown error'
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
 }

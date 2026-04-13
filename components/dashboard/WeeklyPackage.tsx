@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { ChevronDown, ChevronUp, Copy, Check, Zap, TrendingUp, Users, RefreshCw, Clock, Eye } from 'lucide-react'
-import { Card, Button, PageHeader, GeneratingState, Spinner } from '@/components/ui'
-import CompetitorManager from '@/components/dashboard/CompetitorManager'
+import { ChevronDown, ChevronUp, Copy, Check, Zap, TrendingUp, Users, RefreshCw, Clock } from 'lucide-react'
+import { Card, Button, PageHeader, GeneratingState } from '@/components/ui'
+import { TaskProgress } from '@/components/ui/task-progress'
+import { useIsMobile } from '@/lib/use-mobile'
 import { toast } from 'sonner'
 
 interface WeeklyScript {
@@ -26,27 +27,20 @@ interface ParsedReel {
   raw: string
 }
 
+interface PoppingItem {
+  insight: string
+  account?: string
+  hook?: string
+  views?: string
+}
+
 interface ParsedPackage {
   weekLabel: string
   intelSection: string
-  whatsPopping: string[]
+  whatsPopping: PoppingItem[]
   performanceNote: string
   accountsToWatch: string
   reels: ParsedReel[]
-}
-
-interface CompReel {
-  account: string
-  views: number | null
-  hook: string | null
-  format_type: string | null
-  date: string | null
-}
-
-function fmtK(n: number): string {
-  if (n >= 1_000_000) return (n / 1_000_000).toFixed(1) + 'M'
-  if (n >= 1_000) return (n / 1_000).toFixed(0) + 'K'
-  return String(n)
 }
 
 // ── Markdown parser — mirrors ScriptCards.tsx but with full intel extraction ──
@@ -64,11 +58,33 @@ function parsePackage(md: string, weekStart: string): ParsedPackage {
   const accountsMarker = reelsRaw.search(/\n###\s*Accounts to Watch/)
   const accountsToWatch = accountsMarker > 0 ? reelsRaw.slice(accountsMarker).replace(/^###\s*Accounts to Watch[^\n]*\n/, '').trim() : ''
 
-  // Extract "What's Popping" bullets
+  // Extract "What's Popping" bullets with optional Source: attribution
   const poppingMatch = intelRaw.match(/###\s*What['']s Popping[^\n]*\n([\s\S]*?)(\n###|$)/)
-  const whatsPopping = poppingMatch
-    ? poppingMatch[1].split('\n').map(l => l.replace(/^[-•*]\s*/, '').trim()).filter(l => l.length > 5)
-    : []
+  const whatsPopping: PoppingItem[] = []
+  if (poppingMatch) {
+    // Group lines into bullet + optional Source: sub-line
+    const lines = poppingMatch[1].split('\n')
+    let current: PoppingItem | null = null
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed) continue
+      // Source attribution line
+      const sourceMatch = trimmed.match(/^Source:\s*@([\w.]+)\s*[—–-]\s*"([^"]+)"\s*\(?([\d,k]+\s*views?)\)?/i)
+      if (sourceMatch && current) {
+        current.account = sourceMatch[1]
+        current.hook = sourceMatch[2]
+        current.views = sourceMatch[3]
+        continue
+      }
+      // New bullet line
+      const bulletText = trimmed.replace(/^[-•*]\s*/, '').trim()
+      if (bulletText.length > 5) {
+        if (current) whatsPopping.push(current)
+        current = { insight: bulletText }
+      }
+    }
+    if (current) whatsPopping.push(current)
+  }
 
   // Extract "Performance Last Week"
   const perfMatch = intelRaw.match(/###\s*Performance Last Week[^\n]*\n([\s\S]*?)(\n###|---|\n\n\n|$)/)
@@ -109,6 +125,19 @@ function parsePackage(md: string, weekStart: string): ParsedPackage {
   return { weekLabel, intelSection: intelRaw.trim(), whatsPopping, performanceNote, accountsToWatch, reels }
 }
 
+// ── Inline markdown renderer ─────────────────────────────────────────────────
+
+function renderMd(text: string): string {
+  return text
+    .replace(/^#{1,6}\s+(.+)$/gm, '$1')  // strip heading markers (### H3, ## H2, etc.)
+    .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--foreground);font-weight:700;">$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/^[-•] (.+)$/gm, '<li style="margin:3px 0;padding-left:4px;word-break:break-word;overflow-wrap:break-word;">$1</li>')
+    .replace(/(<li[^>]*>.*?<\/li>\n?)+/g, '<ul style="padding-left:16px;margin:6px 0;list-style:disc;max-width:100%;overflow:hidden;">$&</ul>')
+    .replace(/\n\n/g, '</p><p style="margin:6px 0;line-height:1.65;word-break:break-word;overflow-wrap:break-word;">')
+    .replace(/\n/g, '<br/>')
+}
+
 // ── Copy button ───────────────────────────────────────────────────────────────
 
 function CopyButton({ text }: { text: string }) {
@@ -141,6 +170,7 @@ const DAY_COLORS = [
 
 function ReelCard({ reel, index }: { reel: ParsedReel; index: number }) {
   const [open, setOpen] = useState(false)
+  const isMobile = useIsMobile()
   const accent = DAY_COLORS[index % DAY_COLORS.length]
   const copyText = [
     reel.hook,
@@ -190,12 +220,12 @@ function ReelCard({ reel, index }: { reel: ParsedReel; index: number }) {
       {open && (
         <div style={{ borderTop: '1px solid var(--border)', background: 'var(--background)' }}>
           {/* Hook */}
-          <div style={{ padding: '14px 16px 0' }}>
+          <div style={{ padding: isMobile ? '12px 12px 0' : '14px 16px 0' }}>
             <div style={{ fontSize: 10, fontWeight: 700, color: accent, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
               Hook
             </div>
             <div style={{
-              fontSize: 15, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1.4,
+              fontSize: isMobile ? 13 : 15, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1.4,
               paddingLeft: 12, borderLeft: `3px solid ${accent}`, marginBottom: 16,
             }}>
               &ldquo;{reel.hook}&rdquo;
@@ -204,46 +234,42 @@ function ReelCard({ reel, index }: { reel: ParsedReel; index: number }) {
 
           {/* Script */}
           {reel.script && (
-            <div style={{ padding: '0 16px 14px' }}>
+            <div style={{ padding: isMobile ? '0 12px 12px' : '0 16px 14px' }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
                 Full Script
               </div>
-              <div style={{
-                whiteSpace: 'pre-wrap', fontSize: 13, color: 'var(--foreground)',
-                lineHeight: 1.75, background: 'var(--muted)', borderRadius: 8,
-                padding: '12px 14px',
-              }}>
-                {reel.script}
-              </div>
+              <div
+                style={{ fontSize: isMobile ? 12 : 13, color: 'var(--foreground)', lineHeight: 1.75, background: 'var(--muted)', borderRadius: 8, padding: isMobile ? '10px 12px' : '12px 14px', overflowWrap: 'break-word', wordBreak: 'break-word' }}
+                dangerouslySetInnerHTML={{ __html: renderMd(reel.script) }}
+              />
             </div>
           )}
 
           {/* Caption */}
           {reel.caption && (
-            <div style={{ padding: '0 16px 14px' }}>
+            <div style={{ padding: isMobile ? '0 12px 12px' : '0 16px 14px' }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
                 Caption
               </div>
-              <div style={{
-                fontSize: 12, color: 'var(--foreground)', lineHeight: 1.65,
-                background: 'var(--muted)', borderRadius: 8, padding: '10px 14px',
-              }}>
-                {reel.caption}
-              </div>
+              <div
+                style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.65, background: 'var(--muted)', borderRadius: 8, padding: isMobile ? '8px 12px' : '10px 14px', overflowWrap: 'break-word', wordBreak: 'break-word' }}
+                dangerouslySetInnerHTML={{ __html: renderMd(reel.caption) }}
+              />
             </div>
           )}
 
           {/* CTA + copy */}
-          <div style={{ padding: '0 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ padding: isMobile ? '0 12px 12px' : '0 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
             {reel.cta && (
               <div style={{
                 display: 'inline-flex', padding: '4px 10px', borderRadius: 20,
                 background: `${accent}18`, fontSize: 11, fontWeight: 600, color: accent,
+                flex: '1 1 auto',
               }}>
                 CTA: {reel.cta}
               </div>
             )}
-            <div style={{ marginLeft: 'auto' }}>
+            <div style={{ flexShrink: 0 }}>
               <CopyButton text={copyText} />
             </div>
           </div>
@@ -255,17 +281,13 @@ function ReelCard({ reel, index }: { reel: ParsedReel; index: number }) {
 
 // ── Main component ────────────────────────────────────────────────────────────
 
-export default function WeeklyPackage({ profileId }: { profileId: string }) {
+export default function WeeklyPackage({ profileId, embedded }: { profileId: string; embedded?: boolean }) {
   const [packages, setPackages] = useState<WeeklyScript[]>([])
   const [activeIdx, setActiveIdx] = useState(0)
   const [generating, setGenerating] = useState(false)
   const [loading, setLoading] = useState(true)
   const [intelOpen, setIntelOpen] = useState(true)
-  const [competitorOpen, setCompetitorOpen] = useState(false)
-  const [scraping, setScraping] = useState(false)
-  const [scrapeMsg, setScrapeMsg] = useState<string | null>(null)
-  const [scrapeOk, setScrapeOk] = useState(false)
-  const [compReels, setCompReels] = useState<CompReel[]>([])
+  const isMobile = useIsMobile()
 
   const loadPackages = useCallback(async () => {
     setLoading(true)
@@ -282,43 +304,6 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
       setLoading(false)
     }
   }, [profileId])
-
-  const loadCompReels = useCallback(async () => {
-    try {
-      const res = await fetch('/api/competitor-intel')
-      const data = await res.json()
-      if (data.reels) setCompReels(data.reels.slice(0, 30))
-    } catch { /* silent */ }
-  }, [])
-
-  async function handleScrape() {
-    setScraping(true)
-    setScrapeMsg(null)
-    setScrapeOk(false)
-    try {
-      const res = await fetch('/api/competitors/scrape', { method: 'POST' })
-      const json = await res.json()
-      if (!res.ok) {
-        if (res.status === 503) {
-          setScrapeMsg('Apify not configured — add APIFY_API_TOKEN to Vercel env vars.')
-        } else if (json.error === 'no_competitors') {
-          setScrapeMsg('No competitor accounts added yet. Add some below.')
-        } else {
-          setScrapeMsg(json.message || json.error || 'Scrape failed.')
-        }
-      } else {
-        setScrapeMsg(`Scraped ${json.accounts_scraped} accounts — ${json.added} new reels added.`)
-        setScrapeOk(true)
-        toast.success(`Scraped ${json.accounts_scraped} accounts — ${json.added} new reels added`)
-        await loadCompReels()
-      }
-    } catch {
-      setScrapeMsg('Network error — scrape failed.')
-      toast.error('Scrape failed')
-    } finally {
-      setScraping(false)
-    }
-  }
 
   useEffect(() => { loadPackages() }, [loadPackages])
 
@@ -354,17 +339,19 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
   const hasThisWeek = packages.some(p => p.week_start === thisWeekStart)
 
   return (
-    <div style={{ padding: '24px', maxWidth: 960, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-        <PageHeader
-          title="Weekly Content Package"
-          description="Your personalised weekly intel report + 7 reel scripts, generated from your reels, competitor data, and brand voice."
-        />
+    <div style={embedded ? {} : { padding: isMobile ? '12px' : '24px', maxWidth: 960, margin: '0 auto' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: embedded ? 'flex-end' : 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
+        {!embedded && (
+          <PageHeader
+            title="Weekly Content Package"
+            description="Your personalised weekly intel report + 7 reel scripts, generated from your reels, competitor data, and brand voice."
+          />
+        )}
         <Button
           onClick={handleGenerate}
           disabled={generating}
           variant="primary"
-          style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', width: isMobile ? '100%' : undefined, justifyContent: isMobile ? 'center' : undefined }}
         >
           {generating
             ? <><RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} /> Generating…</>
@@ -373,103 +360,12 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
         </Button>
       </div>
 
-      {/* ── Competitor Intelligence ───────────────────────────────────── */}
-      <Card style={{ marginBottom: 20, overflow: 'hidden' }}>
-        <button
-          onClick={() => setCompetitorOpen(o => !o)}
-          style={{
-            width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-            padding: '14px 18px', background: 'none', border: 'none', cursor: 'pointer',
-            fontFamily: 'inherit',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <Users size={14} style={{ color: 'var(--muted-foreground)' }} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>Competitor Intelligence</span>
-            {compReels.length > 0 && (
-              <span style={{ fontSize: 11, color: 'var(--muted-foreground)', marginLeft: 4 }}>
-                {compReels.length} reels in DB
-              </span>
-            )}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button
-              onClick={(e) => { e.stopPropagation(); handleScrape() }}
-              disabled={scraping}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 5,
-                padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-                background: 'var(--muted)', color: 'var(--foreground)',
-                border: '1px solid var(--border)', cursor: scraping ? 'not-allowed' : 'pointer',
-                opacity: scraping ? 0.6 : 1, fontFamily: 'inherit',
-              }}
-            >
-              {scraping ? <Spinner size={10} /> : <RefreshCw size={10} />}
-              {scraping ? 'Scraping…' : 'Scrape Now'}
-            </button>
-            {competitorOpen ? <ChevronUp size={14} style={{ color: 'var(--muted-foreground)' }} /> : <ChevronDown size={14} style={{ color: 'var(--muted-foreground)' }} />}
-          </div>
-        </button>
-
-        {competitorOpen && (
-          <div style={{ borderTop: '1px solid var(--border)', padding: '16px 18px' }}>
-            {scrapeMsg && (
-              <div style={{
-                padding: '9px 13px', borderRadius: 7, marginBottom: 14, fontSize: 12,
-                background: scrapeOk ? 'rgba(74, 222, 128, 0.08)' : 'rgba(255,255,255,0.04)',
-                color: scrapeOk ? 'rgba(74, 222, 128, 0.9)' : 'var(--muted-foreground)',
-                border: `1px solid ${scrapeOk ? 'rgba(74, 222, 128, 0.2)' : 'var(--border)'}`,
-              }}>
-                {scrapeMsg}
-              </div>
-            )}
-
-            {/* Competitor reels from DB */}
-            {compReels.length > 0 && (
-              <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                  Top Competitor Reels
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {compReels.slice(0, 15).map((r, i) => (
-                    <div key={i} style={{
-                      display: 'flex', alignItems: 'center', gap: 12,
-                      padding: '8px 10px', borderRadius: 7, background: 'var(--muted)',
-                      fontSize: 12,
-                    }}>
-                      <span style={{ fontSize: 11, color: 'var(--accent)', fontWeight: 700, flexShrink: 0, width: 90, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        @{r.account}
-                      </span>
-                      <span style={{
-                        flex: 1, color: 'var(--foreground)', fontWeight: 500,
-                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      }}>
-                        {r.hook || '(no hook)'}
-                      </span>
-                      {r.format_type && (
-                        <span style={{ fontSize: 10, color: 'var(--muted-foreground)', flexShrink: 0 }}>
-                          {r.format_type}
-                        </span>
-                      )}
-                      <span style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)', flexShrink: 0 }}>
-                        <Eye size={9} /> {fmtK(r.views ?? 0)}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Manage competitor accounts */}
-            <div>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                Manage Accounts
-              </div>
-              <CompetitorManager />
-            </div>
-          </div>
-        )}
-      </Card>
+      <TaskProgress
+        active={generating}
+        estimatedMs={120000}
+        label="Generating your weekly package…"
+        sublabel="Syncing your account, then generating scripts"
+      />
 
       {generating && (
         <Card style={{ marginBottom: 16, position: 'relative', overflow: 'hidden' }}>
@@ -505,13 +401,25 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
           </Button>
         </Card>
       ) : !generating ? (
-        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 20, alignItems: 'flex-start' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '200px 1fr',
+          gap: isMobile ? 0 : 20,
+          alignItems: 'flex-start',
+        }}>
 
-          {/* History sidebar */}
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
-              Past Packages
-            </div>
+          {/* History sidebar / horizontal strip on mobile */}
+          <div style={isMobile ? {
+            display: 'flex', flexDirection: 'row', overflowX: 'auto', gap: 6,
+            paddingBottom: 4, marginBottom: 12,
+            WebkitOverflowScrolling: 'touch' as any,
+            scrollbarWidth: 'none' as any,
+          } : { display: 'block' }}>
+            {!isMobile && (
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
+                Past Packages
+              </div>
+            )}
             {packages.map((pkg, i) => {
               const label = new Date(pkg.week_start + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
               const isThisWeek = pkg.week_start === thisWeekStart
@@ -522,11 +430,15 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
                   onClick={() => setActiveIdx(i)}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8,
-                    width: '100%', padding: '9px 10px', borderRadius: 8,
+                    flexShrink: 0,
+                    width: isMobile ? 'auto' : '100%',
+                    padding: isMobile ? '7px 12px' : '9px 10px',
+                    borderRadius: 8,
                     border: isActive ? '1px solid var(--border)' : '1px solid transparent',
                     background: isActive ? 'var(--muted)' : 'transparent',
                     cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
-                    marginBottom: 2,
+                    marginBottom: isMobile ? 0 : 2,
+                    whiteSpace: 'nowrap',
                   }}
                 >
                   <div style={{
@@ -537,9 +449,11 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
                     <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>
                       {isThisWeek ? 'This week' : `w/c ${label}`}
                     </div>
-                    <div style={{ fontSize: 10, color: 'var(--muted-foreground)' }}>
-                      {pkg.script_count} scripts
-                    </div>
+                    {!isMobile && (
+                      <div style={{ fontSize: 10, color: 'var(--muted-foreground)' }}>
+                        {pkg.script_count} scripts
+                      </div>
+                    )}
                   </div>
                 </button>
               )
@@ -548,10 +462,10 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
 
           {/* Main content */}
           {parsed && (
-            <div>
+            <div style={{ minWidth: 0, overflow: 'hidden' }}>
               {/* Week header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-                <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)' }}>
+              <div style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 4 : 10, marginBottom: 16 }}>
+                <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: 'var(--foreground)' }}>
                   Week of {parsed.weekLabel}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--muted-foreground)' }}>
@@ -566,19 +480,19 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
                   onClick={() => setIntelOpen(o => !o)}
                   style={{
                     width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '14px 18px', background: 'none', border: 'none', cursor: 'pointer',
-                    fontFamily: 'inherit',
+                    padding: isMobile ? '10px 12px' : '14px 18px', background: 'none', border: 'none', cursor: 'pointer',
+                    fontFamily: 'inherit', gap: 8,
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <TrendingUp size={14} style={{ color: 'var(--accent)' }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                    <TrendingUp size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
                     <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>Weekly Intelligence Report</span>
                   </div>
                   {intelOpen ? <ChevronUp size={14} style={{ color: 'var(--muted-foreground)' }} /> : <ChevronDown size={14} style={{ color: 'var(--muted-foreground)' }} />}
                 </button>
 
                 {intelOpen && (
-                  <div style={{ borderTop: '1px solid var(--border)', padding: '16px 18px' }}>
+                  <div style={{ borderTop: '1px solid var(--border)', padding: isMobile ? '12px' : '16px 18px', overflow: 'hidden' }}>
                     {/* What's Popping */}
                     {parsed.whatsPopping.length > 0 && (
                       <div style={{ marginBottom: 16 }}>
@@ -586,9 +500,40 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
                           What&rsquo;s Popping This Week
                         </div>
                         {parsed.whatsPopping.map((p, i) => (
-                          <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
-                            <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 6 }} />
-                            <span style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.55 }}>{p}</span>
+                          <div key={i} style={{ marginBottom: 12 }}>
+                            <div style={{ display: 'flex', gap: 8, minWidth: 0 }}>
+                              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 6 }} />
+                              <div
+                                style={{ fontSize: isMobile ? 12 : 13, color: 'var(--foreground)', lineHeight: 1.55, overflowWrap: 'break-word', wordBreak: 'break-word', minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}
+                                dangerouslySetInnerHTML={{ __html: renderMd(p.insight) }}
+                              />
+                            </div>
+                            {p.account && (
+                              <div style={{
+                                marginTop: 6, marginLeft: 14,
+                                display: 'flex', flexDirection: 'column', gap: 4,
+                              }}>
+                                <div style={{
+                                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                                  padding: '3px 8px', borderRadius: 20,
+                                  background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)',
+                                  fontSize: 11, fontWeight: 600, color: 'var(--accent)',
+                                  alignSelf: 'flex-start',
+                                }}>
+                                  @{p.account}
+                                  {p.views && (
+                                    <span style={{ fontWeight: 400, color: 'var(--muted-foreground)' }}>
+                                      · {p.views}
+                                    </span>
+                                  )}
+                                </div>
+                                {p.hook && (
+                                  <span style={{ fontSize: 11, color: 'var(--muted-foreground)', lineHeight: 1.5, fontStyle: 'italic', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
+                                    &ldquo;{p.hook}&rdquo;
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -600,9 +545,10 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
                         <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
                           Performance Last Week
                         </div>
-                        <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.65, whiteSpace: 'pre-line' }}>
-                          {parsed.performanceNote}
-                        </div>
+                        <div
+                          style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.65, overflowWrap: 'break-word', wordBreak: 'break-word' }}
+                          dangerouslySetInnerHTML={{ __html: renderMd(parsed.performanceNote) }}
+                        />
                       </div>
                     )}
 
@@ -615,9 +561,10 @@ export default function WeeklyPackage({ profileId }: { profileId: string }) {
                             Accounts to Watch
                           </span>
                         </div>
-                        <div style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.65, whiteSpace: 'pre-line' }}>
-                          {parsed.accountsToWatch}
-                        </div>
+                        <div
+                          style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.65, overflowWrap: 'break-word', wordBreak: 'break-word' }}
+                          dangerouslySetInnerHTML={{ __html: renderMd(parsed.accountsToWatch) }}
+                        />
                       </div>
                     )}
                   </div>

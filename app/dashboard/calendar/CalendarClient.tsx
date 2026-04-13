@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { PageHeader, Button, Card, EmptyState } from '@/components/ui'
 import { Calendar, Copy, Check, List, LayoutGrid, ChevronLeft, ChevronRight, ExternalLink, Eye, Heart, Pencil, Trash2, Plus, X } from 'lucide-react'
+import { useIsMobile } from '@/lib/use-mobile'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -414,12 +415,13 @@ type Selected =
   | { type: 'posted'; reels: PostedReel[] }
 
 export default function CalendarClient({ profileId, reels }: Props) {
+  const isMobile = useIsMobile()
   const [currentMonth, setCurrentMonth] = useState(new Date())
   const [planned, setPlanned] = useState<PlannedEntry[]>([])
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(true)
   const [selected, setSelected] = useState<Selected | null>(null)
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(isMobile ? 'list' : 'grid')
   const [postsPerWeek, setPostsPerWeek] = useState(5)
   const [error, setError] = useState('')
   const [hoveredDate, setHoveredDate] = useState<string | null>(null)
@@ -560,7 +562,7 @@ export default function CalendarClient({ profileId, reels }: Props) {
   }))
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1024, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1024, margin: '0 auto' }}>
       <PageHeader
         title="Content Calendar"
         description="See what you've posted and plan what's coming next."

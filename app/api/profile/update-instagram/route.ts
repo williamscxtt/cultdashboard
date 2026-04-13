@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
         adminClient.from('client_reels').delete().eq('profile_id', profileId),
         adminClient.from('weekly_scripts').delete().eq('profile_id', profileId),
         adminClient.from('follower_snapshots').delete().eq('profile_id', profileId),
-        adminClient.from('profiles').update({ comment_analysis_json: null, followers_count: null }).eq('id', profileId),
+        adminClient.from('profiles').update({ comment_analysis_json: null, content_insights_json: null, content_insights_updated_at: null, followers_count: null }).eq('id', profileId),
       ])
     }
 

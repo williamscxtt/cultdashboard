@@ -27,7 +27,14 @@ const ACTOR_ID = 'apify~instagram-reel-scraper'
 
 // ── Apify helpers ─────────────────────────────────────────────────────────────
 
-async function apifyStartRun(username: string): Promise<string> {
+/**
+ * isInitialSync = true  → first 30 reels (history baseline), with comments
+ * isInitialSync = false → last 7 days only (25 limit — buffer for prolific posters), no comments
+ *
+ * Comments are only fetched on initial sync to power the AI comment overview.
+ * Incremental syncs skip comments to save ~70% Apify compute units.
+ */
+async function apifyStartRun(username: string, isInitialSync: boolean): Promise<string> {
   const token = process.env.APIFY_API_TOKEN
   if (!token) throw new Error('APIFY_API_TOKEN not set')
 
@@ -36,9 +43,12 @@ async function apifyStartRun(username: string): Promise<string> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       username: [username],
-      resultsLimit: 150,        // Capture ~5 months of posting history
-      includeComments: true,
-      maxCommentsPerPost: 30,
+      // 30 on first sync for baseline; 25 on incremental (buffer for high-volume posters)
+      // — Apify returns newest-first, so 25 always covers ≥ 7 days for any realistic schedule
+      resultsLimit: isInitialSync ? 30 : 25,
+      // Comments only on initial sync — powers the AI overview; skip on incrementals
+      includeComments: isInitialSync,
+      maxCommentsPerPost: isInitialSync ? 30 : 0,
     }),
   })
   if (!res.ok) {
@@ -72,7 +82,22 @@ async function apifyDownload(datasetId: string): Promise<ApifyReel[]> {
   const res = await fetch(`${APIFY_BASE}/datasets/${datasetId}/items?token=${token}&clean=true`)
   if (!res.ok) throw new Error(`Apify download failed: ${res.status}`)
   const items = await res.json() as Record<string, unknown>[]
-  return items.map(normalise)
+
+  return items
+    // Reels only — skip photos (no videoPlayCount) and carousels
+    .filter(item => {
+      const isVideo = Boolean(
+        (item.isVideo ?? item.is_video) ||
+        (item.type === 'Video') ||
+        (item.mediaType === 'VIDEO') ||
+        (Number(item.videoPlayCount ?? item.playCount ?? item.videoViewCount ?? 0) > 0)
+      )
+      // Skip pinned posts — they appear at position 1-3 in the grid regardless of
+      // when they were posted and will massively skew date-filtered stats
+      const isPinned = Boolean(item.isPinned ?? item.pinned ?? item.isTopPost ?? false)
+      return isVideo && !isPinned
+    })
+    .map(normalise)
 }
 
 interface ApifyReel {
@@ -320,10 +345,20 @@ export async function POST(req: NextRequest) {
   // Ensure storage bucket exists (no-op if already created)
   await adminClient.storage.createBucket(BUCKET, { public: true }).catch(() => {})
 
-  // ── 1. Apify scrape ──────────────────────────────────────────────────────
+  // ── 1. Determine sync mode BEFORE hitting Apify ──────────────────────────
+  // Initial sync: no reels in DB → pull full history (150 reels, with comments)
+  // Incremental:  existing reels present → pull last ~2 weeks only (15 reels, no comments)
+  //               This saves ~90% of Apify compute unit cost per sync.
+  const { count: existingCount } = await adminClient
+    .from('client_reels')
+    .select('*', { count: 'exact', head: true })
+    .eq('profile_id', profileId)
+  const isInitialSync = (existingCount ?? 0) === 0
+
+  // ── 2. Apify scrape ──────────────────────────────────────────────────────
   let reels: ApifyReel[]
   try {
-    const runId = await apifyStartRun(igUsername)
+    const runId = await apifyStartRun(igUsername, isInitialSync)
     const datasetId = await apifyPollRun(runId)
     reels = await apifyDownload(datasetId)
   } catch (err) {
@@ -336,7 +371,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ synced: 0, total: 0, message: 'No reels found on this account.' })
   }
 
-  // ── 2. Save follower snapshot ────────────────────────────────────────────
+  // For incremental syncs, discard anything older than 7 days — we only want new content
+  if (!isInitialSync) {
+    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    reels = reels.filter(r => {
+      if (!r.timestamp) return true // keep if no date (safer than dropping)
+      const posted = new Date(r.timestamp)
+      return isNaN(posted.getTime()) || posted >= cutoff
+    })
+  }
+
+  // ── 3. Save follower snapshot ────────────────────────────────────────────
   let followerCount = reels.reduce((max, r) => Math.max(max, r.follower_count), 0)
 
   // Fallback: if reel scraper didn't include follower count, hit the profile scraper directly
@@ -372,7 +417,7 @@ export async function POST(req: NextRequest) {
     await adminClient.from('profiles').update({ followers_count: followerCount }).eq('id', profileId)
   }
 
-  // ── 3. Find new reels ────────────────────────────────────────────────────
+  // ── 4. Find new reels ────────────────────────────────────────────────────
   const reelIds = reels.map(r => r.reel_id).filter(Boolean)
   const { data: existing } = await adminClient
     .from('client_reels').select('reel_id').eq('profile_id', profileId).in('reel_id', reelIds)
@@ -397,7 +442,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ synced: 0, total: reels.length, message: 'All reels already synced.' })
   }
 
-  // ── 4. Transcribe + persist thumbnails for new reels (max 5 at a time) ─
+  // ── 5. Transcribe + persist thumbnails for new reels (max 5 at a time) ─
   // Only transcribe the 20 most recent new reels to avoid Vercel timeout
   const MAX_TRANSCRIBE = 20
   const reelsToTranscribe = newReels
@@ -429,7 +474,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // ── 5. Classify format types (new reels + existing with NULL format) ────
+  // ── 6. Classify format types (new reels + existing with NULL format) ────
   const toClassifyNew = newReels.map(r => ({
     reel_id: r.reel_id,
     transcript: (r as ApifyReel & { transcript?: string }).transcript ?? '',
@@ -470,7 +515,7 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // ── 6. Insert new reels ──────────────────────────────────────────────────
+  // ── 7. Insert new reels ──────────────────────────────────────────────────
   const today = new Date().toISOString().slice(0, 10)
   const rows = newReels.map(r => {
     const ext = r as ApifyReel & { transcript?: string; hook?: string; comments_text?: string[] }
@@ -495,9 +540,11 @@ export async function POST(req: NextRequest) {
     }
   })
 
-  const { error: insertErr } = await adminClient.from('client_reels').insert(rows)
+  const { error: insertErr } = await adminClient
+    .from('client_reels')
+    .upsert(rows, { onConflict: 'profile_id,reel_id', ignoreDuplicates: false })
   if (insertErr) {
-    console.error('[sync] Insert error:', insertErr.message)
+    console.error('[sync] Upsert error:', insertErr.message)
     return NextResponse.json({ error: insertErr.message }, { status: 500 })
   }
 
@@ -531,7 +578,7 @@ export async function PATCH(req: NextRequest) {
   // Fetch fresh reel data from Apify
   let reels: ApifyReel[]
   try {
-    const runId = await apifyStartRun(igUsername)
+    const runId = await apifyStartRun(igUsername, true)
     const datasetId = await apifyPollRun(runId)
     reels = await apifyDownload(datasetId)
   } catch (err) {

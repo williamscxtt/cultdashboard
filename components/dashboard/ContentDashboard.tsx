@@ -860,7 +860,7 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
                   display: 'flex', alignItems: 'flex-start', gap: 14,
                   transition: 'background 0.1s',
                 }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--muted)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255, 255, 255, 0.04)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent' }}
                 >
                   <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--border)', minWidth: 20, flexShrink: 0, lineHeight: 1.4 }}>
@@ -1134,13 +1134,14 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
                           </button>
                           {isOpen && (
                             <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border)', background: 'var(--background)' }}>
-                              <div style={{ padding: '14px 0', whiteSpace: 'pre-wrap', fontSize: 13, color: 'var(--foreground)', lineHeight: 1.7 }}>
-                                {script.script}
-                              </div>
+                              <div
+                                style={{ padding: '14px 0', fontSize: 13, color: 'var(--foreground)', lineHeight: 1.7 }}
+                                dangerouslySetInnerHTML={{ __html: renderMd(script.script) }}
+                              />
                               {script.caption && (
                                 <div style={{ padding: '10px 14px', borderRadius: 8, background: 'var(--muted)', marginBottom: 10 }}>
                                   <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 5 }}>Caption</div>
-                                  <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.6 }}>{script.caption}</div>
+                                  <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.6 }} dangerouslySetInnerHTML={{ __html: renderMd(script.caption) }} />
                                 </div>
                               )}
                               {script.cta && (

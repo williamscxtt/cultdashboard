@@ -78,6 +78,10 @@
 /* ── Reset ────────────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+html {
+  overflow-x: hidden;
+}
+
 html.dark { color-scheme: dark; }
 html:not(.dark) { color-scheme: light; }
 
@@ -90,6 +94,11 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
+  overflow-x: hidden;
+  /* Prevent any long unbroken text (AI-generated content, URLs, etc.) from
+     blowing out the layout on mobile */
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 /* Display font for headings */
@@ -150,14 +159,77 @@ select { padding-right: 32px; appearance: none; cursor: pointer; }
 
 /* ── Dashboard mobile ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
+  /* Hide desktop sidebar — restores full viewport width for content */
+  .sidebar-desktop { display: none !important; }
+
+  /* Ensure block-level containers never exceed viewport */
+  div, section, article, aside, main, p, li { max-width: 100%; }
+  img, video, canvas, svg, iframe { max-width: 100%; height: auto; }
+
+  /* Layout */
   .dash-page { padding: 12px !important; }
+
+  /* Grids */
   .stats-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
   .stats-grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
   .stats-grid-2 { grid-template-columns: 1fr !important; }
-  .card-row { flex-direction: column !important; }
+  .grid-2col   { grid-template-columns: 1fr !important; }
+
+  /* Flex */
+  .card-row   { flex-direction: column !important; }
+  .flex-wrap-mobile { flex-wrap: wrap !important; }
+  .hide-mobile { display: none !important; }
+  .full-width-mobile { width: 100% !important; }
+
+  /* Tables */
   .table-wrap { overflow-x: auto !important; }
+
+  /* Cards */
   .card-padded { padding: 14px !important; }
+
+  /* Tabs */
   .tabs-container { overflow-x: auto !important; flex-wrap: nowrap !important; }
+
+  /* Touch targets — minimum 44px for interactive elements */
+  button, a, [role="button"] { min-height: 36px; }
+
+  /* Weekly Package history sidebar → horizontal scroll strip */
+  .wp-history-sidebar {
+    display: flex !important;
+    flex-direction: row !important;
+    overflow-x: auto !important;
+    gap: 6px !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 16px !important;
+    scrollbar-width: none !important;
+  }
+  .wp-history-sidebar::-webkit-scrollbar { display: none; }
+  .wp-history-btn {
+    flex-shrink: 0 !important;
+    white-space: nowrap !important;
+    width: auto !important;
+  }
+
+  /* Reel card grid → 1 column on very small screens */
+  .reel-grid { grid-template-columns: 1fr 1fr !important; }
+
+  /* Page headers */
+  .page-header-row { flex-direction: column !important; align-items: flex-start !important; }
+  .page-header-actions { width: 100% !important; }
+
+  /* Forms */
+  .form-row { flex-direction: column !important; }
+  .form-row > * { width: 100% !important; }
+
+  /* Topbar: shrink breadcrumb on mobile */
+  .topbar-breadcrumb-label { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+
+/* Very small screens (≤ 400px) */
+@media (max-width: 400px) {
+  .reel-grid { grid-template-columns: 1fr !important; }
+  .stats-grid-3 { grid-template-columns: 1fr !important; }
+  .stats-grid-4 { grid-template-columns: 1fr 1fr !important; }
 }
 
 /* ── Animations ───────────────────────────────────────────────────────── */

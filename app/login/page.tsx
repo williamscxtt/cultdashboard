@@ -11,7 +11,14 @@ export default function LoginPage() {
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(() => {
+    // Show error if redirected back from auth callback
+    if (typeof window !== 'undefined') {
+      const p = new URLSearchParams(window.location.search)
+      if (p.get('error') === 'confirmation_failed') return 'Email confirmation failed — please try signing up again or contact support.'
+    }
+    return ''
+  })
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
@@ -31,21 +38,44 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true); setError('')
     const supabase = createClient()
-    const { data, error } = await supabase.auth.signUp({
+
+    const { data, error: signupError } = await supabase.auth.signUp({
       email,
       password,
-      options: { data: { name } },
+      options: {
+        data: { name },
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard/onboarding`,
+      },
     })
-    if (error) { setError(error.message); setLoading(false); return }
-    if (data.session) {
+
+    // If the account already exists, send a password reset so they can get in
+    if (signupError?.message?.toLowerCase().includes('already registered') ||
+        signupError?.message?.toLowerCase().includes('already been registered') ||
+        signupError?.message?.toLowerCase().includes('user already exists')) {
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      })
+      setSuccess("You already have an account. We've sent a link to your email so you can set your password and log in.")
+      setLoading(false)
+      return
+    }
+
+    if (signupError) { setError(signupError.message); setLoading(false); return }
+
+    // Create profile row via API
+    if (data.user) {
       await fetch('/api/auth/create-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
+        body: JSON.stringify({ userId: data.user.id, name, email }),
       })
-      router.push('/onboarding')
+    }
+
+    // If email confirmation is required, user won't be in a session yet
+    if (data.session) {
+      router.push('/dashboard/onboarding')
     } else {
-      setSuccess("Account created — check your email to confirm, then come back and log in.")
+      setSuccess("Account created — check your email to confirm, then sign in.")
       setLoading(false)
     }
   }
@@ -119,7 +149,6 @@ export default function LoginPage() {
         justifyContent: 'center', padding: '0 52px',
         position: 'relative', overflow: 'hidden',
       }}>
-        {/* Ambient glow blobs */}
         <div style={{
           position: 'absolute', top: -60, right: -80, width: 300, height: 300,
           background: '#3B82F6', borderRadius: '50%',
@@ -133,7 +162,6 @@ export default function LoginPage() {
           pointerEvents: 'none',
         }} />
 
-        {/* Content */}
         <div style={{ position: 'relative', zIndex: 1, animation: 'loginFadeIn 0.5s ease both' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 40 }}>
             <div style={{
@@ -184,6 +212,7 @@ export default function LoginPage() {
       }}>
         <div style={{ width: '100%', maxWidth: 380, animation: 'loginFadeIn 0.5s 0.1s ease both', opacity: 0 }}>
 
+          {/* ── Login ── */}
           {mode === 'login' && (
             <>
               <h1 style={{ fontSize: 24, fontWeight: 800, color: 'hsl(0 5% 94%)', marginBottom: 4, letterSpacing: '-0.5px', fontFamily: 'var(--font-display)' }}>
@@ -224,22 +253,30 @@ export default function LoginPage() {
             </>
           )}
 
+          {/* ── Sign up ── */}
           {mode === 'signup' && (
             <>
               <h1 style={{ fontSize: 24, fontWeight: 800, color: 'hsl(0 5% 94%)', marginBottom: 4, letterSpacing: '-0.5px', fontFamily: 'var(--font-display)' }}>
                 Create your account
               </h1>
               <p style={{ fontSize: 13, color: 'hsl(0 5% 45%)', marginBottom: 32 }}>
-                Join Creator Cult and start growing.
+                Get access to your Creator Cult dashboard
               </p>
 
               {success ? (
-                <SuccessBox>{success}</SuccessBox>
+                <>
+                  <SuccessBox>{success}</SuccessBox>
+                  <p style={{ textAlign: 'center', fontSize: 13, color: 'hsl(0 5% 40%)', marginTop: 24 }}>
+                    <button onClick={() => reset('login')} style={{ color: '#3B82F6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
+                      ← Back to sign in
+                    </button>
+                  </p>
+                </>
               ) : (
                 <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Full name</label>
-                    <input className="login-input" type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Will Scott" required />
+                    <input className="login-input" type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" required />
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Email address</label>
@@ -247,7 +284,7 @@ export default function LoginPage() {
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Password</label>
-                    <input className="login-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 8 characters" minLength={8} required />
+                    <input className="login-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 8 characters" minLength={8} required />
                   </div>
 
                   {error && <ErrorBox>{error}</ErrorBox>}
@@ -258,15 +295,18 @@ export default function LoginPage() {
                 </form>
               )}
 
-              <p style={{ textAlign: 'center', fontSize: 13, color: 'hsl(0 5% 40%)', marginTop: 28 }}>
-                Already have an account?{' '}
-                <button onClick={() => reset('login')} style={{ color: '#3B82F6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
-                  Sign in
-                </button>
-              </p>
+              {!success && (
+                <p style={{ textAlign: 'center', fontSize: 13, color: 'hsl(0 5% 40%)', marginTop: 28 }}>
+                  Already have an account?{' '}
+                  <button onClick={() => reset('login')} style={{ color: '#3B82F6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
+                    Sign in
+                  </button>
+                </p>
+              )}
             </>
           )}
 
+          {/* ── Forgot password ── */}
           {mode === 'forgot' && (
             <>
               <h1 style={{ fontSize: 24, fontWeight: 800, color: 'hsl(0 5% 94%)', marginBottom: 4, letterSpacing: '-0.5px', fontFamily: 'var(--font-display)' }}>
@@ -300,6 +340,7 @@ export default function LoginPage() {
               </p>
             </>
           )}
+
         </div>
       </div>
     </div>

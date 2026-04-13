@@ -7,7 +7,7 @@ import {
   Settings, Users, LogOut, Calendar, Copy, Search,
   BookOpen, TrendingUp, PhoneCall,
   ChevronDown, ChevronUp, Send, Zap, PanelLeft, User, X,
-  Sun, Moon,
+  Sun, Moon, Lock,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
@@ -18,7 +18,6 @@ import { useState, useEffect } from 'react'
 // Same nav for everyone — admin just gets the extra section at the bottom
 const mainNav = [
   { href: '/dashboard/analytics',   label: 'Dashboard',        icon: BarChart2 },
-  { href: '/dashboard/scripts',     label: 'This Week',        icon: Zap },
   { href: '/dashboard/content',     label: 'Content Studio',   icon: Lightbulb },
   { href: '/dashboard/calendar',    label: 'Content Calendar', icon: Calendar },
   { href: '/dashboard/dm-sales',    label: 'DM Sales',         icon: PhoneCall },
@@ -28,7 +27,7 @@ const mainNav = [
 const toolsNavBase = [
   { href: '/dashboard/outreach',      label: 'Outreach',         icon: Send },
   { href: '/dashboard/reel-copy',     label: 'Reel Analyser',    icon: Copy },
-  { href: '/dashboard/profile-audit', label: 'Profile Audit',    icon: Search },
+  { href: '/dashboard/profile-audit', label: 'Profile Tools',    icon: Search },
   { href: '/dashboard/settings',      label: 'Settings',         icon: Settings },
 ]
 
@@ -120,6 +119,49 @@ function NavItem({
   )
 }
 
+function LockedNavItem({
+  icon: Icon, label, collapsed,
+}: {
+  icon: React.ComponentType<{ size?: number }>
+  label: string
+  collapsed: boolean
+}) {
+  return (
+    <div
+      title={collapsed ? `${label} — complete your profile to unlock` : 'Complete 75% of My Profile to unlock'}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: collapsed ? 0 : 9,
+        justifyContent: collapsed ? 'center' : 'flex-start',
+        padding: collapsed ? '0' : '0 10px',
+        height: 34,
+        borderRadius: 7,
+        fontSize: 13,
+        fontWeight: 500,
+        marginBottom: 1,
+        color: 'var(--muted-foreground)',
+        opacity: 0.4,
+        cursor: 'not-allowed',
+        userSelect: 'none',
+        position: 'relative',
+        flexShrink: 0,
+        width: '100%',
+      }}
+    >
+      <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <Icon size={14} />
+      </span>
+      {!collapsed && (
+        <>
+          <span style={{ letterSpacing: '-0.15px', flex: 1 }}>{label}</span>
+          <Lock size={10} style={{ opacity: 0.6, flexShrink: 0 }} />
+        </>
+      )}
+    </div>
+  )
+}
+
 function SectionDivider({ label, collapsed }: { label: string; collapsed: boolean }) {
   if (collapsed) {
     return <div style={{ height: 1, background: 'var(--border)', margin: '8px 6px' }} />
@@ -156,6 +198,10 @@ function SidebarContent({
   const isAdmin = realProfile.role === 'admin'
   const displayProfile = isImpersonating ? effectiveProfile : realProfile
   const toolsNav = [...toolsNavBase, clientOnboardingItem]
+
+  // Lock nav items for clients who haven't completed ≥75% of the Onboarding Hub
+  // Admins are always unlocked; impersonating admins see the client's locked state
+  const hubLocked = !isAdmin && !(isImpersonating ? effectiveProfile : realProfile).onboarding_hub_complete
 
   const [isDark, setIsDark] = useState(true)
 
@@ -283,15 +329,38 @@ function SidebarContent({
         flexDirection: 'column',
       }}>
         <div style={{ flex: 1 }}>
-          {mainNav.map(item => (
-            <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} />
-          ))}
+          {mainNav.map(item => hubLocked
+            ? <LockedNavItem key={item.href} icon={item.icon} label={item.label} collapsed={collapsed} />
+            : <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} />
+          )}
 
           <SectionDivider label="Tools" collapsed={collapsed} />
-          {toolsNav.map(item => (
-            <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} />
-          ))}
+          {toolsNav.map(item => {
+            // "My Profile" (onboarding hub) is always accessible — it's how they unlock the rest
+            const alwaysOpen = item.href === '/dashboard/onboarding'
+            if (hubLocked && !alwaysOpen) {
+              return <LockedNavItem key={item.href} icon={item.icon} label={item.label} collapsed={collapsed} />
+            }
+            return <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} />
+          })}
         </div>
+
+        {/* Hub locked banner */}
+        {hubLocked && !collapsed && (
+          <div style={{
+            margin: '8px 2px 4px',
+            padding: '10px 12px',
+            borderRadius: 8,
+            background: 'rgba(59,130,246,0.08)',
+            border: '1px solid rgba(59,130,246,0.2)',
+            fontSize: 11,
+            color: 'rgba(255,255,255,0.5)',
+            lineHeight: 1.5,
+          }}>
+            <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>Complete My Profile</span>
+            {' '}to unlock all features. Fill in 75% of the questions and save.
+          </div>
+        )}
 
         {/* Admin section */}
         {isAdmin && (
