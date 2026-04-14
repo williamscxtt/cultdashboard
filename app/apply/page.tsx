@@ -9,21 +9,6 @@ const PLATFORM_OPTIONS = ['Instagram', 'TikTok', 'YouTube', 'Not posting yet']
 
 const FREQUENCY_OPTIONS = ['0–5 posts', '6–15 posts', '16–30 posts', 'Daily or more']
 
-const IF_NOTHING_CHANGES_OPTIONS = [
-  "I'd stay consistent but plateau — income and growth wouldn't move",
-  "I'd lose momentum and motivation would drop",
-  "I'd lose leads or clients — what I'm doing is becoming less effective",
-  "I'd fall behind competitors who are scaling faster",
-  "Honestly, that would be a serious problem — I need growth soon",
-]
-
-const BIGGEST_OBSTACLE_OPTIONS = [
-  "Not knowing how to position content to attract clients",
-  "Doing everything myself — spreading too thin",
-  "No clear plan to grow",
-  "Not knowing what to do next",
-]
-
 const STRATEGIES_TRIED_OPTIONS = [
   'Posting consistently',
   'Outreaching to potential clients',
@@ -33,7 +18,13 @@ const STRATEGIES_TRIED_OPTIONS = [
   'None yet',
 ]
 
-const MONTHLY_INCOME_OPTIONS = [
+const INVESTMENT_APPROACH_OPTIONS = [
+  { label: 'I can invest immediately', disqualify: false },
+  { label: 'I need to plan and allocate capital first', disqualify: false },
+  { label: "I'm not in a position to invest right now", disqualify: true },
+]
+
+const MONTHLY_INCOME_STEPS = [
   'Under £1,200',
   '£1,200–£2,000',
   '£2,000–£3,500',
@@ -45,23 +36,16 @@ const MONTHLY_INCOME_OPTIONS = [
   '£20,000+',
 ]
 
-const INVESTMENT_APPROACH_OPTIONS = [
-  { label: 'I can invest immediately', disqualify: false },
-  { label: 'I need to plan and allocate capital first', disqualify: false },
-  { label: "I'm not in a position to invest right now", disqualify: true },
+const INVESTMENT_AMOUNT_STEPS = [
+  '£1,000–£2,000',
+  '£2,000–£3,500',
+  '£3,500–£5,000',
+  '£5,000–£7,000',
+  '£7,000–£10,000',
+  '£10,000+',
 ]
 
-const INVESTMENT_AMOUNT_OPTIONS = [
-  { label: '£1,000–£2,000', disqualify: false },
-  { label: '£2,000–£3,500', disqualify: false },
-  { label: '£3,500–£5,000', disqualify: false },
-  { label: '£5,000–£7,000', disqualify: false },
-  { label: '£7,000–£10,000', disqualify: false },
-  { label: '£10,000+', disqualify: false },
-  { label: "I'm not in a position to invest right now", disqualify: true },
-]
-
-const INCOME_GOAL_OPTIONS = [
+const INCOME_GOAL_STEPS = [
   'Under £2,500/month',
   '£2,500–£5,000/month',
   '£5,000–£7,500/month',
@@ -95,8 +79,7 @@ type FormData = {
 
 function isDisqualified(form: FormData): boolean {
   const approachDisq = INVESTMENT_APPROACH_OPTIONS.find(o => o.label === form.investment_approach)?.disqualify
-  const amountDisq = INVESTMENT_AMOUNT_OPTIONS.find(o => o.label === form.investment_amount)?.disqualify
-  return !!(approachDisq || amountDisq || form.business_mindset === 'No')
+  return !!(approachDisq || form.business_mindset === 'No')
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -109,8 +92,11 @@ export default function ApplyPage() {
     first_name: '', last_name: '', date_of_birth: '', email: '', phone: '',
     instagram_handle: '', platforms: [], posting_frequency: '', niche: '',
     if_nothing_changes: '', biggest_obstacle: '', strategies_tried: [],
-    monthly_income: '', investment_approach: '', investment_amount: '',
-    income_goal: '', business_mindset: '',
+    monthly_income: MONTHLY_INCOME_STEPS[0],
+    investment_approach: '',
+    investment_amount: INVESTMENT_AMOUNT_STEPS[0],
+    income_goal: INCOME_GOAL_STEPS[0],
+    business_mindset: '',
   })
 
   function set(field: keyof FormData, value: string) {
@@ -131,7 +117,7 @@ export default function ApplyPage() {
       form.instagram_handle.trim() && form.date_of_birth
     )
     if (step === 2) return form.platforms.length > 0 && form.posting_frequency && form.niche.trim()
-    if (step === 3) return form.if_nothing_changes && form.biggest_obstacle && form.strategies_tried.length > 0
+    if (step === 3) return form.if_nothing_changes.trim() && form.biggest_obstacle.trim() && form.strategies_tried.length > 0
     if (step === 4) return form.monthly_income && form.investment_approach && form.investment_amount && form.income_goal && form.business_mindset
     return true
   }
@@ -296,23 +282,23 @@ export default function ApplyPage() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <Field label="If your business stays exactly the same for the next 6 months, what's the most likely outcome?">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {IF_NOTHING_CHANGES_OPTIONS.map(opt => (
-                    <button key={opt} className={`pill-option${form.if_nothing_changes === opt ? ' selected' : ''}`} onClick={() => set('if_nothing_changes', opt)}>
-                      {opt}
-                    </button>
-                  ))}
-                </div>
+                <textarea
+                  className="apply-input apply-textarea"
+                  placeholder="Be honest — what actually happens if nothing changes?"
+                  value={form.if_nothing_changes}
+                  onChange={e => set('if_nothing_changes', e.target.value)}
+                  rows={3}
+                />
               </Field>
 
               <Field label="What's been the biggest thing stopping your business from growing?">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {BIGGEST_OBSTACLE_OPTIONS.map(opt => (
-                    <button key={opt} className={`pill-option${form.biggest_obstacle === opt ? ' selected' : ''}`} onClick={() => set('biggest_obstacle', opt)}>
-                      {opt}
-                    </button>
-                  ))}
-                </div>
+                <textarea
+                  className="apply-input apply-textarea"
+                  placeholder="Be specific — what's the actual blocker?"
+                  value={form.biggest_obstacle}
+                  onChange={e => set('biggest_obstacle', e.target.value)}
+                  rows={3}
+                />
               </Field>
 
               <Field label="What have you already tried to grow? (select all that apply)">
@@ -335,15 +321,13 @@ export default function ApplyPage() {
             <h1 style={headingStyle}>Investment & commitment</h1>
             <p style={subStyle}>Last section. Creator Cult is a serious programme — we need to know you&apos;re in the right position to make it work.</p>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <Field label="What is your current average monthly income from all sources?">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {MONTHLY_INCOME_OPTIONS.map(opt => (
-                    <button key={opt} className={`pill-option${form.monthly_income === opt ? ' selected' : ''}`} onClick={() => set('monthly_income', opt)}>
-                      {opt}
-                    </button>
-                  ))}
-                </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+              <Field label="Current average monthly income">
+                <MoneySlider
+                  steps={MONTHLY_INCOME_STEPS}
+                  value={form.monthly_income}
+                  onChange={v => set('monthly_income', v)}
+                />
               </Field>
 
               <Field label="If a clear plan for growth exists, how would you approach investing in it?">
@@ -356,41 +340,35 @@ export default function ApplyPage() {
                 </div>
               </Field>
 
-              <Field label="How much are you prepared to invest in the growth of your business?">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {INVESTMENT_AMOUNT_OPTIONS.map(({ label }) => (
-                    <button key={label} className={`pill-option${form.investment_amount === label ? ' selected' : ''}`} onClick={() => set('investment_amount', label)}>
-                      {label}
-                    </button>
-                  ))}
-                </div>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 8, lineHeight: 1.5 }}>
-                  If you have less than £1,000 to invest right now, we don&apos;t recommend booking a call — Creator Cult requires an upfront commitment.
+              <Field label="How much are you prepared to invest in your business growth?">
+                <MoneySlider
+                  steps={INVESTMENT_AMOUNT_STEPS}
+                  value={form.investment_amount}
+                  onChange={v => set('investment_amount', v)}
+                />
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 12, lineHeight: 1.5 }}>
+                  Creator Cult requires a minimum upfront commitment of £1,000.
                 </p>
               </Field>
 
-              <Field label="What is your desired monthly income goal?">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {INCOME_GOAL_OPTIONS.map(opt => (
-                    <button key={opt} className={`pill-option${form.income_goal === opt ? ' selected' : ''}`} onClick={() => set('income_goal', opt)}>
-                      {opt}
-                    </button>
-                  ))}
-                </div>
+              <Field label="Your desired monthly income goal">
+                <MoneySlider
+                  steps={INCOME_GOAL_STEPS}
+                  value={form.income_goal}
+                  onChange={v => set('income_goal', v)}
+                />
               </Field>
 
               <Field label="This call is a business evaluation, not a free coaching session. Are you prepared to engage with a business mindset and make decisions based on outcomes?">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {['Yes — I&apos;m ready to make a decision', 'No — I&apos;m not ready yet'].map(opt => {
-                    const raw = opt.replace(/&apos;/g, "'")
-                    const isYes = raw.startsWith('Yes')
-                    const storedVal = isYes ? 'Yes' : 'No'
-                    return (
-                      <button key={raw} className={`pill-option${form.business_mindset === storedVal ? ' selected' : ''}`} onClick={() => set('business_mindset', storedVal)}>
-                        {raw}
-                      </button>
-                    )
-                  })}
+                  {[
+                    { display: "Yes — I'm ready to make a decision", value: 'Yes' },
+                    { display: "No — I'm not ready yet", value: 'No' },
+                  ].map(({ display, value }) => (
+                    <button key={value} className={`pill-option${form.business_mindset === value ? ' selected' : ''}`} onClick={() => set('business_mindset', value)}>
+                      {display}
+                    </button>
+                  ))}
                 </div>
               </Field>
             </div>
@@ -438,6 +416,10 @@ function PageShell({ children }: { children: React.ReactNode }) {
           font-size: 14px; font-weight: 500; font-family: inherit; box-sizing: border-box;
           transition: border-color 0.15s, box-shadow 0.15s;
         }
+        .apply-textarea {
+          height: auto !important; padding: 12px 14px !important;
+          resize: vertical; min-height: 84px; line-height: 1.6;
+        }
         .apply-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
         .apply-input::placeholder { color: #555; }
         .apply-btn {
@@ -456,6 +438,55 @@ function PageShell({ children }: { children: React.ReactNode }) {
         }
         .pill-option:hover { border-color: rgba(59,130,246,0.5); color: #a0c4ff; }
         .pill-option.selected { border-color: #3B82F6; background: rgba(59,130,246,0.12); color: #93c5fd; }
+        .money-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 100%;
+          height: 4px;
+          border-radius: 2px;
+          outline: none;
+          cursor: pointer;
+          background: linear-gradient(
+            to right,
+            #3B82F6 var(--slider-fill, 0%),
+            rgba(255,255,255,0.12) var(--slider-fill, 0%)
+          );
+        }
+        .money-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: #3B82F6;
+          cursor: pointer;
+          border: 2.5px solid #000;
+          box-shadow: 0 0 0 1.5px rgba(59,130,246,0.7), 0 0 14px rgba(59,130,246,0.4);
+          transition: box-shadow 0.15s, transform 0.1s;
+        }
+        .money-slider:active::-webkit-slider-thumb {
+          transform: scale(1.15);
+          box-shadow: 0 0 0 2px rgba(59,130,246,0.9), 0 0 22px rgba(59,130,246,0.6);
+        }
+        .money-slider::-moz-range-thumb {
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          background: #3B82F6;
+          cursor: pointer;
+          border: 2.5px solid #000;
+          box-shadow: 0 0 0 1.5px rgba(59,130,246,0.7);
+        }
+        .money-slider::-moz-range-track {
+          height: 4px;
+          border-radius: 2px;
+          background: rgba(255,255,255,0.12);
+        }
+        .money-slider::-moz-range-progress {
+          height: 4px;
+          border-radius: 2px;
+          background: #3B82F6;
+        }
       `}</style>
 
       <div style={{ position: 'fixed', top: -100, left: '50%', transform: 'translateX(-50%)', width: 500, height: 400, background: '#3B82F6', borderRadius: '50%', filter: 'blur(120px)', opacity: 0.07, animation: 'glowPulse 5s ease-in-out infinite', pointerEvents: 'none' }} />
@@ -480,6 +511,42 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
         {label}
       </label>
       {children}
+    </div>
+  )
+}
+
+function MoneySlider({ steps, value, onChange }: { steps: string[]; value: string; onChange: (val: string) => void }) {
+  const idx = steps.indexOf(value)
+  const currentIdx = idx === -1 ? 0 : idx
+  const pct = steps.length > 1 ? (currentIdx / (steps.length - 1)) * 100 : 0
+
+  return (
+    <div style={{ paddingTop: 4 }}>
+      <div style={{
+        textAlign: 'center',
+        fontSize: 22,
+        fontWeight: 800,
+        color: '#93c5fd',
+        marginBottom: 20,
+        letterSpacing: '-0.5px',
+        minHeight: 30,
+        transition: 'color 0.15s',
+      }}>
+        {steps[currentIdx]}
+      </div>
+      <input
+        type="range"
+        min={0}
+        max={steps.length - 1}
+        value={currentIdx}
+        onChange={e => onChange(steps[parseInt(e.target.value)])}
+        className="money-slider"
+        style={{ '--slider-fill': `${pct}%` } as React.CSSProperties}
+      />
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
+        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)' }}>{steps[0]}</span>
+        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)' }}>{steps[steps.length - 1]}</span>
+      </div>
     </div>
   )
 }
