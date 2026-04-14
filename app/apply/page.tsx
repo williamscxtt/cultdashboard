@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Zap, ArrowRight, Check } from 'lucide-react'
 
 // ── Replace this with your actual payment link ────────────────────────────────
-const PAYMENT_LINK = process.env.NEXT_PUBLIC_PAYMENT_LINK || 'https://buy.stripe.com/REPLACE_ME'
+const PAYMENT_LINK = process.env.NEXT_PUBLIC_PAYMENT_LINK || 'https://www.fanbasis.com/agency-checkout/will/Q7VRY'
 
 const MONTHLY_REVENUE_OPTIONS = [
   'Less than £1k/month',
