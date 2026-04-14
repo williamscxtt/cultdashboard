@@ -4,10 +4,11 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { Zap, Check } from 'lucide-react'
 
-type Mode = 'login' | 'forgot'
+type Mode = 'login' | 'signup' | 'forgot'
 
 export default function ClientAccessPage() {
   const [mode, setMode] = useState<Mode>('login')
+  const [name, setName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(() => {
@@ -22,6 +23,49 @@ export default function ClientAccessPage() {
   const router = useRouter()
 
   const reset = (m: Mode) => { setMode(m); setError(''); setSuccess('') }
+
+  async function handleSignup(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true); setError('')
+    const supabase = createClient()
+
+    const { data, error: signupError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name },
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard/onboarding`,
+      },
+    })
+
+    if (signupError?.message?.toLowerCase().includes('already registered') ||
+        signupError?.message?.toLowerCase().includes('already been registered') ||
+        signupError?.message?.toLowerCase().includes('user already exists')) {
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      })
+      setSuccess("You already have an account. We've sent a link to your email so you can set your password and log in.")
+      setLoading(false)
+      return
+    }
+
+    if (signupError) { setError(signupError.message); setLoading(false); return }
+
+    if (data.user) {
+      await fetch('/api/auth/create-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: data.user.id, name, email }),
+      })
+    }
+
+    if (data.session) {
+      router.push('/dashboard/onboarding')
+    } else {
+      setSuccess("Account created — check your email to confirm, then sign in.")
+      setLoading(false)
+    }
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -197,11 +241,64 @@ export default function ClientAccessPage() {
               </form>
 
               <p style={{ textAlign: 'center', fontSize: 13, color: 'hsl(0 5% 40%)', marginTop: 28 }}>
-                Don&apos;t have access?{' '}
-                <a href="/apply" style={{ color: '#3B82F6', fontWeight: 600, textDecoration: 'none' }}>
-                  Apply here →
-                </a>
+                Don&apos;t have an account?{' '}
+                <button onClick={() => reset('signup')} style={{ color: '#3B82F6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
+                  Sign up
+                </button>
               </p>
+            </>
+          )}
+
+          {/* ── Sign up ── */}
+          {mode === 'signup' && (
+            <>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: 'hsl(0 5% 94%)', marginBottom: 4, letterSpacing: '-0.5px', fontFamily: 'var(--font-display)' }}>
+                Create your account
+              </h1>
+              <p style={{ fontSize: 13, color: 'hsl(0 5% 45%)', marginBottom: 32 }}>
+                Get access to your Creator Cult dashboard
+              </p>
+
+              {success ? (
+                <>
+                  <SuccessBox>{success}</SuccessBox>
+                  <p style={{ textAlign: 'center', fontSize: 13, color: 'hsl(0 5% 40%)', marginTop: 24 }}>
+                    <button onClick={() => reset('login')} style={{ color: '#3B82F6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
+                      ← Back to sign in
+                    </button>
+                  </p>
+                </>
+              ) : (
+                <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Full name</label>
+                    <input className="login-input" type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" required />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Email address</label>
+                    <input className="login-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
+                  </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Password</label>
+                    <input className="login-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 8 characters" minLength={8} required />
+                  </div>
+
+                  {error && <ErrorBox>{error}</ErrorBox>}
+
+                  <button type="submit" className="login-btn-primary" disabled={loading} style={{ marginTop: 4 }}>
+                    {loading ? 'Creating account…' : 'Create account →'}
+                  </button>
+                </form>
+              )}
+
+              {!success && (
+                <p style={{ textAlign: 'center', fontSize: 13, color: 'hsl(0 5% 40%)', marginTop: 28 }}>
+                  Already have an account?{' '}
+                  <button onClick={() => reset('login')} style={{ color: '#3B82F6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
+                    Sign in
+                  </button>
+                </p>
+              )}
             </>
           )}
 
