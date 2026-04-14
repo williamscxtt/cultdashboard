@@ -253,7 +253,7 @@ export default function ApplyPage() {
             {step === 1 && (
               <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 20 }}>
                 Already a member?{' '}
-                <a href="/client-access" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>Sign in →</a>
+                <a href="/login" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>Sign in →</a>
               </p>
             )}
           </>
