@@ -23,7 +23,12 @@ function buildSystemPrompt(
   reels: Array<Record<string, unknown>>,
   competitorReels: Array<Record<string, unknown>>,
   conversationHistory: Array<{ role: string; content: string }>,
-  knowledgeDocs: Array<{ title: string; category: string; content: string }>
+  knowledgeDocs: Array<{ title: string; category: string; content: string }>,
+  activityMemory: {
+    audits: Array<{ overall_score: number; verdict: string; created_at: string }>
+    stories: Array<{ sequence_type: string; day_of_week: string; created_at: string }>
+    sales: Array<{ lead_name: string | null; source: string | null; deal_value: number | null; stage: string | null; created_at: string }>
+  }
 ): string {
   const intro = (profile.intro_structured ?? {}) as Record<string, unknown>
 
@@ -79,6 +84,25 @@ function buildSystemPrompt(
 
   const startingFollowers = Number(profile.starting_followers) || 0
   const startingAvgViews = Number(profile.starting_avg_views) || 0
+
+  // Build activity memory section
+  const auditLine = activityMemory.audits.length > 0
+    ? `Profile audits (${activityMemory.audits.length} total): ` +
+      activityMemory.audits.map(a => `${a.overall_score?.toFixed(1)}/10 ${a.verdict} (${new Date(a.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })})`).join(' → ')
+    : ''
+
+  const storyLine = activityMemory.stories.length > 0
+    ? `Story sequences generated: ${activityMemory.stories.length} total — types used: ${[...new Set(activityMemory.stories.map(s => s.sequence_type))].join(', ')}`
+    : ''
+
+  const closedSales = activityMemory.sales.filter(s => s.stage === 'Closed Won' || s.stage === 'Active' || s.stage === 'Past' || s.deal_value != null)
+  const totalRevenue = closedSales.reduce((sum, s) => sum + (s.deal_value ?? 0), 0)
+  const salesLine = closedSales.length > 0
+    ? `Sales logged: ${closedSales.length} client${closedSales.length !== 1 ? 's' : ''}, £${totalRevenue.toLocaleString()} total revenue. ` +
+      `Recent: ${closedSales.slice(0, 3).map(s => `${s.lead_name || 'Client'} (${s.source || 'offer unknown'}, £${s.deal_value?.toLocaleString() ?? '?'})`).join(', ')}`
+    : ''
+
+  const activitySection = [auditLine, storyLine, salesLine].filter(Boolean).join('\n')
 
   return `You are Will Scott — personal brand coach and founder of CULT. You help online coaches build personal brands on Instagram to get more clients and revenue through organic content.
 
@@ -140,7 +164,12 @@ ${knowledgeDocs.map(d => `【${d.category}】 ${d.title}\n${d.content}`).join('\
 - Never use corporate language, filler phrases, or "I understand your frustration"
 - If you reference their content, use their actual hooks and formats
 - When suggesting scripts or hooks, make them fit their exact niche and voice
-- NEVER use Will Scott's own offer, clients, results, or brand as examples for ${name} — always substitute their specific situation`
+- NEVER use Will Scott's own offer, clients, results, or brand as examples for ${name} — always substitute their specific situation
+
+${activitySection ? `═══ WHAT THEY'VE BEEN WORKING ON ═══
+This is everything ${name} has done inside the dashboard. Reference it when relevant — their audit score history tells you how their profile is progressing; story sequences show what content they're building; sales logs show their revenue traction.
+
+${activitySection}` : ''}`
 }
 
 export async function POST(req: NextRequest) {
@@ -162,7 +191,15 @@ export async function POST(req: NextRequest) {
   const profileId = effectiveId(user.id, realProfile?.role === 'admin', impersonatingAs)
 
   // Fetch all client context in parallel
-  const [{ data: profile }, { data: reels }, { data: competitorReels }, { data: knowledgeDocs }] = await Promise.all([
+  const [
+    { data: profile },
+    { data: reels },
+    { data: competitorReels },
+    { data: knowledgeDocs },
+    { data: recentAudits },
+    { data: recentStories },
+    { data: recentSales },
+  ] = await Promise.all([
     adminClient.from('profiles').select('*').eq('id', profileId).single(),
     adminClient
       .from('client_reels')
@@ -180,6 +217,27 @@ export async function POST(req: NextRequest) {
       .select('title, category, content')
       .order('category', { ascending: true })
       .limit(40),
+    // Activity memory: recent profile audits
+    adminClient
+      .from('profile_audits')
+      .select('overall_score, verdict, created_at')
+      .eq('profile_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(5),
+    // Activity memory: recent story sequences
+    adminClient
+      .from('story_sequences')
+      .select('sequence_type, day_of_week, created_at')
+      .eq('profile_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(10),
+    // Activity memory: sales
+    adminClient
+      .from('dm_sales')
+      .select('lead_name, source, deal_value, stage, created_at')
+      .eq('profile_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(20),
   ])
 
   // Fetch or create session conversation history
@@ -200,7 +258,12 @@ export async function POST(req: NextRequest) {
     (reels ?? []) as Array<Record<string, unknown>>,
     (competitorReels ?? []) as Array<Record<string, unknown>>,
     previousMessages,
-    (knowledgeDocs ?? []) as Array<{ title: string; category: string; content: string }>
+    (knowledgeDocs ?? []) as Array<{ title: string; category: string; content: string }>,
+    {
+      audits: (recentAudits ?? []) as Array<{ overall_score: number; verdict: string; created_at: string }>,
+      stories: (recentStories ?? []) as Array<{ sequence_type: string; day_of_week: string; created_at: string }>,
+      sales: (recentSales ?? []) as Array<{ lead_name: string | null; source: string | null; deal_value: number | null; stage: string | null; created_at: string }>,
+    }
   )
 
   // Build message history for Claude (last 10 messages for context)

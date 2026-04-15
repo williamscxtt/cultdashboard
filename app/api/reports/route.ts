@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   const thirtyDaysAgo = new Date(weekStart)
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
 
-  const [profileRes, weeklyLogRes, reelsThisWeekRes, reelsBaselineRes, followersRes, dmSalesRes] = await Promise.all([
+  const [profileRes, weeklyLogRes, reelsThisWeekRes, reelsBaselineRes, followersRes, dmSalesRes, auditHistoryRes, storyCountRes] = await Promise.all([
     adminClient.from('profiles').select('*').eq('id', profileId).single(),
     adminClient.from('weekly_log').select('*').eq('profile_id', profileId).order('date', { ascending: false }).limit(4),
     // Reels posted THIS week (date column = when they posted)
@@ -57,10 +57,22 @@ export async function POST(request: NextRequest) {
       .order('date', { ascending: true })
       .limit(35),
     adminClient.from('dm_sales')
-      .select('lead_name, stage, deal_value, revenue, pain_points')
+      .select('lead_name, source, stage, deal_value, revenue, created_at')
       .eq('profile_id', profileId)
       .order('created_at', { ascending: false })
-      .limit(15),
+      .limit(20),
+    // Profile audit history — last 5 for trend
+    adminClient.from('profile_audits')
+      .select('overall_score, verdict, created_at')
+      .eq('profile_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(5),
+    // Story sequences generated this week
+    adminClient.from('story_sequences')
+      .select('sequence_type, created_at')
+      .eq('profile_id', profileId)
+      .gte('created_at', weekStart)
+      .order('created_at', { ascending: false }),
   ])
 
   const profile = profileRes.data
@@ -72,6 +84,8 @@ export async function POST(request: NextRequest) {
   const reelsBaseline = reelsBaselineRes.data ?? []
   const followers = followersRes.data ?? []
   const dmSales = dmSalesRes.data ?? []
+  const auditHistory = auditHistoryRes.data ?? []
+  const storiesThisWeek = storyCountRes.data ?? []
 
   const thisWeekLog = weeklyLogs[0]
 
@@ -98,10 +112,19 @@ export async function POST(request: NextRequest) {
     : null
   const latestFollowers = followers.length ? followers[followers.length - 1].count : null
 
-  // DM Sales pipeline
-  const openDeals = dmSales.filter(d => !['Closed Won', 'Closed Lost'].includes(d.stage ?? ''))
-  const closedWon = dmSales.filter(d => d.stage === 'Closed Won')
-  const closedRevenue = closedWon.reduce((s, d) => s + (Number(d.revenue) || Number(d.deal_value) || 0), 0)
+  // Sales tracker (simplified — all logged sales)
+  const allSales = dmSales.filter(d => d.deal_value != null || d.revenue != null)
+  const closedRevenue = allSales.reduce((s, d) => s + (Number(d.revenue) || Number(d.deal_value) || 0), 0)
+  const salesThisWeek = dmSales.filter(d => d.created_at >= weekStart)
+
+  // Profile audit trend
+  const latestAudit = auditHistory[0]
+  const prevAudit = auditHistory[1]
+  const auditTrend = latestAudit
+    ? prevAudit
+      ? `Latest audit: ${latestAudit.overall_score?.toFixed(1)}/10 (${latestAudit.verdict}) on ${new Date(latestAudit.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} — prev: ${prevAudit.overall_score?.toFixed(1)}/10 (${prevAudit.verdict}) — change: ${latestAudit.overall_score > prevAudit.overall_score ? '+' : ''}${(latestAudit.overall_score - prevAudit.overall_score).toFixed(1)}`
+      : `Latest audit: ${latestAudit.overall_score?.toFixed(1)}/10 (${latestAudit.verdict}) on ${new Date(latestAudit.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} — first audit`
+    : null
 
   // Format breakdown for this week
   const formatCounts: Record<string, number> = {}
@@ -142,7 +165,9 @@ Bottleneck: ${thisWeekLog.biggest_bottleneck || 'None logged'}`
   : `No weekly check-in logged. Follower change: ${followerChange !== null ? (followerChange >= 0 ? '+' : '') + followerChange : 'N/A'}`
 }
 
-DM Sales: ${openDeals.length} open deals, ${closedWon.length} closed, £${closedRevenue.toLocaleString()} closed revenue
+Sales logged: ${allSales.length} total, £${closedRevenue.toLocaleString()} total revenue${salesThisWeek.length > 0 ? `, ${salesThisWeek.length} new sale(s) this week: ${salesThisWeek.map(s => `${s.lead_name || 'Client'} — ${s.source || 'unknown offer'} (£${Number(s.deal_value ?? s.revenue ?? 0).toLocaleString()})`).join(', ')}` : ''}
+${auditTrend ? `Profile audit: ${auditTrend}` : 'Profile audit: Not yet run'}
+Story sequences generated this week: ${storiesThisWeek.length}${storiesThisWeek.length > 0 ? ` (${[...new Set(storiesThisWeek.map(s => s.sequence_type))].join(', ')})` : ''}
 `
 
   let reportJson: Record<string, unknown>
@@ -151,6 +176,10 @@ DM Sales: ${openDeals.length} open deals, ${closedWon.length} closed, £${closed
       model: 'claude-sonnet-4-6',
       max_tokens: 1200,
       system: `You are Will Scott — personal brand coach reviewing a client's week. Write a coaching progress report based on their real data.
+If they ran a profile audit this week and their score changed, mention it in your coach feedback.
+If they generated story sequences, acknowledge they've been working on content.
+If they logged any new sales, celebrate it and reference the revenue.
+Make the report feel personal — like you actually know what they've been doing, because you do.
 
 Return ONLY valid JSON with no markdown fences:
 {
