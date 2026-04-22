@@ -105,7 +105,7 @@ function normalisePost(raw: RawCirclePost): CirclePost {
 
 /** Fetch all community members across all pages */
 export async function getAllCircleMembers(): Promise<CircleMember[]> {
-  const PER_PAGE = 50 // Circle API max is 50 for community_members
+  const PER_PAGE = 10 // conservative — Circle v1 /community_members has a low per_page limit
   const all: CircleMember[] = []
   let page = 1
   while (true) {
