@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import Anthropic from '@anthropic-ai/sdk'
-import { getAllCircleMembers, getPostsSince } from '@/lib/circle-api'
+import { getAllCircleMembers, getPostsSince, getRecentComments } from '@/lib/circle-api'
 import type { Profile } from '@/lib/types'
 
 export const maxDuration = 300 // 5 min Vercel function timeout
@@ -176,10 +176,31 @@ export async function GET(req: Request) {
       ? new Date(new Date(latestCached.created_at).getTime() - 60 * 60 * 1000) // overlap by 1h
       : undefined // first run: fetch all
 
-    const [newPosts, circleMembers] = await Promise.all([
+    // Will's email — used to find his Circle member ID so we can detect his replies
+    const WILL_EMAIL = 'will@scottvip.com'
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000)
+
+    const [newPosts, circleMembers, recentComments] = await Promise.all([
       getPostsSince(since),
       getAllCircleMembers(),
+      getRecentComments(fourteenDaysAgo).catch(() => []), // graceful fallback if comments API fails
     ])
+
+    // Find Will's Circle member ID
+    const willMember = circleMembers.find(m => m.email?.toLowerCase() === WILL_EMAIL.toLowerCase())
+    const willMemberId = willMember?.id ?? null
+
+    // Build map: post_id → most recent date Will replied (only his comments)
+    const willRepliedMap = new Map<number, Date>()
+    for (const comment of recentComments) {
+      if (willMemberId && comment.user_id === willMemberId) {
+        const existing = willRepliedMap.get(comment.post_id)
+        const commentDate = new Date(comment.created_at)
+        if (!existing || commentDate > existing) {
+          willRepliedMap.set(comment.post_id, commentDate)
+        }
+      }
+    }
 
     // Upsert new posts into cache
     if (newPosts.length > 0) {
@@ -294,14 +315,27 @@ export async function GET(req: Request) {
       postsByEmail.set(email, existing)
     }
 
+    // Helper: get Will's reply status for a post
+    function replyStatus(circlePostIdStr: string): { label: string; daysAgo: number | null; skip: boolean } {
+      const postId = parseInt(circlePostIdStr)
+      const replyDate = willRepliedMap.get(postId)
+      if (!replyDate) return { label: '❌ NOT REPLIED', daysAgo: null, skip: false }
+      const daysAgo = Math.floor((Date.now() - replyDate.getTime()) / 86400000)
+      if (daysAgo < 3) return { label: `✅ replied ${daysAgo}d ago`, daysAgo, skip: true }
+      return { label: `⚠️ replied ${daysAgo}d ago — may need follow-up`, daysAgo, skip: false }
+    }
+
     const clientBlocks = clientData.map(({ client, member, matchMethod, daysSinceActive }) => {
       // Look up posts by Circle member email (if matched) OR dashboard email
       const lookupEmail = member?.email?.toLowerCase() ?? client.email?.toLowerCase() ?? ''
       const posts = lookupEmail ? postsByEmail.get(lookupEmail) ?? [] : []
-      const postLines = posts.slice(0, 6).map(p => {
+
+      const postLines = posts.slice(0, 8).map(p => {
         const daysAgo = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000)
         const snippet = (p.body ?? '').slice(0, 300).replace(/\n+/g, ' ')
-        return `  • [${daysAgo}d ago] "${p.title}": ${snippet}`
+        const rs = replyStatus(p.circle_post_id)
+        const spaceName = p.space_name ? `[${p.space_name}] ` : ''
+        return `  • [${daysAgo}d ago] ${spaceName}[${rs.label}] "${p.title}": ${snippet}`
       }).join('\n')
 
       const circleStatus = member
@@ -317,10 +351,31 @@ Instagram: ${client.ig_username ? '@' + client.ig_username : 'n/a'} | Niche: ${c
 Phase: ${client.coaching_phase ?? 'unknown'} | 90-day goal: ${client.ninety_day_goal ?? 'not set'}
 Challenge: ${client.biggest_challenge ?? 'not set'}${bioContext ? `\nBackground: ${bioContext.slice(0, 300)}` : ''}${callContext}
 Circle: ${circleStatus}
-Recent Circle posts (last 30d):
+Recent Circle posts (last 30d) — reply status shown per post:
 ${postLines || '  (none)'}
 ---`
     }).join('\n\n')
+
+    // ── Community posts needing replies (from non-matched/non-client members) ──
+    const clientEmails = new Set(clientData.filter(c => c.member).map(c => c.member!.email.toLowerCase()))
+    const communityUnreplied = (recentPostRows ?? [])
+      .filter(p => {
+        const email = p.member_email?.toLowerCase() ?? ''
+        if (!email) return false
+        if (email === WILL_EMAIL.toLowerCase()) return false // skip Will's own posts
+        if (clientEmails.has(email)) return false // handled in clientBlocks above
+        const rs = replyStatus(p.circle_post_id)
+        return !rs.skip // only include posts Will hasn't recently replied to
+      })
+      .slice(0, 15)
+      .map(p => {
+        const daysAgo = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000)
+        const snippet = (p.body ?? '').slice(0, 250).replace(/\n+/g, ' ')
+        const rs = replyStatus(p.circle_post_id)
+        const spaceName = p.space_name ? `[${p.space_name}] ` : ''
+        return `  • [${daysAgo}d ago] ${spaceName}[${rs.label}] ${p.member_name}: "${p.title}": ${snippet}`
+      })
+      .join('\n')
 
     // Knowledge base context
     const kbContext = (knowledgeDocs ?? []).map(d =>
@@ -335,54 +390,74 @@ ${postLines || '  (none)'}
 
     const systemPrompt = `You are Will Scott's AI client success coach. Will runs a high-ticket Instagram growth coaching programme. He has a Circle community where his clients post, ask questions, share wins, and work through challenges together.
 
-Your job: every morning, give Will a precise, expert briefing on what his clients need — who to reach out to, why, and exactly what to say. Your advice must be expert-level, drawing on Will's coaching frameworks, specific client situations, and patterns from the community. Never write generic advice.
+Your job: every morning, give Will a precise briefing of exactly what needs his attention — unanswered posts, unaddressed questions, check-ins for quiet clients. Your responses must be expert-level, drawing on Will's coaching frameworks and the specific client situation. Never write generic messages.
+
+## REPLY STATUS LEGEND (shown per post)
+- ❌ NOT REPLIED = Will has never commented on this post — always needs a response unless trivial
+- ⚠️ replied Xd ago = Will replied but it was a while ago — check if follow-up needed
+- ✅ replied recently = Will replied in last 3 days — SKIP, already handled
+
+## PRIORITY RULES
+1. ❌ NOT REPLIED in Audits space = HIGHEST (client paid for content feedback, hasn't got it)
+2. ❌ NOT REPLIED question/problem post = HIGH
+3. ❌ NOT REPLIED intro/win = MEDIUM (always worth a quick reply, builds culture)
+4. ⚠️ replied > 7 days ago = MEDIUM (might need follow-up)
+5. Client DORMANT 14+ days with no posts = HIGH check-in DM
+6. Client QUIET 7–14 days = MEDIUM check-in DM
+7. Client THRIVING (< 3 days, posting, no problems, replied to recently) = SKIP
+
+## DRAFT MESSAGE RULES
+- Circle post replies: write what Will should post IN THE COMMUNITY (expert, warm, direct coaching voice)
+- DM check-ins: write an Instagram DM (casual, 3–4 sentences, reference something specific about them — never generic)
+- Reference the client's ACTUAL goal, challenge, niche, and what they've posted
+- If they asked a specific question, answer it with expert advice from the knowledge base
+- Never write "just checking in" — always reference something real
 
 ## Will's Coaching Knowledge Base
 
 ${kbContext}
 
-## Historical Community Patterns (older Circle posts)
+## Historical Community Patterns (older Circle posts for context)
 
 ${historicalContext}`
 
     const userPrompt = `Today is ${today}.
 
-## Current Client Data + Recent Circle Activity
+## Dashboard Clients + Their Circle Activity
+(Each post shows: [space] [reply status] title: snippet)
 
 ${clientBlocks}
 
-## New posts since last briefing (for context)
-${(newPosts ?? []).slice(0, 20).map(p => `- [${p.user_name}] "${p.name}" (${p.space_name}): ${p.body_plain_text.slice(0, 200)}`).join('\n')}
+## Community Posts Needing Replies (non-client members)
+${communityUnreplied || '  (none — all recently replied to or no new posts)'}
+
+## New posts since last run (for context)
+${(newPosts ?? []).slice(0, 20).map(p => {
+  const rs = replyStatus(String(p.id))
+  return `- [${p.user_name}] [${p.space_name}] [${rs.label}] "${p.name}": ${p.body_plain_text.slice(0, 200)}`
+}).join('\n')}
 
 ## Your Task
 
-Generate a morning briefing for Will. Produce up to 12 action items — be ruthlessly specific, not generic.
+Generate Will's morning action list. Up to 15 items max — prioritise ruthlessly.
 
-For each item:
-- Reference the client's ACTUAL goal, challenge, niche, and what they've been posting about
-- Draw on the knowledge base to give expert, specific advice or talking points in the draft message
-- If a client mentioned a specific struggle, address it directly — quote what they said, then give a concrete answer
-- For Circle post replies: write the actual reply Will should post (expert coaching voice, warm, direct)
-- For DM check-ins: write the Instagram DM (casual, 3-4 sentences, reference something specific, never generic)
-- Cross-reference: if a similar question was answered before in the community, reference that pattern
+CRITICAL: Do NOT generate items for posts marked ✅ replied recently (< 3 days ago).
+DO generate items for every ❌ NOT REPLIED post in the Audits space.
+DO generate items for every ❌ NOT REPLIED question or problem post.
+For quiet/dormant clients with no recent posts, generate a DM check-in (set circle_post_id to null).
 
-Priority rules:
-- DORMANT 14+ days = high (especially if they were struggling before they went quiet)
-- NEEDS HELP (posted a question/problem) = high
-- WIN to celebrate = medium (always respond, builds culture)
-- QUIET 7-14 days = medium
-- THRIVING (< 3 days, posting regularly, no problems) = skip
+For community posts from non-client members (listed above): include them if unreplied — set profile_id to null and use the member's Circle ID.
 
 Return ONLY a JSON array. No markdown, no preamble:
 [
   {
-    "profile_id": "uuid",
+    "profile_id": "uuid or null for non-clients",
     "circle_member_id": "number as string or null",
-    "circle_post_id": "post id as string for replies, or null for DMs",
+    "circle_post_id": "post id as string for Circle replies, or null for DMs",
     "action_type": "check_in_quiet|check_in_dormant|celebrate_win|address_problem|respond_intro|follow_up_goal",
     "priority": "high|medium|low",
-    "reason": "one sentence — specific reason this needs action today",
-    "context_quote": "the relevant post snippet, or 'Last seen X days ago'",
+    "reason": "one sentence — specific reason, reference what they posted",
+    "context_quote": "exact quote from their post, or 'Last seen X days ago'",
     "draft_message": "complete ready-to-use message — expert, specific, no placeholders"
   }
 ]`
@@ -547,9 +622,9 @@ Return ONLY a JSON array. No markdown, no preamble:
       clients_matched: clientData.filter(c => c.member).length,
       matched_by_email: clientData.filter(c => c.matchMethod === 'email').length,
       matched_by_name: clientData.filter(c => c.matchMethod === 'name').length,
-      // Sample for debugging — first 5 Circle member emails vs first 5 dashboard client emails
-      sample_circle_emails: circleMembers.slice(0, 5).map(m => m.email),
-      sample_client_emails: dashboardClients.slice(0, 5).map(c => c.email),
+      comments_fetched: recentComments.length,
+      will_member_id: willMemberId,
+      will_replied_to_posts: willRepliedMap.size,
     })
 
   } catch (err) {

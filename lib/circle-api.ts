@@ -103,6 +103,77 @@ function normalisePost(raw: RawCirclePost): CirclePost {
   }
 }
 
+export interface CircleComment {
+  id: number
+  post_id: number
+  user_id: number
+  user_name: string
+  user_email: string
+  body_plain_text: string
+  created_at: string
+}
+
+interface RawCircleComment {
+  id: number
+  post_id?: number
+  user_id?: number
+  user_name?: string
+  user_email?: string
+  body?: { body?: string } | null
+  body_plain_text?: string
+  created_at: string
+}
+
+function normaliseComment(raw: RawCircleComment): CircleComment {
+  const htmlBody =
+    (typeof raw.body === 'object' && raw.body !== null ? raw.body.body : null) ??
+    raw.body_plain_text ?? ''
+  return {
+    id: raw.id,
+    post_id: raw.post_id ?? 0,
+    user_id: raw.user_id ?? 0,
+    user_name: raw.user_name ?? '',
+    user_email: raw.user_email ?? '',
+    body_plain_text: stripHtml(htmlBody),
+    created_at: raw.created_at,
+  }
+}
+
+/**
+ * Fetch recent comments across the whole community.
+ * Used to check which posts Will has already replied to.
+ */
+export async function getRecentComments(since: Date): Promise<CircleComment[]> {
+  const all: CircleComment[] = []
+  let page = 1
+
+  while (true) {
+    const url = `${BASE_URL}/comments?community_id=${COMMUNITY_ID}&per_page=50&page=${page}&sort=latest`
+    const res = await fetch(url, { headers: headers() })
+    if (!res.ok) {
+      const body = await res.text()
+      throw new Error(`Circle API comments error ${res.status}: ${body}`)
+    }
+    const json = await res.json() as RawCircleComment[] | { comments?: RawCircleComment[]; status?: string; message?: string }
+    if (!Array.isArray(json) && (json as { status?: string }).status && (json as { status?: string }).status !== 'ok') {
+      throw new Error(`Circle API comments error: ${(json as { message?: string }).message ?? (json as { status?: string }).status}`)
+    }
+    const rawBatch = Array.isArray(json) ? json : ((json as { comments?: RawCircleComment[] }).comments ?? [])
+    const batch = rawBatch.map(normaliseComment)
+
+    if (batch.length === 0) break
+
+    const recent = batch.filter(c => new Date(c.created_at) >= since)
+    all.push(...recent)
+    const oldest = batch[batch.length - 1]
+    if (!oldest || new Date(oldest.created_at) < since) break
+
+    if (batch.length < 50) break
+    page++
+  }
+  return all
+}
+
 /** Fetch all community members across all pages */
 export async function getAllCircleMembers(): Promise<CircleMember[]> {
   const PER_PAGE = 3 // Circle v1 /community_members confirmed working at 3; higher values silently fail
