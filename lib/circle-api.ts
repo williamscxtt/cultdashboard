@@ -1,7 +1,8 @@
 /**
  * Circle REST API wrapper
  * Docs: https://api.circle.so/
- * Auth: Authorization: Token {CIRCLE_API_TOKEN}
+ * Auth: Authorization: Token {CIRCLE_API_TOKEN} — requires an Admin v1 token
+ * Community ID: 370927 (Creator Cult)
  */
 
 const BASE_URL = 'https://app.circle.so/api/v1'
@@ -20,6 +21,24 @@ function headers() {
   }
 }
 
+/** Strip HTML tags to get readable plain text */
+function stripHtml(html: string): string {
+  return html
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<\/li>/gi, '\n')
+    .replace(/<hr\s*\/?>/gi, '\n---\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim()
+}
+
 export interface CircleMember {
   id: number
   name: string
@@ -35,15 +54,53 @@ export interface CircleMember {
 
 export interface CirclePost {
   id: number
-  name: string           // post title
-  body_plain_text: string
+  name: string            // post title
+  body_plain_text: string // HTML stripped to plain text
   created_at: string
   user_id: number
   user_name: string
   user_email: string
   space_id: number
+  space_name: string
   comments_count: number
   url: string
+}
+
+/** Raw shape returned by the Circle API v1 /posts endpoint */
+interface RawCirclePost {
+  id: number
+  name: string
+  body?: { body?: string } | null
+  body_plain_text?: string
+  created_at: string
+  user_id: number
+  user_name: string
+  user_email: string
+  space_id: number
+  space_name?: string
+  comments_count: number
+  url: string
+}
+
+function normalisePost(raw: RawCirclePost): CirclePost {
+  // API returns body as an object { body: "<html>..." }
+  const htmlBody =
+    (typeof raw.body === 'object' && raw.body !== null ? raw.body.body : null) ??
+    raw.body_plain_text ??
+    ''
+  return {
+    id: raw.id,
+    name: raw.name ?? '',
+    body_plain_text: stripHtml(htmlBody),
+    created_at: raw.created_at,
+    user_id: raw.user_id,
+    user_name: raw.user_name ?? '',
+    user_email: raw.user_email ?? '',
+    space_id: raw.space_id,
+    space_name: raw.space_name ?? '',
+    comments_count: raw.comments_count ?? 0,
+    url: raw.url ?? '',
+  }
 }
 
 /** Fetch all community members across all pages */
@@ -57,8 +114,11 @@ export async function getAllCircleMembers(): Promise<CircleMember[]> {
       const body = await res.text()
       throw new Error(`Circle API members error ${res.status}: ${body}`)
     }
-    const json = await res.json() as { community_members?: CircleMember[]; records?: CircleMember[] }
-    const batch: CircleMember[] = json.community_members ?? (Array.isArray(json) ? json as CircleMember[] : [])
+    // API returns a plain array for v1 Admin tokens
+    const json = await res.json() as CircleMember[] | { community_members?: CircleMember[] }
+    const batch: CircleMember[] = Array.isArray(json)
+      ? json
+      : (json.community_members ?? [])
     if (batch.length === 0) break
     all.push(...batch)
     if (batch.length < 100) break
@@ -69,7 +129,7 @@ export async function getAllCircleMembers(): Promise<CircleMember[]> {
 
 /**
  * Fetch posts since a given date (incremental sync).
- * Pass no `since` to fetch ALL posts ever (first run only).
+ * Pass no `since` to fetch ALL posts ever (first run / full backfill).
  */
 export async function getPostsSince(since?: Date): Promise<CirclePost[]> {
   const all: CirclePost[] = []
@@ -82,8 +142,11 @@ export async function getPostsSince(since?: Date): Promise<CirclePost[]> {
       const body = await res.text()
       throw new Error(`Circle API posts error ${res.status}: ${body}`)
     }
-    const json = await res.json() as { posts?: CirclePost[] } | CirclePost[]
-    const batch: CirclePost[] = Array.isArray(json) ? json : (json.posts ?? [])
+    // API returns a plain array
+    const json = await res.json() as RawCirclePost[] | { posts?: RawCirclePost[] }
+    const rawBatch: RawCirclePost[] = Array.isArray(json) ? json : (json.posts ?? [])
+    const batch = rawBatch.map(normalisePost)
+
     if (batch.length === 0) break
 
     if (since) {

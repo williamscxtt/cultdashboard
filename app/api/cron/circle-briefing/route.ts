@@ -314,7 +314,7 @@ ${historicalContext}`
 ${clientBlocks}
 
 ## New posts since last briefing (for context)
-${(newPosts ?? []).slice(0, 20).map(p => `- [${p.user_name}] "${p.name}": ${(p.body_plain_text ?? '').slice(0, 200)}`).join('\n')}
+${(newPosts ?? []).slice(0, 20).map(p => `- [${p.user_name}] "${p.name}" (${p.space_name}): ${p.body_plain_text.slice(0, 200)}`).join('\n')}
 
 ## Your Task
 
