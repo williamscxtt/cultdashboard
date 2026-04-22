@@ -58,7 +58,6 @@ export async function getAllCircleMembers(): Promise<CircleMember[]> {
       throw new Error(`Circle API members error ${res.status}: ${body}`)
     }
     const json = await res.json() as { community_members?: CircleMember[]; records?: CircleMember[] }
-    // Circle returns either `community_members` or the records directly depending on version
     const batch: CircleMember[] = json.community_members ?? (Array.isArray(json) ? json as CircleMember[] : [])
     if (batch.length === 0) break
     all.push(...batch)
@@ -68,11 +67,13 @@ export async function getAllCircleMembers(): Promise<CircleMember[]> {
   return all
 }
 
-/** Fetch recent posts from all spaces, up to `days` days back */
-export async function getRecentPosts(days = 14): Promise<CirclePost[]> {
+/**
+ * Fetch posts since a given date (incremental sync).
+ * Pass no `since` to fetch ALL posts ever (first run only).
+ */
+export async function getPostsSince(since?: Date): Promise<CirclePost[]> {
   const all: CirclePost[] = []
   let page = 1
-  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
 
   while (true) {
     const url = `${BASE_URL}/posts?community_id=${COMMUNITY_ID}&per_page=50&page=${page}&sort=latest`
@@ -85,13 +86,14 @@ export async function getRecentPosts(days = 14): Promise<CirclePost[]> {
     const batch: CirclePost[] = Array.isArray(json) ? json : (json.posts ?? [])
     if (batch.length === 0) break
 
-    // Filter to posts within the cutoff window
-    const recent = batch.filter(p => new Date(p.created_at) >= cutoff)
-    all.push(...recent)
-
-    // If the oldest post in this batch is before cutoff, we're done
-    const oldest = batch[batch.length - 1]
-    if (!oldest || new Date(oldest.created_at) < cutoff) break
+    if (since) {
+      const recent = batch.filter(p => new Date(p.created_at) >= since)
+      all.push(...recent)
+      const oldest = batch[batch.length - 1]
+      if (!oldest || new Date(oldest.created_at) < since) break
+    } else {
+      all.push(...batch)
+    }
 
     if (batch.length < 50) break
     page++
@@ -99,7 +101,12 @@ export async function getRecentPosts(days = 14): Promise<CirclePost[]> {
   return all
 }
 
-/** Post a comment on a Circle post (used when Will approves a reply_post action) */
+/** Convenience: last N days */
+export async function getRecentPosts(days = 14): Promise<CirclePost[]> {
+  return getPostsSince(new Date(Date.now() - days * 24 * 60 * 60 * 1000))
+}
+
+/** Post a comment on a Circle post */
 export async function postCircleComment(postId: string, body: string): Promise<void> {
   const url = `${BASE_URL}/comments`
   const res = await fetch(url, {
