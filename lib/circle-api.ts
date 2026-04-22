@@ -105,23 +105,27 @@ function normalisePost(raw: RawCirclePost): CirclePost {
 
 /** Fetch all community members across all pages */
 export async function getAllCircleMembers(): Promise<CircleMember[]> {
+  const PER_PAGE = 50 // Circle API max is 50 for community_members
   const all: CircleMember[] = []
   let page = 1
   while (true) {
-    const url = `${BASE_URL}/community_members?community_id=${COMMUNITY_ID}&per_page=100&page=${page}`
+    const url = `${BASE_URL}/community_members?community_id=${COMMUNITY_ID}&per_page=${PER_PAGE}&page=${page}`
     const res = await fetch(url, { headers: headers() })
     if (!res.ok) {
       const body = await res.text()
       throw new Error(`Circle API members error ${res.status}: ${body}`)
     }
-    // API returns a plain array for v1 Admin tokens
-    const json = await res.json() as CircleMember[] | { community_members?: CircleMember[] }
+    // Circle returns HTTP 200 even for errors — detect JSON error responses
+    const json = await res.json() as CircleMember[] | { status?: string; message?: string; community_members?: CircleMember[] }
+    if (!Array.isArray(json) && json.status && json.status !== 'ok') {
+      throw new Error(`Circle API members error: ${json.message ?? json.status}`)
+    }
     const batch: CircleMember[] = Array.isArray(json)
       ? json
       : (json.community_members ?? [])
     if (batch.length === 0) break
     all.push(...batch)
-    if (batch.length < 100) break
+    if (batch.length < PER_PAGE) break
     page++
   }
   return all
