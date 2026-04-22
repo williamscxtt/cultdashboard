@@ -23,33 +23,42 @@ export async function GET() {
     token_length: token.length,
   }
 
-  // Test 1: members endpoint
-  try {
-    const res = await fetch(
-      'https://app.circle.so/api/v1/community_members?community_id=370927&per_page=5&page=1',
-      { headers: { Authorization: `Token ${token}`, 'Content-Type': 'application/json' } }
-    )
-    const text = await res.text()
-    results.members_status = res.status
-    results.members_raw = text.slice(0, 1000)
-    try { results.members_parsed = JSON.parse(text) } catch { results.members_parse_error = 'not JSON' }
-  } catch (e) {
-    results.members_error = String(e)
-  }
+  const h = { Authorization: `Token ${token}`, 'Content-Type': 'application/json' }
+  const CID = 370927
 
-  // Test 2: posts endpoint
+  // Test v2 members
   try {
     const res = await fetch(
-      'https://app.circle.so/api/v1/posts?community_id=370927&per_page=5&page=1&sort=latest',
-      { headers: { Authorization: `Token ${token}`, 'Content-Type': 'application/json' } }
+      `https://app.circle.so/api/v2/community_members?community_id=${CID}&per_page=5&page=1`,
+      { headers: h }
     )
     const text = await res.text()
-    results.posts_status = res.status
-    results.posts_raw = text.slice(0, 1000)
-    try { results.posts_parsed = JSON.parse(text) } catch { results.posts_parse_error = 'not JSON' }
-  } catch (e) {
-    results.posts_error = String(e)
-  }
+    results.v2_members_status = res.status
+    results.v2_members_raw = text.slice(0, 1000)
+    try { results.v2_members_parsed = JSON.parse(text) } catch { results.v2_members_parse_error = 'not JSON' }
+  } catch (e) { results.v2_members_error = String(e) }
+
+  // Test v2 posts
+  try {
+    const res = await fetch(
+      `https://app.circle.so/api/v2/posts?community_id=${CID}&per_page=5&page=1&sort=latest`,
+      { headers: h }
+    )
+    const text = await res.text()
+    results.v2_posts_status = res.status
+    results.v2_posts_raw = text.slice(0, 1000)
+    try { results.v2_posts_parsed = JSON.parse(text) } catch { results.v2_posts_parse_error = 'not JSON' }
+  } catch (e) { results.v2_posts_error = String(e) }
+
+  // Also test v1 for comparison
+  try {
+    const res = await fetch(
+      `https://app.circle.so/api/v1/community_members?community_id=${CID}&per_page=5&page=1`,
+      { headers: h }
+    )
+    results.v1_members_status = res.status
+    results.v1_members_raw = (await res.text()).slice(0, 300)
+  } catch (e) { results.v1_members_error = String(e) }
 
   return NextResponse.json(results)
 }
