@@ -4,7 +4,7 @@
  * Auth: Authorization: Token {CIRCLE_API_TOKEN}
  */
 
-const BASE_URL = 'https://app.circle.so/api/v2'
+const BASE_URL = 'https://app.circle.so/api/v1'
 const COMMUNITY_ID = 370927
 
 function token() {

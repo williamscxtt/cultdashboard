@@ -38,35 +38,9 @@ export async function GET() {
     } catch (e) { results[`${label}_error`] = String(e) }
   }
 
-  // Test 1: v1 Token header
-  await tryFetch('v1_token', `${baseUrl}/community_members?community_id=${CID}&per_page=3`, `Token ${token}`)
-
-  // Test 2: v1 Bearer header
-  await tryFetch('v1_bearer', `${baseUrl}/community_members?community_id=${CID}&per_page=3`, `Bearer ${token}`)
-
-  // Test 3: token as query param
-  try {
-    const res = await fetch(`${baseUrl}/community_members?community_id=${CID}&per_page=3&api_key=${token}`)
-    const text = await res.text()
-    results.v1_queryparam_status = res.status
-    results.v1_queryparam_raw = text.slice(0, 400)
-    try { results.v1_queryparam_parsed = JSON.parse(text) } catch { /* not json */ }
-  } catch (e) { results.v1_queryparam_error = String(e) }
-
-  // Test 4: Circle headless API (newer endpoint pattern)
-  await tryFetch('headless_members', `https://app.circle.so/api/headless/v1/community_members?community_id=${CID}&per_page=3`, `Token ${token}`)
-  await tryFetch('headless_members_bearer', `https://app.circle.so/api/headless/v1/community_members?community_id=${CID}&per_page=3`, `Bearer ${token}`)
-
-  // Test 5: try without content-type (some APIs reject it on GET)
-  try {
-    const res = await fetch(`${baseUrl}/community_members?community_id=${CID}&per_page=3`, {
-      headers: { Authorization: `Token ${token}` }
-    })
-    const text = await res.text()
-    results.v1_no_ct_status = res.status
-    results.v1_no_ct_raw = text.slice(0, 400)
-    try { results.v1_no_ct_parsed = JSON.parse(text) } catch { /* not json */ }
-  } catch (e) { results.v1_no_ct_error = String(e) }
+  // Primary test: v1 with Token auth (Admin v1 tokens work here)
+  await tryFetch('members', `${baseUrl}/community_members?community_id=${CID}&per_page=3`, `Token ${token}`)
+  await tryFetch('posts', `${baseUrl}/posts?community_id=${CID}&per_page=3&sort=latest`, `Token ${token}`)
 
   return NextResponse.json(results)
 }
