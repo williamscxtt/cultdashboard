@@ -393,38 +393,49 @@ Return ONLY a JSON array. No markdown, no preamble:
     }>
 
     // ── 7. Save to DB ──────────────────────────────────────────────────────
+    const profileMap = Object.fromEntries(dashboardClients.map(c => [c.id, c]))
+    const validProfileIds = new Set(dashboardClients.map(c => c.id))
+
     await adminClient.from('circle_action_items').delete().eq('status', 'pending')
 
-    if (items.length > 0) {
-      const profileMap = Object.fromEntries(dashboardClients.map(c => [c.id, c]))
-      await adminClient.from('circle_action_items').insert(
-        items.map(item => ({
+    // Only insert items where profile_id is a real client UUID
+    const validItems = items.filter(item => item.profile_id && validProfileIds.has(item.profile_id))
+    const invalidItems = items.filter(item => !item.profile_id || !validProfileIds.has(item.profile_id))
+
+    if (invalidItems.length > 0) {
+      console.warn(`Skipping ${invalidItems.length} items with invalid profile_ids:`, invalidItems.map(i => i.profile_id))
+    }
+
+    let dbInsertError: string | null = null
+    if (validItems.length > 0) {
+      const { error: insertError } = await adminClient.from('circle_action_items').insert(
+        validItems.map(item => ({
           ...item,
           status: 'pending',
           generated_at: new Date().toISOString(),
         }))
       )
+      if (insertError) {
+        dbInsertError = insertError.message
+        console.error('DB insert error:', insertError)
+      }
     }
 
     // ── 8. Send Slack message ──────────────────────────────────────────────
+    // Build Slack blocks directly from Claude's output — don't re-fetch from DB
+    // This way Slack always fires even if the DB insert had issues
     if (!process.env.SLACK_BOT_TOKEN || !process.env.SLACK_CHANNEL_ID) {
       return NextResponse.json({
         ok: true,
         items_generated: items.length,
+        db_insert_error: dbInsertError,
         slack: 'skipped — SLACK_BOT_TOKEN or SLACK_CHANNEL_ID not set',
       })
     }
 
-    // Fetch saved items with profile names for Slack blocks
-    const { data: savedItems } = await adminClient
-      .from('circle_action_items')
-      .select('*')
-      .eq('status', 'pending')
-      .order('generated_at', { ascending: false })
-
-    const profileMap = Object.fromEntries(dashboardClients.map(c => [c.id, c]))
     const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 }
-    const sortedItems = (savedItems ?? []).sort(
+    // Use ALL Claude items for Slack (even ones with unmatched profile_ids — show them as unknown)
+    const sortedItems = [...items].sort(
       (a, b) => (priorityOrder[a.priority] ?? 3) - (priorityOrder[b.priority] ?? 3)
     )
 
@@ -452,6 +463,17 @@ Return ONLY a JSON array. No markdown, no preamble:
       items: sortedItems.filter(i => i.priority === priority),
     })).filter(g => g.items.length > 0)
 
+    // Fetch saved item IDs so Slack buttons have a real DB id to reference
+    const { data: savedItems } = await adminClient
+      .from('circle_action_items')
+      .select('id, profile_id, action_type')
+      .eq('status', 'pending')
+
+    // Map profile_id+action_type → db id for button values
+    const savedIdMap = new Map(
+      (savedItems ?? []).map(s => [`${s.profile_id}:${s.action_type}`, s.id])
+    )
+
     const itemBlocks: unknown[] = []
     for (const group of grouped) {
       const label = group.priority === 'high' ? '🔴 HIGH PRIORITY' : group.priority === 'medium' ? '🟡 MEDIUM PRIORITY' : '🟢 LOW PRIORITY'
@@ -461,9 +483,11 @@ Return ONLY a JSON array. No markdown, no preamble:
       })
       for (const item of group.items) {
         const profile = profileMap[item.profile_id]
+        const dbId = savedIdMap.get(`${item.profile_id}:${item.action_type}`) ?? item.profile_id
         const enriched = {
           ...item,
-          profile_name: profile?.name ?? null,
+          id: dbId,
+          profile_name: profile?.name ?? item.profile_id ?? 'Unknown',
           profile_ig_username: profile?.ig_username ?? null,
         }
         itemBlocks.push(...buildItemBlocks(enriched))
@@ -487,6 +511,9 @@ Return ONLY a JSON array. No markdown, no preamble:
     return NextResponse.json({
       ok: true,
       items_generated: items.length,
+      valid_items_saved: validItems.length,
+      invalid_profile_ids: invalidItems.length,
+      db_insert_error: dbInsertError,
       posts_synced: newPosts.length,
       clients_matched: clientData.filter(c => c.member).length,
       matched_by_email: clientData.filter(c => c.matchMethod === 'email').length,
