@@ -23,42 +23,33 @@ export async function GET() {
     token_length: token.length,
   }
 
-  const h = { Authorization: `Token ${token}`, 'Content-Type': 'application/json' }
   const CID = 370927
+  const baseUrl = `https://app.circle.so/api/v1`
 
-  // Test v2 members
-  try {
-    const res = await fetch(
-      `https://app.circle.so/api/v2/community_members?community_id=${CID}&per_page=5&page=1`,
-      { headers: h }
-    )
-    const text = await res.text()
-    results.v2_members_status = res.status
-    results.v2_members_raw = text.slice(0, 1000)
-    try { results.v2_members_parsed = JSON.parse(text) } catch { results.v2_members_parse_error = 'not JSON' }
-  } catch (e) { results.v2_members_error = String(e) }
+  async function tryFetch(label: string, url: string, authHeader: string) {
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: authHeader, 'Content-Type': 'application/json' }
+      })
+      const text = await res.text()
+      results[`${label}_status`] = res.status
+      results[`${label}_raw`] = text.slice(0, 400)
+      try { results[`${label}_parsed`] = JSON.parse(text) } catch { /* not json */ }
+    } catch (e) { results[`${label}_error`] = String(e) }
+  }
 
-  // Test v2 posts
-  try {
-    const res = await fetch(
-      `https://app.circle.so/api/v2/posts?community_id=${CID}&per_page=5&page=1&sort=latest`,
-      { headers: h }
-    )
-    const text = await res.text()
-    results.v2_posts_status = res.status
-    results.v2_posts_raw = text.slice(0, 1000)
-    try { results.v2_posts_parsed = JSON.parse(text) } catch { results.v2_posts_parse_error = 'not JSON' }
-  } catch (e) { results.v2_posts_error = String(e) }
+  // Test 1: v1 with "Token" auth (current approach)
+  await tryFetch('v1_token', `${baseUrl}/community_members?community_id=${CID}&per_page=3`, `Token ${token}`)
 
-  // Also test v1 for comparison
-  try {
-    const res = await fetch(
-      `https://app.circle.so/api/v1/community_members?community_id=${CID}&per_page=5&page=1`,
-      { headers: h }
-    )
-    results.v1_members_status = res.status
-    results.v1_members_raw = (await res.text()).slice(0, 300)
-  } catch (e) { results.v1_members_error = String(e) }
+  // Test 2: v1 with "Bearer" auth
+  await tryFetch('v1_bearer', `${baseUrl}/community_members?community_id=${CID}&per_page=3`, `Bearer ${token}`)
+
+  // Test 3: v1 members without community_id (maybe it's implicit for admin tokens)
+  await tryFetch('v1_no_cid', `${baseUrl}/community_members?per_page=3`, `Token ${token}`)
+
+  // Test 4: try the /me or /community endpoint to validate token
+  await tryFetch('v1_community', `${baseUrl}/communities/${CID}`, `Token ${token}`)
+  await tryFetch('v1_community_bearer', `${baseUrl}/communities/${CID}`, `Bearer ${token}`)
 
   return NextResponse.json(results)
 }
