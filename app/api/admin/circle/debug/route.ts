@@ -38,9 +38,27 @@ export async function GET() {
     } catch (e) { results[`${label}_error`] = String(e) }
   }
 
-  // Primary test: v1 with Token auth (Admin v1 tokens work here)
-  await tryFetch('members', `${baseUrl}/community_members?community_id=${CID}&per_page=3`, `Token ${token}`)
-  await tryFetch('posts', `${baseUrl}/posts?community_id=${CID}&per_page=3&sort=latest`, `Token ${token}`)
+  const auth = `Token ${token}`
+
+  // Test members with different per_page values to find the limit
+  for (const pp of [5, 20, 50, 100]) {
+    try {
+      const res = await fetch(`${baseUrl}/community_members?community_id=${CID}&per_page=${pp}&page=1`, {
+        headers: { Authorization: auth, 'Content-Type': 'application/json' }
+      })
+      const text = await res.text()
+      let count = 'not array'
+      try {
+        const parsed = JSON.parse(text)
+        if (Array.isArray(parsed)) count = `array(${parsed.length})`
+        else count = `object: ${JSON.stringify(parsed).slice(0, 100)}`
+      } catch { count = 'not JSON' }
+      results[`members_pp${pp}`] = `HTTP ${res.status} → ${count}`
+    } catch (e) { results[`members_pp${pp}`] = String(e) }
+  }
+
+  // Also verify posts still work
+  await tryFetch('posts_pp5', `${baseUrl}/posts?community_id=${CID}&per_page=5&sort=latest`, auth)
 
   return NextResponse.json(results)
 }

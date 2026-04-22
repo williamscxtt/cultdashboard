@@ -193,6 +193,7 @@ export async function GET(req: Request) {
     // ── 3. Build member lookup and match to dashboard clients ───────────────
     // Match by email first, fall back to name (normalised)
     const membersByEmail = new Map(circleMembers.map(m => [m.email?.toLowerCase(), m]))
+    const memberNameByCircleId = new Map(circleMembers.map(m => [String(m.id), m.name]))
 
     function normaliseName(n: string) {
       return n.toLowerCase().replace(/[^a-z0-9]/g, '')
@@ -398,23 +399,29 @@ Return ONLY a JSON array. No markdown, no preamble:
 
     await adminClient.from('circle_action_items').delete().eq('status', 'pending')
 
-    // Only insert items where profile_id is a real client UUID
+    // Separate items into dashboard-client items (valid profile_id) and community-member items (no match)
     const validItems = items.filter(item => item.profile_id && validProfileIds.has(item.profile_id))
-    const invalidItems = items.filter(item => !item.profile_id || !validProfileIds.has(item.profile_id))
-
-    if (invalidItems.length > 0) {
-      console.warn(`Skipping ${invalidItems.length} items with invalid profile_ids:`, invalidItems.map(i => i.profile_id))
-    }
+    const nonClientItems = items.filter(item => !item.profile_id || !validProfileIds.has(item.profile_id))
 
     let dbInsertError: string | null = null
-    if (validItems.length > 0) {
-      const { error: insertError } = await adminClient.from('circle_action_items').insert(
-        validItems.map(item => ({
-          ...item,
-          status: 'pending',
-          generated_at: new Date().toISOString(),
-        }))
-      )
+    const allInsertItems = [
+      ...validItems.map(item => ({
+        ...item,
+        status: 'pending',
+        generated_at: new Date().toISOString(),
+      })),
+      // Non-client members get null profile_id but store the member name for display
+      ...nonClientItems.map(item => ({
+        ...item,
+        profile_id: null,
+        member_name: item.circle_member_id ? memberNameByCircleId.get(item.circle_member_id) ?? item.profile_id : item.profile_id,
+        status: 'pending',
+        generated_at: new Date().toISOString(),
+      })),
+    ]
+
+    if (allInsertItems.length > 0) {
+      const { error: insertError } = await adminClient.from('circle_action_items').insert(allInsertItems)
       if (insertError) {
         dbInsertError = insertError.message
         console.error('DB insert error:', insertError)
@@ -482,12 +489,17 @@ Return ONLY a JSON array. No markdown, no preamble:
         text: { type: 'mrkdwn', text: `*${label}*` },
       })
       for (const item of group.items) {
-        const profile = profileMap[item.profile_id]
-        const dbId = savedIdMap.get(`${item.profile_id}:${item.action_type}`) ?? item.profile_id
+        const profile = item.profile_id ? profileMap[item.profile_id] : null
+        const dbId = savedIdMap.get(`${item.profile_id}:${item.action_type}`) ?? item.profile_id ?? item.circle_member_id ?? 'unknown'
+        // For non-client members, use the member_name or circle_member_id as display name
+        const displayName = profile?.name
+          ?? (item as { member_name?: string }).member_name
+          ?? (item.circle_member_id ? memberNameByCircleId.get(item.circle_member_id) : null)
+          ?? 'Circle Member'
         const enriched = {
           ...item,
           id: dbId,
-          profile_name: profile?.name ?? item.profile_id ?? 'Unknown',
+          profile_name: displayName,
           profile_ig_username: profile?.ig_username ?? null,
         }
         itemBlocks.push(...buildItemBlocks(enriched))
@@ -511,8 +523,8 @@ Return ONLY a JSON array. No markdown, no preamble:
     return NextResponse.json({
       ok: true,
       items_generated: items.length,
-      valid_items_saved: validItems.length,
-      invalid_profile_ids: invalidItems.length,
+      client_items: validItems.length,
+      community_member_items: nonClientItems.length,
       db_insert_error: dbInsertError,
       posts_synced: newPosts.length,
       clients_matched: clientData.filter(c => c.member).length,
