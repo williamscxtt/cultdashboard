@@ -142,14 +142,19 @@ export async function GET(req: Request) {
 
   try {
     // ── 1. Fetch dashboard clients ──────────────────────────────────────────
-    const { data: clients } = await adminClient
+    const { data: clients, error: clientsError } = await adminClient
       .from('profiles')
-      .select('id, name, email, coaching_phase, ninety_day_goal, biggest_challenge, ig_username, niche, brand_voice')
+      .select('id, name, email, coaching_phase, ninety_day_goal, biggest_challenge, ig_username, niche, intro_insights, call_transcripts, dashboard_bio')
       .eq('role', 'client')
       .eq('is_active', true)
       .not('email', 'is', null)
 
-    const dashboardClients = (clients ?? []) as (Profile & { brand_voice?: string })[]
+    if (clientsError) {
+      console.error('Profiles query error:', clientsError)
+      return NextResponse.json({ error: `Profiles query failed: ${clientsError.message}` }, { status: 500 })
+    }
+
+    const dashboardClients = (clients ?? []) as (Profile & { intro_insights?: string; call_transcripts?: string; dashboard_bio?: string })[]
 
     // ── 2. Sync Circle posts incrementally ─────────────────────────────────
     // Find the most recently cached post date
@@ -296,11 +301,14 @@ export async function GET(req: Request) {
         ? `Matched (${matchMethod}) | Last seen ${daysSinceActive ?? '?'} days ago | ${member.posts_count ?? 0} total posts | ${member.comments_count ?? 0} comments`
         : 'NOT MATCHED IN CIRCLE'
 
+      const bioContext = client.dashboard_bio ?? client.intro_insights ?? ''
+      const callContext = client.call_transcripts ? `\nCall notes: ${String(client.call_transcripts).slice(0, 400)}` : ''
+
       return `---
 CLIENT: ${client.name ?? 'Unknown'} | ID: ${client.id}
 Instagram: ${client.ig_username ? '@' + client.ig_username : 'n/a'} | Niche: ${client.niche ?? 'unknown'}
 Phase: ${client.coaching_phase ?? 'unknown'} | 90-day goal: ${client.ninety_day_goal ?? 'not set'}
-Challenge: ${client.biggest_challenge ?? 'not set'}
+Challenge: ${client.biggest_challenge ?? 'not set'}${bioContext ? `\nBackground: ${bioContext.slice(0, 300)}` : ''}${callContext}
 Circle: ${circleStatus}
 Recent Circle posts (last 30d):
 ${postLines || '  (none)'}
