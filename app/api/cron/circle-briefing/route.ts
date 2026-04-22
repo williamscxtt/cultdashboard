@@ -191,20 +191,36 @@ export async function GET(req: Request) {
     }
 
     // ── 3. Build member lookup and match to dashboard clients ───────────────
+    // Match by email first, fall back to name (normalised)
     const membersByEmail = new Map(circleMembers.map(m => [m.email?.toLowerCase(), m]))
+
+    function normaliseName(n: string) {
+      return n.toLowerCase().replace(/[^a-z0-9]/g, '')
+    }
+    const membersByName = new Map(circleMembers.map(m => [normaliseName(m.name ?? ''), m]))
 
     interface ClientData {
       client: typeof dashboardClients[0]
       member: typeof circleMembers[0] | null
+      matchMethod: 'email' | 'name' | null
       daysSinceActive: number | null
     }
 
     const clientData: ClientData[] = dashboardClients.map(client => {
-      const member = client.email ? membersByEmail.get(client.email.toLowerCase()) ?? null : null
+      // Try email match first
+      let member = client.email ? membersByEmail.get(client.email.toLowerCase()) ?? null : null
+      let matchMethod: 'email' | 'name' | null = member ? 'email' : null
+
+      // Fall back to name match
+      if (!member && client.name) {
+        member = membersByName.get(normaliseName(client.name)) ?? null
+        if (member) matchMethod = 'name'
+      }
+
       const daysSinceActive = member?.last_seen_at
         ? Math.floor((Date.now() - new Date(member.last_seen_at).getTime()) / 86400000)
         : null
-      return { client, member, daysSinceActive }
+      return { client, member, matchMethod, daysSinceActive }
     })
 
     // Upsert activity cache
@@ -265,20 +281,26 @@ export async function GET(req: Request) {
       postsByEmail.set(email, existing)
     }
 
-    const clientBlocks = clientData.map(({ client, member, daysSinceActive }) => {
-      const posts = client.email ? postsByEmail.get(client.email.toLowerCase()) ?? [] : []
+    const clientBlocks = clientData.map(({ client, member, matchMethod, daysSinceActive }) => {
+      // Look up posts by Circle member email (if matched) OR dashboard email
+      const lookupEmail = member?.email?.toLowerCase() ?? client.email?.toLowerCase() ?? ''
+      const posts = lookupEmail ? postsByEmail.get(lookupEmail) ?? [] : []
       const postLines = posts.slice(0, 6).map(p => {
         const daysAgo = Math.floor((Date.now() - new Date(p.created_at).getTime()) / 86400000)
         const snippet = (p.body ?? '').slice(0, 300).replace(/\n+/g, ' ')
         return `  • [${daysAgo}d ago] "${p.title}": ${snippet}`
       }).join('\n')
 
+      const circleStatus = member
+        ? `Matched (${matchMethod}) | Last seen ${daysSinceActive ?? '?'} days ago | ${member.posts_count ?? 0} total posts | ${member.comments_count ?? 0} comments`
+        : 'NOT MATCHED IN CIRCLE'
+
       return `---
 CLIENT: ${client.name ?? 'Unknown'} | ID: ${client.id}
 Instagram: ${client.ig_username ? '@' + client.ig_username : 'n/a'} | Niche: ${client.niche ?? 'unknown'}
 Phase: ${client.coaching_phase ?? 'unknown'} | 90-day goal: ${client.ninety_day_goal ?? 'not set'}
 Challenge: ${client.biggest_challenge ?? 'not set'}
-Circle: ${member ? `Last seen ${daysSinceActive ?? '?'} days ago | ${member.posts_count ?? 0} total posts | ${member.comments_count ?? 0} comments` : 'NOT IN CIRCLE (no email match)'}
+Circle: ${circleStatus}
 Recent Circle posts (last 30d):
 ${postLines || '  (none)'}
 ---`
@@ -467,6 +489,8 @@ Return ONLY a JSON array. No markdown, no preamble:
       items_generated: items.length,
       posts_synced: newPosts.length,
       clients_matched: clientData.filter(c => c.member).length,
+      matched_by_email: clientData.filter(c => c.matchMethod === 'email').length,
+      matched_by_name: clientData.filter(c => c.matchMethod === 'name').length,
     })
 
   } catch (err) {
