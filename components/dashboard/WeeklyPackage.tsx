@@ -337,43 +337,48 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
   thisMonday.setDate(now.getDate() - diff)
   const thisWeekStart = thisMonday.toISOString().split('T')[0]
   const hasThisWeek = packages.some(p => p.week_start === thisWeekStart)
+  // The most recent package is stale if it's from a previous week
+  const isStale = !!active && active.week_start < thisWeekStart
 
   return (
     <div style={embedded ? {} : { padding: isMobile ? '12px' : '24px', maxWidth: 960, margin: '0 auto' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: embedded ? 'flex-end' : 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-        {!embedded && (
+      {!embedded && (
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <PageHeader
             title="Weekly Content Package"
             description="Your personalised weekly intel report + 7 reel scripts, generated from your reels, competitor data, and brand voice."
           />
-        )}
-        <Button
-          onClick={handleGenerate}
-          disabled={generating}
-          variant="primary"
-          style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', width: isMobile ? '100%' : undefined, justifyContent: isMobile ? 'center' : undefined }}
-        >
-          {generating
-            ? <><RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} /> Generating…</>
-            : <><Zap size={13} /> {hasThisWeek ? 'Regenerate This Week' : 'Generate This Week\'s Package'}</>
-          }
-        </Button>
-      </div>
+          <Button
+            onClick={handleGenerate}
+            disabled={generating}
+            variant="primary"
+            style={{ display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap', width: isMobile ? '100%' : undefined, justifyContent: isMobile ? 'center' : undefined }}
+          >
+            {generating
+              ? <><RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} /> Generating…</>
+              : <><Zap size={13} /> {hasThisWeek ? 'Regenerate This Week' : 'Generate This Week\'s Package'}</>
+            }
+          </Button>
+        </div>
+      )}
 
-      <TaskProgress
-        active={generating}
-        estimatedMs={120000}
-        label="Generating your weekly package…"
-        sublabel="Syncing your account, then generating scripts"
-      />
-
-      {generating && (
-        <Card style={{ marginBottom: 16, position: 'relative', overflow: 'hidden' }}>
-          <GeneratingState
+      {!embedded && (
+        <>
+          <TaskProgress
+            active={generating}
+            estimatedMs={120000}
             label="Generating your weekly package…"
-            sub="Analysing your reels, competitor data, and brand voice. This takes 30–60 seconds."
+            sublabel="Syncing your account, then generating scripts"
           />
-        </Card>
+          {generating && (
+            <Card style={{ marginBottom: 16, position: 'relative', overflow: 'hidden' }}>
+              <GeneratingState
+                label="Generating your weekly package…"
+                sub="Analysing your reels, competitor data, and brand voice. This takes 30–60 seconds."
+              />
+            </Card>
+          )}
+        </>
       )}
 
       {loading ? (
@@ -388,17 +393,25 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
           ))}
         </div>
       ) : !generating && packages.length === 0 ? (
-        <Card style={{ padding: 56, textAlign: 'center' }}>
+        <Card style={{ padding: embedded ? '32px 24px' : 56, textAlign: 'center' }}>
           <Zap size={28} style={{ color: 'var(--accent)', margin: '0 auto 16px', display: 'block' }} />
-          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)', marginBottom: 8 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', marginBottom: 8 }}>
             No packages yet
           </div>
-          <div style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 24, maxWidth: 400, margin: '0 auto 24px' }}>
-            Click &ldquo;Generate This Week&rsquo;s Package&rdquo; to create your first personalised weekly content plan, using your reel data, competitor intelligence, and brand voice.
-          </div>
-          <Button onClick={handleGenerate} disabled={generating} variant="primary">
-            {generating ? 'Generating…' : 'Generate Now'}
-          </Button>
+          {embedded ? (
+            <div style={{ fontSize: 13, color: 'var(--muted-foreground)', maxWidth: 380, margin: '0 auto' }}>
+              Click &ldquo;Generate This Week&rsquo;s Content&rdquo; above to scrape your competitors, transcribe their videos, and generate your 7 scripts in one go.
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 24, maxWidth: 400, margin: '0 auto 24px' }}>
+                Click &ldquo;Generate This Week&rsquo;s Package&rdquo; to create your first personalised weekly content plan, using your reel data, competitor intelligence, and brand voice.
+              </div>
+              <Button onClick={handleGenerate} disabled={generating} variant="primary">
+                {generating ? 'Generating…' : 'Generate Now'}
+              </Button>
+            </>
+          )}
         </Card>
       ) : !generating ? (
         <div style={{
@@ -463,8 +476,9 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
           {/* Main content */}
           {parsed && (
             <div style={{ minWidth: 0, overflow: 'hidden' }}>
+
               {/* Week header */}
-              <div style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 4 : 10, marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 4 : 10, marginBottom: 16, flexWrap: 'wrap' }}>
                 <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: 'var(--foreground)' }}>
                   Week of {parsed.weekLabel}
                 </div>
@@ -472,6 +486,16 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
                   <Clock size={11} />
                   {new Date(active.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                 </div>
+                {isStale && (
+                  <span style={{
+                    fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
+                    background: 'hsl(43 96% 56% / 0.15)', color: 'hsl(43 75% 38%)',
+                    border: '1px solid hsl(43 96% 56% / 0.3)',
+                    textTransform: 'uppercase', letterSpacing: '0.06em',
+                  }}>
+                    Out of date
+                  </span>
+                )}
               </div>
 
               {/* Intel section */}

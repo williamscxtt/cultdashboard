@@ -587,6 +587,8 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   const [engMode, setEngMode] = useState('Daily')
   const [contentSort, setContentSort] = useState('Recent')
   const [activePlatform, setActivePlatform] = useState('All')
+  // Local followers count — starts with server value, updated by silent quick-sync on mount
+  const [localFollowers, setLocalFollowers] = useState<number | null>(followersCount ?? null)
 
   const fetchReels = useCallback(async () => {
     setLoading(true)
@@ -603,6 +605,22 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   }, [profileId])
 
   useEffect(() => { fetchReels() }, [fetchReels])
+
+  // Silent quick-sync on every page load — refreshes follower count in background
+  useEffect(() => {
+    if (!igUsername) return
+    fetch('/api/instagram/sync', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profileId, quick: true }),
+    })
+      .then(r => r.ok ? r.json() : null)
+      .then((data: { followers?: number } | null) => {
+        if (data?.followers) setLocalFollowers(data.followers)
+      })
+      .catch(() => {})
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId])
 
   async function handleSync() {
     setSyncing(true)
@@ -698,9 +716,9 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
     return {
       views:     { value: fmtNum(curViews), change: null,    spark: [...reels].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(r => r.views ?? 0) },
       eng:       { value: fmtNum(curEng),   change: pct(curEng, prvEng),        spark: currentReels.map(r => (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0)) },
-      followers: { value: followersCount != null ? fmtNum(followersCount) : '—', change: followerChange, spark: followerSpark },
+      followers: { value: localFollowers != null ? fmtNum(localFollowers) : '—', change: followerChange, spark: followerSpark },
     }
-  }, [reels, currentReels, prevReels, followersCount, followerHistory, days])
+  }, [reels, currentReels, prevReels, localFollowers, followerHistory, days])
 
   // ── views over time ───────────────────────────────────────────────────────
   const viewsChart = useMemo(() => {
@@ -809,18 +827,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
               {total > 0 ? `${total} reels tracked · Instagram` : 'Connect Instagram in Settings to start'}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <button onClick={handleSync} disabled={syncing} style={{
-              display: 'flex', alignItems: 'center', gap: 7,
-              height: 36, padding: '0 16px', borderRadius: 8, border: '1px solid var(--border)',
-              background: 'var(--card)', color: 'var(--foreground)',
-              fontWeight: 600, fontSize: 13, cursor: syncing ? 'not-allowed' : 'pointer',
-              fontFamily: 'inherit', opacity: syncing ? 0.6 : 1, transition: 'opacity 0.15s',
-            }}>
-              <RefreshCw size={13} style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }} />
-              {syncing ? 'Syncing…' : 'Sync Instagram'}
-            </button>
-          </div>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }} />
         </div>
 
         {/* Bio + weekly focus */}
@@ -1116,6 +1123,17 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
               <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.3px' }}>
                 Content Library <span style={{ fontSize: 14, fontWeight: 500, color: 'var(--muted-foreground)' }}>({total})</span>
               </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button onClick={handleSync} disabled={syncing} style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                height: 32, padding: '0 12px', borderRadius: 8, border: '1px solid var(--border)',
+                background: 'var(--card)', color: 'var(--muted-foreground)',
+                fontWeight: 600, fontSize: 12, cursor: syncing ? 'not-allowed' : 'pointer',
+                fontFamily: 'inherit', opacity: syncing ? 0.6 : 1, transition: 'opacity 0.15s',
+              }}>
+                <RefreshCw size={12} style={{ animation: syncing ? 'spin 1s linear infinite' : 'none' }} />
+                {syncing ? 'Syncing…' : 'Sync reels'}
+              </button>
               <div style={{ display: 'flex', gap: 2, background: 'var(--muted)', borderRadius: 8, padding: 3 }}>
                 {(isMobile ? ['Recent', 'Top Views'] : ['Recent', 'Top Views', 'Top Engagement']).map(opt => (
                   <button key={opt} onClick={() => { setContentSort(opt); setLibraryVisible(24) }} style={{
@@ -1129,6 +1147,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                     {opt}
                   </button>
                 ))}
+              </div>
               </div>
             </div>
 

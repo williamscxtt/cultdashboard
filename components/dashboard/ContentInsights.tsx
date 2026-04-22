@@ -26,7 +26,7 @@ function timeAgo(iso: string): string {
   return `${d}d ago`
 }
 
-export default function ContentInsights({ profileId }: { profileId: string }) {
+export default function ContentInsights({ profileId, locked }: { profileId: string; locked?: boolean }) {
   const [insights, setInsights] = useState<Insight | null>(null)
   const [updatedAt, setUpdatedAt] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -93,8 +93,8 @@ export default function ContentInsights({ profileId }: { profileId: string }) {
         <div style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 24, maxWidth: 380, margin: '0 auto 24px' }}>
           Analyse all your reels, audience comments, and goals to get specific, actionable growth strategies — personalised to you.
         </div>
-        <Button onClick={generate} variant="primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <Sparkles size={13} /> Generate My Insights
+        <Button onClick={generate} variant="primary" disabled={locked || generating} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <Sparkles size={13} /> {locked ? 'Refresh competitor data first' : 'Generate My Insights'}
         </Button>
       </Card>
     )
@@ -132,16 +132,20 @@ export default function ContentInsights({ profileId }: { profileId: string }) {
         </div>
         <button
           onClick={generate}
-          disabled={generating}
+          disabled={generating || locked}
+          title={locked ? 'Finish competitor data refresh first' : undefined}
           style={{
             display: 'flex', alignItems: 'center', gap: 5,
             padding: '5px 12px', borderRadius: 6, border: '1px solid var(--border)',
             background: 'var(--muted)', color: 'var(--muted-foreground)',
-            fontSize: 11, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 11, fontWeight: 600, fontFamily: 'inherit',
+            cursor: (generating || locked) ? 'not-allowed' : 'pointer',
+            opacity: locked ? 0.4 : 1,
+            transition: 'opacity 0.15s',
           }}
         >
           <RefreshCw size={11} style={generating ? { animation: 'spin 1s linear infinite' } : {}} />
-          Refresh
+          {locked ? 'Updating data…' : 'Refresh'}
         </button>
       </div>
 

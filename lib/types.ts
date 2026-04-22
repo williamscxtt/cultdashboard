@@ -128,6 +128,9 @@ export interface Profile {
   intro_insights: IntroInsights | null
   dashboard_bio: string | null
   weekly_checklist: unknown | null
+  call_transcripts?: Array<{ id: string; label: string; content: string; added_at: string }> | null
+  roadmap_json?: Record<string, unknown> | null
+  roadmap_generated_at?: string | null
 }
 
 export interface WeeklyReport {
@@ -280,6 +283,50 @@ export interface CompetitorReel {
   hook: string | null
   caption: string | null
   hashtags: string[] | null
+}
+
+// Circle community integration
+export interface CircleActivityCache {
+  profile_id: string
+  circle_member_id: string | null
+  last_seen_at: string | null
+  posts_count: number
+  comments_count: number
+  gamification_points: number
+  circle_headline: string | null
+  circle_profile_url: string | null
+  recent_post_titles: string[] | null
+  recent_post_bodies: string[] | null
+  synced_at: string
+}
+
+export type ActionItemStatus = 'pending' | 'sent' | 'dismissed'
+export type ActionItemType =
+  | 'check_in_quiet'
+  | 'check_in_dormant'
+  | 'celebrate_win'
+  | 'address_problem'
+  | 'respond_intro'
+  | 'follow_up_goal'
+export type ActionItemPriority = 'high' | 'medium' | 'low'
+
+export interface CircleActionItem {
+  id: string
+  profile_id: string | null
+  circle_member_id: string | null
+  circle_post_id: string | null
+  action_type: ActionItemType
+  priority: ActionItemPriority
+  reason: string
+  context_quote: string | null
+  draft_message: string
+  status: ActionItemStatus
+  dismiss_note: string | null
+  acted_at: string | null
+  generated_at: string
+  // Joined from profiles
+  profile_name?: string | null
+  profile_ig_username?: string | null
 }
 
 // Idea bank (saved_hooks repurposed or separate idea_bank table)

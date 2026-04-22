@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import type { Profile, ClientReel } from '@/lib/types'
+import type { Profile, ClientReel, CircleActivityCache, CircleActionItem } from '@/lib/types'
 import Link from 'next/link'
 import AnalyticsCharts from '@/components/dashboard/AnalyticsCharts'
 import ScriptCards from '@/components/dashboard/ScriptCards'
@@ -42,7 +42,13 @@ export default async function ClientDetailPage({
 
   if (!clientProfile || clientProfile.role !== 'client') redirect('/dashboard/clients')
 
-  const [{ data: reels }, { data: weeklyScript }, { data: followerSnapshots }] = await Promise.all([
+  const [
+    { data: reels },
+    { data: weeklyScript },
+    { data: followerSnapshots },
+    { data: circleCache },
+    { data: circlePendingItems },
+  ] = await Promise.all([
     adminClient
       .from('client_reels')
       .select('*')
@@ -61,6 +67,17 @@ export default async function ClientDetailPage({
       .eq('profile_id', id)
       .order('date', { ascending: true })
       .limit(90),
+    adminClient
+      .from('circle_activity_cache')
+      .select('*')
+      .eq('profile_id', id)
+      .single(),
+    adminClient
+      .from('circle_action_items')
+      .select('*')
+      .eq('profile_id', id)
+      .eq('status', 'pending')
+      .order('generated_at', { ascending: false }),
   ])
 
   const reelData = (reels ?? []) as ClientReel[]
@@ -86,6 +103,9 @@ export default async function ClientDetailPage({
     .sort((a, b) => b.avg - a.avg)[0]?.fmt ?? '—'
 
   const profile = clientProfile as Profile
+
+  const callTranscripts = (clientProfile.call_transcripts ?? []) as Array<{ id: string; label: string; content: string; added_at: string }>
+  const roadmapGeneratedAt = (clientProfile.roadmap_generated_at as string | null) ?? null
 
   const overviewContent = (
     <>
@@ -158,7 +178,14 @@ export default async function ClientDetailPage({
       </Card>
 
       {/* Tabbed content */}
-      <ClientDetailTabs profile={profile} overviewContent={overviewContent} />
+      <ClientDetailTabs
+        profile={profile}
+        overviewContent={overviewContent}
+        callTranscripts={callTranscripts}
+        roadmapGeneratedAt={roadmapGeneratedAt}
+        circleCache={(circleCache ?? null) as CircleActivityCache | null}
+        circlePendingItems={(circlePendingItems ?? []) as CircleActionItem[]}
+      />
     </div>
   )
 }

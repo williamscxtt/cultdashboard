@@ -10,6 +10,14 @@ export default function SettingsForm({ profile }: { profile: Profile }) {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState('')
+
+  // Password change state
+  const [newPw, setNewPw] = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwSaved, setPwSaved] = useState(false)
+  const [pwError, setPwError] = useState('')
+
   const router = useRouter()
 
   async function handleSave(e: React.FormEvent) {
@@ -31,6 +39,21 @@ export default function SettingsForm({ profile }: { profile: Profile }) {
       router.refresh()
     }
     setSaving(false)
+  }
+
+  async function handlePasswordChange(e: React.FormEvent) {
+    e.preventDefault()
+    if (newPw !== confirmPw) { setPwError('Passwords do not match'); return }
+    if (newPw.length < 8) { setPwError('Password must be at least 8 characters'); return }
+    setPwSaving(true); setPwError('')
+    const supabase = createClient()
+    const { error } = await supabase.auth.updateUser({ password: newPw })
+    if (error) { setPwError(error.message); setPwSaving(false); return }
+    setPwSaved(true)
+    setNewPw('')
+    setConfirmPw('')
+    setTimeout(() => setPwSaved(false), 3000)
+    setPwSaving(false)
   }
 
   async function handleSignOut() {
@@ -192,6 +215,61 @@ export default function SettingsForm({ profile }: { profile: Profile }) {
             </span>
           </div>
         </div>
+      </div>
+
+      {/* Change password */}
+      <div style={cardStyle}>
+        <h2 style={{ fontSize: 15, fontWeight: 600, color: '#111827', margin: '0 0 16px' }}>Change Password</h2>
+        <form onSubmit={handlePasswordChange} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>New password</label>
+            <input
+              type="password"
+              value={newPw}
+              onChange={e => setNewPw(e.target.value)}
+              placeholder="At least 8 characters"
+              autoComplete="new-password"
+            />
+          </div>
+          <div>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 500, color: '#374151', marginBottom: 6 }}>Confirm new password</label>
+            <input
+              type="password"
+              value={confirmPw}
+              onChange={e => setConfirmPw(e.target.value)}
+              placeholder="Repeat your new password"
+              autoComplete="new-password"
+            />
+          </div>
+          {pwError && (
+            <div style={{
+              background: '#fef2f2', border: '1px solid #fecaca',
+              borderRadius: 8, padding: '10px 14px',
+              fontSize: 13, color: '#dc2626',
+            }}>
+              {pwError}
+            </div>
+          )}
+          <button
+            type="submit"
+            disabled={pwSaving || !newPw}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: pwSaved ? '#f0fdf4' : '#cc0000',
+              color: pwSaved ? '#16a34a' : '#ffffff',
+              border: pwSaved ? '1px solid #bbf7d0' : 'none',
+              borderRadius: 8, padding: '9px 20px',
+              fontSize: 13, fontWeight: 600,
+              cursor: (pwSaving || !newPw) ? 'not-allowed' : 'pointer',
+              opacity: (pwSaving || !newPw) ? 0.6 : 1,
+              alignSelf: 'flex-start',
+              transition: 'all 0.2s',
+            }}
+          >
+            {pwSaved && <Check size={14} />}
+            {pwSaving ? 'Saving...' : pwSaved ? 'Password updated!' : 'Update password'}
+          </button>
+        </form>
       </div>
 
       {/* Account */}

@@ -36,6 +36,7 @@ const clientOnboardingItem = { href: '/dashboard/onboarding', label: 'My Profile
 
 const adminNav = [
   { href: '/dashboard/clients',   label: 'Clients',          icon: Users },
+  { href: '/dashboard/circle',    label: 'Circle Briefing',  icon: MessageSquare },
   { href: '/dashboard/reports',   label: 'Progress Reports', icon: TrendingUp },
   { href: '/dashboard/knowledge', label: 'Knowledge Base',   icon: BookOpen },
 ]

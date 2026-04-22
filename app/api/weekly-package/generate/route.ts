@@ -74,44 +74,6 @@ async function apifyGetResults(runId: string): Promise<ApifyPost[]> {
   return res.json()
 }
 
-const FORMAT_OPTIONS = 'talking_head, rant, list, tutorial, story_time, trend, pov, transformation, q_and_a, behind_the_scenes, other'
-
-async function classifyFormats(reels: { caption: string; hook: string }[]): Promise<string[]> {
-  if (!reels.length) return []
-  const prompt = `Classify each Instagram reel into ONE format type.
-
-Options (use exactly as written): ${FORMAT_OPTIONS}
-
-Format definitions:
-- talking_head: creator talking directly to camera with an opinion or point
-- rant: strong take, calling something out, hot opinion
-- list: numbered tips, mistakes, things nobody tells you, reasons why
-- tutorial: step-by-step how-to, teach something specific
-- story_time: personal story or client story with a lesson/punchline
-- trend: trending audio, challenge, or meme format
-- pov: "POV: you..." style, viewer imagines themselves in a scenario
-- transformation: before/after, journey, results reveal
-- q_and_a: answering a question (real or rhetorical)
-- behind_the_scenes: showing process, day-in-life, what happens behind camera
-- other: doesn't fit any of the above
-
-Return ONLY a JSON array of strings, one per reel, same order. Example: ["tutorial","rant","list"]
-
-Reels:
-${reels.map((r, i) => `${i + 1}. Hook: "${r.hook}" | Caption: "${r.caption?.slice(0, 150)}"`).join('\n')}`
-  const msg = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001', max_tokens: 1500,
-    messages: [{ role: 'user', content: prompt }],
-  })
-  const raw = msg.content[0].type === 'text' ? msg.content[0].text : '[]'
-  const match = raw.match(/\[[\s\S]*\]/)
-  if (!match) return reels.map(() => 'other')
-  try {
-    const parsed = JSON.parse(match[0])
-    return Array.isArray(parsed) ? parsed : reels.map(() => 'other')
-  } catch { return reels.map(() => 'other') }
-}
-
 /**
  * Scrape the client's own IG account and upsert into client_reels.
  * Skips silently if APIFY_API_TOKEN not set or ig_username missing.
@@ -135,7 +97,7 @@ async function syncClientOwnReels(profileId: string, igHandle: string): Promise<
     })()
     const scraped_week = `${weekStr}-W${isoWeek}`
 
-    // Check which reels already exist BEFORE classifying — only new ones need it
+    // Check which reels already exist — only insert new ones
     const shortCodes = posts.map(p => p.shortCode ?? '').filter(Boolean)
     const { data: existing } = await adminClient
       .from('client_reels')
@@ -149,16 +111,10 @@ async function syncClientOwnReels(profileId: string, igHandle: string): Promise<
 
     console.log(`[weekly-package/generate] ${newPosts.length} new reels, ${existingPosts.length} existing (stats update only)`)
 
-    // Classify format only for NEW reels
-    const newInputs = newPosts.map(p => ({
-      caption: p.caption ?? '',
-      hook: (p.caption ?? '').split(/[.!?\n]/)[0]?.trim().slice(0, 200) ?? '',
-    }))
-    const formats = await classifyFormats(newInputs)
-
-    const newRows = newPosts.map((p, i) => {
+    // Hook and format_type come from transcripts — not from captions.
+    // Leave them empty/pending; the transcription step populates them.
+    const newRows = newPosts.map((p) => {
       const caption = p.caption ?? ''
-      const hook = caption.split(/[.!?\n]/)[0]?.trim().slice(0, 200) ?? ''
       return {
         profile_id: profileId,
         reel_id: p.shortCode ?? '',
@@ -168,9 +124,9 @@ async function syncClientOwnReels(profileId: string, igHandle: string): Promise<
         likes: p.likesCount ?? 0,
         comments: p.commentsCount ?? 0,
         caption: caption.slice(0, 2000),
-        hook,
+        hook: '', // Populated from Whisper transcript, not caption
         hashtags: (caption.match(/#\w+/g) ?? []).map((h: string) => h.slice(1)),
-        format_type: formats[i] ?? 'other',
+        format_type: 'other', // Updated when transcript is available
         duration_sec: p.videoDuration ?? null,
         thumbnail_url: p.displayUrl ?? null,
         permalink: p.url ?? null,

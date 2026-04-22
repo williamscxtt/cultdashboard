@@ -14,6 +14,10 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: "CULT Dashboard",
   description: "Your personal brand command centre",
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

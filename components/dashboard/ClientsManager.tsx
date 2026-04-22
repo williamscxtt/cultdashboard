@@ -88,16 +88,19 @@ export default function ClientsManager({ initialClients }: Props) {
       const res = await fetch('/api/admin/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, name }),
       })
       const data = await res.json()
       if (!res.ok) {
         toast.error(`Error: ${data.error || res.status}`)
         return
       }
-      if (data.sent > 0) toast.success(`Invite sent to ${name || email}`)
-      else toast.error(`Failed: ${data.failed?.[0]?.error || 'unknown error'}`)
-    } catch (err) {
+      if (data.emailSent) {
+        toast.success(`Login details sent to ${name || email}`)
+      } else {
+        toast.error(`Couldn't send email — temp password: ${data.tempPassword}`)
+      }
+    } catch {
       toast.error(`Network error sending invite`)
     }
   }
@@ -166,20 +169,37 @@ export default function ClientsManager({ initialClients }: Props) {
   }
 
   async function sendAllInvites() {
-    const activeEmails = clients.filter(c => c.is_active && c.email).map(c => c.email as string)
-    if (activeEmails.length === 0) { toast.error('No active clients with emails'); return }
-    toast.loading(`Sending ${activeEmails.length} invites…`, { id: 'bulk-invite' })
-    const res = await fetch('/api/admin/invite', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emails: activeEmails }),
-    })
-    const data = await res.json()
+    const activeClients = clients.filter(c => c.is_active && c.email)
+    if (activeClients.length === 0) { toast.error('No active clients with emails'); return }
+    toast.loading(`Generating ${activeClients.length} invite links…`, { id: 'bulk-invite' })
+    const lines: string[] = []
+    let failed = 0
+    for (const client of activeClients) {
+      try {
+        const res = await fetch('/api/admin/invite', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: client.email }),
+        })
+        const data = await res.json()
+        if (res.ok && data.inviteUrl) {
+          lines.push(`${client.name || client.email}: ${data.inviteUrl}`)
+        } else {
+          failed++
+        }
+      } catch {
+        failed++
+      }
+    }
     toast.dismiss('bulk-invite')
-    if (data.failed?.length > 0) {
-      toast.success(`${data.sent} invites sent. ${data.failed.length} failed.`)
+    if (lines.length > 0) {
+      await navigator.clipboard.writeText(lines.join('\n\n')).catch(() => {})
+      const msg = failed > 0
+        ? `${lines.length} invite links copied — ${failed} failed`
+        : `${lines.length} invite links copied to clipboard`
+      toast.success(msg)
     } else {
-      toast.success(`${data.sent} invites sent successfully`)
+      toast.error('Failed to generate any invite links')
     }
   }
 
@@ -515,7 +535,25 @@ function ClientRow({ client, onToggleActive, onSendInvite, onSyncIG, isSyncing }
 
 function ClientCard({ client, onToggleActive, onSendInvite }: { client: Profile; onToggleActive: (c: Profile) => void; onSendInvite: (email: string, name?: string | null) => void }) {
   const [inviting, setInviting] = useState(false)
+  const [showSetPw, setShowSetPw] = useState(false)
+  const [tempPw, setTempPw] = useState('')
+  const [pwState, setPwState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
+  const [pwError, setPwError] = useState('')
   const niche = client.niche || (client.intro_structured as { specific_niche?: string } | null)?.specific_niche
+
+  async function handleSetPassword(e: React.FormEvent) {
+    e.preventDefault()
+    if (tempPw.length < 8) { setPwError('Min 8 characters'); return }
+    setPwState('loading'); setPwError('')
+    const res = await fetch('/api/admin/set-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: client.id, password: tempPw }),
+    })
+    const data = await res.json()
+    if (!res.ok) { setPwError(data.error || 'Failed'); setPwState('error'); return }
+    setPwState('done')
+  }
   return (
     <Card style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
       {/* Top row */}
@@ -586,6 +624,52 @@ function ClientCard({ client, onToggleActive, onSendInvite }: { client: Profile;
         )}
       </div>
 
+      {/* Set temp password inline form */}
+      {showSetPw && pwState !== 'done' && (
+        <form onSubmit={handleSetPassword} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <input
+            type="text"
+            value={tempPw}
+            onChange={e => setTempPw(e.target.value)}
+            placeholder="New password (min 8 chars)"
+            autoFocus
+            style={{ fontSize: 13, fontFamily: 'inherit' }}
+          />
+          {pwError && <div style={{ fontSize: 11, color: 'hsl(0 72% 51%)' }}>{pwError}</div>}
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button type="submit" disabled={pwState === 'loading'} style={{
+              flex: 1, height: 30, borderRadius: 5, fontSize: 12, fontWeight: 600,
+              background: '#3B82F6', color: '#fff', border: 'none',
+              cursor: pwState === 'loading' ? 'default' : 'pointer',
+              opacity: pwState === 'loading' ? 0.6 : 1, fontFamily: 'inherit',
+            }}>
+              {pwState === 'loading' ? 'Setting…' : 'Set password'}
+            </button>
+            <button type="button" onClick={() => { setShowSetPw(false); setTempPw(''); setPwState('idle'); setPwError('') }} style={{
+              height: 30, padding: '0 10px', borderRadius: 5, fontSize: 12,
+              background: 'var(--muted)', color: 'var(--muted-foreground)',
+              border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'inherit',
+            }}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+      {pwState === 'done' && (
+        <div style={{
+          background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
+          borderRadius: 6, padding: '8px 12px', fontSize: 12, color: '#22C55E', fontWeight: 600,
+        }}>
+          ✓ Password set — tell them: <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>{tempPw}</span>
+          <span
+            onClick={() => { setPwState('idle'); setTempPw(''); setShowSetPw(false) }}
+            style={{ marginLeft: 10, color: 'var(--muted-foreground)', cursor: 'pointer', fontWeight: 400, fontSize: 11 }}
+          >
+            dismiss
+          </span>
+        </div>
+      )}
+
       {/* CTA row */}
       <div style={{ display: 'flex', gap: 8 }}>
         <button
@@ -607,6 +691,17 @@ function ClientCard({ client, onToggleActive, onSendInvite }: { client: Profile;
         >
           <Mail size={12} />
           {inviting ? 'Sending…' : 'Send invite'}
+        </button>
+        <button
+          onClick={() => { setShowSetPw(v => !v); setPwState('idle'); setTempPw('') }}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            height: 34, padding: '0 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, flexShrink: 0,
+            border: '1px solid var(--border)', background: 'transparent',
+            color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: 'inherit',
+          }}
+        >
+          Set pw
         </button>
         <Link
           href={`/dashboard/clients/${client.id}`}

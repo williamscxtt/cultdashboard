@@ -325,11 +325,71 @@ export async function GET(req: NextRequest) {
   return NextResponse.json(await getStatus(profileId))
 }
 
-// ── POST — full Apify sync ────────────────────────────────────────────────────
+// ── Quick sync — follower count only (no Apify reel scrape) ──────────────────
+
+async function handleQuickSync(profileId: string, igUsername: string): Promise<NextResponse> {
+  const token = process.env.APIFY_API_TOKEN
+  if (!token) return NextResponse.json({ quick: true, followers: null })
+
+  try {
+    const startRes = await fetch(
+      `${APIFY_BASE}/acts/apify~instagram-profile-scraper/runs?token=${token}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ usernames: [igUsername], resultsLimit: 1 }),
+      }
+    )
+    if (!startRes.ok) return NextResponse.json({ quick: true, followers: null })
+
+    const startData = await startRes.json() as { data?: { id?: string } }
+    const runId = startData.data?.id
+    if (!runId) return NextResponse.json({ quick: true, followers: null })
+
+    // Poll for up to 60s
+    const deadline = Date.now() + 60_000
+    let datasetId: string | null = null
+    while (Date.now() < deadline) {
+      await new Promise(r => setTimeout(r, 5000))
+      const pollRes = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${token}`)
+      if (pollRes.ok) {
+        const run = (await pollRes.json()).data as { status: string; defaultDatasetId: string }
+        if (run.status === 'SUCCEEDED') { datasetId = run.defaultDatasetId; break }
+        if (['FAILED', 'ABORTED', 'TIMED-OUT'].includes(run.status)) break
+      }
+    }
+
+    if (!datasetId) return NextResponse.json({ quick: true, followers: null })
+
+    const dlRes = await fetch(`${APIFY_BASE}/datasets/${datasetId}/items?token=${token}&clean=true`)
+    if (!dlRes.ok) return NextResponse.json({ quick: true, followers: null })
+
+    const profiles = await dlRes.json() as Array<Record<string, unknown>>
+    const followerCount = Number(
+      profiles[0]?.followersCount ?? profiles[0]?.followerCount ??
+      profiles[0]?.followers ?? 0
+    )
+
+    if (followerCount > 0) {
+      const today = new Date().toISOString().slice(0, 10)
+      await adminClient.from('follower_snapshots').upsert(
+        { profile_id: profileId, date: today, count: followerCount },
+        { onConflict: 'profile_id,date' }
+      )
+      await adminClient.from('profiles').update({ followers_count: followerCount }).eq('id', profileId)
+    }
+
+    return NextResponse.json({ quick: true, followers: followerCount || null })
+  } catch {
+    return NextResponse.json({ quick: true, followers: null })
+  }
+}
+
+// ── POST — full Apify sync (or quick=true for follower count only) ────────────
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({})) as { profileId?: string }
-  const { profileId } = body
+  const body = await req.json().catch(() => ({})) as { profileId?: string; quick?: boolean }
+  const { profileId, quick } = body
   if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
 
   // Get profile
@@ -341,6 +401,9 @@ export async function POST(req: NextRequest) {
   }
 
   const igUsername = profile.ig_username.toLowerCase().replace('@', '')
+
+  // Quick mode: just refresh follower count, skip all reel scraping
+  if (quick) return handleQuickSync(profileId, igUsername)
 
   // Ensure storage bucket exists (no-op if already created)
   await adminClient.storage.createBucket(BUCKET, { public: true }).catch(() => {})

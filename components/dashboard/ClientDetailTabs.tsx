@@ -1,21 +1,43 @@
 'use client'
 
 import { useState } from 'react'
-import type { Profile } from '@/lib/types'
+import type { Profile, CircleActivityCache, CircleActionItem } from '@/lib/types'
 import OnboardingHub from './OnboardingHub'
-import { BarChart2, ClipboardList } from 'lucide-react'
+import RoadmapPanel from './RoadmapPanel'
+import CircleClientPanel from './CircleClientPanel'
+import { BarChart2, ClipboardList, Map, Users } from 'lucide-react'
+
+interface TranscriptEntry {
+  id: string
+  label: string
+  content: string
+  added_at: string
+}
 
 interface Props {
   profile: Profile
   overviewContent: React.ReactNode
+  callTranscripts: TranscriptEntry[]
+  roadmapGeneratedAt: string | null
+  circleCache?: CircleActivityCache | null
+  circlePendingItems?: CircleActionItem[]
 }
 
 const TABS = [
   { id: 'overview',  label: 'Overview',  icon: BarChart2 },
   { id: 'profile',   label: 'Profile',   icon: ClipboardList },
+  { id: 'roadmap',   label: 'Roadmap',   icon: Map },
+  { id: 'circle',    label: 'Circle',    icon: Users },
 ]
 
-export default function ClientDetailTabs({ profile, overviewContent }: Props) {
+export default function ClientDetailTabs({
+  profile,
+  overviewContent,
+  callTranscripts,
+  roadmapGeneratedAt,
+  circleCache = null,
+  circlePendingItems = [],
+}: Props) {
   const [active, setActive] = useState('overview')
 
   return (
@@ -60,6 +82,21 @@ export default function ClientDetailTabs({ profile, overviewContent }: Props) {
       {active === 'overview' && overviewContent}
       {active === 'profile' && (
         <OnboardingHub profile={profile} adminView />
+      )}
+      {active === 'roadmap' && (
+        <RoadmapPanel
+          profileId={profile.id}
+          profileName={profile.name || 'Client'}
+          roadmapGeneratedAt={roadmapGeneratedAt}
+          callTranscripts={callTranscripts}
+        />
+      )}
+      {active === 'circle' && (
+        <CircleClientPanel
+          profileId={profile.id}
+          circleCache={circleCache}
+          pendingItems={circlePendingItems}
+        />
       )}
     </div>
   )
