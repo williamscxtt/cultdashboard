@@ -439,14 +439,24 @@ ${(newPosts ?? []).slice(0, 20).map(p => {
 
 ## Your Task
 
-Generate Will's morning action list. Up to 15 items max — prioritise ruthlessly.
+Generate Will's COMPLETE morning action list. Do NOT cap items arbitrarily — generate one item for EVERY situation that genuinely needs attention.
 
-CRITICAL: Do NOT generate items for posts marked ✅ replied recently (< 3 days ago).
-DO generate items for every ❌ NOT REPLIED post in the Audits space.
-DO generate items for every ❌ NOT REPLIED question or problem post.
-For quiet/dormant clients with no recent posts, generate a DM check-in (set circle_post_id to null).
+⚠️ DATA RULES — CRITICAL:
+- ONLY reference information explicitly shown in the data above
+- "last seen X days ago" means last Circle login, NOT join date — never say "joined yesterday/recently"
+- If a client has no recent posts, say "Last seen X days ago" — do not invent reasons for their absence
+- If you don't know their niche/goal/challenge (shows as "unknown" or "not set"), do not make it up
+- Never say "I saw you posted" if their posts show as (none)
 
-For community posts from non-client members (listed above): include them if unreplied — set profile_id to null and use the member's Circle ID.
+WHAT TO GENERATE:
+1. One item per ❌ NOT REPLIED post — EVERY unreplied post needs a response, especially Audits space
+2. One check-in per dormant client (14+ days since last seen) who has no recent unreplied posts
+3. One check-in per quiet client (7–14 days) who has no recent activity to reply to
+4. Skip clients who are active (< 7 days) AND whose posts have ✅ replied recently
+5. Community posts from non-clients: include unreplied ones (profile_id: null)
+
+For DM check-ins (no post to reply to): set circle_post_id to null.
+For post replies: set circle_post_id to the actual post ID from the data.
 
 Return ONLY a JSON array. No markdown, no preamble:
 [
@@ -456,16 +466,16 @@ Return ONLY a JSON array. No markdown, no preamble:
     "circle_post_id": "post id as string for Circle replies, or null for DMs",
     "action_type": "check_in_quiet|check_in_dormant|celebrate_win|address_problem|respond_intro|follow_up_goal",
     "priority": "high|medium|low",
-    "reason": "one sentence — specific reason, reference what they posted",
-    "context_quote": "exact quote from their post, or 'Last seen X days ago'",
-    "draft_message": "complete ready-to-use message — expert, specific, no placeholders"
+    "reason": "one sentence — specific reason, reference what they actually posted or their actual last-seen date",
+    "context_quote": "exact quote from their post, or 'Last seen X days ago' using the actual number",
+    "draft_message": "complete ready-to-use message — expert, specific, only reference things shown in the data"
   }
 ]`
 
     // ── 6. Claude Sonnet call ──────────────────────────────────────────────
     const msg = await anthropic.messages.create({
       model: 'claude-sonnet-4-5',
-      max_tokens: 6000,
+      max_tokens: 16000,
       system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }],
     })
