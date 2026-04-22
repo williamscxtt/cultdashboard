@@ -527,9 +527,14 @@ Return ONLY a JSON array. No markdown, no preamble:
       community_member_items: nonClientItems.length,
       db_insert_error: dbInsertError,
       posts_synced: newPosts.length,
+      circle_members_fetched: circleMembers.length,
+      dashboard_clients: dashboardClients.length,
       clients_matched: clientData.filter(c => c.member).length,
       matched_by_email: clientData.filter(c => c.matchMethod === 'email').length,
       matched_by_name: clientData.filter(c => c.matchMethod === 'name').length,
+      // Sample for debugging — first 5 Circle member emails vs first 5 dashboard client emails
+      sample_circle_emails: circleMembers.slice(0, 5).map(m => m.email),
+      sample_client_emails: dashboardClients.slice(0, 5).map(c => c.email),
     })
 
   } catch (err) {
