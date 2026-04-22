@@ -12,6 +12,13 @@ const adminClient = createAdmin(
 )
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
+/** Safely convert any value (string, JSONB object, array) to a plain string */
+function toText(val: unknown): string {
+  if (val === null || val === undefined) return ''
+  if (typeof val === 'string') return val
+  return JSON.stringify(val)
+}
+
 // ── Slack helpers ─────────────────────────────────────────────────────────────
 
 async function sendSlackMessage(blocks: unknown[], text: string) {
@@ -301,8 +308,8 @@ export async function GET(req: Request) {
         ? `Matched (${matchMethod}) | Last seen ${daysSinceActive ?? '?'} days ago | ${member.posts_count ?? 0} total posts | ${member.comments_count ?? 0} comments`
         : 'NOT MATCHED IN CIRCLE'
 
-      const bioContext = client.dashboard_bio ?? client.intro_insights ?? ''
-      const callContext = client.call_transcripts ? `\nCall notes: ${String(client.call_transcripts).slice(0, 400)}` : ''
+      const bioContext = toText(client.dashboard_bio ?? client.intro_insights ?? '')
+      const callContext = client.call_transcripts ? `\nCall notes: ${toText(client.call_transcripts).slice(0, 400)}` : ''
 
       return `---
 CLIENT: ${client.name ?? 'Unknown'} | ID: ${client.id}
