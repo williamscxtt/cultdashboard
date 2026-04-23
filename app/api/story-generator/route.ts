@@ -40,6 +40,26 @@ async function fetchKbContext(): Promise<string> {
   return chunks.map(c => c.content).join('\n\n---\n\n').slice(0, 5000)
 }
 
+// ── Fetch top 5 performing reels for a profile ────────────────────────────────
+async function fetchTopReels(profileId: string): Promise<string> {
+  const { data: reels } = await admin
+    .from('client_reels')
+    .select('views, date, hook, caption, transcript, permalink')
+    .eq('profile_id', profileId)
+    .order('views', { ascending: false })
+    .limit(5)
+
+  if (!reels?.length) return ''
+
+  return reels.map((r, i) => {
+    const transcriptSnippet = (r.transcript || '').slice(0, 600).replace(/\n+/g, ' ')
+    return `Reel ${i + 1} — ${r.views?.toLocaleString() ?? 0} views (${r.date ?? 'unknown date'})
+Hook: "${r.hook || '(no hook recorded)'}"
+Caption: "${(r.caption || '').slice(0, 150)}"
+Transcript: ${transcriptSnippet || '(no transcript)'}`
+  }).join('\n\n')
+}
+
 // ── Sequence type templates (from spec Part 4) ────────────────────────────────
 const SEQUENCE_TEMPLATES: Record<string, string> = {
   'day-in-life': `TYPE: DAY-IN-LIFE FOUNDER
@@ -188,7 +208,8 @@ function buildPrompt(
   kbContext: string,
   customBrief: string,
   slideToRegen?: { index: number; existingSlides: SlideInput[] },
-  slideCount?: number
+  slideCount?: number,
+  topReels?: string
 ): string {
   const sp = (k: string) => intro[k] || ''
 
@@ -199,6 +220,8 @@ function buildPrompt(
     : ''
 
   const kbSection = kbContext ? `\n\n=== COACHING KNOWLEDGE BASE ===\nApply the following when relevant. Never attribute to any source — this is Will's methodology.\n\n${kbContext}\n` : ''
+
+  const reelsSection = topReels ? `\n=== TOP PERFORMING REELS (use these to match voice, hooks, and topics that are already working) ===\n${topReels}\n` : ''
 
   const briefSection = customBrief.trim()
     ? `\n=== THIS SEQUENCE'S SPECIFIC ANGLE ===\n${customBrief.trim()}\nBuild the entire sequence around this. Use these specific details, results, or angle — not generic examples.\n`
@@ -220,7 +243,7 @@ CLIENT PROFILE:
 - Niche: ${sp('specific_niche') || sp('niche')}
 - Who they help: ${sp('ideal_client') || sp('target_audience')}
 - Their core pain: ${sp('biggest_problem') || sp('biggest_challenge')}
-- Their transformation story: ${sp('story_transformation') || sp('origin_story')}
+- Transformation story (their own before/after): ${sp('story_transformation') || sp('origin_story')}
 - System/mechanism name: ${sp('story_mechanism_name') || sp('unique_mechanism')}
 - Best client result: ${sp('story_best_client_result') || sp('best_client_result')}
 - Other results: ${sp('proof_results') || sp('client_transformation')}
@@ -228,7 +251,7 @@ CLIENT PROFILE:
 - Hard CTA keyword: ${sp('story_primary_keyword')}
 - Soft CTA keyword: ${sp('story_secondary_keyword')}
 - Lead magnet: ${sp('story_lead_magnet')}
-${briefSection}${kbSection}
+${briefSection}${reelsSection}${kbSection}
 === SEQUENCE TYPE ===
 ${template}
 ${slideCountSection}
@@ -359,18 +382,20 @@ export async function POST(req: NextRequest) {
   }
 
   // ── Generate or Regen-slide ────────────────────────────────────────────────
-  const profileRes = await admin.from('profiles').select('intro_structured, name').eq('id', profileId).single()
+  const [profileRes, kbContext, topReels] = await Promise.all([
+    admin.from('profiles').select('intro_structured, name').eq('id', profileId).single(),
+    fetchKbContext(),
+    fetchTopReels(profileId),
+  ])
   const intro = (profileRes.data?.intro_structured ?? {}) as Record<string, string>
   const profileName = profileRes.data?.name || 'the client'
-
-  const kbContext = await fetchKbContext()
 
   if (action === 'regen-slide') {
     const { slideIndex, existingSlides } = body
     if (slideIndex === undefined || !existingSlides) {
       return NextResponse.json({ error: 'slideIndex and existingSlides required' }, { status: 400 })
     }
-    const prompt = buildPrompt(intro, profileName, body.sequenceType || 'no-structure', body.ctaType || 'none', kbContext, body.customBrief || '', { index: slideIndex, existingSlides }, body.slideCount)
+    const prompt = buildPrompt(intro, profileName, body.sequenceType || 'no-structure', body.ctaType || 'none', kbContext, body.customBrief || '', { index: slideIndex, existingSlides }, body.slideCount, topReels)
     try {
       const msg = await anthropic.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 1024, messages: [{ role: 'user', content: prompt }] })
       const text = msg.content[0].type === 'text' ? msg.content[0].text : ''
@@ -386,7 +411,7 @@ export async function POST(req: NextRequest) {
 
   // Default: generate full sequence
   const { sequenceType = 'no-structure', ctaType = 'none', dayOfWeek, customBrief = '', slideCount } = body
-  const prompt = buildPrompt(intro, profileName, sequenceType, ctaType, kbContext, customBrief, undefined, slideCount)
+  const prompt = buildPrompt(intro, profileName, sequenceType, ctaType, kbContext, customBrief, undefined, slideCount, topReels)
 
   try {
     const msg = await anthropic.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 4096, messages: [{ role: 'user', content: prompt }] })

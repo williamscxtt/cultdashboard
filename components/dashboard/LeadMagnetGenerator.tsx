@@ -8,6 +8,11 @@ interface LeadMagnetIdea {
   title: string
   concept: string
   why_it_works: string
+  comment_keyword?: string
+  caption_cta?: string
+  reel_angle?: string
+  // legacy field — kept for backward compat
+  promotion_strategy?: string
   outline: string[]
 }
 
@@ -23,6 +28,106 @@ export default function LeadMagnetGenerator({ profileId }: LeadMagnetGeneratorPr
   const [copiedPrompt, setCopiedPrompt] = useState<string | null>(null)
   const [expandedOutlines, setExpandedOutlines] = useState<Set<string>>(new Set())
   const [copiedContent, setCopiedContent] = useState<string | null>(null)
+  const [copiedCta, setCopiedCta] = useState<string | null>(null)
+
+  function copyCta(title: string, text: string) {
+    navigator.clipboard.writeText(text)
+    setCopiedCta(title)
+    setTimeout(() => setCopiedCta(null), 2000)
+  }
+
+  function PromotionBlock({ idea }: { idea: LeadMagnetIdea }) {
+    const isCopied = copiedCta === idea.title
+    const ctaText = idea.caption_cta || idea.promotion_strategy || ''
+    return (
+      <div style={{
+        marginBottom: 14,
+        borderRadius: 8,
+        border: '1px solid var(--border)',
+        overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: '8px 14px',
+          background: 'var(--muted)',
+          borderBottom: '1px solid var(--border)',
+          fontSize: 10,
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase' as const,
+          color: 'var(--muted-foreground)',
+        }}>
+          📣 How to Promote
+        </div>
+
+        <div style={{ padding: '12px 14px', background: 'var(--card)', display: 'flex', flexDirection: 'column' as const, gap: 10 }}>
+          {/* Keyword badge */}
+          {idea.comment_keyword && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600, minWidth: 70 }}>Keyword</span>
+              <span style={{
+                padding: '3px 10px',
+                borderRadius: 4,
+                background: 'var(--foreground)',
+                color: 'var(--background)',
+                fontSize: 12,
+                fontWeight: 800,
+                letterSpacing: '0.05em',
+                fontFamily: 'monospace',
+              }}>
+                {idea.comment_keyword}
+              </span>
+            </div>
+          )}
+
+          {/* Caption CTA — copyable */}
+          {ctaText && (
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600, marginBottom: 5 }}>Caption CTA</div>
+              <div style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 8,
+                padding: '9px 12px',
+                borderRadius: 7,
+                background: 'var(--muted)',
+                border: '1px solid var(--border)',
+              }}>
+                <span style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.5, flex: 1 }}>{ctaText}</span>
+                <button
+                  onClick={() => copyCta(idea.title, ctaText)}
+                  style={{
+                    flexShrink: 0,
+                    padding: '4px 10px',
+                    borderRadius: 6,
+                    border: `1px solid ${isCopied ? 'rgba(34,197,94,0.4)' : 'var(--border)'}`,
+                    background: isCopied ? 'rgba(34,197,94,0.08)' : 'transparent',
+                    color: isCopied ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)',
+                    fontSize: 11,
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    fontFamily: 'inherit',
+                    transition: 'all 0.15s',
+                    whiteSpace: 'nowrap' as const,
+                  }}
+                >
+                  {isCopied ? '✓ Copied' : 'Copy'}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Reel angle */}
+          {idea.reel_angle && (
+            <div>
+              <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600, marginBottom: 4 }}>Reel to post</div>
+              <div style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.6 }}>{idea.reel_angle}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
 
   async function generateIdeas() {
     setLoading(true)
@@ -136,9 +241,7 @@ Write in a direct, no-fluff coaching voice. Each section 150-250 words. End with
               Analysing your profile...
             </>
           ) : (
-            <>
-              ✨ Generate Ideas
-            </>
+            <>✨ Generate Ideas</>
           )}
         </button>
         {ideas && !loading && (
@@ -171,6 +274,11 @@ Write in a direct, no-fluff coaching voice. Each section 150-250 words. End with
                   <div style={{ fontSize: 12, color: 'var(--muted-foreground)', fontStyle: 'italic', lineHeight: 1.55, marginBottom: 14 }}>
                     {idea.why_it_works}
                   </div>
+
+                  {/* Promotion block */}
+                  {(idea.comment_keyword || idea.caption_cta || idea.reel_angle || idea.promotion_strategy) && (
+                    <PromotionBlock idea={idea} />
+                  )}
 
                   {/* Outline toggle */}
                   <button

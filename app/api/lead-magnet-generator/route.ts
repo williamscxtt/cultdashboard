@@ -35,11 +35,31 @@ async function fetchLeadMagnetKbContext(): Promise<string> {
 
   if (!docs?.length) return ''
 
-  // Prioritise the specific lead magnet docs, cap each to keep tokens reasonable
+  // Strip source attribution — present as methodology, not quotes
   return docs
-    .map(d => `### ${d.title} (${d.source})\n${d.content.slice(0, 4000)}`)
+    .map(d => d.content.slice(0, 4000))
     .join('\n\n---\n\n')
     .slice(0, 14000)
+}
+
+/** Pull top 5 performing reels for a profile */
+async function fetchTopReels(profileId: string): Promise<string> {
+  const { data: reels } = await admin
+    .from('client_reels')
+    .select('views, date, hook, caption, transcript')
+    .eq('profile_id', profileId)
+    .order('views', { ascending: false })
+    .limit(5)
+
+  if (!reels?.length) return ''
+
+  return reels.map((r, i) => {
+    const transcriptSnippet = (r.transcript || '').slice(0, 500).replace(/\n+/g, ' ')
+    return `Reel ${i + 1} — ${r.views?.toLocaleString() ?? 0} views
+Hook: "${r.hook || '(no hook recorded)'}"
+Caption: "${(r.caption || '').slice(0, 120)}"
+Transcript: ${transcriptSnippet || '(no transcript)'}`
+  }).join('\n\n')
 }
 
 export async function POST(req: NextRequest) {
@@ -100,11 +120,18 @@ export async function POST(req: NextRequest) {
 
   // ── Ideas action ───────────────────────────────────────────────────────────
   if (action === 'ideas') {
-    const kbContext = await fetchLeadMagnetKbContext()
+    const [kbContext, topReels] = await Promise.all([
+      fetchLeadMagnetKbContext(),
+      fetchTopReels(profileId),
+    ])
+
+    const reelsSection = topReels
+      ? `\n## Creator's Top Performing Reels\nUse these to understand what topics and angles are ALREADY working for this creator — lead magnet ideas should tie naturally into these winning themes:\n\n${topReels}\n`
+      : ''
 
     const prompt = `You are helping ${name} create a lead magnet for their Instagram coaching business.
 
-## Lead Magnet Frameworks from the Knowledge Base
+## Lead Magnet Strategy Frameworks
 Apply these principles — they represent what actually works:
 
 ${kbContext}
@@ -113,35 +140,49 @@ ${kbContext}
 
 ## Creator Profile
 ${profileContext}
-
+${reelsSection}
 ---
 
 ## Your Task
 
-Using the frameworks above, generate 3 lead magnet ideas for this creator. Apply Hormozi's principles:
+Generate ONLY the lead magnet ideas that are genuinely strong — the kind that would make the right person say "I need that right now." If an idea isn't excellent, don't include it. Quality over quantity: return 2-3 ideas max, but only if they are genuinely good. It's fine to return just 1 or 2 if the others aren't strong enough.
+
+Core principles:
 - A lead magnet must be a COMPLETE SOLUTION to a NARROW PROBLEM (not a general tip list)
 - It should be so good they could charge for it — but they give it away to filter leads
 - The narrower and more specific the problem it solves, the better it converts
 - It must point toward the paid offer — solving one step of the journey, not the whole thing
 - Title: outcome-first, specific numbers where possible, no fluff
+- Tie ideas into topics that are already proven in their top-performing content where possible
 
 REJECT any idea that:
 - Could apply to anyone (too broad)
 - Doesn't filter for the exact ICP
 - Is a basic checklist or tip list with no transformation
 - Has a vague title like "Ultimate Guide to X" or "5 Tips for Y"
+- Isn't genuinely compelling or marketable for this specific creator
 
 GOOD examples of specific lead magnets:
 - "The 15-Minute Morning Routine That Helped 47 Busy Mums Lose Their First 5kg Without Dieting"
 - "The DM Script I Use to Book 3 Discovery Calls a Day (Copy-Paste Ready)"
 - "The 3-Post Formula That Took Me From 500 to 10K Followers in 6 Weeks"
 
+CRITICAL OUTPUT RULES:
+- Do NOT mention any person's name, book title, or external source in your output
+- Present everything as the creator's own methodology and insight
+- comment_keyword: 1 punchy word, ALL CAPS — something the ICP would actually type (e.g. VIEWS, SCRIPT, BLUEPRINT)
+- caption_cta: A single sentence to paste directly into a reel caption. Natural, direct, ends with the keyword. E.g. "Comment VIEWS and I'll DM you exactly how I hit 10k views per reel 📲"
+- reel_angle: What type of reel to post so the CTA feels natural and attracts the right person
+
 Return ONLY valid JSON array:
 [
   {
     "title": "exact lead magnet title — specific, outcome-first, no fluff",
     "concept": "2-3 sentences: what's in it, what narrow problem it solves, why the ICP wants it immediately",
-    "why_it_works": "1-2 sentences: which Hormozi principle this applies and why it filters for the right person and bridges to the paid offer",
+    "why_it_works": "1-2 sentences: why this filters for the right person and bridges to the paid offer",
+    "comment_keyword": "ONE_WORD",
+    "caption_cta": "single sentence for reel caption — natural, direct, ends with keyword and emoji",
+    "reel_angle": "1-2 sentences: what the reel should show/say so the CTA feels earned and the right person comments",
     "outline": ["section 1 title: one sentence on what's covered", "section 2...", "section 3...", "section 4...", "section 5..."]
   }
 ]`
@@ -149,7 +190,7 @@ Return ONLY valid JSON array:
     try {
       const msg = await anthropic.messages.create({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2000,
+        max_tokens: 3000,
         messages: [{ role: 'user', content: prompt }],
       })
       const text = msg.content[0].type === 'text' ? msg.content[0].text : ''
@@ -195,8 +236,9 @@ Rules:
 - Each section: 150-250 words of genuinely useful, actionable content
 - This must be valuable enough that someone would pay for it — not a watered-down teaser
 - Reference the creator's mechanism/system naturally where relevant
-- Apply Hormozi's principle: solve ONE narrow problem completely, don't try to cover everything
+- Solve ONE narrow problem completely — don't try to cover everything
 - End with a soft CTA that bridges to the paid offer: "Want [next step]? DM me [soft keyword]"
+- Do NOT mention any external person's name, book title, or source — present all methodology as the creator's own
 
 Return the full content as clean text with section headers. No JSON.`
 
