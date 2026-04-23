@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { useIsMobile } from '@/lib/use-mobile'
 import OfferBuilder from '@/components/dashboard/OfferBuilder'
 import StoryGenerator from '@/components/dashboard/StoryGenerator'
+import LeadMagnetGenerator from '@/components/dashboard/LeadMagnetGenerator'
 
 interface AuditScores {
   profile_pic: number
@@ -65,12 +66,13 @@ function verdictBadge(verdict: string): 'success' | 'accent' | 'warning' | 'erro
   return 'error'
 }
 
-type Tab = 'audit' | 'offer' | 'story'
+type Tab = 'audit' | 'offer' | 'story' | 'leadmagnet'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'audit', label: 'Profile Audit' },
-  { id: 'offer', label: 'Offer Builder' },
-  { id: 'story', label: 'Story Generator' },
+  { id: 'audit',      label: 'Profile Audit' },
+  { id: 'offer',      label: 'Offer Builder' },
+  { id: 'story',      label: 'Story Generator' },
+  { id: 'leadmagnet', label: 'Lead Magnet' },
 ]
 
 export default function ProfileAuditPage() {
@@ -465,6 +467,14 @@ export default function ProfileAuditPage() {
         <StoryGenerator profileId={userId} />
       )}
       {activeTab === 'story' && !userId && (
+        <div style={{ fontSize: 13, color: 'var(--muted-foreground)', padding: 24, textAlign: 'center' }}>Loading...</div>
+      )}
+
+      {/* Lead Magnet tab */}
+      {activeTab === 'leadmagnet' && userId && (
+        <LeadMagnetGenerator profileId={userId} />
+      )}
+      {activeTab === 'leadmagnet' && !userId && (
         <div style={{ fontSize: 13, color: 'var(--muted-foreground)', padding: 24, textAlign: 'center' }}>Loading...</div>
       )}
     </div>

@@ -62,13 +62,13 @@ function getIsoWeekNumber(): number {
 function getWeeklySchedule(): Record<DayKey, DaySchedule> {
   const isQaWeek = getIsoWeekNumber() % 2 === 1
   return {
-    monday:    { label: '7-Slide Conversion',       sequenceType: 'timeline-hard',         ctaType: 'hard',  purpose: 'Drive DMs to your main offer' },
-    tuesday:   { label: 'Day-in-Life',               sequenceType: 'day-in-life',           ctaType: 'none',  purpose: 'Build views + trust' },
-    wednesday: { label: 'Timeline Value',            sequenceType: 'timeline-value',        ctaType: 'none',  purpose: 'Authority + education' },
-    thursday:  { label: 'Client Results',            sequenceType: 'client-results-soft',   ctaType: 'soft',  purpose: 'Drive DMs to free resource' },
-    friday:    { label: 'Client Result Stacking',    sequenceType: 'client-results-none',   ctaType: 'none',  purpose: 'Social proof + FOMO' },
-    saturday:  { label: 'Day-in-Life',               sequenceType: 'day-in-life',           ctaType: 'none',  purpose: 'Authenticity + relatability' },
-    sunday:    { label: isQaWeek ? 'Q&A' : 'No Structure', sequenceType: isQaWeek ? 'qa' : 'no-structure', ctaType: 'none', purpose: 'Relatability + connection' },
+    monday:    { label: 'Hard CTA',           sequenceType: 'hard-cta',       ctaType: 'hard' as const,  purpose: 'Drive DMs to your main offer' },
+    tuesday:   { label: 'Day in the Life',    sequenceType: 'day-in-life',    ctaType: 'none' as const,  purpose: 'Build views + trust' },
+    wednesday: { label: 'Value Sequence',     sequenceType: 'value',          ctaType: 'none' as const,  purpose: 'Authority + education' },
+    thursday:  { label: 'Lead Magnet',        sequenceType: 'conversion',     ctaType: 'soft' as const,  purpose: 'Drive DMs to your lead magnet' },
+    friday:    { label: 'Client Results',     sequenceType: 'client-results', ctaType: 'none' as const,  purpose: 'Social proof + FOMO' },
+    saturday:  { label: 'Day in the Life',    sequenceType: 'day-in-life',    ctaType: 'none' as const,  purpose: 'Authenticity + relatability' },
+    sunday:    { label: isQaWeek ? 'Q&A' : 'Conversion', sequenceType: isQaWeek ? 'qa' : 'conversion', ctaType: isQaWeek ? 'none' as const : 'soft' as const, purpose: isQaWeek ? 'Relatability + connection' : 'Drive DMs to lead magnet' },
   }
 }
 
@@ -79,28 +79,31 @@ const DAY_LABELS: Record<DayKey, string> = {
 }
 
 const SEQUENCE_OPTIONS = [
-  { value: 'timeline-hard',         label: '7-Slide Conversion',         ctaType: 'hard'  as const },
-  { value: 'timeline-soft',         label: 'Timeline (Soft CTA)',        ctaType: 'soft'  as const },
-  { value: 'timeline-value',        label: 'Timeline Value (No CTA)',    ctaType: 'none'  as const },
-  { value: 'day-in-life',           label: 'Day-in-Life',                ctaType: 'none'  as const },
-  { value: 'client-results-soft',   label: 'Client Results (Soft CTA)',  ctaType: 'soft'  as const },
-  { value: 'client-results-none',   label: 'Client Results (No CTA)',    ctaType: 'none'  as const },
-  { value: 'qa',                    label: 'Q&A',                        ctaType: 'none'  as const },
-  { value: 'no-structure',          label: 'No Structure / Evergreen',   ctaType: 'none'  as const },
-  { value: 'story-launch',          label: 'Story Launch (once/month)',  ctaType: 'hard'  as const },
+  { value: 'day-in-life',    label: 'Day in the Life',     ctaType: 'none' as const },
+  { value: 'hard-cta',       label: 'Hard CTA',            ctaType: 'hard' as const },
+  { value: 'conversion',     label: 'Conversion Sequence', ctaType: 'soft' as const },
+  { value: 'value',          label: 'Value Sequence',      ctaType: 'none' as const },
+  { value: 'client-results', label: 'Client Results',      ctaType: 'none' as const },
+  { value: 'qa',             label: 'Q&A',                 ctaType: 'none' as const },
+  { value: 'story-launch',   label: 'Story Launch',        ctaType: 'hard' as const },
 ]
 
 const SEQUENCE_TYPE_LABELS: Record<string, string> = {
-  'timeline-hard':       '7-Slide Conversion',
-  'timeline-soft':       'Timeline (Soft CTA)',
-  'timeline-value':      'Timeline Value',
-  'day-in-life':         'Day-in-Life',
-  'client-results-soft': 'Client Results (Soft CTA)',
-  'client-results-none': 'Client Results',
+  'day-in-life':         'Day in the Life',
+  'hard-cta':            'Hard CTA',
+  'conversion':          'Conversion Sequence',
+  'value':               'Value Sequence',
+  'client-results':      'Client Results',
   'qa':                  'Q&A',
-  'no-structure':        'No Structure',
   'story-launch':        'Story Launch',
   'start-here':          'Start Here',
+  // legacy labels for saved sequences
+  'timeline-hard':       'Hard CTA',
+  'timeline-soft':       'Conversion Sequence',
+  'timeline-value':      'Value Sequence',
+  'client-results-soft': 'Client Results',
+  'client-results-none': 'Client Results',
+  'no-structure':        'Evergreen',
 }
 
 // ── Required fields check ─────────────────────────────────────────────────────
@@ -284,8 +287,9 @@ export default function StoryGenerator({ profileId }: { profileId: string }) {
 
   // Custom generator form
   const [customBrief, setCustomBrief] = useState('')
-  const [customType, setCustomType] = useState('timeline-hard')
+  const [customType, setCustomType] = useState('hard-cta')
   const [customCta, setCustomCta] = useState<'none' | 'hard' | 'soft'>('hard')
+  const [slideCount, setSlideCount] = useState(5)
   const [generatingCustom, setGeneratingCustom] = useState(false)
 
   // Weekly schedule expand
@@ -324,7 +328,7 @@ export default function StoryGenerator({ profileId }: { profileId: string }) {
   useEffect(() => { loadData() }, [loadData])
 
   // ── Generate a sequence ──────────────────────────────────────────────────
-  async function generate(sequenceType: string, ctaType: string, dayOfWeek?: string, brief?: string) {
+  async function generate(sequenceType: string, ctaType: string, dayOfWeek?: string, brief?: string, sc?: number) {
     setGenerating(true)
     setGeneratingDay(dayOfWeek || null)
     setCurrentSlides(null)
@@ -336,6 +340,7 @@ export default function StoryGenerator({ profileId }: { profileId: string }) {
           profileId, action: 'generate', sequenceType, ctaType,
           dayOfWeek: dayOfWeek || null,
           customBrief: brief || '',
+          slideCount: sc || 5,
           week_label: `Week of ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`,
         }),
       })
@@ -485,7 +490,7 @@ export default function StoryGenerator({ profileId }: { profileId: string }) {
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               <CopyAllBtn slides={currentSlides} />
               <button
-                onClick={() => generate(currentSeqType, currentCtaType, currentDayOfWeek || undefined, currentBrief)}
+                onClick={() => generate(currentSeqType, currentCtaType, currentDayOfWeek || undefined, currentBrief, slideCount)}
                 disabled={generating}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -708,6 +713,30 @@ export default function StoryGenerator({ profileId }: { profileId: string }) {
           </div>
         </div>
 
+        {/* Slide count selector */}
+        <div style={{ marginBottom: 14 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: 6, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+            Number of slides
+          </label>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {[3, 4, 5, 6, 7, 8].map(n => (
+              <button
+                key={n}
+                onClick={() => setSlideCount(n)}
+                style={{
+                  width: 36, height: 36, borderRadius: 8, border: `1px solid ${slideCount === n ? 'var(--accent)' : 'var(--border)'}`,
+                  background: slideCount === n ? 'var(--accent)' : 'var(--input)',
+                  color: slideCount === n ? '#fff' : 'var(--muted-foreground)',
+                  fontSize: 13, fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {n}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Story Launch warning */}
         {customType === 'story-launch' && launchWarning && (
           <div style={{ marginBottom: 14, display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
@@ -722,7 +751,7 @@ export default function StoryGenerator({ profileId }: { profileId: string }) {
           disabled={generatingCustom}
           onClick={async () => {
             setGeneratingCustom(true)
-            await generate(customType, customCta, undefined, customBrief)
+            await generate(customType, customCta, undefined, customBrief, slideCount)
             setGeneratingCustom(false)
           }}
           style={{ display: 'flex', alignItems: 'center', gap: 7 }}

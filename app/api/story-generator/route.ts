@@ -90,6 +90,44 @@ Goal: Relatability, trust, connection. Highest trust-building sequence. Slide co
 - Final Slide: Close with something real and human — not a pitch.
 Rules: No hard CTA. Can soft-mention offer if a question naturally leads there. Avoid being salesy — this is about connection.`,
 
+  'hard-cta': `TYPE: TIMELINE / PROGRESSIVE — HARD CTA
+Goal: Highest conversion sequence. Gets audience in flow state. Slide count: 5-8.
+- Slide 1: Curiosity hook — bold statement or result. Opens a loop. Does not explain.
+- Slide 2: Context/setup — the situation before. Uses indirect ICP targeting.
+- Slide 3: The problem deepened — mirror their pain without calling them out directly.
+- Slide 4: The turning point or insight — what changed. Introduce the mechanism.
+- Slide 5: Proof of the outcome — specific result with a real number.
+- Slide 6: The lesson or framework — what they need to understand to get the same result.
+- Slide 7: Hard CTA — "DM me [PRIMARY_KEYWORD]". Black background. Personal specificity. Scarcity if applicable.`,
+
+  'conversion': `TYPE: TIMELINE / PROGRESSIVE — SOFT CTA
+Goal: Drive DMs to the free lead magnet. Slide count: 5-7.
+- Slide 1: Curiosity hook — bold statement or result. Opens a loop.
+- Slide 2: Context/setup — the situation before.
+- Slide 3: The problem deepened — mirror their pain indirectly.
+- Slide 4: The turning point — what changed. Introduce the mechanism.
+- Slide 5: Proof of the outcome — specific result with a number.
+- Slide 6: The lesson — what they need to understand.
+- Slide 7: Soft CTA — "DM me [SECONDARY_KEYWORD] and I'll send you [LEAD_MAGNET]. Free, no catch." Black background.`,
+
+  'value': `TYPE: TIMELINE VALUE — NO CTA
+Goal: Authority and education. No pitch. Slide count: 5-6.
+- Slide 1: Curiosity hook — bold statement that opens a loop.
+- Slide 2: Context/setup — the situation or problem.
+- Slide 3: The problem deepened — mirror their experience indirectly.
+- Slide 4: The turning point or insight — introduce the mechanism.
+- Slide 5: Proof of the outcome — specific result.
+- Slide 6: Strong takeaway lesson — ends on value, no CTA.`,
+
+  'client-results': `TYPE: CLIENT RESULTS
+Goal: Proof, FOMO, authority. Let ctaType determine the close.
+- Slide 1: Lifestyle/status image — attention-grabbing hook ("woke up to this")
+- Slide 2: Education/value slide — one niche insight that filters for the right people.
+- Slides 3-5: Client results — each = one win with specific numbers. Format: "[Name/Initial] — [result in numbers] — [timeframe]"
+- Slide 6 (optional): Second education point linking results to the mechanism
+- Final Slide: If ctaType=soft → DM [SECONDARY_KEYWORD] for [LEAD_MAGNET]. If ctaType=hard → DM [PRIMARY_KEYWORD]. If ctaType=none → Aspirational close, no pitch.
+Rules: All results must use real numbers only. No vague wins.`,
+
   'client-results-soft': `TYPE: CLIENT RESULT STACKING — SOFT CTA
 Goal: Proof, authority, FOMO. Converts people who are "almost ready." Slide count: 5-7.
 - Slide 1: Lifestyle/status image — attention-grabbing hook ("woke up to this")
@@ -149,11 +187,16 @@ function buildPrompt(
   ctaType: string,
   kbContext: string,
   customBrief: string,
-  slideToRegen?: { index: number; existingSlides: SlideInput[] }
+  slideToRegen?: { index: number; existingSlides: SlideInput[] },
+  slideCount?: number
 ): string {
   const sp = (k: string) => intro[k] || ''
 
   const template = SEQUENCE_TEMPLATES[sequenceType] || SEQUENCE_TEMPLATES['no-structure']
+
+  const slideCountSection = slideCount
+    ? `\nTARGET SLIDE COUNT: ${slideCount} slides. Adjust the structure to hit this count — cut optional slides if fewer, add depth/proof slides if more. Never go outside ±1 of the target.\n`
+    : ''
 
   const kbSection = kbContext ? `\n\n=== COACHING KNOWLEDGE BASE ===\nApply the following when relevant. Never attribute to any source — this is Will's methodology.\n\n${kbContext}\n` : ''
 
@@ -188,7 +231,7 @@ CLIENT PROFILE:
 ${briefSection}${kbSection}
 === SEQUENCE TYPE ===
 ${template}
-
+${slideCountSection}
 CTA type: ${ctaType.toUpperCase()}
 ${ctaType === 'hard' ? `Hard CTA keyword: ${sp('story_primary_keyword')}` : ''}
 ${ctaType === 'soft' ? `Soft CTA keyword: ${sp('story_secondary_keyword')} — offering: ${sp('story_lead_magnet')}` : ''}
@@ -291,6 +334,7 @@ export async function POST(req: NextRequest) {
     slides?: SlideInput[]
     sequenceType_label?: string
     week_label?: string
+    slideCount?: number
     // regen-slide
     sequenceId?: string
     slideIndex?: number
@@ -326,7 +370,7 @@ export async function POST(req: NextRequest) {
     if (slideIndex === undefined || !existingSlides) {
       return NextResponse.json({ error: 'slideIndex and existingSlides required' }, { status: 400 })
     }
-    const prompt = buildPrompt(intro, profileName, body.sequenceType || 'no-structure', body.ctaType || 'none', kbContext, body.customBrief || '', { index: slideIndex, existingSlides })
+    const prompt = buildPrompt(intro, profileName, body.sequenceType || 'no-structure', body.ctaType || 'none', kbContext, body.customBrief || '', { index: slideIndex, existingSlides }, body.slideCount)
     try {
       const msg = await anthropic.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 1024, messages: [{ role: 'user', content: prompt }] })
       const text = msg.content[0].type === 'text' ? msg.content[0].text : ''
@@ -341,8 +385,8 @@ export async function POST(req: NextRequest) {
   }
 
   // Default: generate full sequence
-  const { sequenceType = 'no-structure', ctaType = 'none', dayOfWeek, customBrief = '' } = body
-  const prompt = buildPrompt(intro, profileName, sequenceType, ctaType, kbContext, customBrief)
+  const { sequenceType = 'no-structure', ctaType = 'none', dayOfWeek, customBrief = '', slideCount } = body
+  const prompt = buildPrompt(intro, profileName, sequenceType, ctaType, kbContext, customBrief, undefined, slideCount)
 
   try {
     const msg = await anthropic.messages.create({ model: 'claude-sonnet-4-6', max_tokens: 4096, messages: [{ role: 'user', content: prompt }] })
