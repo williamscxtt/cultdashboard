@@ -24,6 +24,24 @@ async function getAuthUser() {
   return user
 }
 
+/** Pull lead magnet framework content from the knowledge base */
+async function fetchLeadMagnetKbContext(): Promise<string> {
+  const { data: docs } = await admin
+    .from('knowledge_documents')
+    .select('title, content, source')
+    .or("title.ilike.%lead magnet%,title.ilike.%lead%magnet%,category.eq.Lead Generation,category.eq.Offer Building")
+    .order('created_at', { ascending: false })
+    .limit(8)
+
+  if (!docs?.length) return ''
+
+  // Prioritise the specific lead magnet docs, cap each to keep tokens reasonable
+  return docs
+    .map(d => `### ${d.title} (${d.source})\n${d.content.slice(0, 4000)}`)
+    .join('\n\n---\n\n')
+    .slice(0, 14000)
+}
+
 export async function POST(req: NextRequest) {
   const user = await getAuthUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -82,27 +100,48 @@ export async function POST(req: NextRequest) {
 
   // ── Ideas action ───────────────────────────────────────────────────────────
   if (action === 'ideas') {
+    const kbContext = await fetchLeadMagnetKbContext()
+
     const prompt = `You are helping ${name} create a lead magnet for their Instagram coaching business.
 
-Their profile:
+## Lead Magnet Frameworks from the Knowledge Base
+Apply these principles — they represent what actually works:
+
+${kbContext}
+
+---
+
+## Creator Profile
 ${profileContext}
 
-Generate 3 lead magnet ideas. Each must be:
-1. SPECIFIC to their exact niche — not generic ("5 tips for fitness" is terrible)
-2. Something their exact ICP would DM for immediately
-3. Something that filters OUT the wrong people
-4. Deliverable as a 1-5 page PDF or simple guide
-5. Title must be specific and outcome-focused, not fluffy
+---
 
-Avoid anything generic. Bad: "free meal plan", "5 morning habits", "social media checklist".
-Good: A highly specific resource tied to the exact transformation they sell.
+## Your Task
+
+Using the frameworks above, generate 3 lead magnet ideas for this creator. Apply Hormozi's principles:
+- A lead magnet must be a COMPLETE SOLUTION to a NARROW PROBLEM (not a general tip list)
+- It should be so good they could charge for it — but they give it away to filter leads
+- The narrower and more specific the problem it solves, the better it converts
+- It must point toward the paid offer — solving one step of the journey, not the whole thing
+- Title: outcome-first, specific numbers where possible, no fluff
+
+REJECT any idea that:
+- Could apply to anyone (too broad)
+- Doesn't filter for the exact ICP
+- Is a basic checklist or tip list with no transformation
+- Has a vague title like "Ultimate Guide to X" or "5 Tips for Y"
+
+GOOD examples of specific lead magnets:
+- "The 15-Minute Morning Routine That Helped 47 Busy Mums Lose Their First 5kg Without Dieting"
+- "The DM Script I Use to Book 3 Discovery Calls a Day (Copy-Paste Ready)"
+- "The 3-Post Formula That Took Me From 500 to 10K Followers in 6 Weeks"
 
 Return ONLY valid JSON array:
 [
   {
-    "title": "exact lead magnet title",
-    "concept": "2-3 sentences: what's in it, what problem it solves, why it's valuable",
-    "why_it_works": "1-2 sentences: why this specific idea filters for the right ICP and builds trust toward the paid offer",
+    "title": "exact lead magnet title — specific, outcome-first, no fluff",
+    "concept": "2-3 sentences: what's in it, what narrow problem it solves, why the ICP wants it immediately",
+    "why_it_works": "1-2 sentences: which Hormozi principle this applies and why it filters for the right person and bridges to the paid offer",
     "outline": ["section 1 title: one sentence on what's covered", "section 2...", "section 3...", "section 4...", "section 5..."]
   }
 ]`
@@ -134,22 +173,30 @@ Return ONLY valid JSON array:
       return NextResponse.json({ error: 'title, concept, and outline required' }, { status: 400 })
     }
 
+    const kbContext = await fetchLeadMagnetKbContext()
+
     const prompt = `Write the full content for this lead magnet PDF for ${name}'s coaching business.
+
+## Framework Reference
+${kbContext.slice(0, 6000)}
+
+---
 
 Lead magnet: "${title}"
 Concept: ${concept}
-Profile:
+Creator profile:
 ${profileContext}
 
 Structure:
 ${outline.map((s, i) => `Section ${i + 1}: ${s}`).join('\n')}
 
 Rules:
-- Write in a direct, no-fluff coaching voice (like Will Scott — confident, specific, no corporate speak)
-- Each section: 150-250 words
-- Include specific actionable steps, not vague advice
-- Reference their mechanism/system naturally where relevant
-- End with a soft CTA: "Ready to go further? DM me [their soft CTA keyword] on Instagram"
+- Write in a direct, no-fluff coaching voice — confident, specific, zero corporate speak
+- Each section: 150-250 words of genuinely useful, actionable content
+- This must be valuable enough that someone would pay for it — not a watered-down teaser
+- Reference the creator's mechanism/system naturally where relevant
+- Apply Hormozi's principle: solve ONE narrow problem completely, don't try to cover everything
+- End with a soft CTA that bridges to the paid offer: "Want [next step]? DM me [soft keyword]"
 
 Return the full content as clean text with section headers. No JSON.`
 
