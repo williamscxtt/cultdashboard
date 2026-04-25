@@ -1094,26 +1094,6 @@ export default function LandingPage() {
 
         </div>{/* ── /lp-page-frame 2 ── */}
 
-        {/* ── Cinematic quote break — full bleed ── */}
-        <div style={{ position: 'relative', height: 'clamp(280px, 36vw, 460px)', overflow: 'hidden' }}>
-          <img
-            src="/IMG_8083.JPG"
-            alt=""
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', filter: 'brightness(0.85) contrast(1.04) saturate(0.85)' }}
-            loading="lazy"
-          />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(13,13,10,0.88) 0%, rgba(13,13,10,0.4) 55%, rgba(13,13,10,0.72) 100%)' }} />
-          <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 clamp(20px,8vw,120px)', maxWidth: 720 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 20, fontFamily: 'Inter, sans-serif' }}>The result of the system</div>
-            <div style={{ fontSize: 'clamp(28px, 4.5vw, 58px)', fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1.05, fontFamily: 'Inter, sans-serif' }}>
-              &ldquo;I didn&apos;t get lucky.<br />I got structured.&rdquo;
-            </div>
-            <div style={{ fontSize: 13, color: '#cbd5e1', marginTop: 20, fontFamily: 'Inter, sans-serif', letterSpacing: '.04em' }}>
-              Will Scott — Founder, Creator Cult
-            </div>
-          </div>
-        </div>
-
         <div className="lp-page-frame">{/* ── lp-page-frame 3 ── */}
 
         {/* ── What's Included ── */}
