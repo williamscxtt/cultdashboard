@@ -28,7 +28,6 @@ function Fade({ children, delay = 0, className = '' }: { children: React.ReactNo
   )
 }
 
-/* ── Icons ── */
 const Ic = ({ d, size = 18 }: { d: string; size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={d} /></svg>
 )
@@ -47,13 +46,15 @@ const IconPackage = () => <svg width="18" height="18" viewBox="0 0 24 24" fill="
 const IconArrow = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
 const IconPlus = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 const IconMinus = () => <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+const IconX = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+const IconStarFill = () => <svg width="13" height="13" viewBox="0 0 24 24" fill="#f59e0b" stroke="none"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
 
-/* ── Sidebar nav icons ── */
 const NavHome = () => <Ic d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" size={14} />
 const NavContent = () => <Ic d="M12 20h9M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" size={14} />
 const NavClients = () => <Ic d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" size={14} />
+const NavIntel = () => <Ic d="M22 7 13.5 15.5 8.5 10.5 2 17M16 7h6v6" size={14} />
 const NavTools = () => <Ic d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" size={14} />
-const NavCommunity = () => <Ic d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" size={14} />
+const NavDM = () => <Ic d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" size={14} />
 
 function Faq({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
@@ -65,13 +66,31 @@ function Faq({ q, a }: { q: string; a: string }) {
           {open ? <IconMinus /> : <IconPlus />}
         </span>
       </button>
-      {open && <div style={{ paddingBottom: 22, fontSize: 15, color: '#64748b', lineHeight: 1.8, maxWidth: 680, fontFamily: 'Inter, -apple-system, sans-serif' }}>{a}</div>}
+      {open && <div style={{ paddingBottom: 22, fontSize: 15, color: '#94a3b8', lineHeight: 1.8, maxWidth: 680, fontFamily: 'Inter, -apple-system, sans-serif' }}>{a}</div>}
     </div>
   )
 }
 
+const LogoMark = ({ size = 20 }: { size?: number }) => (
+  <span style={{
+    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+    width: size, height: size, background: '#3b82f6', borderRadius: Math.round(size * 0.25),
+    fontFamily: 'Inter, sans-serif', fontSize: Math.round(size * 0.55), fontWeight: 900,
+    color: '#fff', flexShrink: 0, letterSpacing: '-.02em',
+  }}>C</span>
+)
+
+interface WinItem {
+  img: string
+  name: string
+  stat: string
+  detail: string
+  quote?: string
+}
+
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
+  const [selectedWin, setSelectedWin] = useState<WinItem | null>(null)
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 20)
@@ -79,15 +98,26 @@ export default function LandingPage() {
     return () => window.removeEventListener('scroll', h)
   }, [])
 
+  useEffect(() => {
+    if (selectedWin) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [selectedWin])
+
   const tickerItems = [
     'Freddie — £1,950 in 3 days',
-    'Eddie — 5,000 followers in 10 days',
+    'Eddie — 4,600 followers in 10 days',
     'Dino — 24 million views in 3 weeks',
     'Brett Capstick — First client in 3 weeks',
     'Asfand — First paying client in 7 days',
     'Michael Kersee — $10,000 in a single day',
     'Tom Köster — 600 to 1,300 followers in one week',
     'Roy — 1 million views, first viral reel',
+    'Mateus — 2.3M total reach in 30 days',
+    'Jakub — Three viral reels back to back',
   ]
 
   const mqRow1 = [
@@ -113,18 +143,18 @@ export default function LandingPage() {
 
   const tools = [
     { icon: <IconBrain />, title: 'AI Story Generator', desc: 'Input your niche, offer, and audience. Get a full Instagram story sequence — hooks, slides, CTA. Built for your positioning, not a template.', badge: 'Most Used' },
-    { icon: <IconDoc />, title: 'Lead Magnet Generator', desc: 'Choose your angle. The AI builds a complete lead magnet: title, concept, outline, and caption CTA with comment keyword.' },
-    { icon: <IconSearch />, title: 'Profile Audit AI', desc: 'Feed your Instagram URL. Get a structured audit: bio clarity, CTA strength, offer visibility, content gaps. Know exactly what to fix.' },
-    { icon: <IconLayers />, title: 'Content Library', desc: 'Every training, resource, and framework in one searchable library. Organised by phase. No hunting through Notion or Slack.' },
-    { icon: <IconZap />, title: 'Offer Builder', desc: 'Step through your offer structure with AI guidance. Deliverables, transformation, price point, positioning — before you launch it.' },
-    { icon: <IconTrend />, title: 'Reel Analytics', desc: 'See which reels pull the most views, track hooks that work, and spot content patterns. All inside your dashboard.' },
+    { icon: <IconTrend />, title: 'Competitor Intel', desc: 'Every Monday: a full breakdown of what your top competitors posted, what went viral, and 5 ready-to-use script angles based on what\'s already working in your niche. Auto-generated.', badge: 'Auto-Weekly' },
+    { icon: <IconDoc />, title: 'Reel Script Generator', desc: 'Pick a proven hook style, describe your angle, and get a complete reel script in seconds — structured on 1,000+ of Will\'s viral frameworks. One click to copy.' },
+    { icon: <IconSearch />, title: 'Profile Audit AI', desc: 'Feed your Instagram URL. Get a structured audit: bio clarity, CTA strength, offer visibility, content gaps. Know exactly what to fix and in what order.' },
+    { icon: <IconMsg />, title: 'DM Sales Playbook', desc: 'The exact DM sequences used to close high-ticket coaching clients from comments and follows. Scripts, objection handling, follow-ups — all in one place.' },
+    { icon: <IconZap />, title: 'Lead Magnet Generator', desc: 'Choose your angle. The AI builds a complete lead magnet: title, concept, outline, and caption CTA with comment keyword. Ready to post in 5 minutes.' },
   ]
 
   const included = [
     { icon: <IconStar />, title: 'The 5-Phase Curriculum', desc: 'Foundations to Scale. Every lesson and framework in the order that works. Self-paced but guided.' },
     { icon: <IconUsers />, title: 'Weekly Group Coaching', desc: 'Live calls every week. Bring your questions, your content, your blockers. Will reviews your work live.' },
-    { icon: <IconGrid />, title: 'The Cult Dashboard', desc: 'Private access to all six AI tools built for Creator Cult members — Story Generator, Lead Magnet, Audit, Offer Builder, and more.' },
-    { icon: <IconMsg />, title: 'Private Circle Community', desc: '40+ creators working the same system. Post wins, ask for feedback, get accountability. Active every day.' },
+    { icon: <IconGrid />, title: 'The Cult Dashboard', desc: 'Private access to six AI tools built for Creator Cult members — Story Generator, Competitor Intel, Reel Scripts, DM Playbook, and more.' },
+    { icon: <IconMsg />, title: 'Private Circle Community', desc: '140+ creators working the same system. Post wins, ask for feedback, get accountability. Active every single day.' },
     { icon: <IconShield />, title: '1:1 Support', desc: 'Direct access to Will between calls. Post your content for review, ask for offer feedback. Not a bot. Not a VA.' },
     { icon: <IconPackage />, title: 'Weekly Strategy Packages', desc: "Every week: what's working on Instagram now, content angles to test, and a plan for the next 7 days." },
   ]
@@ -138,29 +168,55 @@ export default function LandingPage() {
     { n: '—', title: 'Ongoing Support', desc: "You're not going through this alone. Every week, every question, every plateau.", items: ['Weekly group coaching calls', 'Private Circle community', '1:1 support and feedback', 'Content and offer reviews', 'The Cult Dashboard'] },
   ]
 
-  const wins = [
-    { img: '/testimonials/testimonial-michael-10k-day.jpeg',           name: 'MICHAEL KERSEE', stat: '$10K in one day',              detail: 'Two $5K paid-in-fulls before noon. From inconsistent income to $10,000 in a single day.' },
-    { img: '/testimonials/testimonial-35k-month-sales.png',            name: '',               stat: '£35K in 1 month',             detail: 'Net volume from sales — £35,810.79 in a single month using the system.' },
-    { img: '/testimonials/testimonial-michael-1m-views-30days.png',    name: 'MICHAEL KERSEE', stat: '1M views in 30 days',          detail: 'From inconsistent posting to 1 million views in a single month.' },
-    { img: '/testimonials/testimonial-michael-5k-pif.jpeg',            name: 'MICHAEL KERSEE', stat: '$5K paid in full',             detail: 'A $5K, 3-month coaching deal closed. Gross volume shown in Stripe.' },
-    { img: '/testimonials/testimonial-brett-first-client-3weeks.jpeg', name: 'BRETT CAPSTICK', stat: 'First client in 3 weeks',      detail: '18 months with no clients. Rebuilt positioning from scratch. Signed first high-ticket client 3 weeks later.' },
-    { img: '/testimonials/testimonial-bile-first-2-clients.jpg',       name: 'BILE',           stat: '€550/month — 2 clients',      detail: 'Signed first two clients at €550/month total after joining the programme.' },
-    { img: '/testimonials/testimonial-jakub-reels-views.jpg',          name: 'JAKUB RIEDEL',   stat: '114K views — viral reel',     detail: 'Three viral reels back to back — 47K, 12.6K, and 114K views.' },
-    { img: '/testimonials/testimonial-gabrielle-first-100k-views.jpg', name: 'GABRIELLE',      stat: 'First 100K views',            detail: 'First Instagram reel to break 100,000 views after joining Creator Cult.' },
-    { img: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg', name: 'TOM KÖSTER',     stat: '600 → 1,300 followers',       detail: '600 to 1,300 followers in one week. Videos reaching 20K views each.' },
-    { img: '/testimonials/testimonial-zack-instagram-growth.jpg',      name: 'ZACK SINCLAIR',  stat: '19K likes — one reel',        detail: '19K likes and 5.1K saves on a single Instagram reel using the hooks framework.' },
-    { img: '/testimonials/testimonial-matte-first-payout-500.jpeg',    name: 'MATTE FORTUNA',  stat: 'First €500 payout',           detail: 'First ever coaching payout — €500. First client landed through the DM system.' },
-    { img: '/testimonials/testimonial-freeyourmind-10k-views.jpg',     name: 'FREEYOURMIND',   stat: '10K views in 12 hours',       detail: '10,000 views in under 12 hours on Instagram. Then another 10K the same week.' },
+  const wins: WinItem[] = [
+    { img: '/testimonials/testimonial-michael-10k-day.jpeg',           name: 'MICHAEL KERSEE', stat: '$10K in one day',          detail: 'Two $5K paid-in-fulls before noon. From inconsistent income to $10,000 in a single day using the DM close system.',
+      quote: "$10K DAY. Two $5K PIFs for 6-month coaching. The price is just made up — once your positioning is right, people pay it. The DM system did this." },
+    { img: '/testimonials/testimonial-35k-month-sales.png',            name: '',               stat: '£35K in 1 month',         detail: 'Net volume from sales — £35,810.79 in a single month using the offer and conversion system from Phase 4.' },
+    { img: '/testimonials/testimonial-michael-1m-views-30days.png',    name: 'MICHAEL KERSEE', stat: '1M views in 30 days',      detail: 'From inconsistent posting to 1 million views in a single month after implementing the content batching system.',
+      quote: "I was posting randomly and getting nowhere. Will's content system changed everything. 1M views in 30 days is not something I thought was possible this quickly." },
+    { img: '/testimonials/testimonial-brett-first-client-3weeks.jpeg', name: 'BRETT CAPSTICK', stat: 'First client in 3 weeks',  detail: '18 months with no clients. Rebuilt positioning from scratch. Signed first high-ticket client 3 weeks later.',
+      quote: "I was stuck for 18 months. Three weeks after joining Creator Cult I had my first paying client. Just consistently posting, started convos, made the offer. That's literally it." },
+    { img: '/testimonials/testimonial-bile-first-2-clients.jpg',       name: 'BILE',           stat: '€550/month — 2 clients',  detail: 'Signed first two clients at €550/month total after joining the programme. First income from content.',
+      quote: "Signed my first two clients in the same week. Never thought it would happen this fast. The DM framework Will teaches is the real deal." },
+    { img: '/testimonials/testimonial-jakub-reels-views.jpg',          name: 'JAKUB RIEDEL',   stat: '114K views — viral reel', detail: 'Three viral reels back to back — 47K, 12.6K, and 114K views after applying the hooks framework from Phase 2.',
+      quote: "Three viral reels in a row after applying the hooks framework. The content system is genuinely different to anything else I've tried." },
+    { img: '/testimonials/testimonial-gabrielle-first-100k-views.jpg', name: 'GABRIELLE',      stat: 'First 100K views',        detail: 'First Instagram reel to break 100,000 views after joining Creator Cult and applying the hook writing system.',
+      quote: "First reel to ever hit 100K. I've been posting for a year with nothing. One framework change and this happened." },
+    { img: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg', name: 'TOM KÖSTER',     stat: '600 → 1,300 followers',  detail: '600 to 1,300 followers in one week. Videos reaching 20K views each using the brand-first content approach.',
+      quote: "Doubled my followers in a week. The brand positioning work makes everything else click. My content finally feels like it has a direction." },
+    { img: '/testimonials/testimonial-zack-instagram-growth.jpg',      name: 'ZACK SINCLAIR',  stat: '19K likes — one reel',   detail: '19K likes and 5.1K saves on a single Instagram reel using the story-driven hooks framework.',
+      quote: "19K likes and 5.1K saves on one reel. People are saving it because it actually hits something real — that's what the storytelling training teaches you." },
+    { img: '/testimonials/testimonial-matte-first-payout-500.jpeg',    name: 'MATTE FORTUNA',  stat: 'First €500 payout',      detail: 'First ever coaching payout — €500. First client landed through the DM system inside Creator Cult.',
+      quote: "First ever money from content. €500. Doesn't sound huge but it proved the whole thing works. I'll be at €5K/month within 3 months." },
+    { img: '/testimonials/testimonial-michael-5k-pif.jpeg',            name: 'MICHAEL KERSEE', stat: '$5K paid in full',        detail: 'A $5K, 3-month coaching deal closed. Gross volume shown in Stripe. Closed via Instagram DMs.',
+      quote: "Closed a $5K paid-in-full deal through Instagram DMs. The call-to-close framework is next level. People literally thank you for the offer." },
+    { img: '/testimonials/testimonial-freeyourmind-10k-views.jpg',     name: 'FREEYOURMIND',   stat: '10K views in 12 hours',  detail: '10,000 views in under 12 hours on Instagram. Then another 10K the same week using the same hook structure.',
+      quote: "10K views in 12 hours. Then another 10K later that week. I've been trying to go viral for 8 months. Took two weeks inside this programme." },
+  ]
+
+  const reviews = [
+    { name: 'Freddie Woodward', initials: 'FW', color: '#3b82f6', role: 'Fitness Creator', metric: '£1,950 in 72 hours', quote: "£1,950 worth of sales in 3 days. Two sales at £975 each. I just followed the system — it actually works. Can't believe I spent 18 months trying to figure this out alone." },
+    { name: 'Brett Capstick',   initials: 'BC', color: '#6366f1', role: 'Personal Trainer', metric: 'First client in 3 weeks', quote: "18 months with zero paying clients. Three weeks in Creator Cult — signed my first. Just consistently posting, started conversations, made the offer. Simple as that." },
+    { name: 'Eddie Harding',    initials: 'EH', color: '#8b5cf6', role: 'Fitness Creator', metric: '258K views + 4,600 followers', quote: "Two posts gone viral. One reel gave me 4,600 new followers and 258K views in a week. The hooks framework is genuinely different to anything else out there." },
+    { name: 'Rokas Žebrauskas', initials: 'RŽ', color: '#0ea5e9', role: 'Creator', metric: 'Best investment ever', quote: "This is my best investment so far, 100%. I've learned more in two weeks inside this programme than in six months of watching free content. The system just makes sense." },
+    { name: 'Mateus Chapman',   initials: 'MC', color: '#10b981', role: 'Fitness Creator', metric: '2.3M reach in 30 days', quote: "1 million views in a month. My total reach is 2.3 million for the last 30 days. The content batching and posting system changed everything about how I work." },
+    { name: 'Asher Hayhoe',     initials: 'AH', color: '#f59e0b', role: 'Creator', metric: 'First sales call booked', quote: "Had my first ever sales call this week. 4 videos over 100K views in the past month. Before this programme I couldn't get consistent views let alone client enquiries." },
+  ]
+
+  const avatarMembers = [
+    { initials: 'MK', bg: '#0ea5e9' },
+    { initials: 'FW', bg: '#3b82f6' },
+    { initials: 'BC', bg: '#6366f1' },
+    { initials: 'EH', bg: '#8b5cf6' },
+    { initials: 'MC', bg: '#10b981' },
+    { initials: 'RŽ', bg: '#f59e0b' },
   ]
 
   return (
     <>
       <style>{`
-        /* ── Reset ── */
         .lp-root { all: initial; display: block; }
         .lp-root *, .lp-root *::before, .lp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-        /* ── Base ── */
         .lp-root {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
           font-size: 16px; font-weight: 400; line-height: 1.65;
@@ -168,8 +224,6 @@ export default function LandingPage() {
           min-height: 100vh; overflow-x: hidden;
           -webkit-font-smoothing: antialiased;
         }
-
-        /* ── Grain overlay ── */
         .lp-root::after {
           content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0.04;
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -177,25 +231,13 @@ export default function LandingPage() {
         }
 
         /* ── Typography ── */
-        .lp-h1 {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: clamp(38px, 7vw, 88px); font-weight: 900;
-          line-height: 1.0; letter-spacing: -0.04em; color: #f1f5f9;
-        }
-        .lp-h2 {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: clamp(30px, 5vw, 62px); font-weight: 800;
-          line-height: 1.05; letter-spacing: -0.03em; color: #f1f5f9;
-        }
-        .lp-h3 {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: clamp(20px, 2.5vw, 28px); font-weight: 700;
-          line-height: 1.2; color: #f1f5f9;
-        }
+        .lp-h1 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(38px, 7vw, 88px); font-weight: 900; line-height: 1.0; letter-spacing: -0.04em; color: #f1f5f9; }
+        .lp-h2 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(30px, 5vw, 62px); font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; color: #f1f5f9; }
+        .lp-h3 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(20px, 2.5vw, 28px); font-weight: 700; line-height: 1.2; color: #f1f5f9; }
         .lp-body { font-size: 16px; color: #64748b; line-height: 1.75; }
-        .lp-body-lg { font-size: clamp(16px, 1.5vw, 19px); color: #64748b; line-height: 1.75; }
+        .lp-body-lg { font-size: clamp(16px, 1.5vw, 19px); color: #94a3b8; line-height: 1.75; }
         .lp-blue { color: #3b82f6; }
-        .lp-dim { color: #475569; }
+        .lp-dim { color: #64748b; }
 
         /* ── Layout ── */
         .lp-container { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
@@ -204,66 +246,21 @@ export default function LandingPage() {
         .lp-hr { height: 1px; background: rgba(59,130,246,0.12); }
 
         /* ── Pill ── */
-        .lp-pill {
-          display: inline-flex; align-items: center; gap: 8px;
-          font-family: 'Inter', sans-serif !important;
-          font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
-          color: #60a5fa; border: 1px solid rgba(96,165,250,0.2);
-          background: rgba(59,130,246,0.06);
-          padding: 7px 16px; border-radius: 999px; margin-bottom: 28px;
-        }
+        .lp-pill { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); background: rgba(59,130,246,0.06); padding: 7px 16px; border-radius: 999px; margin-bottom: 28px; }
         .lp-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; flex-shrink: 0; }
 
         /* ── CTAs ── */
-        .lp-cta-primary {
-          display: inline-flex; align-items: center; gap: 10px;
-          font-family: 'Inter', sans-serif !important;
-          font-size: 15px; font-weight: 700; letter-spacing: -.01em;
-          color: #fff; text-decoration: none;
-          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-          padding: 16px 36px; border-radius: 10px;
-          box-shadow: 0 0 32px rgba(59,130,246,0.3);
-          transition: box-shadow .25s, transform .2s; cursor: pointer; border: none;
-        }
+        .lp-cta-primary { display: inline-flex; align-items: center; gap: 10px; font-family: 'Inter', sans-serif !important; font-size: 15px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 16px 36px; border-radius: 10px; box-shadow: 0 0 32px rgba(59,130,246,0.3); transition: box-shadow .25s, transform .2s; cursor: pointer; border: none; }
         .lp-cta-primary:hover { box-shadow: 0 0 60px rgba(59,130,246,0.5); transform: translateY(-1px); }
-        .lp-cta-ghost {
-          display: inline-flex; align-items: center; gap: 10px;
-          font-family: 'Inter', sans-serif !important;
-          font-size: 13px; font-weight: 600; letter-spacing: .02em;
-          color: #60a5fa; text-decoration: none;
-          border: 1px solid rgba(96,165,250,0.3);
-          padding: 12px 28px; border-radius: 8px;
-          transition: background .2s, border-color .2s; cursor: pointer; background: transparent;
-        }
+        .lp-cta-ghost { display: inline-flex; align-items: center; gap: 10px; font-family: 'Inter', sans-serif !important; font-size: 13px; font-weight: 600; letter-spacing: .02em; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.3); padding: 12px 28px; border-radius: 8px; transition: background .2s, border-color .2s; cursor: pointer; background: transparent; }
         .lp-cta-ghost:hover { background: rgba(59,130,246,0.08); border-color: rgba(96,165,250,0.5); }
-        .lp-cta-ghost-sm {
-          display: inline-flex; align-items: center; gap: 8px;
-          font-family: 'Inter', sans-serif !important;
-          font-size: 12px; font-weight: 600;
-          color: #60a5fa; text-decoration: none;
-          border: 1px solid rgba(96,165,250,0.25);
-          padding: 9px 18px; border-radius: 6px;
-          transition: background .2s; cursor: pointer; background: transparent;
-        }
+        .lp-cta-ghost-sm { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 600; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.25); padding: 9px 18px; border-radius: 6px; transition: background .2s; cursor: pointer; background: transparent; }
         .lp-cta-ghost-sm:hover { background: rgba(59,130,246,0.08); }
 
         /* ── Nav ── */
-        .lp-nav {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-          height: 64px; display: flex; align-items: center;
-          justify-content: space-between; padding: 0 48px;
-          transition: background .3s, border-color .3s;
-        }
-        .lp-nav.scrolled {
-          background: rgba(13,13,10,0.88);
-          backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(59,130,246,0.1);
-        }
-        .lp-nav-logo {
-          font-family: 'Inter', sans-serif !important;
-          font-size: 15px; font-weight: 900; letter-spacing: -.03em;
-          text-decoration: none; display: flex; align-items: center; gap: 2px; color: #fff;
-        }
+        .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; transition: background .3s, border-color .3s; }
+        .lp-nav.scrolled { background: rgba(13,13,10,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(59,130,246,0.1); }
+        .lp-nav-logo { font-family: 'Inter', sans-serif !important; font-size: 15px; font-weight: 900; letter-spacing: -.03em; text-decoration: none; display: flex; align-items: center; gap: 8px; color: #fff; }
         .lp-nav-logo .c1 { color: #60a5fa; }
 
         /* ── Hero ── */
@@ -272,36 +269,35 @@ export default function LandingPage() {
         .lp-hero-left { display: flex; flex-direction: column; justify-content: center; padding: 120px 64px 80px 48px; border-right: 1px solid rgba(59,130,246,0.07); }
         @media (max-width: 900px) { .lp-hero-left { padding: 96px 32px 60px; border-right: none; } }
         @media (max-width: 640px) { .lp-hero-left { padding: 88px 20px 56px; } }
-        .lp-hero-badge {
-          display: inline-flex; align-items: center; gap: 8px;
-          font-family: 'Inter', sans-serif !important;
-          font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
-          color: #60a5fa; background: rgba(59,130,246,0.08);
-          border: 1px solid rgba(96,165,250,0.2);
-          padding: 7px 16px; border-radius: 999px; margin-bottom: 36px;
-          width: fit-content;
-        }
+        .lp-hero-badge { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #60a5fa; background: rgba(59,130,246,0.08); border: 1px solid rgba(96,165,250,0.2); padding: 7px 16px; border-radius: 999px; margin-bottom: 36px; width: fit-content; }
         .lp-hero-photo-col { position: relative; overflow: hidden; }
         .lp-hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; filter: brightness(0.85) contrast(1.05) saturate(0.9); }
         .lp-hero-photo-overlay { position: absolute; inset: 0; background: linear-gradient(to right, #0d0d0a 0%, transparent 20%), linear-gradient(to top, #0d0d0a 0%, transparent 30%), linear-gradient(to bottom, rgba(13,13,10,0.3) 0%, transparent 20%); }
         .lp-hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 56px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 40px; }
         @media (max-width: 640px) { .lp-hero-stats { grid-template-columns: repeat(2, 1fr); gap: 28px 0; } }
         .lp-stat-n { font-family: 'Inter', sans-serif !important; font-size: clamp(26px, 3.5vw, 40px); font-weight: 900; color: #f1f5f9; letter-spacing: -.03em; line-height: 1; }
-        .lp-stat-l { font-size: 11px; color: #334155; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; margin-top: 8px; }
+        .lp-stat-l { font-size: 11px; color: #64748b; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; margin-top: 8px; }
+
+        /* ── Avatar social strip ── */
+        .lp-avatar-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+        .lp-avatar-stack { display: flex; align-items: center; }
+        .lp-avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #0d0d0a; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; position: relative; }
+        .lp-avatar-text { font-family: 'Inter', sans-serif !important; font-size: 13px; color: #64748b; line-height: 1.4; }
+        .lp-avatar-text strong { color: #94a3b8; font-weight: 600; }
 
         /* ── Ticker ── */
         .lp-ticker { border-top: 1px solid rgba(59,130,246,0.12); border-bottom: 1px solid rgba(59,130,246,0.12); padding: 15px 0; overflow: hidden; background: rgba(59,130,246,0.02); }
-        .lp-ticker-track { display: flex; width: max-content; animation: lp-tick 32s linear infinite; }
+        .lp-ticker-track { display: flex; width: max-content; animation: lp-tick 36s linear infinite; }
         .lp-ticker-track:hover { animation-play-state: paused; }
         @keyframes lp-tick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        .lp-tick-item { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 500; color: #475569; white-space: nowrap; padding: 0 28px; letter-spacing: .03em; }
-        .lp-tick-dot { color: #3b82f6; margin-right: 0; font-size: 10px; margin-left: 0; }
+        .lp-tick-item { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 600; color: #94a3b8; white-space: nowrap; padding: 0 28px; letter-spacing: .03em; }
+        .lp-tick-dot { color: #3b82f6; font-size: 10px; }
 
-        /* ── Social strip ── */
-        .lp-social-strip { padding: 36px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
-        .lp-social-label { font-size: 11px; font-weight: 600; letter-spacing: .18em; text-transform: uppercase; color: #1e293b; margin-bottom: 20px; text-align: center; }
-        .lp-social-names { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; }
-        .lp-social-name { font-size: 12px; font-weight: 500; color: #1e293b; padding: 4px 18px; letter-spacing: .04em; border-right: 1px solid rgba(255,255,255,0.04); }
+        /* ── Social strip (member names) ── */
+        .lp-social-strip { padding: 28px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .lp-social-label { font-size: 10px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: #475569; margin-bottom: 16px; text-align: center; }
+        .lp-social-names { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0; }
+        .lp-social-name { font-size: 13px; font-weight: 500; color: #64748b; padding: 5px 16px; border-right: 1px solid rgba(255,255,255,0.06); letter-spacing: .02em; }
         .lp-social-name:last-child { border-right: none; }
 
         /* ── Pain ── */
@@ -309,15 +305,15 @@ export default function LandingPage() {
         @media (max-width: 640px) { .lp-pain-item { grid-template-columns: 1fr; gap: 10px; } }
         .lp-pain-num { font-family: 'Inter', sans-serif !important; font-size: 48px; font-weight: 900; color: rgba(59,130,246,0.12); line-height: 1; margin-top: -6px; letter-spacing: -.04em; }
         .lp-pain-title { font-family: 'Inter', sans-serif !important; font-size: clamp(17px, 2vw, 22px); font-weight: 700; color: #f1f5f9; margin-bottom: 10px; line-height: 1.3; letter-spacing: -.02em; }
-        .lp-pain-body { font-size: 15px; color: #334155; line-height: 1.8; }
+        .lp-pain-body { font-size: 15px; color: #64748b; line-height: 1.8; }
 
         /* ── Story ── */
         .lp-story-grid { display: grid; grid-template-columns: 1fr 360px; gap: 88px; align-items: start; }
         @media (max-width: 900px) { .lp-story-grid { grid-template-columns: 1fr; gap: 48px; } .lp-story-photo-col { order: -1; max-width: 360px; } }
         .lp-story-photo-col { position: sticky; top: 90px; }
         .lp-story-photo { width: 100%; display: block; aspect-ratio: 3/4; object-fit: cover; object-position: top; border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; }
-        .lp-story-caption { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #1e293b; margin-top: 14px; text-align: center; }
-        .lp-story-text { font-size: clamp(15px, 1.4vw, 17px); color: #475569; line-height: 1.85; }
+        .lp-story-caption { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: #475569; margin-top: 14px; text-align: center; }
+        .lp-story-text { font-size: clamp(15px, 1.4vw, 17px); color: #64748b; line-height: 1.85; }
         .lp-story-text p { margin-bottom: 20px; }
         .lp-story-text p:last-child { margin-bottom: 0; }
         .lp-story-text strong { color: #e2e8f0; font-weight: 600; }
@@ -332,12 +328,12 @@ export default function LandingPage() {
         @media (max-width: 960px) { .lp-phase-card:nth-child(3n) { border-right: 1px solid rgba(255,255,255,0.06); } .lp-phase-card:nth-child(2n) { border-right: none; } }
         .lp-phase-n { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #3b82f6; margin-bottom: 16px; }
         .lp-phase-title { font-family: 'Inter', sans-serif !important; font-size: 16px; font-weight: 700; color: #f1f5f9; margin-bottom: 10px; letter-spacing: -.02em; }
-        .lp-phase-desc { font-size: 13px; color: #334155; line-height: 1.7; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .lp-phase-desc { font-size: 13px; color: #64748b; line-height: 1.7; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.04); }
         .lp-phase-items { display: flex; flex-direction: column; gap: 9px; }
-        .lp-phase-item { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #334155; line-height: 1.55; }
+        .lp-phase-item { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #64748b; line-height: 1.55; }
         .lp-phase-dash { color: #3b82f6; flex-shrink: 0; }
         .lp-phase-support { background: rgba(59,130,246,0.03); border-top: 1px solid rgba(59,130,246,0.15) !important; }
-        .lp-phase-support .lp-phase-title { color: rgba(241,245,249,0.6); }
+        .lp-phase-support .lp-phase-title { color: rgba(241,245,249,0.5); }
 
         /* ── Dashboard mockup ── */
         .lp-dash-outer { border: 1px solid rgba(59,130,246,0.15); border-radius: 10px; overflow: hidden; margin: 56px 0 0; background: #0a0a08; }
@@ -345,37 +341,38 @@ export default function LandingPage() {
         .lp-dash-dot-r { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,80,80,0.45); flex-shrink: 0; }
         .lp-dash-dot-y { width: 12px; height: 12px; border-radius: 50%; background: rgba(255,185,0,0.4); flex-shrink: 0; }
         .lp-dash-dot-g { width: 12px; height: 12px; border-radius: 50%; background: rgba(40,200,70,0.35); flex-shrink: 0; }
-        .lp-dash-url { flex: 1; background: rgba(255,255,255,0.03); border-radius: 5px; padding: 5px 12px; font-size: 11px; color: rgba(255,255,255,0.25); text-align: center; margin: 0 16px; font-family: 'Inter', monospace; }
+        .lp-dash-url { flex: 1; background: rgba(255,255,255,0.03); border-radius: 5px; padding: 5px 12px; font-size: 11px; color: rgba(255,255,255,0.3); text-align: center; margin: 0 16px; font-family: 'Inter', monospace; }
         .lp-dash-body { display: grid; grid-template-columns: 192px 1fr; min-height: 380px; }
         @media (max-width: 700px) { .lp-dash-body { grid-template-columns: 1fr; } .lp-dash-sidebar { display: none; } }
         .lp-dash-sidebar { background: #080808; border-right: 1px solid rgba(255,255,255,0.05); padding: 20px 12px; display: flex; flex-direction: column; }
-        .lp-dash-logo { font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 900; letter-spacing: -.02em; color: #fff; padding: 8px 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; }
+        .lp-dash-logo { font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 900; letter-spacing: -.02em; color: #fff; padding: 8px 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
         .lp-dash-logo span { color: #60a5fa; }
-        .lp-dash-nav { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.3); cursor: pointer; transition: background .15s; margin-bottom: 2px; }
+        .lp-dash-nav { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.35); cursor: pointer; transition: background .15s; margin-bottom: 2px; }
         .lp-dash-nav.active { background: rgba(59,130,246,0.12); color: #60a5fa; font-weight: 600; }
         .lp-dash-nav:hover:not(.active) { background: rgba(255,255,255,0.04); }
         .lp-dash-main { padding: 24px; background: #0f0f0c; display: flex; flex-direction: column; gap: 18px; }
         .lp-dash-topbar { display: flex; justify-content: space-between; align-items: center; }
         .lp-dash-greeting { font-family: 'Inter', sans-serif !important; font-size: 14px; font-weight: 700; color: #f1f5f9; letter-spacing: -.01em; }
-        .lp-dash-subtext { font-size: 11px; color: #334155; margin-top: 2px; }
+        .lp-dash-subtext { font-size: 11px; color: #475569; margin-top: 2px; }
         .lp-dash-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         @media (max-width: 700px) { .lp-dash-metrics { grid-template-columns: repeat(2, 1fr); } }
         .lp-dash-metric { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 14px 16px; }
         .lp-dash-metric-val { font-family: 'Inter', sans-serif !important; font-size: 18px; font-weight: 900; color: #f1f5f9; letter-spacing: -.03em; }
         .lp-dash-metric-val.blue { color: #3b82f6; }
-        .lp-dash-metric-lbl { font-size: 10px; color: #334155; margin-top: 4px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+        .lp-dash-metric-lbl { font-size: 10px; color: #475569; margin-top: 4px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
         .lp-dash-lower { display: grid; grid-template-columns: 3fr 2fr; gap: 10px; }
         @media (max-width: 700px) { .lp-dash-lower { grid-template-columns: 1fr; } }
         .lp-dash-panel { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 16px; }
-        .lp-dash-panel-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #475569; margin-bottom: 12px; }
-        .lp-dash-ai-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: #3b82f6; background: rgba(59,130,246,0.1); padding: 3px 8px; border-radius: 4px; font-weight: 600; float: right; }
-        .lp-dash-line { font-size: 11px; color: rgba(255,255,255,0.35); margin-bottom: 7px; padding: 7px 10px; background: rgba(255,255,255,0.02); border-radius: 5px; border-left: 2px solid rgba(59,130,246,0.3); line-height: 1.45; }
+        .lp-dash-panel-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #64748b; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+        .lp-dash-ai-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: #3b82f6; background: rgba(59,130,246,0.1); padding: 3px 8px; border-radius: 4px; font-weight: 600; }
+        .lp-dash-line { font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 7px; padding: 7px 10px; background: rgba(255,255,255,0.02); border-radius: 5px; border-left: 2px solid rgba(59,130,246,0.3); line-height: 1.45; }
+        .lp-dash-line.green { border-left-color: rgba(16,185,129,0.4); color: rgba(255,255,255,0.45); }
         .lp-dash-progress { margin-top: 12px; height: 3px; background: rgba(255,255,255,0.05); border-radius: 2px; }
         .lp-dash-pfill { height: 100%; width: 68%; border-radius: 2px; background: linear-gradient(90deg, #3b82f6, #60a5fa); }
         .lp-dash-client { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
         .lp-dash-client:last-child { border-bottom: none; }
         .lp-dash-client-name { font-size: 12px; color: rgba(255,255,255,0.65); font-weight: 500; }
-        .lp-dash-client-phase { font-size: 10px; color: #1e293b; margin-top: 2px; }
+        .lp-dash-client-phase { font-size: 10px; color: #475569; margin-top: 2px; }
         .lp-dash-client-badge { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #3b82f6; }
 
         /* ── Tool grid ── */
@@ -389,12 +386,12 @@ export default function LandingPage() {
         .lp-tool-icon-wrap { width: 36px; height: 36px; border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #3b82f6; margin-bottom: 16px; }
         .lp-tool-badge { font-size: 9px; font-weight: 700; letter-spacing: .14em; color: #3b82f6; text-transform: uppercase; background: rgba(59,130,246,0.1); padding: 2px 8px; border-radius: 4px; margin-left: 10px; }
         .lp-tool-title { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; display: flex; align-items: center; letter-spacing: -.01em; }
-        .lp-tool-desc { font-size: 13px; color: #334155; line-height: 1.7; }
+        .lp-tool-desc { font-size: 13px; color: #64748b; line-height: 1.7; }
 
         /* ── Image marquee ── */
-        .lp-imgmq-wrap { overflow: hidden; padding: 0; }
-        .lp-imgmq-track-l { display: flex; width: max-content; gap: 0; animation: lp-mq-l 18s linear infinite; }
-        .lp-imgmq-track-r { display: flex; width: max-content; gap: 0; animation: lp-mq-r 22s linear infinite; }
+        .lp-imgmq-wrap { overflow: hidden; }
+        .lp-imgmq-track-l { display: flex; width: max-content; animation: lp-mq-l 18s linear infinite; }
+        .lp-imgmq-track-r { display: flex; width: max-content; animation: lp-mq-r 22s linear infinite; }
         .lp-imgmq-track-l:hover, .lp-imgmq-track-r:hover { animation-play-state: paused; }
         @keyframes lp-mq-l { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         @keyframes lp-mq-r { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
@@ -405,22 +402,54 @@ export default function LandingPage() {
         .lp-imgmq-img { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; }
         .lp-imgmq-foot { padding: 12px 14px 14px; }
         .lp-imgmq-win { font-size: 12px; font-weight: 700; color: #e2e8f0; line-height: 1.3; letter-spacing: -.01em; }
-        .lp-imgmq-name { font-size: 10px; color: #334155; margin-top: 4px; font-weight: 500; letter-spacing: .04em; }
+        .lp-imgmq-name { font-size: 10px; color: #64748b; margin-top: 4px; font-weight: 500; letter-spacing: .04em; }
 
         /* ── Win grid ── */
         .lp-win-grid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 64px; border: 1px solid rgba(255,255,255,0.06); }
         @media (max-width: 900px) { .lp-win-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 580px) { .lp-win-grid { grid-template-columns: 1fr; } }
-        .lp-win-card { border-right: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; overflow: hidden; transition: background .2s; }
-        .lp-win-card:hover { background: rgba(59,130,246,0.03); }
+        .lp-win-card { border-right: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; overflow: hidden; cursor: pointer; transition: background .2s, border-color .25s; position: relative; }
+        .lp-win-card:hover { background: rgba(59,130,246,0.05); border-color: rgba(59,130,246,0.2); }
+        .lp-win-card::after { content: 'Tap to expand'; position: absolute; top: 10px; right: 10px; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #3b82f6; background: rgba(59,130,246,0.1); padding: 3px 8px; border-radius: 4px; opacity: 0; transition: opacity .2s; }
+        .lp-win-card:hover::after { opacity: 1; }
         .lp-win-card:nth-child(3n) { border-right: none; }
         @media (max-width: 900px) { .lp-win-card:nth-child(3n) { border-right: 1px solid rgba(255,255,255,0.06); } .lp-win-card:nth-child(2n) { border-right: none; } }
         .lp-win-img-wrap { background: #0a0a08; border-bottom: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
         .lp-win-img { width: 100%; display: block; max-height: 210px; object-fit: contain; object-position: top; }
-        .lp-win-body { padding: 20px 22px 24px; }
+        .lp-win-body { padding: 20px 22px 24px; flex: 1; display: flex; flex-direction: column; }
         .lp-win-stat { font-family: 'Inter', sans-serif !important; font-size: 18px; font-weight: 800; color: #f1f5f9; letter-spacing: -.02em; margin-bottom: 7px; line-height: 1.2; }
-        .lp-win-detail { font-size: 12px; color: #334155; line-height: 1.65; margin-bottom: 10px; }
+        .lp-win-detail { font-size: 12px; color: #64748b; line-height: 1.65; margin-bottom: 10px; flex: 1; }
         .lp-win-name { font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #3b82f6; }
+        .lp-win-expand-hint { margin-top: 12px; font-size: 11px; color: #3b82f6; display: flex; align-items: center; gap: 6px; font-weight: 600; letter-spacing: .04em; }
+
+        /* ── Win modal ── */
+        .lp-modal-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .lp-modal { background: #0f0f0c; border: 1px solid rgba(59,130,246,0.2); border-radius: 14px; max-width: 580px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; }
+        .lp-modal-close { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.07); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 1; transition: background .2s; }
+        .lp-modal-close:hover { background: rgba(255,255,255,0.12); }
+        .lp-modal-img { width: 100%; max-height: 320px; object-fit: contain; display: block; background: #080808; }
+        .lp-modal-body { padding: 28px 32px 36px; }
+        .lp-modal-tag { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #3b82f6; margin-bottom: 10px; }
+        .lp-modal-stat { font-family: 'Inter', sans-serif !important; font-size: clamp(22px, 4vw, 30px); font-weight: 800; color: #f1f5f9; letter-spacing: -.03em; line-height: 1.1; margin-bottom: 16px; }
+        .lp-modal-detail { font-size: 15px; color: #94a3b8; line-height: 1.75; margin-bottom: 24px; }
+        .lp-modal-quote { border-left: 2px solid rgba(59,130,246,0.35); padding-left: 20px; margin-bottom: 24px; }
+        .lp-modal-quote p { font-size: 14px; color: #60a5fa; font-style: italic; line-height: 1.7; }
+        .lp-modal-source { font-size: 11px; color: #475569; letter-spacing: .08em; text-transform: uppercase; }
+
+        /* ── Reviews ── */
+        .lp-reviews-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 64px; }
+        @media (max-width: 900px) { .lp-reviews-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 580px) { .lp-reviews-grid { grid-template-columns: 1fr; } }
+        .lp-review-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; padding: 24px; display: flex; flex-direction: column; gap: 14px; transition: border-color .25s, background .25s; }
+        .lp-review-card:hover { border-color: rgba(59,130,246,0.2); background: rgba(59,130,246,0.04); }
+        .lp-review-header { display: flex; align-items: center; gap: 12px; }
+        .lp-review-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
+        .lp-review-name { font-size: 14px; font-weight: 700; color: #e2e8f0; letter-spacing: -.01em; }
+        .lp-review-role { font-size: 11px; color: #64748b; margin-top: 1px; }
+        .lp-review-stars { display: flex; gap: 2px; }
+        .lp-review-metric { font-size: 12px; font-weight: 700; color: #3b82f6; background: rgba(59,130,246,0.08); padding: 4px 10px; border-radius: 5px; display: inline-block; }
+        .lp-review-quote { font-size: 14px; color: #94a3b8; line-height: 1.7; font-style: italic; }
+        .lp-review-source { font-size: 10px; color: #475569; letter-spacing: .1em; text-transform: uppercase; margin-top: 4px; }
 
         /* ── Included grid ── */
         .lp-incl-grid { display: grid; grid-template-columns: repeat(2, 1fr); margin-top: 72px; border: 1px solid rgba(255,255,255,0.06); }
@@ -430,7 +459,7 @@ export default function LandingPage() {
         .lp-incl-card:nth-child(2n) { border-right: none; }
         .lp-incl-icon { width: 32px; height: 32px; flex-shrink: 0; border: 1px solid rgba(59,130,246,0.2); border-radius: 7px; display: flex; align-items: center; justify-content: center; color: #3b82f6; margin-top: 2px; }
         .lp-incl-title { font-size: 13px; font-weight: 700; color: #e2e8f0; margin-bottom: 7px; letter-spacing: -.01em; }
-        .lp-incl-desc { font-size: 13px; color: #334155; line-height: 1.7; }
+        .lp-incl-desc { font-size: 13px; color: #64748b; line-height: 1.7; }
 
         /* ── For/Not for ── */
         .lp-for-grid { display: grid; grid-template-columns: 1fr 1fr; }
@@ -440,14 +469,14 @@ export default function LandingPage() {
         @media (max-width: 640px) { .lp-for-col { padding: 36px 20px; } .lp-for-col.yes { border-right: none; border-bottom: 1px solid rgba(59,130,246,0.1); } }
         .lp-for-col-head { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 28px; }
         .yes .lp-for-col-head { color: #3b82f6; }
-        .no .lp-for-col-head { color: #1e293b; }
+        .no .lp-for-col-head { color: #64748b; }
         .lp-for-items { display: flex; flex-direction: column; gap: 14px; }
         .lp-for-item { display: flex; gap: 14px; align-items: flex-start; font-size: 14px; line-height: 1.6; }
-        .yes .lp-for-item { color: #64748b; }
-        .no .lp-for-item { color: #1e293b; }
+        .yes .lp-for-item { color: #94a3b8; }
+        .no .lp-for-item { color: #64748b; }
         .lp-for-mark { flex-shrink: 0; font-size: 11px; font-weight: 700; margin-top: 3px; }
         .yes .lp-for-mark { color: #3b82f6; }
-        .no .lp-for-mark { color: #1e293b; }
+        .no .lp-for-mark { color: #475569; }
 
         /* ── Mid & Final CTA ── */
         .lp-cta-block { text-align: center; padding: 88px 48px; }
@@ -455,12 +484,12 @@ export default function LandingPage() {
 
         /* ── Footer ── */
         .lp-footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 36px 48px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; max-width: 1200px; margin: 0 auto; }
-        .lp-footer-logo { font-size: 12px; font-weight: 900; letter-spacing: -.02em; color: #1e293b; }
-        .lp-footer-logo span { color: #1d4ed8; }
+        .lp-footer-logo { font-size: 12px; font-weight: 900; letter-spacing: -.02em; color: #475569; display: flex; align-items: center; gap: 7px; }
+        .lp-footer-logo span { color: #3b82f6; }
         .lp-footer-links { display: flex; gap: 24px; }
-        .lp-footer-links a { font-size: 12px; color: #1e293b; text-decoration: none; transition: color .2s; }
-        .lp-footer-links a:hover { color: #475569; }
-        .lp-footer-copy { font-size: 12px; color: #0f172a; }
+        .lp-footer-links a { font-size: 12px; color: #475569; text-decoration: none; transition: color .2s; }
+        .lp-footer-links a:hover { color: #94a3b8; }
+        .lp-footer-copy { font-size: 12px; color: #334155; }
 
         /* ── Global mobile ── */
         @media (max-width: 640px) {
@@ -475,9 +504,31 @@ export default function LandingPage() {
 
       <div className="lp-root">
 
+        {/* ── Win modal ── */}
+        {selectedWin && (
+          <div className="lp-modal-overlay" onClick={() => setSelectedWin(null)}>
+            <div className="lp-modal" onClick={e => e.stopPropagation()}>
+              <button className="lp-modal-close" onClick={() => setSelectedWin(null)}><IconX /></button>
+              <img src={selectedWin.img} alt={selectedWin.stat} className="lp-modal-img" />
+              <div className="lp-modal-body">
+                {selectedWin.name && <div className="lp-modal-tag">{selectedWin.name}</div>}
+                <div className="lp-modal-stat">{selectedWin.stat}</div>
+                <p className="lp-modal-detail">{selectedWin.detail}</p>
+                {selectedWin.quote && (
+                  <div className="lp-modal-quote">
+                    <p>&ldquo;{selectedWin.quote}&rdquo;</p>
+                  </div>
+                )}
+                <div className="lp-modal-source">Creator Cult Member — Circle Community</div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── Nav ── */}
         <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
           <a href="/landing-page" className="lp-nav-logo">
+            <LogoMark size={22} />
             <span className="c1">Creator</span>&nbsp;Cult
           </a>
           <Link href="/apply" className="lp-cta-ghost-sm">
@@ -511,15 +562,33 @@ export default function LandingPage() {
                 <Link href="/apply" className="lp-cta-primary">
                   Apply for a Spot <IconArrow />
                 </Link>
-                <span className="lp-dim" style={{ fontSize: 12 }}>Applications reviewed personally.</span>
+                <span className="lp-dim" style={{ fontSize: 12, fontFamily: 'Inter, sans-serif' }}>Applications reviewed personally.</span>
               </div>
             </Fade>
             <Fade delay={320}>
+              {/* Avatar social proof strip */}
+              <div className="lp-avatar-row" style={{ marginTop: 32 }}>
+                <div className="lp-avatar-stack">
+                  {avatarMembers.map((a, i) => (
+                    <div key={i} className="lp-avatar" style={{ background: a.bg, marginLeft: i > 0 ? -10 : 0, zIndex: 10 - i }}>
+                      {a.initials}
+                    </div>
+                  ))}
+                  <div className="lp-avatar" style={{ background: '#1e293b', marginLeft: -10, zIndex: 4, fontSize: 9 }}>
+                    +134
+                  </div>
+                </div>
+                <div className="lp-avatar-text">
+                  <strong>140+ creators.</strong> £500K+ in verified wins. Members in 15+ countries.
+                </div>
+              </div>
+            </Fade>
+            <Fade delay={400}>
               <div className="lp-hero-stats">
-                <div><div className="lp-stat-n">40+</div><div className="lp-stat-l">Creators enrolled</div></div>
-                <div><div className="lp-stat-n">24M</div><div className="lp-stat-l">Views generated</div></div>
-                <div><div className="lp-stat-n">5K</div><div className="lp-stat-l">Followers in 10 days</div></div>
-                <div><div className="lp-stat-n">£1,950</div><div className="lp-stat-l">Revenue in 3 days</div></div>
+                <div><div className="lp-stat-n">140+</div><div className="lp-stat-l">Creators enrolled</div></div>
+                <div><div className="lp-stat-n">350M+</div><div className="lp-stat-l">Combined views</div></div>
+                <div><div className="lp-stat-n">1M+</div><div className="lp-stat-l">Combined followers</div></div>
+                <div><div className="lp-stat-n">£50K+</div><div className="lp-stat-l">Monthly revenue</div></div>
               </div>
             </Fade>
           </div>
@@ -534,7 +603,7 @@ export default function LandingPage() {
           <div className="lp-ticker-track">
             {[...tickerItems, ...tickerItems].map((s, i) => (
               <span key={i} className="lp-tick-item">
-                <span className="lp-tick-dot" style={{ marginRight: 0 }}>&#9670;&nbsp;&nbsp;</span>{s}
+                <span className="lp-tick-dot" style={{ marginRight: 12 }}>&#9670;</span>{s}
               </span>
             ))}
           </div>
@@ -597,7 +666,7 @@ export default function LandingPage() {
                   <div className="lp-story-text" style={{ marginTop: 36 }}>
                     <p>That was me. Not long ago. I was posting every day and getting nowhere. I knew content. I knew marketing theory. I still couldn&apos;t pay my rent with it.</p>
                     <p>I stopped copying tactics and started building a system. A real one. Positioning, story, offer, acquisition. In the right order.</p>
-                    <p>Within months, I had clients. Then a waiting list. Then a coaching programme with 40+ creators inside.</p>
+                    <p>Within months, I had clients. Then a waiting list. Then a coaching programme with 140+ creators inside.</p>
                     <p><strong>I didn&apos;t get lucky. I got structured.</strong></p>
                     <p>Creator Cult is the system I wish I&apos;d had in year one. Every phase, every tool, every coaching call — built to shortcut the years I wasted figuring it out alone.</p>
                   </div>
@@ -650,51 +719,52 @@ export default function LandingPage() {
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />Exclusive to Creator Cult</span></Fade>
             <Fade delay={60}>
               <h2 className="lp-h2">The Cult Dashboard.</h2>
-              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 560 }}>
-                Every client gets private access to a dashboard built specifically for Creator Cult members. Six AI tools trained on our methodology — not generic, purpose-built for your business.
+              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 580 }}>
+                Every member gets private access to a dashboard built specifically for Creator Cult. Six AI tools trained on the methodology — including weekly competitor analysis that writes your content ideas for you.
               </p>
             </Fade>
 
-            {/* Full dashboard mockup */}
             <Fade delay={100}>
               <div className="lp-dash-outer">
-                {/* Chrome bar */}
                 <div className="lp-dash-chrome">
                   <div className="lp-dash-dot-r" /><div className="lp-dash-dot-y" /><div className="lp-dash-dot-g" />
-                  <div className="lp-dash-url">cult-dashboard.vercel.app/dashboard</div>
+                  <div className="lp-dash-url">cult-dashboard.vercel.app/dashboard/intel</div>
                 </div>
-                {/* Body */}
                 <div className="lp-dash-body">
-                  {/* Sidebar */}
                   <div className="lp-dash-sidebar">
-                    <div className="lp-dash-logo"><span>Creator</span> Cult</div>
+                    <div className="lp-dash-logo">
+                      <LogoMark size={16} />
+                      <span>Creator</span>&nbsp;Cult
+                    </div>
                     {[
-                      { label: 'Dashboard', icon: <NavHome />, active: true },
+                      { label: 'Dashboard', icon: <NavHome />, active: false },
                       { label: 'Content Tools', icon: <NavContent />, active: false },
+                      { label: 'Competitor Intel', icon: <NavIntel />, active: true },
                       { label: 'Clients', icon: <NavClients />, active: false },
                       { label: 'AI Tools', icon: <NavTools />, active: false },
-                      { label: 'Community', icon: <NavCommunity />, active: false },
+                      { label: 'DM Sales', icon: <NavDM />, active: false },
                     ].map(item => (
                       <div key={item.label} className={`lp-dash-nav${item.active ? ' active' : ''}`}>
                         {item.icon}{item.label}
                       </div>
                     ))}
                   </div>
-                  {/* Main content */}
                   <div className="lp-dash-main">
                     <div className="lp-dash-topbar">
                       <div>
-                        <div className="lp-dash-greeting">Good morning, Will</div>
-                        <div className="lp-dash-subtext">Friday, 25 April 2026 — 8 action items pending</div>
+                        <div className="lp-dash-greeting">Competitor Intel — Week of Apr 21, 2026</div>
+                        <div className="lp-dash-subtext">Auto-generated every Monday · 47 competitor posts analysed · 5 scripts ready</div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span className="lp-dash-ai-badge">&#9679; Updated</span>
                       </div>
                     </div>
-                    {/* Metrics */}
                     <div className="lp-dash-metrics">
                       {[
-                        { val: '300M+', lbl: 'Total Views', blue: false },
-                        { val: '1M+',   lbl: 'Followers',   blue: true },
-                        { val: '40+',   lbl: 'Active Clients', blue: false },
-                        { val: '£50K+', lbl: 'Monthly Rev', blue: true },
+                        { val: '47',   lbl: 'Posts Analysed', blue: false },
+                        { val: '2.1M', lbl: 'Top Post Views', blue: true },
+                        { val: '5',    lbl: 'Scripts Ready',  blue: false },
+                        { val: '3',    lbl: 'Trend Angles',   blue: true },
                       ].map(m => (
                         <div key={m.lbl} className="lp-dash-metric">
                           <div className={`lp-dash-metric-val${m.blue ? ' blue' : ''}`}>{m.val}</div>
@@ -702,22 +772,18 @@ export default function LandingPage() {
                         </div>
                       ))}
                     </div>
-                    {/* Lower panels */}
                     <div className="lp-dash-lower">
-                      {/* AI Story Generator */}
                       <div className="lp-dash-panel">
                         <div className="lp-dash-panel-title">
-                          AI Story Generator
-                          <span className="lp-dash-ai-badge">&#9679; Generating</span>
+                          Your 5 Script Ideas This Week
+                          <span className="lp-dash-ai-badge">AI Generated</span>
                         </div>
-                        <div className="lp-dash-line">Hook: &quot;I was delivering pizzas at 23 with 412 followers...&quot;</div>
-                        <div className="lp-dash-line">Frame 2: &quot;I stopped copying tactics and built a real system&quot;</div>
-                        <div className="lp-dash-line">Frame 3: &quot;6 months later — 1M followers, £50K/month&quot;</div>
-                        <div className="lp-dash-line">CTA: &quot;DM me CULT — limited to 20 new members per month&quot;</div>
-                        <div className="lp-dash-progress"><div className="lp-dash-pfill" /></div>
-                        <div style={{ fontSize: 10, color: 'rgba(59,130,246,0.5)', marginTop: 6 }}>68% complete</div>
+                        <div className="lp-dash-line">&ldquo;I made £10K this month doing the exact opposite of what every coach told me&rdquo;</div>
+                        <div className="lp-dash-line">&ldquo;What 3 months of following a real system looks like (full breakdown)&rdquo;</div>
+                        <div className="lp-dash-line">&ldquo;Stop copying viral creators — here&apos;s what actually converts to paying clients&rdquo;</div>
+                        <div className="lp-dash-line">&ldquo;The DM strategy that took me from 0 to 3 clients in 30 days&rdquo;</div>
+                        <div className="lp-dash-line green">&ldquo;18 months of nothing — then one positioning change made everything click&rdquo;</div>
                       </div>
-                      {/* Active clients */}
                       <div className="lp-dash-panel">
                         <div className="lp-dash-panel-title">Active Clients</div>
                         {[
@@ -741,7 +807,6 @@ export default function LandingPage() {
               </div>
             </Fade>
 
-            {/* Tool grid */}
             <div className="lp-tool-grid">
               {tools.map((t, i) => (
                 <Fade key={t.title} delay={i * 50}>
@@ -770,9 +835,8 @@ export default function LandingPage() {
             </Fade>
           </div>
 
-          {/* Image marquee — two rows */}
+          {/* Image marquee */}
           <div style={{ marginTop: 56, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-            {/* Row 1 scrolls left */}
             <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
               <div className="lp-imgmq-wrap">
                 <div className="lp-imgmq-track-l">
@@ -790,7 +854,6 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-            {/* Row 2 scrolls right */}
             <div>
               <div className="lp-imgmq-wrap">
                 <div className="lp-imgmq-track-r">
@@ -810,26 +873,32 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Static win grid */}
+          {/* Win grid — clickable */}
           <div className="lp-container">
+            <Fade delay={20}>
+              <p style={{ fontSize: 12, color: '#64748b', marginTop: 48, marginBottom: 8, letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
+                Click any result to read the full story
+              </p>
+            </Fade>
             <div className="lp-win-grid">
-              {wins.map(({ img, name, stat, detail }, i) => (
-                <Fade key={stat + name} delay={(i % 3) * 60}>
-                  <div className="lp-win-card">
+              {wins.map((win, i) => (
+                <Fade key={win.stat + win.name} delay={(i % 3) * 60}>
+                  <div className="lp-win-card" onClick={() => setSelectedWin(win)}>
                     <div className="lp-win-img-wrap">
-                      <img src={img} alt={`${name} — ${stat}`} className="lp-win-img" loading="lazy" />
+                      <img src={win.img} alt={`${win.name} — ${win.stat}`} className="lp-win-img" loading="lazy" />
                     </div>
                     <div className="lp-win-body">
-                      <div className="lp-win-stat">{stat}</div>
-                      <div className="lp-win-detail">{detail}</div>
-                      {name && <div className="lp-win-name">{name}</div>}
+                      <div className="lp-win-stat">{win.stat}</div>
+                      <div className="lp-win-detail">{win.detail}</div>
+                      {win.name && <div className="lp-win-name">{win.name}</div>}
+                      {win.quote && <div className="lp-win-expand-hint">Read their story <IconArrow /></div>}
                     </div>
                   </div>
                 </Fade>
               ))}
             </div>
             <Fade delay={80}>
-              <p style={{ textAlign: 'center', fontSize: 12, color: '#1e293b', marginTop: 28, letterSpacing: '.06em' }}>
+              <p style={{ textAlign: 'center', fontSize: 12, color: '#475569', marginTop: 28, letterSpacing: '.06em', fontFamily: 'Inter, sans-serif' }}>
                 Real results from real Creator Cult members. Individual results vary.
               </p>
             </Fade>
@@ -838,8 +907,46 @@ export default function LandingPage() {
 
         <div className="lp-hr" />
 
-        {/* ── What&apos;s Included ── */}
+        {/* ── Community Reviews ── */}
         <div className="lp-section" style={{ background: 'rgba(59,130,246,0.01)' }}>
+          <div className="lp-container">
+            <Fade><span className="lp-pill"><span className="lp-pill-dot" />From The Community</span></Fade>
+            <Fade delay={60}>
+              <h2 className="lp-h2">What members are saying.</h2>
+              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 520 }}>
+                Posted in the private Creator Cult Circle community. Unedited.
+              </p>
+            </Fade>
+            <div className="lp-reviews-grid">
+              {reviews.map((r, i) => (
+                <Fade key={r.name} delay={i * 60}>
+                  <div className="lp-review-card">
+                    <div className="lp-review-header">
+                      <div className="lp-review-avatar" style={{ background: r.color }}>
+                        {r.initials}
+                      </div>
+                      <div>
+                        <div className="lp-review-name">{r.name}</div>
+                        <div className="lp-review-role">{r.role}</div>
+                      </div>
+                    </div>
+                    <div className="lp-review-stars">
+                      {[1,2,3,4,5].map(s => <IconStarFill key={s} />)}
+                    </div>
+                    <span className="lp-review-metric">{r.metric}</span>
+                    <p className="lp-review-quote">&ldquo;{r.quote}&rdquo;</p>
+                    <div className="lp-review-source">Verified · Circle Community</div>
+                  </div>
+                </Fade>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="lp-hr" />
+
+        {/* ── What's Included ── */}
+        <div className="lp-section">
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />What You Get</span></Fade>
             <Fade delay={60}><h2 className="lp-h2">Everything in one place.</h2></Fade>
@@ -919,7 +1026,7 @@ export default function LandingPage() {
                 <Faq q="How long does the programme run?" a="Creator Cult is an ongoing coaching programme. Most clients see their first real results within 30 to 60 days of starting. There is no set end date. You stay in as long as you are growing." />
                 <Faq q="Do I need a big following to join?" a="No. Several of our members signed their first clients with under 1,000 followers. Following size does not determine your results. Your system does. We build the system first." />
                 <Faq q="How much time do I need to commit each week?" a="Expect to block 5 to 8 hours per week: content creation, implementation, and the weekly coaching call. Less than that and progress slows. You do not need more than that to see results." />
-                <Faq q="Is this just another course?" a="No. The curriculum is part of it, but Creator Cult is a coaching programme. You have live weekly calls, 1:1 access to Will, a community of active creators, and the Cult Dashboard AI tools. The course is the structure. The coaching is where you actually move forward." />
+                <Faq q="Is this just another course?" a="No. The curriculum is part of it, but Creator Cult is a coaching programme. You have live weekly calls, 1:1 access to Will, a community of 140+ active creators, and the Cult Dashboard AI tools. The course is the structure. The coaching is where you actually move forward." />
                 <Faq q="How does the weekly group coaching work?" a="Every week we host live group coaching calls where you bring your content and business challenges. You get real-time feedback on your brand strategy, content audits, offer positioning, and scaling decisions. Can't make it live? You get access to all past recordings too." />
                 <Faq q="What if I've tried coaching before and it didn't work?" a="That is worth talking about in your application. A lot of creators who come to Creator Cult have been through generic social media courses or coaching that gave them tactics without a system. If your previous experience did not work, tell us why in your application. Will reads every one." />
                 <Faq q="Who is this NOT for?" a="This isn't for people looking for quick fixes, those hoping someone else will do the work, anyone not willing to show up and implement, or creators allergic to accountability and feedback. You need to be ready to invest 6 months into building something real." />
@@ -941,7 +1048,7 @@ export default function LandingPage() {
             <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
             <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center', gap: 28, flexWrap: 'wrap' }}>
               {['Takes 3 minutes', 'Reviewed personally by Will', 'No commitment to apply'].map(c => (
-                <span key={c} className="lp-dim" style={{ fontSize: 12, letterSpacing: '.08em' }}>— {c}</span>
+                <span key={c} className="lp-dim" style={{ fontSize: 12, letterSpacing: '.08em', fontFamily: 'Inter, sans-serif' }}>— {c}</span>
               ))}
             </div>
           </Fade>
@@ -949,7 +1056,10 @@ export default function LandingPage() {
 
         {/* ── Footer ── */}
         <div className="lp-footer">
-          <div className="lp-footer-logo"><span>Creator</span> Cult</div>
+          <div className="lp-footer-logo">
+            <LogoMark size={18} />
+            <span>Creator</span>&nbsp;Cult
+          </div>
           <div className="lp-footer-links">
             <a href="/privacy">Privacy</a>
             <a href="/data-deletion">Data Deletion</a>
