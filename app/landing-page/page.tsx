@@ -273,8 +273,8 @@ export default function LandingPage() {
         .lp-h1 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(38px, 7vw, 88px); font-weight: 900; line-height: 1.0; letter-spacing: -0.04em; color: #f1f5f9; }
         .lp-h2 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(30px, 5vw, 62px); font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; color: #f1f5f9; }
         .lp-h3 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(20px, 2.5vw, 28px); font-weight: 700; line-height: 1.2; color: #f1f5f9; }
-        .lp-body { font-size: 16px; color: #b0bec5; line-height: 1.75; }
-        .lp-body-lg { font-size: clamp(16px, 1.5vw, 19px); color: #b0bec5; line-height: 1.75; }
+        .lp-body { font-size: 16px; color: #ffffff; line-height: 1.75; }
+        .lp-body-lg { font-size: clamp(16px, 1.5vw, 19px); color: #ffffff; line-height: 1.75; }
         .lp-blue { color: #3b82f6; }
         .lp-dim { color: #b0bec5; }
 
