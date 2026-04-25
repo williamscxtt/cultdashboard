@@ -234,14 +234,12 @@ export default function LandingPage() {
       quote: "First reel to ever hit 100K. I've been posting for a year with nothing. One framework change and this happened." },
     { img: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg', name: 'TOM KÖSTER',     stat: '0 → 10K followers',      detail: 'Zero to 10,000 followers in one month. From 200 views per video to hundreds of thousands. First paying client at £2,000 — all within 30 days of joining.',
       quote: "Zero to 10K followers in a month. 200 views to hundreds of thousands. And my first £2,000 client — all in one month. I didn't think this was possible this fast." },
-    { img: '/testimonials/testimonial-zack-instagram-growth.jpg',      name: 'ZACK SINCLAIR',  stat: '0 → 100K+ followers',    detail: 'Zero to over 100,000 followers in four months — and a brand sponsorship deal with Booked Up. Built using the content and positioning system from Creator Cult.',
-      quote: "Zero to 100K+ followers in four months. Sponsored by Booked Up. I went from nobody online to a brand deal and a real audience. The positioning system made this happen." },
+    { img: '/testimonials/testimonial-zack-instagram-growth.jpg',      name: 'ZACK SINCLAIR',  stat: '0 → 100K+ followers',    detail: 'Zero to over 100,000 followers in four months — and a brand sponsorship deal with Bucked Up. Built using the content and positioning system from Creator Cult.',
+      quote: "Zero to 100K+ followers in four months. Sponsored by Bucked Up. I went from nobody online to a brand deal and a real audience. The positioning system made this happen." },
     { img: '/testimonials/testimonial-matte-first-payout-500.jpeg',    name: 'MATTE FORTUNA',  stat: 'First €500 payout',      detail: 'First ever coaching payout — €500. First client landed through the DM system inside Creator Cult.',
       quote: "First ever money from content. €500. Doesn't sound huge but it proved the whole thing works. I'll be at €5K/month within 3 months." },
-    { img: '/testimonials/testimonial-michael-5k-pif.jpeg',            name: 'MICHAEL KERSEE', stat: '$10K day on Stripe',      detail: 'One of multiple $10K single days — Stripe revenue shown. Part of a consistent pattern of £50K+ months built on the Creator Cult DM and offer system.',
+    { img: '/testimonials/testimonial-michael-5k-pif.jpeg',            name: 'MICHAEL KERSEE', stat: '$10K day',                detail: 'One of multiple $10K single days — revenue shown. Part of a consistent pattern of £50K+ months built on the Creator Cult DM and offer system.',
       quote: "This is one $10K day. I've had several now. The offer positioning and DM close system makes this repeatable — not a fluke." },
-    { img: '/testimonials/testimonial-freeyourmind-10k-views.jpg',     name: 'FREEYOURMIND',   stat: '10K views in 12 hours',  detail: '10,000 views in under 12 hours on Instagram. Then another 10K the same week using the same hook structure.',
-      quote: "10K views in 12 hours. Then another 10K later that week. I've been trying to go viral for 8 months. Took two weeks inside this programme." },
   ]
 
   const reviews = [
