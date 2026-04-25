@@ -74,10 +74,13 @@ function Faq({ q, a }: { q: string; a: string }) {
 const LogoMark = ({ size = 20 }: { size?: number }) => (
   <span style={{
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    width: size, height: size, background: '#3b82f6', borderRadius: Math.round(size * 0.25),
-    fontFamily: 'Inter, sans-serif', fontSize: Math.round(size * 0.55), fontWeight: 900,
-    color: '#fff', flexShrink: 0, letterSpacing: '-.02em',
-  }}>C</span>
+    width: size, height: size, background: '#3b82f6', borderRadius: Math.round(size * 0.26),
+    flexShrink: 0,
+  }}>
+    <svg width={Math.round(size * 0.5)} height={Math.round(size * 0.5)} viewBox="0 0 24 24" fill="white" stroke="none">
+      <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+    </svg>
+  </span>
 )
 
 interface WinItem {
@@ -234,10 +237,10 @@ export default function LandingPage() {
         .lp-h1 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(38px, 7vw, 88px); font-weight: 900; line-height: 1.0; letter-spacing: -0.04em; color: #f1f5f9; }
         .lp-h2 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(30px, 5vw, 62px); font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; color: #f1f5f9; }
         .lp-h3 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(20px, 2.5vw, 28px); font-weight: 700; line-height: 1.2; color: #f1f5f9; }
-        .lp-body { font-size: 16px; color: #94a3b8; line-height: 1.75; }
-        .lp-body-lg { font-size: clamp(16px, 1.5vw, 19px); color: #94a3b8; line-height: 1.75; }
+        .lp-body { font-size: 16px; color: #b0bec5; line-height: 1.75; }
+        .lp-body-lg { font-size: clamp(16px, 1.5vw, 19px); color: #b0bec5; line-height: 1.75; }
         .lp-blue { color: #3b82f6; }
-        .lp-dim { color: #94a3b8; }
+        .lp-dim { color: #b0bec5; }
 
         /* ── Layout ── */
         .lp-container { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
@@ -256,12 +259,13 @@ export default function LandingPage() {
         .lp-cta-ghost:hover { background: rgba(59,130,246,0.08); border-color: rgba(96,165,250,0.5); }
         .lp-cta-ghost-sm { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 600; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.25); padding: 9px 18px; border-radius: 6px; transition: background .2s; cursor: pointer; background: transparent; }
         .lp-cta-ghost-sm:hover { background: rgba(59,130,246,0.08); }
+        .lp-nav-cta { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 13px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 10px 22px; border-radius: 8px; transition: background .2s, transform .15s, box-shadow .2s; cursor: pointer; border: none; box-shadow: 0 0 24px rgba(59,130,246,0.35); }
+        .lp-nav-cta:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 0 36px rgba(59,130,246,0.55); }
 
         /* ── Nav ── */
         .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; transition: background .3s, border-color .3s; }
         .lp-nav.scrolled { background: rgba(13,13,10,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(59,130,246,0.1); }
-        .lp-nav-logo { font-family: 'Inter', sans-serif !important; font-size: 15px; font-weight: 900; letter-spacing: -.03em; text-decoration: none; display: flex; align-items: center; gap: 8px; color: #fff; }
-        .lp-nav-logo .c1 { color: #60a5fa; }
+        .lp-nav-logo { font-family: 'Inter', sans-serif !important; font-size: 15px; font-weight: 800; letter-spacing: -.02em; text-decoration: none; display: flex; align-items: center; gap: 9px; color: #f1f5f9; }
 
         /* ── Hero ── */
         .lp-hero { display: grid; grid-template-columns: 1fr 42%; min-height: 100vh; position: relative; }
@@ -276,7 +280,7 @@ export default function LandingPage() {
         .lp-hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 56px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 40px; }
         @media (max-width: 640px) { .lp-hero-stats { grid-template-columns: repeat(2, 1fr); gap: 28px 0; } }
         .lp-stat-n { font-family: 'Inter', sans-serif !important; font-size: clamp(26px, 3.5vw, 40px); font-weight: 900; color: #f1f5f9; letter-spacing: -.03em; line-height: 1; }
-        .lp-stat-l { font-size: 11px; color: #64748b; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; margin-top: 8px; }
+        .lp-stat-l { font-size: 11px; color: #94a3b8; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; margin-top: 8px; }
 
         /* ── Avatar social strip ── */
         .lp-avatar-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -305,13 +309,13 @@ export default function LandingPage() {
         @media (max-width: 640px) { .lp-pain-item { grid-template-columns: 1fr; gap: 10px; } }
         .lp-pain-num { font-family: 'Inter', sans-serif !important; font-size: 48px; font-weight: 900; color: rgba(255,255,255,0.22); line-height: 1; margin-top: -6px; letter-spacing: -.04em; }
         .lp-pain-title { font-family: 'Inter', sans-serif !important; font-size: clamp(17px, 2vw, 22px); font-weight: 700; color: #f1f5f9; margin-bottom: 10px; line-height: 1.3; letter-spacing: -.02em; }
-        .lp-pain-body { font-size: 15px; color: #94a3b8; line-height: 1.8; }
+        .lp-pain-body { font-size: 15px; color: #b0bec5; line-height: 1.8; }
 
         /* ── Story ── */
         .lp-story-grid { display: grid; grid-template-columns: 1fr 340px; gap: 80px; align-items: start; }
         @media (max-width: 900px) { .lp-story-grid { grid-template-columns: 1fr; gap: 48px; } }
         .lp-story-card-col { position: sticky; top: 90px; }
-        .lp-story-text { font-size: clamp(15px, 1.4vw, 17px); color: #94a3b8; line-height: 1.85; }
+        .lp-story-text { font-size: clamp(15px, 1.4vw, 17px); color: #b0bec5; line-height: 1.85; }
         .lp-story-text p { margin-bottom: 20px; }
         .lp-story-text p:last-child { margin-bottom: 0; }
         .lp-story-text strong { color: #ffffff; font-weight: 600; }
@@ -324,8 +328,8 @@ export default function LandingPage() {
         .lp-ba-after .lp-ba-label { color: #3b82f6; }
         .lp-ba-item { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
         .lp-ba-item:last-child { margin-bottom: 0; }
-        .lp-ba-before .lp-ba-item { color: #64748b; font-size: 14px; }
-        .lp-ba-before .lp-ba-mark { color: #334155; font-size: 12px; }
+        .lp-ba-before .lp-ba-item { color: #94a3b8; font-size: 14px; }
+        .lp-ba-before .lp-ba-mark { color: #64748b; font-size: 12px; }
         .lp-ba-after .lp-ba-item { color: #f1f5f9; font-size: 15px; font-weight: 600; }
         .lp-ba-after .lp-ba-mark { color: #3b82f6; font-size: 12px; font-weight: 700; }
 
@@ -340,9 +344,9 @@ export default function LandingPage() {
         .lp-phase-row-num { font-family: 'Inter', sans-serif !important; font-size: 80px; font-weight: 900; color: #3b82f6; letter-spacing: -.06em; line-height: 0.85; opacity: 0.9; }
         .lp-phase-row-label { font-size: 10px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: #3b82f6; margin-bottom: 14px; }
         .lp-phase-row-title { font-family: 'Inter', sans-serif !important; font-size: clamp(20px, 2.2vw, 28px); font-weight: 800; color: #ffffff; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 14px; }
-        .lp-phase-row-desc { font-size: 15px; color: #94a3b8; line-height: 1.75; }
+        .lp-phase-row-desc { font-size: 15px; color: #b0bec5; line-height: 1.75; }
         .lp-phase-row-bullets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; align-content: start; padding-top: 2px; }
-        .lp-phase-row-bullet { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #94a3b8; line-height: 1.5; }
+        .lp-phase-row-bullet { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #b0bec5; line-height: 1.5; }
         .lp-phase-row-bmark { color: #3b82f6; flex-shrink: 0; font-weight: 700; font-size: 14px; line-height: 1.5; }
         /* Support (throughout) row */
         .lp-phase-row.lp-support { grid-template-columns: 100px 1fr 1fr; background: rgba(59,130,246,0.04); border-top: 1px solid rgba(59,130,246,0.15); border-bottom: none; }
@@ -368,17 +372,17 @@ export default function LandingPage() {
         .lp-dash-main { padding: 24px; background: #0f0f0c; display: flex; flex-direction: column; gap: 18px; }
         .lp-dash-topbar { display: flex; justify-content: space-between; align-items: center; }
         .lp-dash-greeting { font-family: 'Inter', sans-serif !important; font-size: 14px; font-weight: 700; color: #f1f5f9; letter-spacing: -.01em; }
-        .lp-dash-subtext { font-size: 11px; color: #475569; margin-top: 2px; }
+        .lp-dash-subtext { font-size: 11px; color: #64748b; margin-top: 2px; }
         .lp-dash-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         @media (max-width: 700px) { .lp-dash-metrics { grid-template-columns: repeat(2, 1fr); } }
         .lp-dash-metric { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 14px 16px; }
         .lp-dash-metric-val { font-family: 'Inter', sans-serif !important; font-size: 18px; font-weight: 900; color: #f1f5f9; letter-spacing: -.03em; }
         .lp-dash-metric-val.blue { color: #3b82f6; }
-        .lp-dash-metric-lbl { font-size: 10px; color: #475569; margin-top: 4px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
+        .lp-dash-metric-lbl { font-size: 10px; color: #64748b; margin-top: 4px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
         .lp-dash-lower { display: grid; grid-template-columns: 3fr 2fr; gap: 10px; }
         @media (max-width: 700px) { .lp-dash-lower { grid-template-columns: 1fr; } }
         .lp-dash-panel { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 16px; }
-        .lp-dash-panel-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #64748b; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+        .lp-dash-panel-title { font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #94a3b8; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
         .lp-dash-ai-badge { display: inline-flex; align-items: center; gap: 5px; font-size: 10px; color: #3b82f6; background: rgba(59,130,246,0.1); padding: 3px 8px; border-radius: 4px; font-weight: 600; }
         .lp-dash-line { font-size: 11px; color: rgba(255,255,255,0.5); margin-bottom: 7px; padding: 7px 10px; background: rgba(255,255,255,0.02); border-radius: 5px; border-left: 2px solid rgba(59,130,246,0.3); line-height: 1.45; }
         .lp-dash-line.green { border-left-color: rgba(16,185,129,0.4); color: rgba(255,255,255,0.45); }
@@ -387,7 +391,7 @@ export default function LandingPage() {
         .lp-dash-client { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.04); }
         .lp-dash-client:last-child { border-bottom: none; }
         .lp-dash-client-name { font-size: 12px; color: rgba(255,255,255,0.65); font-weight: 500; }
-        .lp-dash-client-phase { font-size: 10px; color: #475569; margin-top: 2px; }
+        .lp-dash-client-phase { font-size: 10px; color: #64748b; margin-top: 2px; }
         .lp-dash-client-badge { font-size: 9px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #3b82f6; }
 
         /* ── Tool grid ── */
@@ -401,7 +405,7 @@ export default function LandingPage() {
         .lp-tool-icon-wrap { width: 36px; height: 36px; border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #3b82f6; margin-bottom: 16px; }
         .lp-tool-badge { font-size: 9px; font-weight: 700; letter-spacing: .14em; color: #3b82f6; text-transform: uppercase; background: rgba(59,130,246,0.1); padding: 2px 8px; border-radius: 4px; margin-left: 10px; }
         .lp-tool-title { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; display: flex; align-items: center; letter-spacing: -.01em; }
-        .lp-tool-desc { font-size: 13px; color: #94a3b8; line-height: 1.7; }
+        .lp-tool-desc { font-size: 13px; color: #b0bec5; line-height: 1.7; }
 
         /* ── Image marquee ── */
         .lp-imgmq-wrap { overflow: hidden; }
@@ -417,7 +421,7 @@ export default function LandingPage() {
         .lp-imgmq-img { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; }
         .lp-imgmq-foot { padding: 12px 14px 14px; }
         .lp-imgmq-win { font-size: 12px; font-weight: 700; color: #e2e8f0; line-height: 1.3; letter-spacing: -.01em; }
-        .lp-imgmq-name { font-size: 10px; color: #64748b; margin-top: 4px; font-weight: 500; letter-spacing: .04em; }
+        .lp-imgmq-name { font-size: 10px; color: #94a3b8; margin-top: 4px; font-weight: 500; letter-spacing: .04em; }
 
         /* ── Win grid ── */
         .lp-win-grid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 64px; border: 1px solid rgba(255,255,255,0.06); }
@@ -433,7 +437,7 @@ export default function LandingPage() {
         .lp-win-img { width: 100%; display: block; max-height: 210px; object-fit: contain; object-position: top; }
         .lp-win-body { padding: 20px 22px 24px; flex: 1; display: flex; flex-direction: column; }
         .lp-win-stat { font-family: 'Inter', sans-serif !important; font-size: 18px; font-weight: 800; color: #f1f5f9; letter-spacing: -.02em; margin-bottom: 7px; line-height: 1.2; }
-        .lp-win-detail { font-size: 12px; color: #94a3b8; line-height: 1.65; margin-bottom: 10px; flex: 1; }
+        .lp-win-detail { font-size: 12px; color: #b0bec5; line-height: 1.65; margin-bottom: 10px; flex: 1; }
         .lp-win-name { font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #3b82f6; }
         .lp-win-expand-hint { margin-top: 12px; font-size: 11px; color: #3b82f6; display: flex; align-items: center; gap: 6px; font-weight: 600; letter-spacing: .04em; }
 
@@ -446,7 +450,7 @@ export default function LandingPage() {
         .lp-modal-body { padding: 28px 32px 36px; }
         .lp-modal-tag { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #3b82f6; margin-bottom: 10px; }
         .lp-modal-stat { font-family: 'Inter', sans-serif !important; font-size: clamp(22px, 4vw, 30px); font-weight: 800; color: #f1f5f9; letter-spacing: -.03em; line-height: 1.1; margin-bottom: 16px; }
-        .lp-modal-detail { font-size: 15px; color: #94a3b8; line-height: 1.75; margin-bottom: 24px; }
+        .lp-modal-detail { font-size: 15px; color: #b0bec5; line-height: 1.75; margin-bottom: 24px; }
         .lp-modal-quote { border-left: 2px solid rgba(59,130,246,0.35); padding-left: 20px; margin-bottom: 24px; }
         .lp-modal-quote p { font-size: 14px; color: #60a5fa; font-style: italic; line-height: 1.7; }
         .lp-modal-source { font-size: 11px; color: #475569; letter-spacing: .08em; text-transform: uppercase; }
@@ -460,11 +464,11 @@ export default function LandingPage() {
         .lp-review-header { display: flex; align-items: center; gap: 12px; }
         .lp-review-avatar { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
         .lp-review-name { font-size: 14px; font-weight: 700; color: #e2e8f0; letter-spacing: -.01em; }
-        .lp-review-role { font-size: 11px; color: #94a3b8; margin-top: 1px; }
+        .lp-review-role { font-size: 11px; color: #b0bec5; margin-top: 1px; }
         .lp-review-stars { display: flex; gap: 2px; }
         .lp-review-metric { font-size: 12px; font-weight: 700; color: #3b82f6; background: rgba(59,130,246,0.08); padding: 4px 10px; border-radius: 5px; display: inline-block; }
-        .lp-review-quote { font-size: 14px; color: #cbd5e1; line-height: 1.7; font-style: italic; }
-        .lp-review-source { font-size: 10px; color: #475569; letter-spacing: .1em; text-transform: uppercase; margin-top: 4px; }
+        .lp-review-quote { font-size: 14px; color: #e2e8f0; line-height: 1.7; font-style: italic; }
+        .lp-review-source { font-size: 10px; color: #64748b; letter-spacing: .1em; text-transform: uppercase; margin-top: 4px; }
 
         /* ── Included grid ── */
         .lp-incl-grid { display: grid; grid-template-columns: repeat(2, 1fr); margin-top: 72px; border: 1px solid rgba(255,255,255,0.06); }
@@ -474,7 +478,7 @@ export default function LandingPage() {
         .lp-incl-card:nth-child(2n) { border-right: none; }
         .lp-incl-icon { width: 32px; height: 32px; flex-shrink: 0; border: 1px solid rgba(59,130,246,0.2); border-radius: 7px; display: flex; align-items: center; justify-content: center; color: #3b82f6; margin-top: 2px; }
         .lp-incl-title { font-size: 13px; font-weight: 700; color: #e2e8f0; margin-bottom: 7px; letter-spacing: -.01em; }
-        .lp-incl-desc { font-size: 13px; color: #94a3b8; line-height: 1.7; }
+        .lp-incl-desc { font-size: 13px; color: #b0bec5; line-height: 1.7; }
 
         /* ── For/Not for ── */
         .lp-for-grid { display: grid; grid-template-columns: 1fr 1fr; }
@@ -488,10 +492,10 @@ export default function LandingPage() {
         .lp-for-items { display: flex; flex-direction: column; gap: 14px; }
         .lp-for-item { display: flex; gap: 14px; align-items: flex-start; font-size: 15px; line-height: 1.65; }
         .yes .lp-for-item { color: #e2e8f0; }
-        .no .lp-for-item { color: #64748b; }
+        .no .lp-for-item { color: #94a3b8; }
         .lp-for-mark { flex-shrink: 0; font-size: 12px; font-weight: 700; margin-top: 3px; }
         .yes .lp-for-mark { color: #3b82f6; }
-        .no .lp-for-mark { color: #475569; }
+        .no .lp-for-mark { color: #64748b; }
 
         /* ── Mid & Final CTA ── */
         .lp-cta-block { text-align: center; padding: 88px 48px; }
@@ -499,12 +503,12 @@ export default function LandingPage() {
 
         /* ── Footer ── */
         .lp-footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 36px 48px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; max-width: 1200px; margin: 0 auto; }
-        .lp-footer-logo { font-size: 12px; font-weight: 900; letter-spacing: -.02em; color: #475569; display: flex; align-items: center; gap: 7px; }
+        .lp-footer-logo { font-size: 12px; font-weight: 900; letter-spacing: -.02em; color: #94a3b8; display: flex; align-items: center; gap: 7px; }
         .lp-footer-logo span { color: #3b82f6; }
         .lp-footer-links { display: flex; gap: 24px; }
-        .lp-footer-links a { font-size: 12px; color: #475569; text-decoration: none; transition: color .2s; }
-        .lp-footer-links a:hover { color: #94a3b8; }
-        .lp-footer-copy { font-size: 12px; color: #334155; }
+        .lp-footer-links a { font-size: 12px; color: #64748b; text-decoration: none; transition: color .2s; }
+        .lp-footer-links a:hover { color: #cbd5e1; }
+        .lp-footer-copy { font-size: 12px; color: #64748b; }
 
         /* ── Global mobile ── */
         @media (max-width: 640px) {
@@ -543,11 +547,11 @@ export default function LandingPage() {
         {/* ── Nav ── */}
         <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
           <a href="/landing-page" className="lp-nav-logo">
-            <LogoMark size={22} />
-            <span className="c1">Creator</span>&nbsp;Cult
+            <LogoMark size={28} />
+            Creator Cult
           </a>
-          <Link href="/apply" className="lp-cta-ghost-sm">
-            Apply <IconArrow />
+          <Link href="/apply" className="lp-nav-cta">
+            Apply Now <IconArrow />
           </Link>
         </nav>
 
@@ -826,8 +830,8 @@ export default function LandingPage() {
                 <div className="lp-dash-body">
                   <div className="lp-dash-sidebar">
                     <div className="lp-dash-logo">
-                      <LogoMark size={16} />
-                      <span>Creator</span>&nbsp;Cult
+                      <LogoMark size={20} />
+                      Creator Cult
                     </div>
                     {[
                       { label: 'Dashboard', icon: <NavHome />, active: false },
@@ -916,7 +920,7 @@ export default function LandingPage() {
             </div>
             <Fade delay={60}>
               <div style={{ textAlign: 'center', paddingTop: 56 }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#64748b', marginBottom: 20 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#94a3b8', marginBottom: 20 }}>
                   Access unlocks when you join Creator Cult.
                 </p>
                 <Link href="/apply" className="lp-cta-primary">Apply for access <IconArrow /></Link>
@@ -977,7 +981,7 @@ export default function LandingPage() {
           {/* Win grid — clickable */}
           <div className="lp-container">
             <Fade delay={20}>
-              <p style={{ fontSize: 12, color: '#64748b', marginTop: 48, marginBottom: 8, letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
+              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 48, marginBottom: 8, letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
                 Click any result to read the full story
               </p>
             </Fade>
@@ -999,7 +1003,7 @@ export default function LandingPage() {
               ))}
             </div>
             <Fade delay={80}>
-              <p style={{ textAlign: 'center', fontSize: 12, color: '#475569', marginTop: 28, letterSpacing: '.06em', fontFamily: 'Inter, sans-serif' }}>
+              <p style={{ textAlign: 'center', fontSize: 12, color: '#64748b', marginTop: 28, letterSpacing: '.06em', fontFamily: 'Inter, sans-serif' }}>
                 Real results from real Creator Cult members. Individual results vary.
               </p>
             </Fade>
@@ -1216,8 +1220,8 @@ export default function LandingPage() {
         {/* ── Footer ── */}
         <div className="lp-footer">
           <div className="lp-footer-logo">
-            <LogoMark size={18} />
-            <span>Creator</span>&nbsp;Cult
+            <LogoMark size={22} />
+            Creator Cult
           </div>
           <div className="lp-footer-links">
             <a href="/privacy">Privacy</a>
