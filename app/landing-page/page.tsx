@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 
-/* ─── Scroll-reveal ─────────────────────────────────────────────────── */
+/* ─── Scroll reveal ─────────────────────────────────────────────────── */
 function useReveal() {
   const ref = useRef<HTMLDivElement>(null)
   const [on, setOn] = useState(false)
@@ -12,7 +12,7 @@ function useReveal() {
     if (!el) return
     const io = new IntersectionObserver(
       ([e]) => { if (e.isIntersecting) setOn(true) },
-      { threshold: 0.08 }
+      { threshold: 0.06 }
     )
     io.observe(el)
     return () => io.disconnect()
@@ -20,37 +20,15 @@ function useReveal() {
   return { ref, on }
 }
 
-/* ─── Count-up hook ─────────────────────────────────────────────────── */
-function useCountUp(target: number, duration = 1600) {
-  const ref = useRef<HTMLDivElement>(null)
-  const [count, setCount] = useState(0)
-  const [started, setStarted] = useState(false)
-  useEffect(() => {
-    const el = ref.current
-    if (!el) return
-    const io = new IntersectionObserver(
-      ([e]) => { if (e.isIntersecting) setStarted(true) },
-      { threshold: 0.5 }
-    )
-    io.observe(el)
-    return () => io.disconnect()
-  }, [])
-  useEffect(() => {
-    if (!started) return
-    let frame = 0
-    const steps = Math.ceil(duration / 16)
-    const inc = target / steps
-    const tick = () => {
-      frame++
-      setCount(Math.min(Math.round(inc * frame), target))
-      if (frame < steps) requestAnimationFrame(tick)
-    }
-    requestAnimationFrame(tick)
-  }, [started, target, duration])
-  return { ref, count }
-}
-
-function Fade({ children, delay = 0, className = '' }: { children: React.ReactNode; delay?: number; className?: string }) {
+function Fade({
+  children,
+  delay = 0,
+  className = '',
+}: {
+  children: React.ReactNode
+  delay?: number
+  className?: string
+}) {
   const { ref, on } = useReveal()
   return (
     <div
@@ -58,8 +36,8 @@ function Fade({ children, delay = 0, className = '' }: { children: React.ReactNo
       className={className}
       style={{
         opacity: on ? 1 : 0,
-        transform: on ? 'none' : 'translateY(28px)',
-        transition: `opacity .7s ease ${delay}ms, transform .7s ease ${delay}ms`,
+        transform: on ? 'none' : 'translateY(36px)',
+        transition: `opacity .9s cubic-bezier(.16,1,.3,1) ${delay}ms, transform .9s cubic-bezier(.16,1,.3,1) ${delay}ms`,
       }}
     >
       {children}
@@ -69,47 +47,50 @@ function Fade({ children, delay = 0, className = '' }: { children: React.ReactNo
 
 /* ─── SVG Icons ─────────────────────────────────────────────────────── */
 const IconBrain = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3.16A2.5 2.5 0 0 1 9.5 2Z"/>
     <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3.16A2.5 2.5 0 0 0 14.5 2Z"/>
   </svg>
 )
 const IconDoc = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
-    <line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14 2 14 8 20 8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
   </svg>
 )
 const IconSearch = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8"/>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
   </svg>
 )
 const IconLayers = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="12 2 2 7 12 12 22 7 12 2"/>
     <polyline points="2 17 12 22 22 17"/>
     <polyline points="2 12 12 17 22 12"/>
   </svg>
 )
 const IconZap = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
   </svg>
 )
 const IconTrend = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/>
     <polyline points="16 7 22 7 22 13"/>
   </svg>
 )
 const IconStar = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
   </svg>
 )
 const IconUsers = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
     <circle cx="9" cy="7" r="4"/>
     <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
@@ -117,131 +98,92 @@ const IconUsers = () => (
   </svg>
 )
 const IconGrid = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
-    <rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="7" height="7"/>
+    <rect x="14" y="3" width="7" height="7"/>
+    <rect x="14" y="14" width="7" height="7"/>
+    <rect x="3" y="14" width="7" height="7"/>
   </svg>
 )
 const IconMsg = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
   </svg>
 )
 const IconShield = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
   </svg>
 )
 const IconPackage = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"/>
     <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
     <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
     <line x1="12" y1="22.08" x2="12" y2="12"/>
   </svg>
 )
-const IconCheck = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12"/>
-  </svg>
-)
-const IconX = () => (
-  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-  </svg>
-)
-const IconChevron = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="6 9 12 15 18 9"/>
-  </svg>
-)
 const IconArrow = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"/>
+    <polyline points="12 5 19 12 12 19"/>
+  </svg>
+)
+const IconPlus = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="12" y1="5" x2="12" y2="19"/>
+    <line x1="5" y1="12" x2="19" y2="12"/>
+  </svg>
+)
+const IconMinus = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="5" y1="12" x2="19" y2="12"/>
   </svg>
 )
 
-/* ─── Components ─────────────────────────────────────────────────────── */
-
+/* ─── FAQ ──────────────────────────────────────────────────────────── */
 function Faq({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="lp-faq-item">
-      <button className="lp-faq-q" onClick={() => setOpen(!open)}>
+    <div className="lp-faq-item" style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
+      <button
+        className="lp-faq-q"
+        onClick={() => setOpen(!open)}
+        style={{
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '24px 0',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          textAlign: 'left',
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+          fontSize: '15px',
+          fontWeight: 500,
+          color: '#e8e4dc',
+          lineHeight: 1.5,
+          gap: 24,
+        }}
+      >
         <span>{q}</span>
-        <span style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .25s', display: 'inline-flex', marginLeft: 16, flexShrink: 0 }}>
-          <IconChevron />
+        <span style={{ flexShrink: 0, color: '#C41E3A', transition: 'transform .2s', display: 'inline-flex' }}>
+          {open ? <IconMinus /> : <IconPlus />}
         </span>
       </button>
-      {open && <div className="lp-faq-a">{a}</div>}
-    </div>
-  )
-}
-
-function Win({ name, stat, detail, img, delay = 0 }: { name: string; stat: string; detail: string; img?: string; delay?: number }) {
-  const { ref, on } = useReveal()
-  return (
-    <div
-      ref={ref}
-      className="lp-win-card"
-      style={{ opacity: on ? 1 : 0, transform: on ? 'none' : 'translateY(24px)', transition: `opacity .6s ease ${delay}ms, transform .6s ease ${delay}ms` }}
-    >
-      <div className="lp-win-stat">{stat}</div>
-      <p className="lp-win-detail">{detail}</p>
-      {img && (
-        <div className="lp-win-img-wrap">
-          <img src={img} alt={`${name} result`} className="lp-win-img" loading="lazy" />
+      {open && (
+        <div style={{
+          paddingBottom: 24,
+          fontSize: 14,
+          color: '#7a756e',
+          lineHeight: 1.8,
+          maxWidth: 680,
+          fontFamily: "'DM Sans', system-ui, sans-serif",
+        }}>
+          {a}
         </div>
       )}
-      <div className="lp-win-name">— {name}</div>
-    </div>
-  )
-}
-
-function Phase({ num, title, desc, items, delay = 0, highlight = false }: { num: string; title: string; desc: string; items: string[]; delay?: number; highlight?: boolean }) {
-  const { ref, on } = useReveal()
-  return (
-    <div
-      ref={ref}
-      className={`lp-phase-card${highlight ? ' lp-phase-hl' : ''}`}
-      style={{ opacity: on ? 1 : 0, transform: on ? 'none' : 'translateY(24px)', transition: `opacity .65s ease ${delay}ms, transform .65s ease ${delay}ms` }}
-    >
-      <div className="lp-phase-num">Phase {num}</div>
-      <h3 className="lp-phase-title">{title}</h3>
-      <p className="lp-phase-desc">{desc}</p>
-      <ul className="lp-phase-list">
-        {items.map(i => (
-          <li key={i} className="lp-phase-item">
-            <span className="lp-check-icon"><IconCheck /></span>{i}
-          </li>
-        ))}
-      </ul>
-    </div>
-  )
-}
-
-function ToolCard({ icon, title, desc, badge }: { icon: React.ReactNode; title: string; desc: string; badge?: string }) {
-  return (
-    <div className="lp-tool-card">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
-        <div className="lp-tool-icon">{icon}</div>
-        {badge && <span className="lp-tool-badge">{badge}</span>}
-      </div>
-      <div className="lp-tool-title">{title}</div>
-      <p className="lp-tool-desc">{desc}</p>
-    </div>
-  )
-}
-
-function StatCounter({ prefix = '', target, suffix = '', label }: { prefix?: string; target: number; suffix?: string; label: string }) {
-  const { ref, count } = useCountUp(target)
-  const display = target >= 1000
-    ? `${prefix}${count.toLocaleString()}${suffix}`
-    : `${prefix}${count}${suffix}`
-  return (
-    <div style={{ textAlign: 'center' }}>
-      <div className="lp-stat-n" ref={ref}>{display}</div>
-      <div className="lp-stat-l">{label}</div>
     </div>
   )
 }
@@ -249,6 +191,7 @@ function StatCounter({ prefix = '', target, suffix = '', label }: { prefix?: str
 /* ─── Page ──────────────────────────────────────────────────────────── */
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
+
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', h, { passive: true })
@@ -256,177 +199,264 @@ export default function LandingPage() {
   }, [])
 
   const tickerItems = [
-    'Freddie · £1,950 in 3 days',
-    'Eddie · 5K followers in 10 days',
-    'Dino · 24M views in 3 weeks',
-    'Brett · first client in 3 weeks',
-    'Asfand · first client in 7 days',
-    'Michael · $10K day',
-    'Tom · monetised within 30 days',
-    'Roy · 6K followers in 6 weeks',
+    'Freddie — £1,950 in 3 days',
+    'Eddie — 5,000 followers in 10 days',
+    'Dino — 24 million views in 3 weeks',
+    'Brett Capstick — First client in 3 weeks',
+    'Asfand — First paying client in 7 days',
+    'Michael Kersee — $10,000 in a single day',
+    'Tom Köster — 600 to 1,300 followers in one week',
+    'Roy — 1 million views, first viral reel',
+  ]
+
+  const marqueeRow1 = [
+    { name: 'Michael Kersee', result: '$10,000 in a single day' },
+    { name: 'Freddie', result: '£1,950 in 72 hours' },
+    { name: 'Eddie', result: '5,000 followers in 10 days' },
+    { name: 'Dino', result: '24 million views in 3 weeks' },
+    { name: 'Brett Capstick', result: 'First client in 3 weeks' },
+    { name: 'Bile', result: '€550/month — two clients signed' },
+    { name: 'Jakub Riedel', result: 'Three viral reels back to back' },
+    { name: 'Zack Sinclair', result: '19K likes and 5.1K saves on one reel' },
+  ]
+  const marqueeRow2 = [
+    { name: 'Tom Köster', result: '600 to 1,300 followers in one week' },
+    { name: 'Roy', result: '1 million views — first viral reel' },
+    { name: 'Gabrielle', result: 'First 100,000 views on Instagram' },
+    { name: 'Matte Fortuna', result: '€500 first coaching payout' },
+    { name: 'Asfand', result: 'First paying client in 7 days' },
+    { name: 'Toshiro Khouth', result: 'First 100K-view video' },
+    { name: 'FreeYourMind', result: '10K views in under 12 hours' },
+    { name: 'Michael Kersee', result: '1M views in 30 days' },
+  ]
+
+  const tools = [
+    { icon: <IconBrain />, title: 'AI Story Generator', desc: 'Input your niche, offer, and audience. Get a full Instagram story sequence built around your specific positioning — hooks, slides, CTA. Not a template. A custom sequence.', badge: 'Most Used' },
+    { icon: <IconDoc />, title: 'Lead Magnet Generator', desc: 'Choose your angle. The AI builds a complete lead magnet brief: title, concept, outline, and a ready-to-paste caption CTA with comment keyword. Convert followers into leads this week.' },
+    { icon: <IconSearch />, title: 'Profile Audit AI', desc: 'Feed in your Instagram URL. Get a structured audit: bio clarity, CTA strength, offer visibility, content gaps. Know exactly what to fix and in what order.' },
+    { icon: <IconLayers />, title: 'Content Library', desc: 'Every training, resource, and framework in one searchable library. Organised by phase. No hunting through Notion docs or Slack threads to find what you need.' },
+    { icon: <IconZap />, title: 'Offer Builder', desc: 'Step through your offer structure with AI guidance. Deliverables, transformation, price point, positioning. Build an offer that actually sells before you launch it.' },
+    { icon: <IconTrend />, title: 'Reel Analytics', desc: 'See which reels pull the most views, track the hooks that work, and spot content patterns — all inside your dashboard, connected to your profile data.' },
+  ]
+
+  const included = [
+    { icon: <IconStar />, title: 'The 5-Phase Curriculum', desc: 'Foundations to Scale. Every lesson, framework, and exercise structured in the order that works. Self-paced, but guided.' },
+    { icon: <IconUsers />, title: 'Weekly Group Coaching Calls', desc: 'Live calls every week. Bring your questions, your content, your blockers. Will reviews your work live and tells you exactly what to fix.' },
+    { icon: <IconGrid />, title: 'The Cult Dashboard', desc: 'Private access to all six AI tools built for Creator Cult members — Story Generator, Lead Magnet Generator, Profile Audit, Offer Builder, and more.' },
+    { icon: <IconMsg />, title: 'Private Circle Community', desc: '40+ creators at different stages, all working the same system. Post wins, ask for feedback, get accountability. Active every day.' },
+    { icon: <IconShield />, title: '1:1 Support', desc: 'Direct access to Will between calls. Post your content for review, ask for offer feedback, get unstuck fast. Not a bot. Not a VA.' },
+    { icon: <IconPackage />, title: 'Weekly Strategy Packages', desc: "Every week you get a curated strategy package: what's working on Instagram right now, content angles to test, and a plan for the next 7 days." },
+  ]
+
+  const phases = [
+    { n: '01', title: 'Foundations', desc: 'Before you create content, you need clarity. Most creators skip this. It costs them everything.', items: ['Niche and ICP precision', 'Positioning that makes you the obvious choice', 'Brand voice and content identity', 'Offer foundations — what you sell before you sell anything'] },
+    { n: '02', title: 'Build the Brand', desc: 'Content that builds authority, attracts the right people, and makes them follow for a reason.', items: ['Hook writing and the psychology behind stopping thumbs', 'Content frameworks that convert viewers into followers', 'Story-driven content that sells without selling', 'Reel strategy tied directly to your offer'] },
+    { n: '03', title: 'Client Acquisition', desc: "Followers mean nothing if you can't convert them. This phase builds the machine.", items: ['DM strategy that turns comments into conversations', 'Discovery call frameworks and objection handling', 'Lead magnet creation and comment-keyword funnels', 'First client delivery: get paid before you have a product'] },
+    { n: '04', title: 'Monetisation Mastery', desc: 'Turn a trickle of clients into a consistent, scalable income stream.', items: ['High-ticket offer structuring and pricing', 'Upsell and retention systems for existing clients', 'Instagram sales psychology: urgency, scarcity, trust', 'Revenue goal planning with real numbers'] },
+    { n: '05', title: 'Scale and Systems', desc: 'Build the infrastructure that lets the business run without burning out.', items: ['Content batching and weekly production workflow', 'Setter and team onboarding foundations', 'Automation for DMs, leads, and client delivery', 'From full-time employee to full-time creator'] },
+    { n: '—', title: 'Ongoing Support', desc: "You're not going through this alone. Every week, every question, every plateau.", items: ['Weekly group coaching calls', 'Private Circle community', '1:1 support and feedback', 'Content and offer reviews', 'The Cult Dashboard'] },
   ]
 
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Playfair+Display:ital,wght@0,400;0,500;0,700;0,900;1,400;1,500;1,700&display=swap');
+
         /* ── Reset ── */
         .lp-root { all: initial; display: block; }
         .lp-root *, .lp-root *::before, .lp-root *::after {
           box-sizing: border-box; margin: 0; padding: 0;
         }
+
+        /* ── Base ── */
         .lp-root {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-          font-size: 16px; font-weight: 400; line-height: 1.6;
-          color: #ffffff; background: #000; min-height: 100vh;
-          overflow-x: hidden; -webkit-font-smoothing: antialiased;
+          font-family: 'DM Sans', system-ui, -apple-system, sans-serif !important;
+          font-size: 16px; font-weight: 400; line-height: 1.65;
+          color: #e8e4dc; background: #0d0d0a;
+          min-height: 100vh; overflow-x: hidden;
+          -webkit-font-smoothing: antialiased;
         }
+
+        /* ── Grain overlay ── */
+        .lp-root::after {
+          content: '';
+          position: fixed; inset: 0;
+          z-index: 9999; pointer-events: none;
+          opacity: 0.045;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.72' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+          background-size: 280px 280px;
+        }
+
+        /* ── Typography ── */
+        .lp-h1 {
+          font-family: 'Playfair Display', Georgia, 'Times New Roman', serif !important;
+          font-size: clamp(52px, 7.5vw, 96px);
+          font-weight: 900; line-height: 0.93;
+          letter-spacing: -0.025em; color: #f0ece4;
+        }
+        .lp-h2 {
+          font-family: 'Playfair Display', Georgia, serif !important;
+          font-size: clamp(38px, 5.5vw, 68px);
+          font-weight: 700; line-height: 1.03;
+          letter-spacing: -0.02em; color: #f0ece4;
+        }
+        .lp-h3 {
+          font-family: 'Playfair Display', Georgia, serif !important;
+          font-size: clamp(20px, 2.5vw, 28px);
+          font-weight: 600; line-height: 1.15; color: #f0ece4;
+        }
+        .lp-h4 {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 13px; font-weight: 700;
+          letter-spacing: .08em; color: #e8e4dc;
+          text-transform: uppercase;
+        }
+        .lp-body { font-size: 16px; color: #7a756e; line-height: 1.75; }
+        .lp-body-lg { font-size: 18px; color: #7a756e; line-height: 1.75; }
+        .lp-italic { font-style: italic; }
+
+        /* ── Layout ── */
+        .lp-container { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
+        .lp-container-sm { max-width: 840px; margin: 0 auto; padding: 0 48px; }
+        .lp-section { padding: 128px 0; }
+        .lp-section-sm { padding: 80px 0; }
+        .lp-hr { height: 1px; background: rgba(196,30,58,0.2); }
+
+        /* ── Pill label ── */
+        .lp-pill {
+          display: inline-block;
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 9px; font-weight: 600;
+          letter-spacing: .24em; text-transform: uppercase;
+          color: #C41E3A;
+          border: 1px solid rgba(196,30,58,0.3);
+          padding: 5px 14px;
+          border-radius: 2px;
+          margin-bottom: 28px;
+        }
+
+        /* ── CTAs ── */
+        .lp-cta {
+          display: inline-flex; align-items: center; gap: 12px;
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 10px; font-weight: 700;
+          letter-spacing: .22em; text-transform: uppercase;
+          color: #C41E3A; background: transparent;
+          border: 1px solid #C41E3A;
+          padding: 17px 40px; text-decoration: none;
+          transition: background .2s ease, color .2s ease;
+          cursor: pointer; border-radius: 0;
+        }
+        .lp-cta:hover { background: #C41E3A; color: #0d0d0a; }
+        .lp-cta-sm {
+          display: inline-flex; align-items: center; gap: 10px;
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 9px; font-weight: 700;
+          letter-spacing: .22em; text-transform: uppercase;
+          color: #C41E3A; background: transparent;
+          border: 1px solid #C41E3A;
+          padding: 10px 22px; text-decoration: none;
+          transition: background .2s ease, color .2s ease;
+          cursor: pointer; border-radius: 0;
+        }
+        .lp-cta-sm:hover { background: #C41E3A; color: #0d0d0a; }
 
         /* ── Nav ── */
         .lp-nav {
-          position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+          position: fixed; top: 0; left: 0; right: 0; z-index: 100;
           height: 64px; display: flex; align-items: center;
-          justify-content: space-between; padding: 0 32px;
-          transition: background .3s, border-color .3s, backdrop-filter .3s;
+          justify-content: space-between; padding: 0 48px;
+          transition: background .4s ease, border-color .4s ease;
         }
         .lp-nav.scrolled {
-          background: rgba(0,0,0,0.85);
+          background: rgba(13,13,10,0.92);
           backdrop-filter: blur(20px);
           -webkit-backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(255,255,255,0.07);
+          border-bottom: 1px solid rgba(196,30,58,0.15);
         }
         .lp-nav-logo {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: 16px; font-weight: 900; letter-spacing: -.02em;
-          text-decoration: none; display: flex; align-items: center; gap: 2px;
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 12px; font-weight: 700;
+          letter-spacing: .22em; text-transform: uppercase;
+          text-decoration: none; color: #e8e4dc;
         }
-        .lp-nav-logo .c1 { color: #60a5fa; }
-        .lp-nav-logo .c2 { color: #ffffff; }
-        .lp-nav-cta {
-          display: inline-flex; align-items: center; gap: 8px;
-          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-          color: #fff; font-size: 13px; font-weight: 700;
-          padding: 10px 22px; border-radius: 12px; text-decoration: none;
-          transition: opacity .2s, box-shadow .2s; cursor: pointer;
-          box-shadow: 0 0 20px rgba(59,130,246,0.3);
-        }
-        .lp-nav-cta:hover { opacity: .9; box-shadow: 0 0 32px rgba(59,130,246,0.5); }
+        .lp-nav-logo span { color: #C41E3A; }
 
-        /* ── Container ── */
-        .lp-container { max-width: 1120px; margin: 0 auto; padding: 0 32px; width: 100%; }
-        .lp-section { padding: 120px 0; }
-        .lp-section-sm { padding: 72px 0; }
-
-        /* ── HERO ── */
+        /* ── Hero ── */
         .lp-hero {
-          min-height: 100vh; display: flex; align-items: center;
-          padding: 80px 32px 60px; position: relative; overflow: hidden;
+          display: grid;
+          grid-template-columns: 1fr 42%;
+          min-height: 100vh;
+          position: relative;
         }
-        .lp-hero-bg {
-          position: absolute; inset: 0; pointer-events: none;
-          background: radial-gradient(ellipse 80% 70% at 20% 40%, rgba(59,130,246,0.12) 0%, transparent 60%),
-                      radial-gradient(ellipse 50% 50% at 80% 20%, rgba(99,102,241,0.06) 0%, transparent 55%);
+        @media (max-width: 900px) {
+          .lp-hero { grid-template-columns: 1fr; min-height: auto; }
+          .lp-hero-photo-col { height: 60vw; min-height: 320px; order: -1; }
         }
-        .lp-hero-inner {
-          position: relative; max-width: 1120px; margin: 0 auto; width: 100%;
-          display: grid; grid-template-columns: 1fr 440px; gap: 80px; align-items: center;
+        .lp-hero-left {
+          display: flex; flex-direction: column; justify-content: center;
+          padding: 120px 64px 80px 48px;
+          border-right: 1px solid rgba(196,30,58,0.1);
         }
-        @media (max-width: 960px) {
-          .lp-hero-inner { grid-template-columns: 1fr; gap: 56px; }
-          .lp-hero-photo-col { order: -1; max-width: 340px; margin: 0 auto; }
+        @media (max-width: 900px) {
+          .lp-hero-left { padding: 100px 32px 60px; border-right: none; }
         }
         @media (max-width: 640px) {
-          .lp-hero { padding: 80px 20px 60px; min-height: auto; padding-top: 110px; }
-          .lp-hero-photo-col { max-width: 260px; }
+          .lp-hero-left { padding: 100px 20px 60px; }
         }
-
-        /* ── Hero text ── */
-        .lp-badge {
-          display: inline-flex; align-items: center; gap: 8px;
-          color: #60a5fa; font-size: 11px; font-weight: 700; letter-spacing: .14em;
-          text-transform: uppercase; border: 1px solid rgba(96,165,250,0.2);
-          background: rgba(59,130,246,0.08); padding: 8px 16px; border-radius: 999px;
-          margin-bottom: 32px;
+        .lp-hero-eyebrow {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 9px; font-weight: 600; letter-spacing: .28em;
+          text-transform: uppercase; color: #C41E3A; margin-bottom: 32px;
         }
-        .lp-badge-dot { width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; }
-        .lp-h1 {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: clamp(44px, 6.5vw, 80px); font-weight: 900;
-          line-height: 1.03; letter-spacing: -.04em; color: #fff;
-          margin-bottom: 28px;
-        }
-        .lp-h1 .grad {
-          background: linear-gradient(135deg, #60a5fa 0%, #818cf8 100%);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-        .lp-hero-sub {
-          font-size: clamp(17px, 2vw, 20px); color: #9ca3af;
-          max-width: 520px; line-height: 1.65; margin-bottom: 40px;
-        }
-        .lp-cta-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
-        .lp-cta-primary {
-          display: inline-flex; align-items: center; gap: 10px;
-          background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
-          color: #fff; font-size: 17px; font-weight: 800;
-          padding: 18px 36px; border-radius: 16px; text-decoration: none;
-          transition: box-shadow .25s, transform .25s; cursor: pointer;
-          box-shadow: 0 0 40px rgba(59,130,246,0.35);
-          font-family: 'Inter', -apple-system, sans-serif !important;
-        }
-        .lp-cta-primary:hover {
-          box-shadow: 0 0 70px rgba(59,130,246,0.6);
-          transform: translateY(-2px);
-        }
-        .lp-cta-note { font-size: 13px; color: #4b5563; }
-
-        /* ── Hero stats ── */
-        .lp-hero-stats {
-          display: flex; flex-wrap: wrap; gap: 40px; margin-top: 56px;
-          padding-top: 40px; border-top: 1px solid rgba(255,255,255,0.07);
-        }
-        .lp-stat-n {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: 38px; font-weight: 900; color: #fff; letter-spacing: -.03em;
-          line-height: 1;
-          text-shadow: 0 0 40px rgba(59,130,246,0.4);
-        }
-        .lp-stat-l { font-size: 12px; color: #6b7280; margin-top: 6px; font-weight: 500; letter-spacing: .02em; }
-
-        /* ── Hero photo ── */
-        .lp-hero-photo-col { position: relative; }
-        .lp-hero-photo-glow {
-          position: absolute; inset: -60px;
-          background: radial-gradient(ellipse at center, rgba(59,130,246,0.22) 0%, transparent 65%);
-          pointer-events: none; z-index: 0;
+        .lp-hero-photo-col {
+          position: relative; overflow: hidden;
         }
         .lp-hero-photo {
-          position: relative; z-index: 1; width: 100%;
-          border-radius: 24px; aspect-ratio: 3/4; object-fit: cover;
-          object-position: top; display: block;
-          border: 1px solid rgba(59,130,246,0.15);
-          box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+          position: absolute; inset: 0;
+          width: 100%; height: 100%;
+          object-fit: cover; object-position: top;
+          display: block;
+          filter: brightness(0.88) contrast(1.05);
         }
-        .lp-hero-photo-badge {
-          position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%);
-          z-index: 2; background: rgba(0,0,0,0.8); backdrop-filter: blur(12px);
-          border: 1px solid rgba(255,255,255,0.1); border-radius: 12px;
-          padding: 12px 20px; text-align: center; white-space: nowrap;
+        .lp-hero-photo-overlay {
+          position: absolute; inset: 0;
+          background: linear-gradient(to right, #0d0d0a 0%, transparent 25%),
+                      linear-gradient(to top, #0d0d0a 0%, transparent 30%);
         }
-        .lp-hero-photo-badge-n {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: 20px; font-weight: 900; color: #60a5fa;
+        .lp-hero-stats {
+          display: grid; grid-template-columns: repeat(4, 1fr);
+          gap: 0; margin-top: 56px;
+          border-top: 1px solid rgba(255,255,255,0.07);
+          padding-top: 40px;
         }
-        .lp-hero-photo-badge-l { font-size: 11px; color: #6b7280; margin-top: 2px; }
+        @media (max-width: 640px) {
+          .lp-hero-stats { grid-template-columns: repeat(2, 1fr); gap: 28px 0; }
+        }
+        .lp-stat { }
+        .lp-stat-n {
+          font-family: 'Playfair Display', Georgia, serif !important;
+          font-size: clamp(28px, 4vw, 44px);
+          font-weight: 900; color: #f0ece4;
+          line-height: 1; letter-spacing: -0.02em;
+        }
+        .lp-stat-l {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 10px; color: #4a4640;
+          font-weight: 500; letter-spacing: .1em;
+          text-transform: uppercase; margin-top: 8px;
+        }
 
-        /* ── Animated Ticker ── */
+        /* ── Ticker ── */
         .lp-ticker {
-          border-top: 1px solid rgba(255,255,255,0.06);
-          border-bottom: 1px solid rgba(255,255,255,0.06);
-          padding: 18px 0; overflow: hidden; background: rgba(255,255,255,0.01);
+          border-top: 1px solid rgba(196,30,58,0.2);
+          border-bottom: 1px solid rgba(196,30,58,0.2);
+          padding: 16px 0; overflow: hidden;
+          background: rgba(196,30,58,0.02);
         }
         .lp-ticker-track {
           display: flex; width: max-content;
-          animation: lp-marquee 28s linear infinite;
+          animation: lp-marquee 36s linear infinite;
         }
         .lp-ticker-track:hover { animation-play-state: paused; }
         @keyframes lp-marquee {
@@ -434,456 +464,544 @@ export default function LandingPage() {
           100% { transform: translateX(-50%); }
         }
         .lp-tick {
-          display: inline-flex; align-items: center; gap: 8px;
-          font-size: 13px; color: #6b7280; white-space: nowrap;
+          display: inline-flex; align-items: center; gap: 0;
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 11px; font-weight: 500; letter-spacing: .1em;
+          color: #4a4640; white-space: nowrap;
           padding: 0 32px;
         }
-        .lp-tick-dot { width: 5px; height: 5px; border-radius: 50%; background: #3b82f6; flex-shrink: 0; }
+        .lp-tick-sep {
+          color: #C41E3A; margin-right: 0; font-size: 10px; margin-left: 0;
+        }
 
-        /* ── Section headings ── */
-        .lp-overline {
-          font-size: 11px; font-weight: 700; letter-spacing: .14em;
-          text-transform: uppercase; color: #3b82f6; margin-bottom: 20px;
+        /* ── Social strip ── */
+        .lp-social-strip {
+          padding: 40px 0;
+          border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .lp-h2 {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: clamp(34px, 5vw, 56px); font-weight: 900;
-          line-height: 1.07; letter-spacing: -.035em; color: #fff; margin-bottom: 20px;
+        .lp-social-label {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 9px; font-weight: 600; letter-spacing: .28em;
+          text-transform: uppercase; color: #3a3530;
+          margin-bottom: 24px; text-align: center;
         }
-        .lp-h2 .muted { color: #374151; }
-        .lp-h2 .blue { color: #60a5fa; }
-        .lp-h2 .grad {
-          background: linear-gradient(135deg, #60a5fa 0%, #818cf8 100%);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-          background-clip: text;
+        .lp-social-names {
+          display: flex; flex-wrap: wrap; justify-content: center;
+          gap: 0; align-items: center;
         }
-        .lp-intro { font-size: 18px; color: #6b7280; line-height: 1.75; }
-        .lp-center { text-align: center; }
-        .lp-center .lp-intro { margin: 0 auto; max-width: 600px; }
+        .lp-social-name {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 12px; font-weight: 500; letter-spacing: .08em;
+          color: #3a3530; padding: 0 20px;
+          border-right: 1px solid rgba(255,255,255,0.05);
+        }
+        .lp-social-name:last-child { border-right: none; }
 
-        /* ── Pain cards ── */
-        .lp-pain-stack { display: flex; flex-direction: column; gap: 12px; margin-top: 52px; }
-        .lp-pain-card {
-          background: rgba(255,255,255,0.02);
-          border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 20px; padding: 30px 36px;
-          transition: border-color .3s, background .3s, transform .2s;
-          cursor: default;
+        /* ── Pain ── */
+        .lp-pain-item {
+          padding: 44px 0;
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          display: grid; grid-template-columns: 80px 1fr;
+          gap: 48px; align-items: start;
         }
-        .lp-pain-card:hover {
-          border-color: rgba(59,130,246,0.18); background: rgba(255,255,255,0.03);
-          transform: translateX(4px);
+        @media (max-width: 640px) {
+          .lp-pain-item { grid-template-columns: 1fr; gap: 12px; }
         }
-        .lp-pain-num { font-size: 11px; font-weight: 700; color: rgba(96,165,250,0.4); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 12px; }
-        .lp-pain-title { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 10px; }
-        .lp-pain-body { font-size: 15px; color: #6b7280; line-height: 1.75; }
+        .lp-pain-num {
+          font-family: 'Playfair Display', serif !important;
+          font-size: 52px; font-weight: 400; color: rgba(196,30,58,0.15);
+          line-height: 1; margin-top: -8px; font-style: italic;
+        }
+        .lp-pain-title {
+          font-family: 'Playfair Display', serif !important;
+          font-size: clamp(20px, 2.5vw, 26px);
+          font-weight: 600; color: #f0ece4; margin-bottom: 12px; line-height: 1.25;
+        }
+        .lp-pain-body {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 15px; color: #5a5550; line-height: 1.8;
+        }
 
         /* ── Story ── */
-        .lp-story-border {
-          background: linear-gradient(180deg, transparent 0%, rgba(59,130,246,0.03) 50%, transparent 100%);
-          border-top: 1px solid rgba(255,255,255,0.05);
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-          position: relative;
-        }
-        .lp-story-layout {
-          display: grid; grid-template-columns: 1fr 400px; gap: 88px; align-items: start;
+        .lp-story-grid {
+          display: grid; grid-template-columns: 1fr 380px; gap: 96px; align-items: start;
         }
         @media (max-width: 900px) {
-          .lp-story-layout { grid-template-columns: 1fr; gap: 52px; }
-          .lp-story-photo-col { order: -1; max-width: 380px; margin: 0 auto; }
+          .lp-story-grid { grid-template-columns: 1fr; gap: 52px; }
+          .lp-story-photo-col { order: -1; max-width: 380px; }
         }
         .lp-story-photo-col { position: sticky; top: 90px; }
         .lp-story-photo {
-          width: 100%; border-radius: 20px; object-fit: cover;
-          aspect-ratio: 3/4; object-position: top; display: block;
-          border: 1px solid rgba(255,255,255,0.07);
-          box-shadow: 0 32px 80px rgba(0,0,0,0.5);
+          width: 100%; display: block;
+          aspect-ratio: 3/4; object-fit: cover; object-position: top;
+          border: 1px solid rgba(255,255,255,0.06);
         }
-        .lp-story-caption { text-align: center; font-size: 12px; color: #374151; margin-top: 14px; font-weight: 500; }
-        .lp-story-text { font-size: 18px; color: #9ca3af; line-height: 1.85; }
+        .lp-story-caption {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+          color: #3a3530; margin-top: 16px; text-align: center;
+        }
+        .lp-story-text {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 17px; color: #5a5550; line-height: 1.85;
+        }
         .lp-story-text p { margin-bottom: 22px; }
         .lp-story-text p:last-child { margin-bottom: 0; }
-        .lp-story-text strong { color: #fff; font-weight: 700; }
-        .lp-story-text .lp-h2 { margin-bottom: 32px; }
+        .lp-story-text strong { color: #e8e4dc; font-weight: 600; }
 
         /* ── Phase grid ── */
         .lp-phase-grid {
-          display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 64px;
+          display: grid; grid-template-columns: repeat(3, 1fr);
+          gap: 0; margin-top: 80px;
+          border: 1px solid rgba(255,255,255,0.06);
         }
         @media (max-width: 960px) { .lp-phase-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 580px) { .lp-phase-grid { grid-template-columns: 1fr; } }
         .lp-phase-card {
-          background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 20px; padding: 28px;
-          transition: border-color .3s, background .3s, transform .2s; cursor: default;
+          padding: 36px 32px;
+          border-right: 1px solid rgba(255,255,255,0.06);
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          transition: background .25s;
+          cursor: default;
         }
-        .lp-phase-card:hover {
-          border-color: rgba(59,130,246,0.2); background: rgba(255,255,255,0.035);
-          transform: translateY(-2px);
+        .lp-phase-card:hover { background: rgba(196,30,58,0.03); }
+        .lp-phase-card:nth-child(3n) { border-right: none; }
+        @media (max-width: 960px) {
+          .lp-phase-card:nth-child(3n) { border-right: 1px solid rgba(255,255,255,0.06); }
+          .lp-phase-card:nth-child(2n) { border-right: none; }
         }
-        .lp-phase-hl {
-          background: rgba(59,130,246,0.07); border-color: rgba(59,130,246,0.2);
-        }
-        .lp-phase-hl:hover { background: rgba(59,130,246,0.1); }
-        .lp-phase-num {
-          font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
-          color: rgba(96,165,250,0.5); margin-bottom: 14px;
+        .lp-phase-n {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 9px; font-weight: 700; letter-spacing: .28em;
+          text-transform: uppercase; color: #C41E3A;
+          margin-bottom: 20px;
         }
         .lp-phase-title {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 10px;
+          font-family: 'Playfair Display', serif !important;
+          font-size: 20px; font-weight: 700; color: #f0ece4;
+          margin-bottom: 12px; line-height: 1.2;
         }
-        .lp-phase-hl .lp-phase-title { color: #93c5fd; }
-        .lp-phase-desc { font-size: 13px; color: #6b7280; line-height: 1.65; margin-bottom: 20px; }
-        .lp-phase-hl .lp-phase-desc { color: rgba(147,197,253,0.6); }
-        .lp-phase-list { list-style: none; display: flex; flex-direction: column; gap: 9px; }
-        .lp-phase-item { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #9ca3af; line-height: 1.5; }
-        .lp-phase-hl .lp-phase-item { color: rgba(147,197,253,0.8); }
-        .lp-check-icon {
-          color: #3b82f6; flex-shrink: 0; margin-top: 2px;
-          display: inline-flex; align-items: center;
-        }
-        .lp-phase-hl .lp-check-icon { color: #60a5fa; }
-
-        /* ── Dashboard section ── */
-        .lp-dash-bg {
-          background: linear-gradient(180deg, transparent 0%, rgba(59,130,246,0.04) 50%, transparent 100%);
-          border-top: 1px solid rgba(255,255,255,0.05);
+        .lp-phase-desc {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 13px; color: #5a5550; line-height: 1.7;
+          margin-bottom: 24px; padding-bottom: 24px;
           border-bottom: 1px solid rgba(255,255,255,0.05);
-          position: relative; overflow: hidden;
         }
-        .lp-dash-glow {
-          position: absolute; inset: 0;
-          background: radial-gradient(ellipse 70% 50% at 50% 50%, rgba(59,130,246,0.05) 0%, transparent 70%);
-          pointer-events: none;
+        .lp-phase-items { display: flex; flex-direction: column; gap: 10px; }
+        .lp-phase-item {
+          display: flex; align-items: flex-start; gap: 12px;
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 12px; color: #4a4640; line-height: 1.55;
         }
+        .lp-phase-dash { color: #C41E3A; flex-shrink: 0; font-size: 10px; margin-top: 3px; }
+        .lp-phase-card.lp-phase-support {
+          background: rgba(196,30,58,0.04);
+          border-top: 1px solid rgba(196,30,58,0.2);
+        }
+        .lp-phase-support .lp-phase-title { color: rgba(240,236,228,0.7); }
+        .lp-phase-support .lp-phase-item { color: rgba(196,30,58,0.5); }
+
+        /* ── Dashboard mockup ── */
         .lp-dash-mockup {
-          border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 20px; overflow: hidden;
-          margin: 52px 0; background: rgba(255,255,255,0.015);
-          box-shadow: 0 40px 100px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.02);
+          margin: 56px 0;
+          border: 1px solid rgba(255,255,255,0.07);
         }
         .lp-dash-bar {
           display: flex; align-items: center; gap: 8px;
-          padding: 14px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);
-          background: rgba(255,255,255,0.02);
+          padding: 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05);
+          background: rgba(255,255,255,0.01);
         }
-        .lp-dash-dot { width: 11px; height: 11px; border-radius: 50%; background: rgba(255,255,255,0.08); }
+        .lp-dash-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.06); }
         .lp-dash-url {
-          flex: 1; background: rgba(255,255,255,0.04); border-radius: 8px;
-          padding: 5px 12px; font-size: 12px; color: #4b5563;
-          margin: 0 16px; display: flex; align-items: center; gap: 8px;
+          flex: 1; background: rgba(255,255,255,0.03); padding: 5px 12px;
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 11px; color: #3a3530; margin: 0 12px;
+          display: flex; align-items: center; gap: 8px;
         }
-        .lp-dash-url-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(59,130,246,0.5); flex-shrink: 0; }
-        .lp-dash-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 28px; }
+        .lp-dash-url-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(196,30,58,0.5); flex-shrink: 0; }
+        .lp-dash-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
         @media (max-width: 700px) { .lp-dash-cards { grid-template-columns: 1fr; } }
         .lp-dash-card {
-          background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
-          border-radius: 14px; padding: 20px;
+          padding: 24px;
+          border-right: 1px solid rgba(255,255,255,0.05);
         }
-        .lp-dash-card-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
-        .lp-dash-card-status { font-size: 13px; color: #e5e7eb; margin-bottom: 16px; font-weight: 500; }
-        .lp-dash-bar-track { height: 3px; background: rgba(255,255,255,0.05); border-radius: 99px; overflow: hidden; }
-        .lp-dash-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, #3b82f6, #60a5fa); }
+        .lp-dash-card:last-child { border-right: none; }
+        .lp-dash-card-label {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 9px; font-weight: 700; letter-spacing: .18em;
+          text-transform: uppercase; margin-bottom: 10px;
+        }
+        .lp-dash-card-status {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 13px; color: #e5e7eb; margin-bottom: 18px; font-weight: 500;
+        }
+        .lp-dash-track { height: 2px; background: rgba(255,255,255,0.05); }
+        .lp-dash-fill { height: 100%; background: #C41E3A; }
 
         /* ── Tool grid ── */
-        .lp-tool-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 16px; }
+        .lp-tool-grid {
+          display: grid; grid-template-columns: repeat(3, 1fr);
+          gap: 0; margin-top: 0;
+          border: 1px solid rgba(255,255,255,0.06);
+          border-top: none;
+        }
         @media (max-width: 960px) { .lp-tool-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 580px) { .lp-tool-grid { grid-template-columns: 1fr; } }
         .lp-tool-card {
-          background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 20px; padding: 26px;
-          transition: border-color .25s, background .25s, transform .2s; cursor: default;
+          padding: 32px;
+          border-right: 1px solid rgba(255,255,255,0.06);
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          transition: background .25s; cursor: default;
         }
-        .lp-tool-card:hover {
-          border-color: rgba(59,130,246,0.22); background: rgba(255,255,255,0.035);
-          transform: translateY(-3px);
+        .lp-tool-card:hover { background: rgba(196,30,58,0.03); }
+        .lp-tool-card:nth-child(3n) { border-right: none; }
+        @media (max-width: 960px) {
+          .lp-tool-card:nth-child(3n) { border-right: 1px solid rgba(255,255,255,0.06); }
+          .lp-tool-card:nth-child(2n) { border-right: none; }
         }
-        .lp-tool-icon {
-          width: 42px; height: 42px; border-radius: 12px;
-          background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.18);
+        .lp-tool-icon-wrap {
+          width: 36px; height: 36px;
+          border: 1px solid rgba(196,30,58,0.25);
           display: flex; align-items: center; justify-content: center;
-          color: #60a5fa;
+          color: #C41E3A; margin-bottom: 20px;
         }
         .lp-tool-badge {
-          font-size: 10px; font-weight: 700; color: #3b82f6;
-          background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.18);
-          padding: 4px 10px; border-radius: 99px; letter-spacing: .06em;
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 9px; font-weight: 700; letter-spacing: .18em;
+          color: #C41E3A; text-transform: uppercase; margin-left: 12px;
+          border: 1px solid rgba(196,30,58,0.25); padding: 2px 8px;
         }
-        .lp-tool-title { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 8px; }
-        .lp-tool-desc { font-size: 13px; color: #6b7280; line-height: 1.7; }
+        .lp-tool-title {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 14px; font-weight: 700; color: #e8e4dc;
+          margin-bottom: 10px; display: flex; align-items: center;
+        }
+        .lp-tool-desc {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 13px; color: #4a4640; line-height: 1.75;
+        }
 
-        /* ── Win grid ── */
+        /* ── Testimonial marquee ── */
+        .lp-marquee-wrap { overflow: hidden; padding: 8px 0; }
+        .lp-marquee-track-l {
+          display: flex; width: max-content;
+          animation: lp-mq-l 40s linear infinite;
+        }
+        .lp-marquee-track-r {
+          display: flex; width: max-content;
+          animation: lp-mq-r 38s linear infinite;
+        }
+        .lp-marquee-track-l:hover,
+        .lp-marquee-track-r:hover { animation-play-state: paused; }
+        @keyframes lp-mq-l {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        @keyframes lp-mq-r {
+          0% { transform: translateX(-50%); }
+          100% { transform: translateX(0); }
+        }
+        .lp-mq-item {
+          display: inline-flex; align-items: baseline; gap: 12px;
+          padding: 18px 48px;
+          border-right: 1px solid rgba(255,255,255,0.05);
+          white-space: nowrap; cursor: default;
+          transition: background .2s;
+        }
+        .lp-mq-item:hover { background: rgba(196,30,58,0.03); }
+        .lp-mq-name {
+          font-family: 'Playfair Display', serif !important;
+          font-size: 14px; font-style: italic; color: #6b6560;
+        }
+        .lp-mq-result {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 13px; font-weight: 600; color: #f0ece4; letter-spacing: -.01em;
+        }
+        .lp-mq-dot { color: #C41E3A; font-size: 8px; }
+
+        /* ── Win cards ── */
         .lp-win-grid {
-          display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 64px;
+          display: grid; grid-template-columns: repeat(3, 1fr);
+          gap: 0; margin-top: 64px;
+          border: 1px solid rgba(255,255,255,0.06);
         }
-        @media (max-width: 700px) { .lp-win-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 900px) { .lp-win-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 580px) { .lp-win-grid { grid-template-columns: 1fr; } }
         .lp-win-card {
-          background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07);
-          border-radius: 20px; padding: 28px; display: flex; flex-direction: column; gap: 12px;
-          transition: border-color .25s, background .25s, transform .2s; cursor: default;
+          padding: 0;
+          border-right: 1px solid rgba(255,255,255,0.06);
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          display: flex; flex-direction: column;
+          overflow: hidden;
+          transition: background .25s; cursor: default;
         }
-        .lp-win-card:hover {
-          border-color: rgba(59,130,246,0.2); background: rgba(255,255,255,0.03);
-          transform: translateY(-3px);
+        .lp-win-card:hover { background: rgba(196,30,58,0.03); }
+        .lp-win-card:nth-child(3n) { border-right: none; }
+        @media (max-width: 900px) {
+          .lp-win-card:nth-child(3n) { border-right: 1px solid rgba(255,255,255,0.06); }
+          .lp-win-card:nth-child(2n) { border-right: none; }
         }
-        .lp-win-stat {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: 30px; font-weight: 900; letter-spacing: -.02em;
-          background: linear-gradient(135deg, #60a5fa 0%, #93c5fd 100%);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-        }
-        .lp-win-detail { font-size: 14px; color: #6b7280; line-height: 1.7; }
         .lp-win-img-wrap {
-          background: #0c0c0c; border-radius: 12px; overflow: hidden;
-          border: 1px solid rgba(255,255,255,0.05);
-        }
-        .lp-win-img {
-          width: 100%; display: block; max-height: 280px;
-          object-fit: contain; object-position: top;
-        }
-        .lp-win-name { font-size: 12px; color: #374151; font-weight: 600; letter-spacing: .04em; }
-
-        /* ── Included grid ── */
-        .lp-included-grid {
-          display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 64px;
-        }
-        @media (max-width: 640px) { .lp-included-grid { grid-template-columns: 1fr; } }
-        .lp-included-card {
-          display: flex; gap: 20px; background: rgba(255,255,255,0.02);
-          border: 1px solid rgba(255,255,255,0.07); border-radius: 20px; padding: 26px;
-          transition: border-color .25s, transform .2s; cursor: default;
-        }
-        .lp-included-card:hover { border-color: rgba(59,130,246,0.18); transform: translateY(-2px); }
-        .lp-included-icon {
-          width: 40px; height: 40px; border-radius: 11px; flex-shrink: 0;
-          background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.15);
-          display: flex; align-items: center; justify-content: center; color: #60a5fa;
-          margin-top: 2px;
-        }
-        .lp-included-title { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 6px; }
-        .lp-included-desc { font-size: 13px; color: #6b7280; line-height: 1.7; }
-
-        /* ── For / Not for ── */
-        .lp-for-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-        @media (max-width: 640px) { .lp-for-grid { grid-template-columns: 1fr; } }
-        .lp-for-card { border-radius: 20px; padding: 36px; }
-        .lp-for-card.yes {
-          background: rgba(59,130,246,0.06); border: 1px solid rgba(59,130,246,0.18);
-        }
-        .lp-for-card.no {
-          background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.06);
-        }
-        .lp-for-head { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
-        .lp-for-head-icon {
-          width: 32px; height: 32px; border-radius: 8px; display: flex;
-          align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .lp-for-card.yes .lp-for-head-icon { background: rgba(96,165,250,0.15); color: #60a5fa; }
-        .lp-for-card.no .lp-for-head-icon { background: rgba(255,255,255,0.04); color: #4b5563; }
-        .lp-for-head-text { font-size: 16px; font-weight: 800; }
-        .lp-for-card.yes .lp-for-head-text { color: #93c5fd; }
-        .lp-for-card.no .lp-for-head-text { color: #4b5563; }
-        .lp-for-list { display: flex; flex-direction: column; gap: 14px; }
-        .lp-for-item { display: flex; align-items: flex-start; gap: 12px; font-size: 14px; line-height: 1.6; }
-        .lp-for-card.yes .lp-for-item { color: rgba(147,197,253,0.85); }
-        .lp-for-card.no .lp-for-item { color: #4b5563; }
-        .lp-for-icon { flex-shrink: 0; margin-top: 2px; }
-        .lp-for-card.yes .lp-for-icon { color: #60a5fa; }
-        .lp-for-card.no .lp-for-icon { color: #374151; }
-
-        /* ── Mid CTA ── */
-        .lp-mid-cta {
-          background: linear-gradient(180deg, transparent 0%, rgba(59,130,246,0.04) 50%, transparent 100%);
-          border-top: 1px solid rgba(255,255,255,0.05);
+          background: #0a0a08; overflow: hidden;
           border-bottom: 1px solid rgba(255,255,255,0.05);
         }
-        .lp-mid-cta-inner { max-width: 600px; margin: 0 auto; text-align: center; }
-        .lp-mid-cta-h {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: clamp(28px, 4vw, 40px); font-weight: 900;
-          color: #fff; margin-bottom: 16px; letter-spacing: -.025em;
+        .lp-win-img {
+          width: 100%; display: block;
+          max-height: 220px; object-fit: contain; object-position: top;
         }
-        .lp-mid-cta-sub { font-size: 16px; color: #6b7280; margin-bottom: 36px; line-height: 1.65; }
+        .lp-win-body { padding: 24px 24px 28px; }
+        .lp-win-stat {
+          font-family: 'Playfair Display', serif !important;
+          font-size: 22px; font-weight: 700; color: #f0ece4;
+          letter-spacing: -.01em; margin-bottom: 8px; line-height: 1.2;
+        }
+        .lp-win-detail {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 12px; color: #4a4640; line-height: 1.7; margin-bottom: 12px;
+        }
+        .lp-win-name {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 9px; font-weight: 700; letter-spacing: .2em;
+          text-transform: uppercase; color: #C41E3A;
+        }
 
-        /* ── FAQ ── */
-        .lp-faq-stack { display: flex; flex-direction: column; gap: 8px; margin-top: 56px; }
-        .lp-faq-item {
-          border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; overflow: hidden;
-          transition: border-color .25s;
+        /* ── Included grid ── */
+        .lp-incl-grid {
+          display: grid; grid-template-columns: repeat(2, 1fr);
+          gap: 0; margin-top: 80px;
+          border: 1px solid rgba(255,255,255,0.06);
         }
-        .lp-faq-item:hover { border-color: rgba(255,255,255,0.12); }
-        .lp-faq-q {
-          width: 100%; display: flex; align-items: center; justify-content: space-between;
-          padding: 22px 28px; text-align: left; background: transparent; border: none;
-          cursor: pointer; font-size: 15px; font-weight: 700; color: #fff;
-          font-family: 'Inter', -apple-system, sans-serif; transition: background .2s;
-          color: #e5e7eb;
+        @media (max-width: 640px) { .lp-incl-grid { grid-template-columns: 1fr; } }
+        .lp-incl-card {
+          padding: 36px 32px; display: flex; gap: 20px;
+          border-right: 1px solid rgba(255,255,255,0.06);
+          border-bottom: 1px solid rgba(255,255,255,0.06);
+          transition: background .25s; cursor: default;
         }
-        .lp-faq-q:hover { background: rgba(255,255,255,0.02); }
-        .lp-faq-a {
-          padding: 0 28px 22px; font-size: 14px; color: #6b7280; line-height: 1.75;
-          border-top: 1px solid rgba(255,255,255,0.05); padding-top: 16px;
+        .lp-incl-card:hover { background: rgba(196,30,58,0.03); }
+        .lp-incl-card:nth-child(2n) { border-right: none; }
+        .lp-incl-icon {
+          width: 32px; height: 32px; flex-shrink: 0;
+          border: 1px solid rgba(196,30,58,0.2);
+          display: flex; align-items: center; justify-content: center;
+          color: #C41E3A; margin-top: 2px;
         }
+        .lp-incl-title {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 13px; font-weight: 700; color: #e8e4dc;
+          margin-bottom: 8px; letter-spacing: .02em;
+        }
+        .lp-incl-desc {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 13px; color: #4a4640; line-height: 1.7;
+        }
+
+        /* ── For/Not for ── */
+        .lp-for-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+        @media (max-width: 640px) { .lp-for-grid { grid-template-columns: 1fr; } }
+        .lp-for-col { padding: 52px 48px; }
+        .lp-for-col.yes { border-right: 1px solid rgba(196,30,58,0.15); }
+        .lp-for-col-head {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 9px; font-weight: 700; letter-spacing: .28em;
+          text-transform: uppercase; margin-bottom: 32px;
+        }
+        .yes .lp-for-col-head { color: #C41E3A; }
+        .no .lp-for-col-head { color: #3a3530; }
+        .lp-for-items { display: flex; flex-direction: column; gap: 16px; }
+        .lp-for-item {
+          display: flex; gap: 16px; align-items: flex-start;
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 14px; line-height: 1.65;
+        }
+        .yes .lp-for-item { color: #8a8480; }
+        .no .lp-for-item { color: #3a3530; }
+        .lp-for-mark { flex-shrink: 0; font-size: 10px; font-weight: 700; margin-top: 4px; }
+        .yes .lp-for-mark { color: #C41E3A; }
+        .no .lp-for-mark { color: #2a2520; }
+
+        /* ── Mid CTA ── */
+        .lp-mid-cta-inner { text-align: center; padding: 80px 48px; }
 
         /* ── Final CTA ── */
-        .lp-final { position: relative; overflow: hidden; text-align: center; }
-        .lp-final-bg {
-          position: absolute; inset: 0;
-          background: radial-gradient(ellipse 80% 70% at 50% 50%, rgba(59,130,246,0.1) 0%, transparent 65%);
-          pointer-events: none;
-        }
-        .lp-final-inner { position: relative; max-width: 700px; margin: 0 auto; }
-        .lp-final-h {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: clamp(44px, 7vw, 72px); font-weight: 900;
-          line-height: 1.04; letter-spacing: -.04em; color: #fff; margin-bottom: 22px;
-        }
-        .lp-final-h .grad {
-          background: linear-gradient(135deg, #60a5fa 0%, #818cf8 100%);
-          -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-        }
-        .lp-final-sub { font-size: 18px; color: #6b7280; margin-bottom: 44px; line-height: 1.65; }
-        .lp-chips {
-          display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; margin-top: 32px;
-        }
-        .lp-chip { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #4b5563; }
-        .lp-chip-check { color: #3b82f6; display: inline-flex; }
+        .lp-final { text-align: center; position: relative; }
+        .lp-final-inner { padding: 120px 48px; }
 
         /* ── Footer ── */
         .lp-footer {
           border-top: 1px solid rgba(255,255,255,0.05);
-          padding: 40px 32px; display: flex; flex-wrap: wrap;
+          padding: 40px 48px;
+          display: flex; flex-wrap: wrap;
           align-items: center; justify-content: space-between;
-          gap: 16px; max-width: 1120px; margin: 0 auto;
+          gap: 16px; max-width: 1200px; margin: 0 auto;
         }
         .lp-footer-logo {
-          font-family: 'Inter', -apple-system, sans-serif !important;
-          font-size: 14px; font-weight: 900; letter-spacing: -.01em;
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 10px; font-weight: 700; letter-spacing: .22em;
+          text-transform: uppercase; color: #3a3530;
         }
-        .lp-footer-logo .c1 { color: rgba(96,165,250,0.5); }
-        .lp-footer-logo .c2 { color: rgba(255,255,255,0.3); }
+        .lp-footer-logo span { color: #C41E3A; }
         .lp-footer-links { display: flex; gap: 24px; }
-        .lp-footer-links a { font-size: 13px; color: #374151; text-decoration: none; transition: color .2s; }
-        .lp-footer-links a:hover { color: #6b7280; }
-        .lp-footer-copy { font-size: 12px; color: #1f2937; }
-
-        /* ── Divider ── */
-        .lp-divider {
-          height: 1px; background: rgba(255,255,255,0.05); margin: 0;
+        .lp-footer-links a {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 11px; color: #2a2520; text-decoration: none;
+          letter-spacing: .08em; transition: color .2s;
+        }
+        .lp-footer-links a:hover { color: #6b6560; }
+        .lp-footer-copy {
+          font-family: 'DM Sans', sans-serif !important;
+          font-size: 11px; color: #1f1c18;
         }
 
         /* ── Responsive ── */
         @media (max-width: 640px) {
           .lp-container { padding: 0 20px; }
+          .lp-container-sm { padding: 0 20px; }
           .lp-section { padding: 80px 0; }
-          .lp-h2 { font-size: 32px; }
-          .lp-cta-row { flex-direction: column; align-items: flex-start; }
-          .lp-footer { padding: 32px 20px; }
           .lp-nav { padding: 0 20px; }
+          .lp-for-col { padding: 40px 20px; }
+          .lp-footer { padding: 32px 20px; }
+          .lp-final-inner { padding: 80px 20px; }
+          .lp-mid-cta-inner { padding: 64px 20px; }
+          .lp-hero-stats { grid-template-columns: repeat(2, 1fr); gap: 32px 0; }
         }
       `}</style>
 
       <div className="lp-root">
+
         {/* ── Nav ── */}
         <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
           <a href="/landing-page" className="lp-nav-logo">
-            <span className="c1">CREATOR</span><span className="c2"> CULT</span>
+            Creator <span>Cult</span>
           </a>
-          <Link href="/apply" className="lp-nav-cta">
-            Apply Now <IconArrow />
+          <Link href="/apply" className="lp-cta-sm">
+            Apply <IconArrow />
           </Link>
         </nav>
 
         {/* ── Hero ── */}
         <div className="lp-hero">
-          <div className="lp-hero-bg" />
-          <div className="lp-hero-inner">
-            {/* Text column */}
-            <div>
-              <Fade>
-                <div className="lp-badge">
-                  <span className="lp-badge-dot" />
-                  Instagram Growth Coaching
+          {/* Left */}
+          <div className="lp-hero-left">
+            <Fade>
+              <div className="lp-hero-eyebrow">Instagram Growth Coaching</div>
+            </Fade>
+            <Fade delay={80}>
+              <h1 className="lp-h1">
+                You&apos;ve been<br />
+                posting for<br />
+                months.<br />
+                <span className="lp-italic">Still clocking in.</span>
+              </h1>
+            </Fade>
+            <Fade delay={160}>
+              <p className="lp-body-lg" style={{ maxWidth: 500, marginTop: 32 }}>
+                Creator Cult is the coaching programme that turns consistent creators into full-time personal brands.
+                A real system. Not recycled advice.
+              </p>
+            </Fade>
+            <Fade delay={240}>
+              <div style={{ marginTop: 44, display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap' }}>
+                <Link href="/apply" className="lp-cta">
+                  Apply for a Spot <IconArrow />
+                </Link>
+                <span style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: '#3a3530', letterSpacing: '.06em' }}>
+                  Applications reviewed personally.
+                </span>
+              </div>
+            </Fade>
+            <Fade delay={320}>
+              <div className="lp-hero-stats">
+                <div className="lp-stat">
+                  <div className="lp-stat-n">40+</div>
+                  <div className="lp-stat-l">Creators Enrolled</div>
                 </div>
-              </Fade>
-              <Fade delay={80}>
-                <h1 className="lp-h1">
-                  You&apos;ve been posting<br />for months.<br />
-                  <span className="grad">You&apos;re still clocking&nbsp;in.</span>
-                </h1>
-              </Fade>
-              <Fade delay={160}>
-                <p className="lp-hero-sub">
-                  Creator Cult is the coaching programme that turns consistent creators into full-time personal brands.
-                  A real system. Not recycled advice.
-                </p>
-              </Fade>
-              <Fade delay={240}>
-                <div className="lp-cta-row">
-                  <Link href="/apply" className="lp-cta-primary">
-                    Apply for a Spot <IconArrow />
-                  </Link>
+                <div className="lp-stat">
+                  <div className="lp-stat-n">24M</div>
+                  <div className="lp-stat-l">Views Generated</div>
                 </div>
-                <p className="lp-cta-note" style={{ marginTop: 14 }}>Applications reviewed manually. No commitment to apply.</p>
-              </Fade>
-              <Fade delay={320}>
-                <div className="lp-hero-stats">
-                  <StatCounter target={40} suffix="+" label="Creators Enrolled" />
-                  <StatCounter target={24} suffix="M" label="Views Generated" />
-                  <StatCounter target={5} suffix="K" label="Followers in 10 Days" />
-                  <StatCounter prefix="£" target={1950} label="Revenue in 3 Days" />
+                <div className="lp-stat">
+                  <div className="lp-stat-n">5K</div>
+                  <div className="lp-stat-l">Followers in 10 Days</div>
                 </div>
-              </Fade>
-            </div>
-            {/* Photo column */}
-            <Fade delay={120} className="lp-hero-photo-col">
-              <div className="lp-hero-photo-glow" />
-              <img
-                src="/will-gym.jpg"
-                alt="Will Scott — Creator Cult founder"
-                className="lp-hero-photo"
-              />
-              <div className="lp-hero-photo-badge">
-                <div className="lp-hero-photo-badge-n">40+</div>
-                <div className="lp-hero-photo-badge-l">Clients Enrolled</div>
+                <div className="lp-stat">
+                  <div className="lp-stat-n">£1,950</div>
+                  <div className="lp-stat-l">Revenue in 3 Days</div>
+                </div>
               </div>
             </Fade>
           </div>
+          {/* Right — photo */}
+          <div className="lp-hero-photo-col">
+            <img src="/will-gym.jpg" alt="Will Scott — Creator Cult" className="lp-hero-photo" />
+            <div className="lp-hero-photo-overlay" />
+          </div>
         </div>
 
-        {/* ── Animated Ticker ── */}
+        {/* ── Animated Results Ticker ── */}
         <div className="lp-ticker">
           <div className="lp-ticker-track">
             {[...tickerItems, ...tickerItems].map((s, i) => (
               <span key={i} className="lp-tick">
-                <span className="lp-tick-dot" />{s}
+                <span className="lp-tick-sep" style={{ marginRight: 0 }}>◆&nbsp;&nbsp;</span>{s}
               </span>
             ))}
           </div>
         </div>
 
+        {/* ── Social proof strip ── */}
+        <div className="lp-social-strip">
+          <div className="lp-container">
+            <div className="lp-social-label">Members who have taken action</div>
+            <div className="lp-social-names">
+              {['Michael Kersee', 'Freddie', 'Eddie', 'Dino', 'Brett Capstick', 'Bile', 'Matte Fortuna', 'Jakub Riedel', 'Tom Köster', 'Roy', 'Gabrielle', 'Zack Sinclair', 'Asfand', 'Toshiro Khouth', 'FreeYourMind', 'Samuel'].map(n => (
+                <span key={n} className="lp-social-name">{n}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="lp-hr" />
+
         {/* ── Pain ── */}
         <div className="lp-section">
           <div className="lp-container">
-            <Fade><div className="lp-overline">The Real Problem</div></Fade>
+            <Fade>
+              <span className="lp-pill">The Real Problem</span>
+            </Fade>
             <Fade delay={60}>
               <h2 className="lp-h2">
-                You don&apos;t have a content problem.<br />
-                <span className="muted">You have a system problem.</span>
+                You don&apos;t have<br />a content problem.
               </h2>
+              <p className="lp-body-lg" style={{ marginTop: 20, maxWidth: 520 }}>
+                You have a system problem.
+              </p>
             </Fade>
-            <div className="lp-pain-stack">
+            <div style={{ marginTop: 64 }}>
               {[
-                { n: '01', title: 'You post. Nothing moves.', body: "You try a new format. You copy what worked for someone else. You wait. The numbers don't shift. You wonder if Instagram has it in for you." },
-                { n: '02', title: 'Everyone sells you tactics. Nobody gives you a system.', body: "You've watched the free courses. You've applied the hooks. You can name every algorithm update this year. Still no clients. Still no income." },
-                { n: '03', title: 'The gap between content and income feels impossible.', body: "You're close enough to see that other creators are making it work. You can't work out what they have that you don't. The answer isn't hustle. It's structure." },
+                {
+                  n: 'I',
+                  title: 'You post. Nothing moves.',
+                  body: "You try a new format. You copy what worked for someone else. You wait. The numbers don't shift. You wonder if Instagram has it in for you.",
+                },
+                {
+                  n: 'II',
+                  title: 'Everyone sells you tactics. Nobody gives you a system.',
+                  body: "You've watched the free courses. You've applied the hooks. You can name every algorithm update this year. Still no clients. Still no income.",
+                },
+                {
+                  n: 'III',
+                  title: 'The gap between content and income feels impossible.',
+                  body: "You're close enough to see that other creators are making it work. You can't work out what they have that you don't. The answer isn't hustle. It's structure.",
+                },
               ].map(({ n, title, body }, i) => (
-                <Fade key={n} delay={i * 70}>
-                  <div className="lp-pain-card">
+                <Fade key={n} delay={i * 80}>
+                  <div className="lp-pain-item">
                     <div className="lp-pain-num">{n}</div>
-                    <div className="lp-pain-title">{title}</div>
-                    <div className="lp-pain-body">{body}</div>
+                    <div>
+                      <div className="lp-pain-title">{title}</div>
+                      <div className="lp-pain-body">{body}</div>
+                    </div>
                   </div>
                 </Fade>
               ))}
@@ -891,20 +1009,25 @@ export default function LandingPage() {
           </div>
         </div>
 
+        <div className="lp-hr" />
+
         {/* ── Story ── */}
-        <div className="lp-section lp-story-border">
+        <div className="lp-section">
           <div className="lp-container">
-            <div className="lp-story-layout">
+            <div className="lp-story-grid">
               <div>
-                <Fade><div className="lp-overline">Why I Built This</div></Fade>
+                <Fade>
+                  <span className="lp-pill">The Origin</span>
+                </Fade>
                 <Fade delay={60}>
                   <h2 className="lp-h2">
-                    412 followers.<br />£20,000 in debt.<br />
-                    <span className="muted">Delivering pizzas in the evenings.</span>
+                    412 followers.<br />
+                    £20,000 in debt.<br />
+                    <span className="lp-italic">Delivering pizzas in the evenings.</span>
                   </h2>
                 </Fade>
                 <Fade delay={120}>
-                  <div className="lp-story-text">
+                  <div className="lp-story-text" style={{ marginTop: 40 }}>
                     <p>That was me. Not long ago. I was posting every day and getting nowhere. I knew content. I knew marketing theory. I still couldn&apos;t pay my rent with it.</p>
                     <p>I stopped copying tactics and started building a system. A real one. Positioning, story, offer, acquisition. In the right order.</p>
                     <p>Within months, I had clients. Then a waiting list. Then a coaching programme with 40+ creators inside.</p>
@@ -914,56 +1037,75 @@ export default function LandingPage() {
                 </Fade>
               </div>
               <Fade delay={100} className="lp-story-photo-col">
-                <img
-                  src="/will-hero.jpg"
-                  alt="Will Scott — Creator Cult founder"
-                  className="lp-story-photo"
-                />
-                <div className="lp-story-caption">Will Scott — Creator Cult</div>
+                <img src="/will-hero.jpg" alt="Will Scott" className="lp-story-photo" />
+                <div className="lp-story-caption">Will Scott — Founder, Creator Cult</div>
               </Fade>
             </div>
           </div>
         </div>
 
-        {/* ── The System ── */}
+        <div className="lp-hr" />
+
+        {/* ── The Programme ── */}
         <div className="lp-section">
           <div className="lp-container">
             <Fade>
-              <div className="lp-center">
-                <div className="lp-overline">The Programme</div>
-                <h2 className="lp-h2">Five phases. One direction.<br /><span className="muted">Full-time creator.</span></h2>
-              </div>
+              <span className="lp-pill">The Programme</span>
             </Fade>
+            <Fade delay={60}>
+              <h2 className="lp-h2">
+                Five phases.<br />One direction.
+              </h2>
+              <p className="lp-body-lg" style={{ marginTop: 20, maxWidth: 520 }}>
+                Full-time creator.
+              </p>
+            </Fade>
+          </div>
+          <div className="lp-container">
             <div className="lp-phase-grid">
-              <Phase num="1" title="Foundations" desc="Before you create content, you need clarity. Most creators skip this. It costs them everything." items={['Niche and ICP precision. Who you serve and what they need.', 'Positioning statement that makes you the obvious choice', 'Brand voice and content identity', 'Offer foundations. What you sell before you sell anything.']} delay={0} />
-              <Phase num="2" title="Build the Brand" desc="Content that builds authority, attracts the right people, and makes them follow for a reason." items={['Hook writing and the psychology behind stopping thumbs', 'Content frameworks that convert viewers into followers', 'Story-driven content that sells without selling', 'Reel strategy tied directly to your offer']} delay={70} />
-              <Phase num="3" title="Client Acquisition" desc="Followers mean nothing if you can't convert them. This phase builds the machine." items={['DM strategy that turns comments into conversations', 'Discovery call frameworks and objection handling', 'Lead magnet creation and comment-keyword funnels', 'First client delivery: get paid before you have a product']} delay={140} />
-              <Phase num="4" title="Monetisation Mastery" desc="Turn a trickle of clients into a consistent, scalable income stream." items={['High-ticket offer structuring and pricing', 'Upsell and retention systems for existing clients', 'Instagram sales psychology: urgency, scarcity, trust', 'Revenue goal planning with real numbers']} delay={210} />
-              <Phase num="5" title="Scale and Systems" desc="Build the infrastructure that lets the business run without burning out." items={['Content batching and weekly production workflow', 'Setter and team onboarding foundations', 'Automation for DMs, leads, and client delivery', 'From full-time employee to full-time creator']} delay={280} />
-              <Phase num="+" title="Ongoing Support" desc="You're not going through this alone. Every week, every question, every plateau." items={['Weekly group coaching calls', 'Private Circle community', '1:1 support and feedback', 'Content and offer reviews', 'The Cult Dashboard (see below)']} delay={350} highlight />
+              {phases.map(({ n, title, desc, items }, i) => (
+                <Fade key={n} delay={i * 60}>
+                  <div className={`lp-phase-card${n === '—' ? ' lp-phase-support' : ''}`}>
+                    <div className="lp-phase-n">{n === '—' ? 'Throughout' : `Phase ${n}`}</div>
+                    <div className="lp-phase-title">{title}</div>
+                    <div className="lp-phase-desc">{desc}</div>
+                    <div className="lp-phase-items">
+                      {items.map(item => (
+                        <div key={item} className="lp-phase-item">
+                          <span className="lp-phase-dash">—</span>
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Fade>
+              ))}
             </div>
           </div>
         </div>
 
+        <div className="lp-hr" />
+
         {/* ── Cult Dashboard ── */}
-        <div className="lp-dash-bg lp-section">
-          <div className="lp-dash-glow" />
-          <div className="lp-container" style={{ position: 'relative' }}>
+        <div className="lp-section">
+          <div className="lp-container">
             <Fade>
-              <div className="lp-center">
-                <div className="lp-overline">Exclusive to Creator Cult</div>
-                <h2 className="lp-h2">The Cult Dashboard.<br /><span className="muted">Your AI-powered growth engine.</span></h2>
-                <p className="lp-intro">
-                  Every client gets access to a private dashboard built specifically for Creator Cult members.
-                  AI tools trained on our methodology. Not generic. Purpose-built for your business.
-                </p>
-              </div>
+              <span className="lp-pill">Exclusive to Creator Cult</span>
+            </Fade>
+            <Fade delay={60}>
+              <h2 className="lp-h2">The Cult Dashboard.</h2>
+              <p className="lp-body-lg" style={{ marginTop: 20, maxWidth: 560 }}>
+                Every client gets access to a private dashboard built specifically for Creator Cult members.
+                AI tools trained on our methodology. Not generic. Purpose-built for your business.
+              </p>
             </Fade>
 
             <Fade delay={80}>
               <div className="lp-dash-mockup">
                 <div className="lp-dash-bar">
-                  <div className="lp-dash-dot" /><div className="lp-dash-dot" /><div className="lp-dash-dot" />
+                  <div className="lp-dash-dot" />
+                  <div className="lp-dash-dot" />
+                  <div className="lp-dash-dot" />
                   <div className="lp-dash-url">
                     <div className="lp-dash-url-dot" />
                     cult-dashboard.vercel.app/dashboard
@@ -971,15 +1113,15 @@ export default function LandingPage() {
                 </div>
                 <div className="lp-dash-cards">
                   {[
-                    { label: 'AI Story Generator', status: 'Generating slide 3 of 7...', color: '#3b82f6', bar: 43 },
-                    { label: 'Lead Magnet Generator', status: '3 ideas ready to review', color: '#22c55e', bar: 100 },
-                    { label: 'Profile Audit', status: 'Report complete', color: '#a855f7', bar: 100 },
+                    { label: 'AI Story Generator', status: 'Generating slide 3 of 7...', color: '#C41E3A', bar: 43 },
+                    { label: 'Lead Magnet Generator', status: '3 ideas ready to review', color: '#6b6560', bar: 100 },
+                    { label: 'Profile Audit', status: 'Report complete', color: '#6b6560', bar: 100 },
                   ].map(({ label, status, color, bar }) => (
                     <div key={label} className="lp-dash-card">
                       <div className="lp-dash-card-label" style={{ color }}>{label}</div>
                       <div className="lp-dash-card-status">{status}</div>
-                      <div className="lp-dash-bar-track">
-                        <div className="lp-dash-bar-fill" style={{ width: `${bar}%` }} />
+                      <div className="lp-dash-track">
+                        <div className="lp-dash-fill" style={{ width: `${bar}%` }} />
                       </div>
                     </div>
                   ))}
@@ -988,73 +1130,126 @@ export default function LandingPage() {
             </Fade>
 
             <div className="lp-tool-grid">
-              {[
-                { icon: <IconBrain />, title: 'AI Story Generator', desc: 'Input your niche, offer, and audience. Get a full Instagram story sequence built around your specific positioning. Hooks, slides, and CTA. Not a template. A custom sequence.', badge: 'Most Used' },
-                { icon: <IconDoc />, title: 'Lead Magnet Generator', desc: 'Choose your angle. The AI builds a complete lead magnet brief: title, concept, outline, and a ready-to-paste caption CTA with comment keyword. Start converting followers into leads this week.' },
-                { icon: <IconSearch />, title: 'Profile Audit AI', desc: "Feed in your Instagram URL. Get a structured audit: bio clarity, CTA strength, offer visibility, content gaps. Know exactly what to fix and in what order." },
-                { icon: <IconLayers />, title: 'Content Library', desc: 'Every training, resource, and framework in one searchable library. Organised by phase. No hunting through Notion docs or Slack threads to find what you need.' },
-                { icon: <IconZap />, title: 'Offer Builder', desc: 'Step through your offer structure with AI guidance. Deliverables, transformation, price point, positioning. Build an offer that actually sells before you launch it.' },
-                { icon: <IconTrend />, title: 'Reel Analytics', desc: 'See which of your reels are pulling the most views, track hooks that work, and spot content patterns. All inside your dashboard, connected to your profile data.' },
-              ].map((t, i) => (
-                <Fade key={t.title} delay={i * 55}>
-                  <ToolCard {...t} />
+              {tools.map((t, i) => (
+                <Fade key={t.title} delay={i * 50}>
+                  <div className="lp-tool-card">
+                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 20 }}>
+                      <div className="lp-tool-icon-wrap">{t.icon}</div>
+                      {t.badge && <span className="lp-tool-badge">{t.badge}</span>}
+                    </div>
+                    <div className="lp-tool-title">{t.title}</div>
+                    <div className="lp-tool-desc">{t.desc}</div>
+                  </div>
                 </Fade>
               ))}
             </div>
           </div>
         </div>
 
-        {/* ── Client Wins ── */}
+        <div className="lp-hr" />
+
+        {/* ── Results — Marquee ── */}
         <div className="lp-section">
           <div className="lp-container">
             <Fade>
-              <div className="lp-center">
-                <div className="lp-overline">Real Results</div>
-                <h2 className="lp-h2">What happens when you have<br /><span className="grad">a system instead of a strategy.</span></h2>
-              </div>
+              <span className="lp-pill">The Results</span>
             </Fade>
+            <Fade delay={60}>
+              <h2 className="lp-h2">
+                What happens when you have<br /><span className="lp-italic">a system instead of a strategy.</span>
+              </h2>
+            </Fade>
+          </div>
+
+          <div style={{ marginTop: 64, borderTop: '1px solid rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+            {/* Row 1 — scrolls left */}
+            <div style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="lp-marquee-wrap">
+                <div className="lp-marquee-track-l">
+                  {[...marqueeRow1, ...marqueeRow1].map((item, i) => (
+                    <div key={i} className="lp-mq-item">
+                      <span className="lp-mq-name">{item.name}</span>
+                      <span className="lp-mq-dot">◆</span>
+                      <span className="lp-mq-result">{item.result}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {/* Row 2 — scrolls right */}
+            <div>
+              <div className="lp-marquee-wrap">
+                <div className="lp-marquee-track-r">
+                  {[...marqueeRow2, ...marqueeRow2].map((item, i) => (
+                    <div key={i} className="lp-mq-item">
+                      <span className="lp-mq-name">{item.name}</span>
+                      <span className="lp-mq-dot">◆</span>
+                      <span className="lp-mq-result">{item.result}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Screenshot results grid */}
+          <div className="lp-container">
             <div className="lp-win-grid">
-              <Win name="Freddie" stat="£1,950 in 3 days" detail="No offer, no clients when he joined. Built and launched his first high-ticket package using the Client Acquisition phase. £1,950 in three days." img="https://assets-v2.circle.so/vjrs5iivuayf1j9x5te9q9u8f3bt" delay={0} />
-              <Win name="Eddie" stat="5,000 followers in 10 days" detail="Reworked his positioning and hooks using Phase 2. Two reels went viral. 5,000 new followers in 10 days. First paying client followed from that growth." img="https://assets-v2.circle.so/li0b9tx3pl289tyzwa4c1vhus6jb" delay={70} />
-              <Win name="Dino" stat="24 million views in 3 weeks" detail="Changed his username, applied the content frameworks, and hit 24 million views three weeks after joining. DMs turned into discovery calls within days." img="https://assets-v2.circle.so/7di4sesakx0atgazfw0wdz0ult0i" delay={140} />
-              <Win name="Michael" stat="$10K day" detail="Two $5K pay-in-fulls before noon. Went from inconsistent income to $10,000 in a single day by restructuring his offer using the Monetisation Mastery phase." img="https://assets-v2.circle.so/w5tlngk8d5r1q5dpt0bmjtq5zzxl" delay={210} />
-              <Win name="Tom" stat="6K followers in 2 months" detail="First paying clients landed while growing to 6,000 followers working with Will. His own words: 'shits bout to get crazy.'" img="https://assets-v2.circle.so/oovd23m42ybtzncmcuomqyiabjm7" delay={280} />
-              <Win name="Roy" stat="1M views — first viral reel" detail="First reel to break 1 million views after consistently posting every day for 25 days. Hit 1K followers within 2 months of starting Creator Cult." img="https://assets-v2.circle.so/0z7iywo1kuov1nlanetscbuw6o8p" delay={350} />
-              <Win name="Brett" stat="First client in 3 weeks" detail="18 months of posting with zero clients. Rebuilt his positioning from scratch in Foundations. Signed his first high-ticket coaching client three weeks later." delay={420} />
-              <Win name="Asfand" stat="First client in 7 days" detail="Used the DM acquisition system and lead magnet framework from Phase 3. First paid client within a week of implementing. Launched his Instagram the Monday before." delay={490} />
+              {[
+                { name: 'FREDDIE', stat: '£1,950 in 3 days', detail: 'No offer, no clients when he joined. Built and launched his first high-ticket package using Phase 3. £1,950 in three days.', img: 'https://assets-v2.circle.so/vjrs5iivuayf1j9x5te9q9u8f3bt' },
+                { name: 'EDDIE', stat: '5,000 followers in 10 days', detail: 'Reworked his positioning and hooks using Phase 2. Two reels went viral. 5,000 new followers in 10 days.', img: 'https://assets-v2.circle.so/li0b9tx3pl289tyzwa4c1vhus6jb' },
+                { name: 'DINO', stat: '24 million views in 3 weeks', detail: 'Changed his username, applied the content frameworks, and hit 24 million views three weeks after joining.', img: 'https://assets-v2.circle.so/7di4sesakx0atgazfw0wdz0ult0i' },
+                { name: 'MICHAEL KERSEE', stat: '$10K day', detail: 'Two $5K pay-in-fulls before noon. From inconsistent income to $10,000 in a single day.', img: 'https://assets-v2.circle.so/w5tlngk8d5r1q5dpt0bmjtq5zzxl' },
+                { name: 'TOM', stat: '6K followers in 2 months', detail: 'First paying clients landed while growing to 6,000 followers. His words: "shits bout to get crazy."', img: 'https://assets-v2.circle.so/oovd23m42ybtzncmcuomqyiabjm7' },
+                { name: 'ROY', stat: '1M views — first viral reel', detail: 'First reel to break 1 million views after 25 days of consistent posting. Hit 1K followers within 2 months.', img: 'https://assets-v2.circle.so/0z7iywo1kuov1nlanetscbuw6o8p' },
+                { name: 'BRETT CAPSTICK', stat: 'First client in 3 weeks', detail: '18 months of posting with zero clients. Rebuilt his positioning from scratch. Signed his first high-ticket client three weeks later.' },
+                { name: 'ASFAND', stat: 'First client in 7 days', detail: 'Used the DM acquisition system from Phase 3. First paid client within a week of implementing. Launched his Instagram the Monday before.' },
+              ].map(({ name, stat, detail, img }, i) => (
+                <Fade key={name} delay={(i % 3) * 70}>
+                  <div className="lp-win-card">
+                    {img && (
+                      <div className="lp-win-img-wrap">
+                        <img src={img} alt={`${name} result`} className="lp-win-img" loading="lazy" />
+                      </div>
+                    )}
+                    <div className="lp-win-body">
+                      <div className="lp-win-stat">{stat}</div>
+                      <div className="lp-win-detail">{detail}</div>
+                      <div className="lp-win-name">{name}</div>
+                    </div>
+                  </div>
+                </Fade>
+              ))}
             </div>
             <Fade delay={80}>
-              <p style={{ textAlign: 'center', fontSize: 13, color: '#1f2937', marginTop: 40 }}>
+              <p style={{ textAlign: 'center', fontSize: 11, color: '#2a2520', marginTop: 32, fontFamily: "'DM Sans', sans-serif", letterSpacing: '.08em' }}>
                 Results vary. These are real outcomes from real Creator Cult members.
               </p>
             </Fade>
           </div>
         </div>
 
-        {/* ── What's included ── */}
-        <div className="lp-section" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.005)' }}>
+        <div className="lp-hr" />
+
+        {/* ── What's Included ── */}
+        <div className="lp-section" style={{ background: 'rgba(255,255,255,0.008)' }}>
           <div className="lp-container">
             <Fade>
-              <div className="lp-center">
-                <div className="lp-overline">What You Get</div>
-                <h2 className="lp-h2">Everything in one place.</h2>
-              </div>
+              <span className="lp-pill">What You Get</span>
             </Fade>
-            <div className="lp-included-grid">
-              {[
-                { icon: <IconStar />, title: 'The 5-Phase Curriculum', desc: 'Foundations to Scale. Every lesson, framework, and exercise structured in the order that actually works. Self-paced but guided.' },
-                { icon: <IconUsers />, title: 'Weekly Group Coaching Calls', desc: 'Live calls every week. Bring your questions, your content, your blockers. Will reviews your work live and tells you exactly what to fix.' },
-                { icon: <IconGrid />, title: 'The Cult Dashboard', desc: 'Private access to all six AI tools built for Creator Cult members. Story Generator, Lead Magnet Generator, Profile Audit, Offer Builder, and more.' },
-                { icon: <IconMsg />, title: 'Private Circle Community', desc: '40+ creators at different stages, all working the same system. Post wins, ask for feedback, get accountability. Active every day.' },
-                { icon: <IconShield />, title: '1:1 Support', desc: 'Direct access to Will between calls. Post your content for review, ask for offer feedback, get unstuck fast. Not a bot. Not a VA.' },
-                { icon: <IconPackage />, title: 'Weekly Strategy Packages', desc: "Every week you get a curated strategy package: what's working on Instagram right now, content angles to test, and a plan for the next 7 days." },
-              ].map(({ icon, title, desc }, i) => (
-                <Fade key={title} delay={i * 55}>
-                  <div className="lp-included-card">
-                    <div className="lp-included-icon">{icon}</div>
+            <Fade delay={60}>
+              <h2 className="lp-h2">Everything in one place.</h2>
+            </Fade>
+          </div>
+          <div className="lp-container">
+            <div className="lp-incl-grid">
+              {included.map(({ icon, title, desc }, i) => (
+                <Fade key={title} delay={(i % 2) * 70}>
+                  <div className="lp-incl-card">
+                    <div className="lp-incl-icon">{icon}</div>
                     <div>
-                      <div className="lp-included-title">{title}</div>
-                      <div className="lp-included-desc">{desc}</div>
+                      <div className="lp-incl-title">{title}</div>
+                      <div className="lp-incl-desc">{desc}</div>
                     </div>
                   </div>
                 </Fade>
@@ -1063,118 +1258,131 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* ── For / Not for ── */}
+        <div className="lp-hr" />
+
+        {/* ── For / Not For ── */}
         <div className="lp-section">
           <div className="lp-container">
             <Fade>
-              <div className="lp-center" style={{ marginBottom: 56 }}>
-                <h2 className="lp-h2">This is for you.<br /><span className="muted">This is not for everyone.</span></h2>
-              </div>
+              <h2 className="lp-h2" style={{ marginBottom: 64 }}>
+                This is for you.<br />
+                <span className="lp-italic" style={{ color: '#3a3530' }}>This is not for everyone.</span>
+              </h2>
             </Fade>
-            <div className="lp-for-grid">
-              <Fade delay={0}>
-                <div className="lp-for-card yes">
-                  <div className="lp-for-head">
-                    <div className="lp-for-head-icon"><IconCheck /></div>
-                    <span className="lp-for-head-text">Creator Cult is for you if...</span>
+          </div>
+          <div className="lp-container">
+            <div style={{ border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="lp-for-grid">
+                <Fade delay={0}>
+                  <div className="lp-for-col yes">
+                    <div className="lp-for-col-head">Creator Cult is for you if</div>
+                    <div className="lp-for-items">
+                      {[
+                        "You've been posting consistently but you're not seeing income",
+                        "You know content but you don't have a business system around it",
+                        "You want to be full-time as a creator within 12 months",
+                        "You're willing to put in the work and follow a proven process",
+                        "You want support, not just another course to watch alone",
+                        "You're ready to treat your content like a business, not a hobby",
+                      ].map(s => (
+                        <div key={s} className="lp-for-item">
+                          <span className="lp-for-mark">—</span>{s}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div className="lp-for-list">
-                    {[
-                      "You've been posting consistently but you're not seeing income",
-                      "You know content but you don't have a business system around it",
-                      "You want to be full-time as a creator within 12 months",
-                      "You're willing to put in the work and follow a proven process",
-                      "You want support, not just another course to watch alone",
-                      "You're ready to treat your content like a business, not a hobby",
-                    ].map(s => (
-                      <div key={s} className="lp-for-item">
-                        <span className="lp-for-icon"><IconCheck /></span>{s}
-                      </div>
-                    ))}
+                </Fade>
+                <Fade delay={100}>
+                  <div className="lp-for-col no">
+                    <div className="lp-for-col-head">Not the right fit if</div>
+                    <div className="lp-for-items">
+                      {[
+                        "You're expecting overnight results without putting in real effort",
+                        "You're not willing to invest in your own growth",
+                        "You want a magic content formula. This is a business system.",
+                        "You're not able to commit time each week to implement",
+                        "You just started posting and haven't tested what works yet",
+                        "You're looking for someone to do it all for you",
+                      ].map(s => (
+                        <div key={s} className="lp-for-item">
+                          <span className="lp-for-mark">×</span>{s}
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              </Fade>
-              <Fade delay={100}>
-                <div className="lp-for-card no">
-                  <div className="lp-for-head">
-                    <div className="lp-for-head-icon"><IconX /></div>
-                    <span className="lp-for-head-text">Not the right fit if...</span>
-                  </div>
-                  <div className="lp-for-list">
-                    {[
-                      "You're expecting overnight results without putting in real effort",
-                      "You're not willing to invest in your own growth",
-                      "You want a magic content formula. This is a business system.",
-                      "You're not able to commit time each week to implement",
-                      "You just started posting and haven't tested what works yet",
-                      "You're looking for someone to do it all for you",
-                    ].map(s => (
-                      <div key={s} className="lp-for-item">
-                        <span className="lp-for-icon"><IconX /></span>{s}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Fade>
+                </Fade>
+              </div>
             </div>
           </div>
         </div>
 
+        <div className="lp-hr" />
+
         {/* ── Mid CTA ── */}
-        <div className="lp-mid-cta lp-section-sm">
+        <div>
           <div className="lp-mid-cta-inner">
             <Fade>
-              <div className="lp-mid-cta-h">Ready to stop figuring it out alone?</div>
-              <p className="lp-mid-cta-sub">Applications take 3 minutes. No commitment to apply. Will reviews every one personally.</p>
-              <Link href="/apply" className="lp-cta-primary" style={{ display: 'inline-flex' }}>
+              <span className="lp-pill">Apply</span>
+              <h2 className="lp-h2" style={{ marginBottom: 20 }}>
+                Ready to stop figuring<br /><span className="lp-italic">it out alone?</span>
+              </h2>
+              <p className="lp-body-lg" style={{ marginBottom: 40 }}>
+                Applications take 3 minutes. No commitment to apply.<br />Will reviews every one personally.
+              </p>
+              <Link href="/apply" className="lp-cta">
                 Apply for a Spot <IconArrow />
               </Link>
             </Fade>
           </div>
         </div>
+
+        <div className="lp-hr" />
 
         {/* ── FAQ ── */}
         <div className="lp-section">
-          <div className="lp-container" style={{ maxWidth: 800, margin: '0 auto', padding: '0 32px' }}>
+          <div className="lp-container-sm">
             <Fade>
-              <div className="lp-center">
-                <div className="lp-overline">FAQ</div>
-                <h2 className="lp-h2">Common questions.</h2>
-              </div>
+              <span className="lp-pill">FAQ</span>
             </Fade>
             <Fade delay={60}>
-              <div className="lp-faq-stack">
+              <h2 className="lp-h2" style={{ marginBottom: 64 }}>Common questions.</h2>
+            </Fade>
+            <Fade delay={100}>
+              <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                <Faq q="What exactly do I get when I join Creator Cult?" a="You get access to the full 5-phase curriculum, weekly live group coaching calls with recordings, 1:1 access to Will between calls, content and offer reviews, the Cult Dashboard with all six AI tools, and the private Circle community. Ongoing support at every stage." />
                 <Faq q="How long does the programme run?" a="Creator Cult is an ongoing coaching programme. Most clients see their first real results within 30 to 60 days of starting. There is no set end date. You stay in as long as you are growing." />
                 <Faq q="Do I need a big following to join?" a="No. Several of our members signed their first clients with under 1,000 followers. Following size does not determine your results. Your system does. We build the system first." />
                 <Faq q="How much time do I need to commit each week?" a="Expect to block 5 to 8 hours per week: content creation, implementation, and the weekly coaching call. Less than that and progress slows. You do not need more than that to see results." />
-                <Faq q="What platforms does this work for?" a="The programme is built primarily around Instagram. The frameworks, tools, and coaching are all Instagram-first. If you are cross-posting to TikTok or YouTube, the positioning and offer work translates. Instagram is the core focus." />
                 <Faq q="Is this just another course?" a="No. The curriculum is part of it, but Creator Cult is a coaching programme. You have live weekly calls, 1:1 access to Will, a community of active creators, and the Cult Dashboard AI tools. The course is the structure. The coaching is where you actually move forward." />
+                <Faq q="How does the weekly group coaching work?" a="Every week we host live group coaching calls where you bring your content and business challenges. You get real-time feedback on your brand strategy, content audits, offer positioning, and scaling decisions. Can't make it live? You get access to all past recordings too." />
                 <Faq q="What if I've tried coaching before and it didn't work?" a="That is worth talking about in your application. A lot of creators who come to Creator Cult have been through generic social media courses or coaching that gave them tactics without a system. If your previous experience did not work, tell us why in your application. Will reads every one." />
-                <Faq q="How do I apply?" a="Click the Apply button and fill in the short form. It takes about 3 minutes. Will reviews it personally. If it is a fit, you will hear back within 48 hours." />
+                <Faq q="Who is this NOT for?" a="This isn't for people looking for quick fixes, those hoping someone else will do the work, anyone not willing to show up and implement, or creators allergic to accountability and feedback. You need to be ready to invest 6 months into building something real." />
               </div>
             </Fade>
           </div>
         </div>
 
+        <div className="lp-hr" />
+
         {/* ── Final CTA ── */}
-        <div className="lp-final lp-section">
-          <div className="lp-final-bg" />
+        <div className="lp-final">
           <div className="lp-final-inner">
             <Fade>
-              <h2 className="lp-final-h">
-                Stop posting into<br /><span className="grad">the void.</span>
+              <span className="lp-pill">One last thing</span>
+              <h2 className="lp-h2" style={{ marginBottom: 24 }}>
+                Stop posting into<br /><span className="lp-italic">the void.</span>
               </h2>
-              <p className="lp-final-sub">
-                You&apos;re three minutes away from finding out if Creator Cult is the right fit.<br />
+              <p className="lp-body-lg" style={{ marginBottom: 48, maxWidth: 520, margin: '0 auto 48px' }}>
+                You&apos;re three minutes away from finding out if Creator Cult is the right fit.
                 Apply now. No commitment. No sales call unless you want one.
               </p>
-              <Link href="/apply" className="lp-cta-primary" style={{ display: 'inline-flex' }}>
+              <Link href="/apply" className="lp-cta">
                 Apply for a Spot <IconArrow />
               </Link>
-              <div className="lp-chips">
+              <div style={{ marginTop: 36, display: 'flex', justifyContent: 'center', gap: 32, flexWrap: 'wrap' }}>
                 {['Takes 3 minutes', 'Reviewed personally by Will', 'No commitment to apply'].map(c => (
-                  <span key={c} className="lp-chip">
-                    <span className="lp-chip-check"><IconCheck /></span> {c}
+                  <span key={c} style={{ fontFamily: "'DM Sans', sans-serif", fontSize: 11, color: '#2a2520', letterSpacing: '.1em' }}>
+                    — {c}
                   </span>
                 ))}
               </div>
@@ -1184,14 +1392,15 @@ export default function LandingPage() {
 
         {/* ── Footer ── */}
         <div className="lp-footer">
-          <div className="lp-footer-logo"><span className="c1">CREATOR</span><span className="c2"> CULT</span></div>
+          <div className="lp-footer-logo"><span>Creator</span> Cult</div>
           <div className="lp-footer-links">
-            <a href="/privacy">Privacy Policy</a>
+            <a href="/privacy">Privacy</a>
             <a href="/data-deletion">Data Deletion</a>
             <Link href="/apply">Apply</Link>
           </div>
-          <div className="lp-footer-copy">© {new Date().getFullYear()} Creator Cult. All rights reserved.</div>
+          <div className="lp-footer-copy">© {new Date().getFullYear()} Creator Cult</div>
         </div>
+
       </div>
     </>
   )
