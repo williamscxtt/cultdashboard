@@ -29,9 +29,21 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true); setError('')
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(error.message); setLoading(false) }
-    else router.push('/dashboard')
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    if (error) { setError(error.message); setLoading(false); return }
+    // Check if this client still needs to complete onboarding
+    if (data.user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('onboarding_completed, role')
+        .eq('id', data.user.id)
+        .single()
+      if (profile?.role === 'client' && !profile?.onboarding_completed) {
+        router.push('/dashboard/onboarding')
+        return
+      }
+    }
+    router.push('/dashboard')
   }
 
   async function handleSignup(e: React.FormEvent) {
