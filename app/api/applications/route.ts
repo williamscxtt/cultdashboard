@@ -6,7 +6,7 @@ const adminClient = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 )
 
-async function sendSlackNotification(data: Record<string, unknown>) {
+async function sendSlackNotification(data: Record<string, unknown>, isQualified: boolean) {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL
   if (!webhookUrl) return
 
@@ -26,19 +26,24 @@ async function sendSlackNotification(data: Record<string, unknown>) {
   const incomeGoal = String(data.income_goal || '')
   const dob = String(data.date_of_birth || '')
 
+  const header = isQualified
+    ? '🔔 New Creator Cult Application'
+    : '🟡 Application — Auto-Disqualified (worth a look)'
+
+  const contactLine = isQualified
+    ? `*📞 CALL NOW: ${phone}*\n*Name:* ${name}  |  *DOB:* ${dob}\n*Email:* ${email}\n*Instagram:* @${ig.replace(/^@/, '')}`
+    : `*Name:* ${name}  |  *DOB:* ${dob}\n*Email:* ${email}  |  *Instagram:* @${ig.replace(/^@/, '')}\n*Phone:* ${phone || '—'}\n_Auto-disqualified by the form — check their investment answer below_`
+
   const message = {
-    text: `🔔 New Creator Cult Application — ${name}`,
+    text: `${isQualified ? '🔔' : '🟡'} Creator Cult Application — ${name}`,
     blocks: [
       {
         type: 'header',
-        text: { type: 'plain_text', text: '🔔 New Creator Cult Application', emoji: true },
+        text: { type: 'plain_text', text: header, emoji: true },
       },
       {
         type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*📞 CALL NOW: ${phone}*\n*Name:* ${name}  |  *DOB:* ${dob}\n*Email:* ${email}\n*Instagram:* @${ig.replace(/^@/, '')}`,
-        },
+        text: { type: 'mrkdwn', text: contactLine },
       },
       { type: 'divider' },
       {
@@ -70,13 +75,10 @@ async function sendSlackNotification(data: Record<string, unknown>) {
           text: `*💰 Investment & Income*\n• Current income: ${income}\n• Will invest: ${investAmount}\n• Approach: ${investApproach}\n• Income goal: ${incomeGoal}`,
         },
       },
-      {
+      ...(isQualified ? [{
         type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*📞 Ring them now:* \`${phone}\``,
-        },
-      },
+        text: { type: 'mrkdwn', text: `*📞 Ring them now:* \`${phone}\`` },
+      }] : []),
     ],
   }
 
@@ -124,10 +126,12 @@ export async function POST(req: Request) {
     console.error('[applications] insert error:', error.message)
   }
 
-  // Only ping Slack for qualified applicants
-  if (qualified !== false) {
+  // Ping Slack for all real submissions — qualified ones get the urgent message,
+  // disqualified ones get a low-priority heads-up. Skip if no real data (fake/test entries).
+  const hasRealData = Boolean(first_name && (phone || niche || biggest_obstacle))
+  if (hasRealData) {
     try {
-      await sendSlackNotification(body)
+      await sendSlackNotification(body, qualified !== false)
     } catch (err) {
       console.error('[applications] slack error:', err)
     }
