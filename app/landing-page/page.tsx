@@ -125,10 +125,13 @@ export default function LandingPage() {
   const [selectedWin, setSelectedWin] = useState<WinItem | null>(null)
   const typedText = useTypewriter([
     'Still clocking in.',
-    'Still getting nowhere.',
+    'Still getting zero likes.',
     'Still posting into the void.',
-    'Still waiting for results.',
+    'Still broke at 11pm.',
     'Still figuring it out alone.',
+    'Still working your 9-to-5.',
+    'Still waiting for results.',
+    'Still watching others win.',
   ])
 
   useEffect(() => {
@@ -373,8 +376,9 @@ export default function LandingPage() {
         .lp-social-name:last-child { border-right: none; }
 
         /* ── Pain ── */
-        .lp-pain-item { padding: 40px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: grid; grid-template-columns: 72px 1fr; gap: 40px; align-items: start; }
-        @media (max-width: 640px) { .lp-pain-item { grid-template-columns: 1fr; gap: 10px; } }
+        .lp-pain-item { padding: 32px 36px; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; display: grid; grid-template-columns: 64px 1fr; gap: 32px; align-items: start; margin-bottom: 14px; transition: background .25s, border-color .25s; }
+        .lp-pain-item:hover { background: rgba(59,130,246,0.045); border-color: rgba(59,130,246,0.22); }
+        @media (max-width: 640px) { .lp-pain-item { grid-template-columns: 1fr; gap: 10px; padding: 24px 20px; } }
         .lp-pain-num { font-family: 'Inter', sans-serif !important; font-size: 48px; font-weight: 900; color: rgba(255,255,255,0.22); line-height: 1; margin-top: -6px; letter-spacing: -.04em; }
         .lp-pain-title { font-family: 'Inter', sans-serif !important; font-size: clamp(17px, 2vw, 22px); font-weight: 700; color: #f1f5f9; margin-bottom: 10px; line-height: 1.3; letter-spacing: -.02em; }
         .lp-pain-body { font-size: 15px; color: #b0bec5; line-height: 1.8; }
@@ -402,11 +406,11 @@ export default function LandingPage() {
         .lp-ba-after .lp-ba-mark { color: #3b82f6; font-size: 12px; font-weight: 700; }
 
         /* ── Phase list (new design) ── */
-        .lp-phase-list { margin-top: 80px; border-top: 1px solid rgba(255,255,255,0.06); }
-        .lp-phase-row { display: grid; grid-template-columns: 100px 1fr 1fr; gap: 56px; padding: 56px 0; border-bottom: 1px solid rgba(255,255,255,0.06); transition: background .3s; position: relative; overflow: hidden; }
-        .lp-phase-row::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; transition: background .3s; }
+        .lp-phase-list { margin-top: 80px; display: flex; flex-direction: column; gap: 12px; }
+        .lp-phase-row { display: grid; grid-template-columns: 100px 1fr 1fr; gap: 56px; padding: 40px 36px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; transition: background .3s, border-color .3s; position: relative; overflow: hidden; }
+        .lp-phase-row::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; border-radius: 12px 0 0 12px; transition: background .3s; }
         .lp-phase-row:hover::before { background: #3b82f6; }
-        .lp-phase-row:hover { background: rgba(59,130,246,0.025); }
+        .lp-phase-row:hover { background: rgba(59,130,246,0.04); border-color: rgba(59,130,246,0.2); }
         @media (max-width: 960px) { .lp-phase-row { grid-template-columns: 70px 1fr; gap: 32px; } .lp-phase-row-bullets { display: none; } }
         @media (max-width: 580px) { .lp-phase-row { grid-template-columns: 1fr; gap: 16px; padding: 40px 0; } }
         .lp-phase-row-num { font-family: 'Inter', sans-serif !important; font-size: 80px; font-weight: 900; color: #3b82f6; letter-spacing: -.06em; line-height: 0.85; opacity: 0.9; }
@@ -417,7 +421,7 @@ export default function LandingPage() {
         .lp-phase-row-bullet { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #b0bec5; line-height: 1.5; }
         .lp-phase-row-bmark { color: #3b82f6; flex-shrink: 0; font-weight: 700; font-size: 14px; line-height: 1.5; }
         /* Support (throughout) row */
-        .lp-phase-row.lp-support { grid-template-columns: 100px 1fr 1fr; background: rgba(59,130,246,0.04); border-top: 1px solid rgba(59,130,246,0.15); border-bottom: none; }
+        .lp-phase-row.lp-support { grid-template-columns: 100px 1fr 1fr; background: rgba(59,130,246,0.06); border-color: rgba(59,130,246,0.2); }
         @media (max-width: 960px) { .lp-phase-row.lp-support { grid-template-columns: 70px 1fr; } .lp-phase-row.lp-support .lp-phase-row-bullets { display: grid; } }
         .lp-phase-row.lp-support .lp-phase-row-num { color: rgba(59,130,246,0.25); }
         .lp-phase-row.lp-support .lp-phase-row-title { color: rgba(255,255,255,0.7); }
@@ -492,17 +496,17 @@ export default function LandingPage() {
         .lp-imgmq-name { font-size: 10px; color: #94a3b8; margin-top: 4px; font-weight: 500; letter-spacing: .04em; }
 
         /* ── Win grid ── */
-        .lp-win-grid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 64px; border: 1px solid rgba(255,255,255,0.06); }
+        .lp-win-grid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 64px; border: 1px solid rgba(255,255,255,0.09); border-radius: 14px; overflow: hidden; background: rgba(255,255,255,0.015); }
         @media (max-width: 900px) { .lp-win-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 580px) { .lp-win-grid { grid-template-columns: 1fr; } }
-        .lp-win-card { border-right: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; flex-direction: column; overflow: hidden; cursor: pointer; transition: background .2s, border-color .25s; position: relative; }
+        .lp-win-card { border-right: 1px solid rgba(255,255,255,0.07); border-bottom: 1px solid rgba(255,255,255,0.07); display: flex; flex-direction: column; overflow: hidden; cursor: pointer; transition: background .2s, border-color .25s; position: relative; }
         .lp-win-card:hover { background: rgba(59,130,246,0.05); border-color: rgba(59,130,246,0.2); }
         .lp-win-card::after { content: 'Tap to expand'; position: absolute; top: 10px; right: 10px; font-size: 9px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #3b82f6; background: rgba(59,130,246,0.1); padding: 3px 8px; border-radius: 4px; opacity: 0; transition: opacity .2s; }
         .lp-win-card:hover::after { opacity: 1; }
         .lp-win-card:nth-child(3n) { border-right: none; }
         @media (max-width: 900px) { .lp-win-card:nth-child(3n) { border-right: 1px solid rgba(255,255,255,0.06); } .lp-win-card:nth-child(2n) { border-right: none; } }
-        .lp-win-img-wrap { background: #0a0a08; border-bottom: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
-        .lp-win-img { width: 100%; display: block; max-height: 210px; object-fit: contain; object-position: top; }
+        .lp-win-img-wrap { background: #0a0a08; border-bottom: 1px solid rgba(255,255,255,0.05); overflow: hidden; height: 200px; }
+        .lp-win-img { width: 100%; height: 100%; display: block; object-fit: contain; object-position: top; }
         .lp-win-body { padding: 20px 22px 24px; flex: 1; display: flex; flex-direction: column; }
         .lp-win-stat { font-family: 'Inter', sans-serif !important; font-size: 18px; font-weight: 800; color: #f1f5f9; letter-spacing: -.02em; margin-bottom: 7px; line-height: 1.2; }
         .lp-win-detail { font-size: 12px; color: #b0bec5; line-height: 1.65; margin-bottom: 10px; flex: 1; }
@@ -690,9 +694,7 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="lp-page-frame">
-
-        {/* ── Ticker ── */}
+        {/* ── Ticker — full bleed ── */}
         <div className="lp-ticker">
           <div className="lp-ticker-track">
             {[...tickerItems, ...tickerItems].map((s, i) => (
@@ -702,6 +704,8 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
+
+        <div className="lp-page-frame">
 
         <div className="lp-hr" />
 
@@ -747,7 +751,7 @@ export default function LandingPage() {
               <div>
                 <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Origin</span></Fade>
                 <Fade delay={60}>
-                  <h2 className="lp-h2">412 followers.<br /><span style={{ color: '#ffffff' }}>£20,000 in debt.<br />Delivering pizzas in the evenings.</span></h2>
+                  <h2 className="lp-h2">412 followers.<br /><span style={{ color: '#ffffff' }}>£20,000 in debt.</span><br /><span style={{ color: '#3b82f6' }}>Delivering pizzas in the evenings.</span></h2>
                 </Fade>
                 <Fade delay={120}>
                   <div className="lp-story-text" style={{ marginTop: 36 }}>
@@ -813,7 +817,7 @@ export default function LandingPage() {
           <img
             src="/IMG_7050.JPG"
             alt="Creator Cult community"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 10%', filter: 'brightness(0.68) contrast(1.08) saturate(0.8)' }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 55%', filter: 'brightness(0.75) contrast(1.06) saturate(0.85)' }}
             loading="lazy"
           />
           <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(13,13,10,0.25) 0%, rgba(13,13,10,0.65) 80%)' }} />
@@ -1094,7 +1098,7 @@ export default function LandingPage() {
           <img
             src="/IMG_8083.JPG"
             alt=""
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', filter: 'brightness(0.78) contrast(1.05) saturate(0.8)' }}
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', filter: 'brightness(0.85) contrast(1.04) saturate(0.85)' }}
             loading="lazy"
           />
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(13,13,10,0.88) 0%, rgba(13,13,10,0.4) 55%, rgba(13,13,10,0.72) 100%)' }} />
