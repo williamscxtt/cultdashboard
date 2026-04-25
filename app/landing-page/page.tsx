@@ -259,9 +259,21 @@ export default function LandingPage() {
         .lp-root {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
           font-size: 16px; font-weight: 400; line-height: 1.65;
-          color: #cbd5e1; background: #0d0d0a;
+          color: #cbd5e1; background: #0a0a08;
           min-height: 100vh; overflow-x: hidden;
           -webkit-font-smoothing: antialiased;
+          background-image: radial-gradient(rgba(255,255,255,0.055) 1px, transparent 1px);
+          background-size: 28px 28px;
+        }
+        /* ── Page frame ── */
+        .lp-page-frame {
+          max-width: 1380px;
+          margin: 0 auto;
+          border-left: 1px solid rgba(255,255,255,0.07);
+          border-right: 1px solid rgba(255,255,255,0.07);
+          background: #0d0d0a;
+          position: relative;
+          overflow: hidden;
         }
         .lp-root::after {
           content: ''; position: fixed; inset: 0; z-index: 9999; pointer-events: none; opacity: 0.04;
@@ -571,6 +583,7 @@ export default function LandingPage() {
       `}</style>
 
       <div className="lp-root">
+      <div className="lp-page-frame">
 
         {/* ── Win modal ── */}
         {selectedWin && (
@@ -1214,6 +1227,7 @@ export default function LandingPage() {
           <div className="lp-footer-copy">© {new Date().getFullYear()} Creator Cult</div>
         </div>
 
+      </div>
       </div>
     </>
   )
