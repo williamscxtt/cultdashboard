@@ -608,7 +608,7 @@ export default function LandingPage() {
             </Fade>
           </div>
           <div className="lp-hero-photo-col">
-            <img src="/will-gym.jpg" alt="Will Scott — Creator Cult" className="lp-hero-photo" />
+            <img src="/B5D8C241-1826-46EE-898C-A40008641860.jpg" alt="Will Scott — Creator Cult" className="lp-hero-photo" />
             <div className="lp-hero-photo-overlay" />
           </div>
         </div>
@@ -693,6 +693,14 @@ export default function LandingPage() {
                 </Fade>
               </div>
               <Fade delay={100} className="lp-story-card-col">
+                <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 14, border: '1px solid rgba(255,255,255,0.08)' }}>
+                  <img
+                    src="/IMG_6327.JPG"
+                    alt="Will Scott — transformation"
+                    style={{ width: '100%', height: 200, objectFit: 'cover', objectPosition: 'center top', display: 'block', filter: 'brightness(0.88) contrast(1.08) saturate(0.85)' }}
+                    loading="lazy"
+                  />
+                </div>
                 <div className="lp-ba-card">
                   <div className="lp-ba-before">
                     <div className="lp-ba-label">Before</div>
@@ -731,7 +739,25 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="lp-hr" />
+        {/* ── Cinematic quote break ── */}
+        <div style={{ position: 'relative', height: 'clamp(280px, 36vw, 440px)', overflow: 'hidden' }}>
+          <img
+            src="/IMG_8083.JPG"
+            alt=""
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 35%', filter: 'brightness(0.55) contrast(1.1) saturate(0.75)' }}
+            loading="lazy"
+          />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(13,13,10,0.92) 0%, rgba(13,13,10,0.5) 55%, rgba(13,13,10,0.8) 100%)' }} />
+          <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 clamp(20px,5vw,80px)', maxWidth: 660 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 20, fontFamily: 'Inter, sans-serif' }}>The result of the system</div>
+            <div style={{ fontSize: 'clamp(26px, 4vw, 52px)', fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1.05, fontFamily: 'Inter, sans-serif' }}>
+              &ldquo;I didn&apos;t get lucky.<br />I got structured.&rdquo;
+            </div>
+            <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 20, fontFamily: 'Inter, sans-serif', letterSpacing: '.04em' }}>
+              Will Scott — Founder, Creator Cult
+            </div>
+          </div>
+        </div>
 
         {/* ── Programme ── */}
         <div className="lp-section">
@@ -1023,7 +1049,51 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="lp-hr" />
+        {/* ── 5-Star ratings strip ── */}
+        <div style={{ padding: '56px 0', borderTop: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
+          <div className="lp-container">
+            <Fade>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
+                <div style={{ display: 'flex', gap: 3 }}>{[1,2,3,4,5].map(s => <IconStarFill key={s} />)}</div>
+                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: '#94a3b8', fontFamily: 'Inter, sans-serif' }}>Verified reviews</span>
+              </div>
+            </Fade>
+          </div>
+          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingLeft: 'max(24px, calc((100vw - 1200px) / 2 + 48px))', paddingRight: 48, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+            {[
+              { img: '/testimonials/IMG_8034.jpeg', name: 'reenzo',           text: 'Will is an absolute goat of the coaching industry. 10/10 course recommendation.' },
+              { img: '/testimonials/IMG_8033.jpeg', name: 'FreeYourMind',     text: 'Very insightful course and Will is actively implicated and invested in delivering the most value!' },
+              { img: '/testimonials/IMG_8032.jpeg', name: 'Kyriakos Parpas',  text: 'Just starting out with his Course and i feel like its a steal from the value and the hours he is put down, absolutely great.' },
+              { img: '/testimonials/IMG_8031.jpeg', name: 'Matt Neems',       text: 'Looks great so far and extremely grateful that this is available at no cost.' },
+              { img: '/testimonials/IMG_8036.jpeg', name: 'Ed Kershaw',       text: 'Insanely good free value' },
+              { img: '/testimonials/IMG_8037.jpeg', name: 'Jacob B Smith',    text: 'Comprehensive and competitive, Useful and Thorough' },
+            ].map((r, i) => (
+              <div key={i} style={{ flexShrink: 0, width: 'clamp(240px, 30vw, 300px)', background: '#ffffff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
+                <img src={r.img} alt={`${r.name} review`} style={{ width: '100%', height: 'auto', display: 'block' }} loading="lazy" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Community image break ── */}
+        <div style={{ position: 'relative', height: 'clamp(240px, 30vw, 380px)', overflow: 'hidden' }}>
+          <img
+            src="/IMG_7050.JPG"
+            alt="Creator Cult community"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%', filter: 'brightness(0.45) contrast(1.1) saturate(0.7)' }}
+            loading="lazy"
+          />
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(13,13,10,0.4) 0%, rgba(13,13,10,0.85) 80%)' }} />
+          <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 20px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 16, fontFamily: 'Inter, sans-serif' }}>The community</div>
+            <div style={{ fontSize: 'clamp(22px, 3.5vw, 46px)', fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1.08, fontFamily: 'Inter, sans-serif', maxWidth: 640 }}>
+              140+ creators.<br />One system. One community.
+            </div>
+            <div style={{ fontSize: 14, color: '#94a3b8', marginTop: 16, fontFamily: 'Inter, sans-serif' }}>
+              Members in 15+ countries. Active every single day.
+            </div>
+          </div>
+        </div>
 
         {/* ── What's Included ── */}
         <div className="lp-section">
@@ -1118,20 +1188,29 @@ export default function LandingPage() {
         <div className="lp-hr" />
 
         {/* ── Final CTA ── */}
-        <div className="lp-cta-block" style={{ padding: '112px 48px' }}>
-          <Fade>
-            <span className="lp-pill" style={{ marginBottom: 24 }}><span className="lp-pill-dot" />One last thing</span>
-            <h2 className="lp-h2" style={{ marginBottom: 20 }}>Stop posting into the void.</h2>
-            <p className="lp-body-lg" style={{ marginBottom: 44, maxWidth: 480, margin: '0 auto 44px' }}>
-              You&apos;re three minutes away from finding out if Creator Cult is the right fit. Apply now. No commitment. No sales call unless you want one.
-            </p>
-            <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
-            <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center', gap: 28, flexWrap: 'wrap' }}>
-              {['Takes 3 minutes', 'Reviewed personally by Will', 'No commitment to apply'].map(c => (
-                <span key={c} className="lp-dim" style={{ fontSize: 12, letterSpacing: '.08em', fontFamily: 'Inter, sans-serif' }}>— {c}</span>
-              ))}
-            </div>
-          </Fade>
+        <div className="lp-cta-block" style={{ padding: '120px 48px', position: 'relative', overflow: 'hidden' }}>
+          <img
+            src="/19241A27-9CDA-4FE2-8DBF-066F8E62E29E.jpg"
+            alt=""
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', filter: 'brightness(0.25) saturate(0.5) contrast(1.1)' }}
+            loading="lazy"
+          />
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center bottom, rgba(13,13,10,0.4) 0%, rgba(13,13,10,0.85) 65%, rgba(13,13,10,0.98) 100%)' }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <Fade>
+              <span className="lp-pill" style={{ marginBottom: 24 }}><span className="lp-pill-dot" />One last thing</span>
+              <h2 className="lp-h2" style={{ marginBottom: 20 }}>Stop posting into the void.</h2>
+              <p className="lp-body-lg" style={{ marginBottom: 44, maxWidth: 480, margin: '0 auto 44px' }}>
+                You&apos;re three minutes away from finding out if Creator Cult is the right fit. Apply now. No commitment. No sales call unless you want one.
+              </p>
+              <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
+              <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center', gap: 28, flexWrap: 'wrap' }}>
+                {['Takes 3 minutes', 'Reviewed personally by Will', 'No commitment to apply'].map(c => (
+                  <span key={c} className="lp-dim" style={{ fontSize: 12, letterSpacing: '.08em', fontFamily: 'Inter, sans-serif' }}>— {c}</span>
+                ))}
+              </div>
+            </Fade>
+          </div>
         </div>
 
         {/* ── Footer ── */}
