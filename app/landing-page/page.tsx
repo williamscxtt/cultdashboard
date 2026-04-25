@@ -621,7 +621,7 @@ export default function LandingPage() {
             <Fade delay={80}>
               <h1 className="lp-h1">
                 You&apos;ve been<br />
-                <span style={{ color: '#94a3b8' }}>posting for months.</span><br />
+                <span style={{ color: 'rgba(255,255,255,0.38)' }}>posting for months.</span><br />
                 <span className="lp-blue">{typedText}<span className="lp-cursor">|</span></span>
               </h1>
             </Fade>
@@ -713,7 +713,7 @@ export default function LandingPage() {
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Real Problem</span></Fade>
             <Fade delay={60}>
-              <h2 className="lp-h2">You don&apos;t have<br /><span style={{ color: '#94a3b8' }}>a content problem.</span></h2>
+              <h2 className="lp-h2">You don&apos;t have<br /><span style={{ color: 'rgba(255,255,255,0.38)' }}>a content problem.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 500 }}>You have a system problem. And there&apos;s a difference.</p>
             </Fade>
             <div style={{ marginTop: 56 }}>
@@ -750,7 +750,7 @@ export default function LandingPage() {
               <div>
                 <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Origin</span></Fade>
                 <Fade delay={60}>
-                  <h2 className="lp-h2">412 followers.<br /><span style={{ color: '#94a3b8' }}>£20,000 in debt.<br />Delivering pizzas in the evenings.</span></h2>
+                  <h2 className="lp-h2">412 followers.<br /><span style={{ color: 'rgba(255,255,255,0.38)' }}>£20,000 in debt.<br />Delivering pizzas in the evenings.</span></h2>
                 </Fade>
                 <Fade delay={120}>
                   <div className="lp-story-text" style={{ marginTop: 36 }}>
@@ -834,7 +834,7 @@ export default function LandingPage() {
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Programme</span></Fade>
             <Fade delay={60}>
-              <h2 className="lp-h2">Five phases.<br /><span style={{ color: '#94a3b8' }}>One direction.</span></h2>
+              <h2 className="lp-h2">Five phases.<br /><span style={{ color: 'rgba(255,255,255,0.38)' }}>One direction.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 520 }}>
                 Every Creator Cult member goes through the same five phases in order. Skip one and you build on sand. Follow the sequence and the results compound.
               </p>
@@ -943,7 +943,7 @@ export default function LandingPage() {
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Results</span></Fade>
             <Fade delay={60}>
-              <h2 className="lp-h2">What happens when you have<br /><span style={{ color: '#94a3b8' }}>a system instead of a strategy.</span></h2>
+              <h2 className="lp-h2">What happens when you have<br /><span style={{ color: 'rgba(255,255,255,0.38)' }}>a system instead of a strategy.</span></h2>
             </Fade>
           </div>
 
@@ -1024,7 +1024,7 @@ export default function LandingPage() {
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />From The Community</span></Fade>
             <Fade delay={60}>
-              <h2 className="lp-h2">What members<br /><span style={{ color: '#94a3b8' }}>are saying.</span></h2>
+              <h2 className="lp-h2">What members<br /><span style={{ color: 'rgba(255,255,255,0.38)' }}>are saying.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 520 }}>
                 Posted in the private Creator Cult Circle community. Unedited.
               </p>
@@ -1110,7 +1110,7 @@ export default function LandingPage() {
         <div className="lp-section">
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />What You Get</span></Fade>
-            <Fade delay={60}><h2 className="lp-h2">Everything<br /><span style={{ color: '#94a3b8' }}>in one place.</span></h2></Fade>
+            <Fade delay={60}><h2 className="lp-h2">Everything<br /><span style={{ color: 'rgba(255,255,255,0.38)' }}>in one place.</span></h2></Fade>
             <div className="lp-incl-grid">
               {included.map(({ icon, title, desc }, i) => (
                 <Fade key={title} delay={(i % 2) * 70}>
@@ -1168,7 +1168,7 @@ export default function LandingPage() {
         <div className="lp-cta-block">
           <Fade>
             <span className="lp-pill" style={{ marginBottom: 20 }}><span className="lp-pill-dot" />Apply</span>
-            <h2 className="lp-h2" style={{ marginBottom: 20 }}>Ready to stop figuring<br /><span style={{ color: '#94a3b8' }}>it out alone?</span></h2>
+            <h2 className="lp-h2" style={{ marginBottom: 20 }}>Ready to stop figuring<br /><span style={{ color: 'rgba(255,255,255,0.38)' }}>it out alone?</span></h2>
             <p className="lp-body-lg" style={{ marginBottom: 36 }}>Applications take 3 minutes. No commitment to apply.<br />Will reviews every one personally.</p>
             <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
           </Fade>
@@ -1210,7 +1210,7 @@ export default function LandingPage() {
           <div style={{ position: 'relative', zIndex: 1 }}>
             <Fade>
               <span className="lp-pill" style={{ marginBottom: 24 }}><span className="lp-pill-dot" />One last thing</span>
-              <h2 className="lp-h2" style={{ marginBottom: 20 }}>Stop posting<br /><span style={{ color: '#94a3b8' }}>into the void.</span></h2>
+              <h2 className="lp-h2" style={{ marginBottom: 20 }}>Stop posting<br /><span style={{ color: 'rgba(255,255,255,0.38)' }}>into the void.</span></h2>
               <p className="lp-body-lg" style={{ marginBottom: 44, maxWidth: 480, margin: '0 auto 44px' }}>
                 You&apos;re three minutes away from finding out if Creator Cult is the right fit. Apply now. No commitment. No sales call unless you want one.
               </p>
