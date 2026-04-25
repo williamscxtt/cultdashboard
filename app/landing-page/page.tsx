@@ -182,17 +182,23 @@ export default function LandingPage() {
 
   const tools = [
     { icon: <IconBrain />, title: 'AI Story Generator', desc: 'Input your niche, offer, and audience. Get a full Instagram story sequence — hooks, slides, CTA. Built for your positioning, not a template.', badge: 'Most Used' },
-    { icon: <IconTrend />, title: 'Competitor Intel', desc: 'Every Monday: a full breakdown of what your top competitors posted, what went viral, and 5 ready-to-use script angles based on what\'s already working in your niche. Auto-generated.', badge: 'Auto-Weekly' },
+    { icon: <IconTrend />, title: 'Competitor Intel Engine', desc: 'Every Monday: a full breakdown of what your top competitors posted, what went viral, and 5 ready-to-use script angles based on what\'s already working in your niche. Auto-generated.', badge: 'Auto-Weekly' },
     { icon: <IconDoc />, title: 'Reel Script Generator', desc: 'Pick a proven hook style, describe your angle, and get a complete reel script in seconds — structured on 1,000+ of Will\'s viral frameworks. One click to copy.' },
     { icon: <IconSearch />, title: 'Profile Audit AI', desc: 'Feed your Instagram URL. Get a structured audit: bio clarity, CTA strength, offer visibility, content gaps. Know exactly what to fix and in what order.' },
     { icon: <IconMsg />, title: 'DM Sales Playbook', desc: 'The exact DM sequences used to close high-ticket coaching clients from comments and follows. Scripts, objection handling, follow-ups — all in one place.' },
     { icon: <IconZap />, title: 'Lead Magnet Generator', desc: 'Choose your angle. The AI builds a complete lead magnet: title, concept, outline, and caption CTA with comment keyword. Ready to post in 5 minutes.' },
+    { icon: <IconGrid />, title: 'Content Calendar Builder', desc: 'Input your niche and monthly goals. Get a 30-day posting plan with content themes, hook angles, and recommended post types — optimised for reach and conversion.' },
+    { icon: <IconLayers />, title: 'Viral Hook Analyser', desc: 'Paste any hook or opening line. The AI scores it on thumb-stop power, clarity, and emotional pull — then rewrites it three different ways. Know before you post.' },
+    { icon: <IconPackage />, title: 'Bio Optimiser', desc: 'Feed your current Instagram bio. Get four fully rewritten versions with sharper positioning, stronger CTA, and cleaner keyword signals. Updated in under 60 seconds.' },
+    { icon: <IconDoc />, title: 'Caption Generator', desc: 'Describe your reel angle. Get three complete captions with hooks, body copy, and keyword CTA options — formatted to stop the scroll and drive saves and follows.', badge: 'New' },
+    { icon: <IconShield />, title: 'Offer Builder', desc: 'Describe what you do and who you help. The AI builds a full high-ticket coaching offer: name, outcome promise, pricing structure, and delivery format. Ready to pitch.' },
+    { icon: <IconTrend />, title: 'Outreach Script Library', desc: 'Pre-written cold outreach, comment reply scripts, follow-up sequences, and DM openers — all indexed by niche and scenario. Stop writing from scratch every time.' },
   ]
 
   const included = [
     { icon: <IconStar />, title: 'The 5-Phase Curriculum', desc: 'Foundations to Scale. Every lesson and framework in the order that works. Self-paced but guided.' },
     { icon: <IconUsers />, title: 'Weekly Group Coaching', desc: 'Live calls every week. Bring your questions, your content, your blockers. Will reviews your work live.' },
-    { icon: <IconGrid />, title: 'The Cult Dashboard', desc: 'Private access to six AI tools built for Creator Cult members — Story Generator, Competitor Intel, Reel Scripts, DM Playbook, and more.' },
+    { icon: <IconGrid />, title: 'The Cult Dashboard', desc: 'Private access to 12 AI tools built for Creator Cult members — Story Generator, Competitor Intel Engine, Reel Scripts, Hook Analyser, Bio Optimiser, and more.' },
     { icon: <IconMsg />, title: 'Private Circle Community', desc: '140+ creators working the same system. Post wins, ask for feedback, get accountability. Active every single day.' },
     { icon: <IconShield />, title: '1:1 Support', desc: 'Direct access to Will between calls. Post your content for review, ask for offer feedback. Not a bot. Not a VA.' },
     { icon: <IconPackage />, title: 'Weekly Strategy Packages', desc: "Every week: what's working on Instagram now, content angles to test, and a plan for the next 7 days." },
@@ -800,25 +806,29 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* ── Cinematic quote break ── */}
-        <div style={{ position: 'relative', height: 'clamp(280px, 36vw, 440px)', overflow: 'hidden' }}>
+        </div>{/* ── /lp-page-frame 1 ── */}
+
+        {/* ── Community image break — full bleed ── */}
+        <div style={{ position: 'relative', height: 'clamp(300px, 38vw, 500px)', overflow: 'hidden' }}>
           <img
-            src="/IMG_8083.JPG"
-            alt=""
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 35%', filter: 'brightness(0.55) contrast(1.1) saturate(0.75)' }}
+            src="/IMG_7050.JPG"
+            alt="Creator Cult community"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 10%', filter: 'brightness(0.68) contrast(1.08) saturate(0.8)' }}
             loading="lazy"
           />
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(13,13,10,0.92) 0%, rgba(13,13,10,0.5) 55%, rgba(13,13,10,0.8) 100%)' }} />
-          <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 clamp(20px,5vw,80px)', maxWidth: 660 }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 20, fontFamily: 'Inter, sans-serif' }}>The result of the system</div>
-            <div style={{ fontSize: 'clamp(26px, 4vw, 52px)', fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1.05, fontFamily: 'Inter, sans-serif' }}>
-              &ldquo;I didn&apos;t get lucky.<br />I got structured.&rdquo;
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(13,13,10,0.25) 0%, rgba(13,13,10,0.65) 80%)' }} />
+          <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 20px' }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 16, fontFamily: 'Inter, sans-serif' }}>The community</div>
+            <div style={{ fontSize: 'clamp(26px, 4vw, 52px)', fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1.08, fontFamily: 'Inter, sans-serif', maxWidth: 700 }}>
+              140+ creators.<br />One system. One community.
             </div>
-            <div style={{ fontSize: 13, color: '#94a3b8', marginTop: 20, fontFamily: 'Inter, sans-serif', letterSpacing: '.04em' }}>
-              Will Scott — Founder, Creator Cult
+            <div style={{ fontSize: 14, color: '#cbd5e1', marginTop: 16, fontFamily: 'Inter, sans-serif' }}>
+              Members in 15+ countries. Active every single day.
             </div>
           </div>
         </div>
+
+        <div className="lp-page-frame">{/* ── lp-page-frame 2 ── */}
 
         {/* ── Programme ── */}
         <div className="lp-section">
@@ -872,9 +882,9 @@ export default function LandingPage() {
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />Exclusive to Creator Cult</span></Fade>
             <Fade delay={60}>
-              <h2 className="lp-h2">The Cult Dashboard.<br /><span style={{ color: '#94a3b8', fontSize: '0.7em', fontWeight: 700, letterSpacing: '-.02em' }}>Six AI tools. Yours when you join.</span></h2>
+              <h2 className="lp-h2">The Cult Dashboard.<br /><span style={{ color: '#ffffff', fontSize: '0.7em', fontWeight: 700, letterSpacing: '-.02em' }}>12 AI tools. Yours when you join.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 580 }}>
-                Every member gets private access to a dashboard built specifically for Creator Cult. Six AI tools trained on the methodology — including weekly competitor analysis that writes your content ideas for you.
+                Every member gets private access to a dashboard built specifically for Creator Cult. 12 AI tools trained on the methodology — including weekly competitor analysis that writes your content ideas for you.
               </p>
             </Fade>
 
@@ -1077,25 +1087,29 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* ── Community image break ── */}
-        <div style={{ position: 'relative', height: 'clamp(240px, 30vw, 380px)', overflow: 'hidden' }}>
+        </div>{/* ── /lp-page-frame 2 ── */}
+
+        {/* ── Cinematic quote break — full bleed ── */}
+        <div style={{ position: 'relative', height: 'clamp(280px, 36vw, 460px)', overflow: 'hidden' }}>
           <img
-            src="/IMG_7050.JPG"
-            alt="Creator Cult community"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 25%', filter: 'brightness(0.45) contrast(1.1) saturate(0.7)' }}
+            src="/IMG_8083.JPG"
+            alt=""
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', filter: 'brightness(0.78) contrast(1.05) saturate(0.8)' }}
             loading="lazy"
           />
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(13,13,10,0.4) 0%, rgba(13,13,10,0.85) 80%)' }} />
-          <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 20px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 16, fontFamily: 'Inter, sans-serif' }}>The community</div>
-            <div style={{ fontSize: 'clamp(22px, 3.5vw, 46px)', fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1.08, fontFamily: 'Inter, sans-serif', maxWidth: 640 }}>
-              140+ creators.<br />One system. One community.
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to right, rgba(13,13,10,0.88) 0%, rgba(13,13,10,0.4) 55%, rgba(13,13,10,0.72) 100%)' }} />
+          <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '0 clamp(20px,8vw,120px)', maxWidth: 720 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 20, fontFamily: 'Inter, sans-serif' }}>The result of the system</div>
+            <div style={{ fontSize: 'clamp(28px, 4.5vw, 58px)', fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1.05, fontFamily: 'Inter, sans-serif' }}>
+              &ldquo;I didn&apos;t get lucky.<br />I got structured.&rdquo;
             </div>
-            <div style={{ fontSize: 14, color: '#94a3b8', marginTop: 16, fontFamily: 'Inter, sans-serif' }}>
-              Members in 15+ countries. Active every single day.
+            <div style={{ fontSize: 13, color: '#cbd5e1', marginTop: 20, fontFamily: 'Inter, sans-serif', letterSpacing: '.04em' }}>
+              Will Scott — Founder, Creator Cult
             </div>
           </div>
         </div>
+
+        <div className="lp-page-frame">{/* ── lp-page-frame 3 ── */}
 
         {/* ── What's Included ── */}
         <div className="lp-section">
@@ -1174,7 +1188,7 @@ export default function LandingPage() {
             <Fade delay={60}><h2 className="lp-h2" style={{ marginBottom: 56 }}>Common questions.</h2></Fade>
             <Fade delay={100}>
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-                <Faq q="What exactly do I get when I join Creator Cult?" a="You get access to the full 5-phase curriculum, weekly live group coaching calls with recordings, 1:1 access to Will between calls, content and offer reviews, the Cult Dashboard with all six AI tools, and the private Circle community. Ongoing support at every stage." />
+                <Faq q="What exactly do I get when I join Creator Cult?" a="You get access to the full 5-phase curriculum, weekly live group coaching calls with recordings, 1:1 access to Will between calls, content and offer reviews, the Cult Dashboard with all 12 AI tools, and the private Circle community. Ongoing support at every stage." />
                 <Faq q="How long does the programme run?" a="Creator Cult is an ongoing coaching programme. Most clients see their first real results within 30 to 60 days of starting. There is no set end date. You stay in as long as you are growing." />
                 <Faq q="Do I need a big following to join?" a="No. Several of our members signed their first clients with under 1,000 followers. Following size does not determine your results. Your system does. We build the system first." />
                 <Faq q="How much time do I need to commit each week?" a="Expect to block 5 to 8 hours per week: content creation, implementation, and the weekly coaching call. Less than that and progress slows. You do not need more than that to see results." />
