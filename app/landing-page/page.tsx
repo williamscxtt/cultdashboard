@@ -56,6 +56,35 @@ const NavIntel = () => <Ic d="M22 7 13.5 15.5 8.5 10.5 2 17M16 7h6v6" size={14} 
 const NavTools = () => <Ic d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" size={14} />
 const NavDM = () => <Ic d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" size={14} />
 
+function useTypewriter(words: string[], typingSpeed = 72, deletingSpeed = 38, pauseMs = 2000) {
+  const [display, setDisplay] = useState('')
+  const [wordIdx, setWordIdx] = useState(0)
+  const [phase, setPhase] = useState<'typing' | 'pausing' | 'deleting'>('typing')
+
+  useEffect(() => {
+    const word = words[wordIdx % words.length]
+    if (phase === 'typing') {
+      if (display.length < word.length) {
+        const t = setTimeout(() => setDisplay(word.slice(0, display.length + 1)), typingSpeed)
+        return () => clearTimeout(t)
+      } else {
+        const t = setTimeout(() => setPhase('deleting'), pauseMs)
+        return () => clearTimeout(t)
+      }
+    } else if (phase === 'deleting') {
+      if (display.length > 0) {
+        const t = setTimeout(() => setDisplay(display.slice(0, -1)), deletingSpeed)
+        return () => clearTimeout(t)
+      } else {
+        setPhase('typing')
+        setWordIdx(i => i + 1)
+      }
+    }
+  }, [display, phase, wordIdx, words, typingSpeed, deletingSpeed, pauseMs])
+
+  return display
+}
+
 function Faq({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
@@ -94,6 +123,13 @@ interface WinItem {
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
   const [selectedWin, setSelectedWin] = useState<WinItem | null>(null)
+  const typedText = useTypewriter([
+    'Still clocking in.',
+    'Still getting nowhere.',
+    'Still posting into the void.',
+    'Still waiting for results.',
+    'Still figuring it out alone.',
+  ])
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 20)
@@ -247,6 +283,19 @@ export default function LandingPage() {
         .lp-container-sm { max-width: 840px; margin: 0 auto; padding: 0 48px; }
         .lp-section { padding: 112px 0; }
         .lp-hr { height: 1px; background: rgba(59,130,246,0.12); }
+
+        /* ── Cursor blink ── */
+        @keyframes lp-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+        .lp-cursor { display: inline-block; color: #3b82f6; animation: lp-blink .65s step-end infinite; margin-left: 2px; font-weight: 300; }
+        /* ── Badge dot pulse ── */
+        @keyframes lp-pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.7); } }
+        .lp-pill-dot { animation: lp-pulse-dot 2s ease-in-out infinite; }
+
+        /* ── Feature strip ── */
+        .lp-feat-strip { padding: 18px 0; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
+        .lp-feat-inner { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; }
+        .lp-feat-item { font-family: 'Inter', sans-serif !important; font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #64748b; padding: 4px 20px; white-space: nowrap; }
+        .lp-feat-sep { color: #3b82f6; font-size: 8px; flex-shrink: 0; }
 
         /* ── Pill ── */
         .lp-pill { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); background: rgba(59,130,246,0.06); padding: 7px 16px; border-radius: 999px; margin-bottom: 28px; }
@@ -557,7 +606,12 @@ export default function LandingPage() {
 
         {/* ── Hero ── */}
         <div className="lp-hero">
-          <div className="lp-hero-left">
+          {/* Background radial glow */}
+          <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
+            <div style={{ position: 'absolute', top: '-30%', left: '15%', width: '70%', height: '110%', background: 'radial-gradient(ellipse at center, rgba(59,130,246,0.08) 0%, transparent 60%)' }} />
+            <div style={{ position: 'absolute', bottom: '-20%', right: '0', width: '40%', height: '60%', background: 'radial-gradient(ellipse at bottom right, rgba(99,102,241,0.05) 0%, transparent 55%)' }} />
+          </div>
+          <div className="lp-hero-left" style={{ position: 'relative', zIndex: 1 }}>
             <Fade>
               <div className="lp-hero-badge">
                 <span className="lp-pill-dot" />
@@ -567,8 +621,8 @@ export default function LandingPage() {
             <Fade delay={80}>
               <h1 className="lp-h1">
                 You&apos;ve been<br />
-                posting for months.<br />
-                <span className="lp-blue">Still clocking in.</span>
+                <span style={{ color: '#94a3b8' }}>posting for months.</span><br />
+                <span className="lp-blue">{typedText}<span className="lp-cursor">|</span></span>
               </h1>
             </Fade>
             <Fade delay={160}>
@@ -611,7 +665,7 @@ export default function LandingPage() {
               </div>
             </Fade>
           </div>
-          <div className="lp-hero-photo-col">
+          <div className="lp-hero-photo-col" style={{ position: 'relative', zIndex: 1 }}>
             <img src="/B5D8C241-1826-46EE-898C-A40008641860.jpg" alt="Will Scott — Creator Cult" className="lp-hero-photo" />
             <div className="lp-hero-photo-overlay" />
           </div>
@@ -623,6 +677,18 @@ export default function LandingPage() {
             {[...tickerItems, ...tickerItems].map((s, i) => (
               <span key={i} className="lp-tick-item">
                 <span className="lp-tick-dot" style={{ marginRight: 12 }}>&#9670;</span>{s}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Feature strip ── */}
+        <div className="lp-feat-strip">
+          <div className="lp-feat-inner">
+            {['Five-Phase System', 'Weekly Group Coaching', 'AI Tools Dashboard', 'Private Circle Community', '140+ Creators Enrolled', '£500K+ in Verified Wins', 'Competitor Intel Tool', '1:1 Access to Will'].map((item, i, arr) => (
+              <span key={item} style={{ display: 'inline-flex', alignItems: 'center' }}>
+                <span className="lp-feat-item">{item}</span>
+                {i < arr.length - 1 && <span className="lp-feat-sep">◆</span>}
               </span>
             ))}
           </div>
@@ -647,8 +713,8 @@ export default function LandingPage() {
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Real Problem</span></Fade>
             <Fade delay={60}>
-              <h2 className="lp-h2">You don&apos;t have<br />a content problem.</h2>
-              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 500 }}>You have a system problem.</p>
+              <h2 className="lp-h2">You don&apos;t have<br /><span style={{ color: '#94a3b8' }}>a content problem.</span></h2>
+              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 500 }}>You have a system problem. And there&apos;s a difference.</p>
             </Fade>
             <div style={{ marginTop: 56 }}>
               {[
@@ -684,7 +750,7 @@ export default function LandingPage() {
               <div>
                 <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Origin</span></Fade>
                 <Fade delay={60}>
-                  <h2 className="lp-h2">412 followers.<br />£20,000 in debt.<br /><span style={{ color: '#94a3b8' }}>Delivering pizzas in the evenings.</span></h2>
+                  <h2 className="lp-h2">412 followers.<br /><span style={{ color: '#94a3b8' }}>£20,000 in debt.<br />Delivering pizzas in the evenings.</span></h2>
                 </Fade>
                 <Fade delay={120}>
                   <div className="lp-story-text" style={{ marginTop: 36 }}>
@@ -768,7 +834,7 @@ export default function LandingPage() {
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Programme</span></Fade>
             <Fade delay={60}>
-              <h2 className="lp-h2">Five phases.<br />One direction.</h2>
+              <h2 className="lp-h2">Five phases.<br /><span style={{ color: '#94a3b8' }}>One direction.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 520 }}>
                 Every Creator Cult member goes through the same five phases in order. Skip one and you build on sand. Follow the sequence and the results compound.
               </p>
@@ -815,91 +881,32 @@ export default function LandingPage() {
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />Exclusive to Creator Cult</span></Fade>
             <Fade delay={60}>
-              <h2 className="lp-h2">The Cult Dashboard.</h2>
+              <h2 className="lp-h2">The Cult Dashboard.<br /><span style={{ color: '#94a3b8', fontSize: '0.7em', fontWeight: 700, letterSpacing: '-.02em' }}>Six AI tools. Yours when you join.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 580 }}>
                 Every member gets private access to a dashboard built specifically for Creator Cult. Six AI tools trained on the methodology — including weekly competitor analysis that writes your content ideas for you.
               </p>
             </Fade>
 
             <Fade delay={100}>
-              <div className="lp-dash-outer">
-                <div className="lp-dash-chrome">
-                  <div className="lp-dash-dot-r" /><div className="lp-dash-dot-y" /><div className="lp-dash-dot-g" />
-                  <div className="lp-dash-url">cult-dashboard.vercel.app/dashboard/intel</div>
+              <div style={{ marginTop: 56, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(59,130,246,0.15)', position: 'relative', boxShadow: '0 0 80px rgba(59,130,246,0.1)', background: '#000' }}>
+                {/* Browser chrome bar */}
+                <div style={{ background: '#080808', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'rgba(255,80,80,0.45)' }} />
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'rgba(255,185,0,0.4)' }} />
+                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'rgba(40,200,70,0.35)' }} />
+                  <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', borderRadius: 5, padding: '4px 12px', fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '0 16px', fontFamily: 'Inter, monospace' }}>
+                    cult-dashboard.vercel.app/dashboard
+                  </div>
                 </div>
-                <div className="lp-dash-body">
-                  <div className="lp-dash-sidebar">
-                    <div className="lp-dash-logo">
-                      <LogoMark size={20} />
-                      Creator Cult
-                    </div>
-                    {[
-                      { label: 'Dashboard', icon: <NavHome />, active: false },
-                      { label: 'Content Tools', icon: <NavContent />, active: false },
-                      { label: 'Competitor Intel', icon: <NavIntel />, active: true },
-                      { label: 'Clients', icon: <NavClients />, active: false },
-                      { label: 'AI Tools', icon: <NavTools />, active: false },
-                      { label: 'DM Sales', icon: <NavDM />, active: false },
-                    ].map(item => (
-                      <div key={item.label} className={`lp-dash-nav${item.active ? ' active' : ''}`}>
-                        {item.icon}{item.label}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="lp-dash-main">
-                    <div className="lp-dash-topbar">
-                      <div>
-                        <div className="lp-dash-greeting">Competitor Intel — Week of Apr 21, 2026</div>
-                        <div className="lp-dash-subtext">Auto-generated every Monday · 47 competitor posts analysed · 5 scripts ready</div>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <span className="lp-dash-ai-badge">&#9679; Updated</span>
-                      </div>
-                    </div>
-                    <div className="lp-dash-metrics">
-                      {[
-                        { val: '47',   lbl: 'Posts Analysed', blue: false },
-                        { val: '2.1M', lbl: 'Top Post Views', blue: true },
-                        { val: '5',    lbl: 'Scripts Ready',  blue: false },
-                        { val: '3',    lbl: 'Trend Angles',   blue: true },
-                      ].map(m => (
-                        <div key={m.lbl} className="lp-dash-metric">
-                          <div className={`lp-dash-metric-val${m.blue ? ' blue' : ''}`}>{m.val}</div>
-                          <div className="lp-dash-metric-lbl">{m.lbl}</div>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="lp-dash-lower">
-                      <div className="lp-dash-panel">
-                        <div className="lp-dash-panel-title">
-                          Your 5 Script Ideas This Week
-                          <span className="lp-dash-ai-badge">AI Generated</span>
-                        </div>
-                        <div className="lp-dash-line">&ldquo;I made £10K this month doing the exact opposite of what every coach told me&rdquo;</div>
-                        <div className="lp-dash-line">&ldquo;What 3 months of following a real system looks like (full breakdown)&rdquo;</div>
-                        <div className="lp-dash-line">&ldquo;Stop copying viral creators — here&apos;s what actually converts to paying clients&rdquo;</div>
-                        <div className="lp-dash-line">&ldquo;The DM strategy that took me from 0 to 3 clients in 30 days&rdquo;</div>
-                        <div className="lp-dash-line green">&ldquo;18 months of nothing — then one positioning change made everything click&rdquo;</div>
-                      </div>
-                      <div className="lp-dash-panel">
-                        <div className="lp-dash-panel-title">Active Clients</div>
-                        {[
-                          { name: 'Michael Kersee', phase: 'Phase 4 — Scale', badge: 'Active' },
-                          { name: 'Freddie', phase: 'Phase 3 — Acquisition', badge: 'Active' },
-                          { name: 'Eddie', phase: 'Phase 2 — Brand Build', badge: 'Active' },
-                          { name: 'Brett Capstick', phase: 'Phase 1 — Foundations', badge: 'New' },
-                        ].map(c => (
-                          <div key={c.name} className="lp-dash-client">
-                            <div>
-                              <div className="lp-dash-client-name">{c.name}</div>
-                              <div className="lp-dash-client-phase">{c.phase}</div>
-                            </div>
-                            <div className="lp-dash-client-badge">{c.badge}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
+                {/* 16:9 YouTube embed */}
+                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
+                  <iframe
+                    src="https://www.youtube.com/embed/_ZA94MQqnOs?start=10&rel=0&modestbranding=1&color=white"
+                    title="Creator Cult Dashboard — Full Walkthrough"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                    allowFullScreen
+                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', display: 'block' }}
+                  />
                 </div>
               </div>
             </Fade>
@@ -936,7 +943,7 @@ export default function LandingPage() {
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Results</span></Fade>
             <Fade delay={60}>
-              <h2 className="lp-h2">What happens when you have<br /><span className="lp-blue">a system instead of a strategy.</span></h2>
+              <h2 className="lp-h2">What happens when you have<br /><span style={{ color: '#94a3b8' }}>a system instead of a strategy.</span></h2>
             </Fade>
           </div>
 
@@ -1017,7 +1024,7 @@ export default function LandingPage() {
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />From The Community</span></Fade>
             <Fade delay={60}>
-              <h2 className="lp-h2">What members are saying.</h2>
+              <h2 className="lp-h2">What members<br /><span style={{ color: '#94a3b8' }}>are saying.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 520 }}>
                 Posted in the private Creator Cult Circle community. Unedited.
               </p>
@@ -1103,7 +1110,7 @@ export default function LandingPage() {
         <div className="lp-section">
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />What You Get</span></Fade>
-            <Fade delay={60}><h2 className="lp-h2">Everything in one place.</h2></Fade>
+            <Fade delay={60}><h2 className="lp-h2">Everything<br /><span style={{ color: '#94a3b8' }}>in one place.</span></h2></Fade>
             <div className="lp-incl-grid">
               {included.map(({ icon, title, desc }, i) => (
                 <Fade key={title} delay={(i % 2) * 70}>
@@ -1161,7 +1168,7 @@ export default function LandingPage() {
         <div className="lp-cta-block">
           <Fade>
             <span className="lp-pill" style={{ marginBottom: 20 }}><span className="lp-pill-dot" />Apply</span>
-            <h2 className="lp-h2" style={{ marginBottom: 20 }}>Ready to stop figuring<br />it out alone?</h2>
+            <h2 className="lp-h2" style={{ marginBottom: 20 }}>Ready to stop figuring<br /><span style={{ color: '#94a3b8' }}>it out alone?</span></h2>
             <p className="lp-body-lg" style={{ marginBottom: 36 }}>Applications take 3 minutes. No commitment to apply.<br />Will reviews every one personally.</p>
             <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
           </Fade>
@@ -1203,7 +1210,7 @@ export default function LandingPage() {
           <div style={{ position: 'relative', zIndex: 1 }}>
             <Fade>
               <span className="lp-pill" style={{ marginBottom: 24 }}><span className="lp-pill-dot" />One last thing</span>
-              <h2 className="lp-h2" style={{ marginBottom: 20 }}>Stop posting into the void.</h2>
+              <h2 className="lp-h2" style={{ marginBottom: 20 }}>Stop posting<br /><span style={{ color: '#94a3b8' }}>into the void.</span></h2>
               <p className="lp-body-lg" style={{ marginBottom: 44, maxWidth: 480, margin: '0 auto 44px' }}>
                 You&apos;re three minutes away from finding out if Creator Cult is the right fit. Apply now. No commitment. No sales call unless you want one.
               </p>
