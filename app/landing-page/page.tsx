@@ -347,14 +347,16 @@ export default function LandingPage() {
 
         /* ── Hero ── */
         .lp-hero { display: grid; grid-template-columns: 1fr 42%; min-height: 100vh; position: relative; }
-        @media (max-width: 900px) { .lp-hero { grid-template-columns: 1fr; min-height: auto; } .lp-hero-photo-col { height: 65vw; min-height: 300px; order: -1; } }
+        @media (max-width: 900px) { .lp-hero { grid-template-columns: 1fr; min-height: auto; } .lp-hero-photo-col { height: 72vw; max-height: 420px; min-height: 260px; order: 1; } }
+        @media (max-width: 640px) { .lp-hero-photo-col { height: 88vw; max-height: 380px; } }
         .lp-hero-left { display: flex; flex-direction: column; justify-content: center; padding: 120px 64px 80px 48px; border-right: 1px solid rgba(59,130,246,0.07); }
-        @media (max-width: 900px) { .lp-hero-left { padding: 96px 32px 60px; border-right: none; } }
-        @media (max-width: 640px) { .lp-hero-left { padding: 88px 20px 56px; } }
+        @media (max-width: 900px) { .lp-hero-left { padding: 96px 32px 48px; border-right: none; } }
+        @media (max-width: 640px) { .lp-hero-left { padding: 88px 20px 40px; } }
         .lp-hero-badge { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #60a5fa; background: rgba(59,130,246,0.08); border: 1px solid rgba(96,165,250,0.2); padding: 7px 16px; border-radius: 999px; margin-bottom: 36px; width: fit-content; }
         .lp-hero-photo-col { position: relative; overflow: hidden; }
-        .lp-hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; filter: brightness(0.85) contrast(1.05) saturate(0.9); }
+        .lp-hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 15%; display: block; filter: brightness(0.85) contrast(1.05) saturate(0.9); }
         .lp-hero-photo-overlay { position: absolute; inset: 0; background: linear-gradient(to right, #0d0d0a 0%, transparent 20%), linear-gradient(to top, #0d0d0a 0%, transparent 30%), linear-gradient(to bottom, rgba(13,13,10,0.3) 0%, transparent 20%); }
+        @media (max-width: 900px) { .lp-hero-photo-overlay { background: linear-gradient(to top, #0d0d0a 0%, transparent 35%), linear-gradient(to bottom, #0d0d0a 0%, transparent 25%); } }
         .lp-hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 56px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 40px; }
         @media (max-width: 640px) { .lp-hero-stats { grid-template-columns: repeat(2, 1fr); gap: 28px 0; } }
         .lp-stat-n { font-family: 'Inter', sans-serif !important; font-size: clamp(26px, 3.5vw, 40px); font-weight: 900; color: #f1f5f9; letter-spacing: -.03em; line-height: 1; }
@@ -372,6 +374,7 @@ export default function LandingPage() {
         .lp-ticker-track { display: flex; width: max-content; animation: lp-tick 36s linear infinite; }
         .lp-ticker-track:hover { animation-play-state: paused; }
         @keyframes lp-tick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+        @media (max-width: 640px) { .lp-ticker-track { animation-duration: 16s; } }
         .lp-tick-item { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; padding: 0 28px; letter-spacing: .05em; text-transform: uppercase; }
         .lp-tick-dot { color: rgba(255,255,255,0.45); font-size: 8px; }
 
@@ -652,7 +655,7 @@ export default function LandingPage() {
               <h1 className="lp-h1">
                 You&apos;ve been<br />
                 <span style={{ color: '#ffffff' }}>posting for months.</span><br />
-                <span className="lp-blue">{typedText}<span className="lp-cursor">|</span></span>
+                <span className="lp-blue" style={{ display: 'block', minHeight: '1.05em' }}>{typedText}<span className="lp-cursor">|</span></span>
               </h1>
             </Fade>
             <Fade delay={160}>
