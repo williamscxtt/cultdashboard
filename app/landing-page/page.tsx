@@ -168,7 +168,7 @@ export default function LandingPage() {
   }, [])
 
   return (
-    <div className="min-h-screen bg-black text-white" style={{ fontFamily: 'Inter, sans-serif' }}>
+    <div className="min-h-screen bg-black text-white overflow-x-hidden" style={{ fontFamily: 'Inter, sans-serif' }}>
 
       {/* ── Sticky Nav ── */}
       <nav
@@ -264,25 +264,23 @@ export default function LandingPage() {
       </section>
 
       {/* ── Social proof ticker ── */}
-      <section className="py-6 border-y border-white/5 overflow-hidden">
-        <div className="flex gap-12 text-sm text-gray-500 whitespace-nowrap animate-none">
-          <div className="flex gap-12 items-center min-w-full justify-around px-6">
-            {[
-              'Freddie: £1,950 in 3 days',
-              'Eddie: 5K followers in 10 days',
-              'Dino: 24M views in 3 weeks',
-              'Brett: first client in 3 weeks',
-              'Asfand: first client in 7 days',
-              'Michael: $10K month',
-              'Tom: monetised within 30 days',
-              'Roy: 6K followers in 6 weeks',
-            ].map((s) => (
-              <span key={s} className="flex items-center gap-2">
-                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
-                {s}
-              </span>
-            ))}
-          </div>
+      <section className="py-6 border-y border-white/5">
+        <div className="max-w-6xl mx-auto px-6 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-sm text-gray-500">
+          {[
+            'Freddie: £1,950 in 3 days',
+            'Eddie: 5K followers in 10 days',
+            'Dino: 24M views in 3 weeks',
+            'Brett: first client in 3 weeks',
+            'Asfand: first client in 7 days',
+            'Michael: $10K month',
+            'Tom: monetised within 30 days',
+            'Roy: 6K followers in 6 weeks',
+          ].map((s) => (
+            <span key={s} className="flex items-center gap-2 whitespace-nowrap">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500 flex-shrink-0" />
+              {s}
+            </span>
+          ))}
         </div>
       </section>
 
