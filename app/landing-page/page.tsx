@@ -682,30 +682,6 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* ── Feature strip ── */}
-        <div className="lp-feat-strip">
-          <div className="lp-feat-inner">
-            {['Five-Phase System', 'Weekly Group Coaching', 'AI Tools Dashboard', 'Private Circle Community', '140+ Creators Enrolled', '£500K+ in Verified Wins', 'Competitor Intel Tool', '1:1 Access to Will'].map((item, i, arr) => (
-              <span key={item} style={{ display: 'inline-flex', alignItems: 'center' }}>
-                <span className="lp-feat-item">{item}</span>
-                {i < arr.length - 1 && <span className="lp-feat-sep">◆</span>}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* ── Social strip ── */}
-        <div className="lp-social-strip">
-          <div className="lp-container">
-            <div className="lp-social-label">Members who have taken action</div>
-            <div className="lp-social-names">
-              {['Michael Kersee', 'Freddie', 'Eddie', 'Dino', 'Brett Capstick', 'Bile', 'Matte Fortuna', 'Jakub Riedel', 'Tom Köster', 'Roy', 'Gabrielle', 'Zack Sinclair', 'Asfand', 'Toshiro Khouth', 'FreeYourMind', 'Samuel'].map(n => (
-                <span key={n} className="lp-social-name">{n}</span>
-              ))}
-            </div>
-          </div>
-        </div>
-
         <div className="lp-hr" />
 
         {/* ── Pain ── */}
