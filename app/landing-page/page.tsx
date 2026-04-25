@@ -259,19 +259,20 @@ export default function LandingPage() {
         .lp-root {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
           font-size: 16px; font-weight: 400; line-height: 1.65;
-          color: #cbd5e1; background: #0a0a08;
+          color: #cbd5e1; background-color: #0d0d0a;
           min-height: 100vh; overflow-x: hidden;
           -webkit-font-smoothing: antialiased;
-          background-image: radial-gradient(rgba(255,255,255,0.055) 1px, transparent 1px);
-          background-size: 28px 28px;
+          background-image:
+            linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+          background-size: 48px 48px;
         }
         /* ── Page frame ── */
         .lp-page-frame {
           max-width: 1380px;
           margin: 0 auto;
-          border-left: 1px solid rgba(255,255,255,0.07);
-          border-right: 1px solid rgba(255,255,255,0.07);
-          background: #0d0d0a;
+          border-left: 1px solid rgba(255,255,255,0.08);
+          border-right: 1px solid rgba(255,255,255,0.08);
           position: relative;
           overflow: hidden;
         }
