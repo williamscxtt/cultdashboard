@@ -700,8 +700,11 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
   // ── aggregate stats ───────────────────────────────────────────────────────
   const stats = useMemo(() => {
-    // Views: sum ALL reels (older videos keep accumulating views regardless of post date)
-    const curViews  = reels.reduce((a, r) => a + (r.views ?? 0), 0)
+    // Views + engagement: both filtered to the selected time window so
+    // the "vs prev period" delta is a like-for-like comparison.
+    // Note: view counts are accumulated totals per reel at last sync —
+    // not views received specifically within this window.
+    const curViews  = currentReels.reduce((a, r) => a + (r.views ?? 0), 0)
     const prvViews  = prevReels.reduce((a, r) => a + (r.views ?? 0), 0)
     const curEng    = currentReels.reduce((a, r) => a + (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0), 0)
     const prvEng    = prevReels.reduce((a, r) => a + (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0), 0)
@@ -714,8 +717,8 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       : null
 
     return {
-      views:     { value: fmtNum(curViews), change: null,    spark: [...reels].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(r => r.views ?? 0) },
-      eng:       { value: fmtNum(curEng),   change: pct(curEng, prvEng),        spark: currentReels.map(r => (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0)) },
+      views:     { value: fmtNum(curViews), change: pct(curViews, prvViews), spark: currentReels.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(r => r.views ?? 0) },
+      eng:       { value: fmtNum(curEng),   change: pct(curEng, prvEng),     spark: currentReels.map(r => (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0)) },
       followers: { value: localFollowers != null ? fmtNum(localFollowers) : '—', change: followerChange, spark: followerSpark },
     }
   }, [reels, currentReels, prevReels, localFollowers, followerHistory, days])
@@ -947,9 +950,9 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       )}
 
       {/* ── Stat cards ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 12, marginBottom: 16 }}>
-        <StatCard label="Total Views" value={stats.views.value} change={stats.views.change} sparkData={stats.views.spark} accentColor="#3B82F6" delay={0} />
-        <StatCard label="Engagements" value={stats.eng.value} change={stats.eng.change} sparkData={stats.eng.spark} accentColor="#3B82F6" delay={0.05} />
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 12, marginBottom: 8 }}>
+        <StatCard label="Total Views" value={stats.views.value} change={stats.views.change} sparkData={stats.views.spark} accentColor="#3B82F6" delay={0} nullLabel="no prior period data" />
+        <StatCard label="Engagements" value={stats.eng.value} change={stats.eng.change} sparkData={stats.eng.spark} accentColor="#3B82F6" delay={0.05} nullLabel="no prior period data" />
         <StatCard
           label="Followers"
           value={stats.followers.value}
@@ -959,6 +962,20 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
           nullLabel="synced on connect"
           delay={0.1}
         />
+      </div>
+
+      {/* ── Stat definition note ────────────────────────────────────────────── */}
+      <div style={{
+        marginBottom: 16, padding: '7px 12px', borderRadius: 7,
+        background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)',
+        display: 'flex', alignItems: 'center', gap: 6,
+      }}>
+        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', fontWeight: 500, lineHeight: 1.5 }}>
+          <span style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 700 }}>What these numbers mean: </span>
+          Views and engagements cover reels <em>posted</em> in the selected window — not views received during that window on older content.
+          Each reel&apos;s view count is its total accumulated plays at the time of the last sync.
+          {' '}&ldquo;vs prev period&rdquo; compares against the equal-length window immediately before.
+        </span>
       </div>
 
       {/* ── Instagram account banner ─────────────────────────────────────────── */}
