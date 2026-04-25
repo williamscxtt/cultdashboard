@@ -123,6 +123,7 @@ interface WinItem {
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
   const [selectedWin, setSelectedWin] = useState<WinItem | null>(null)
+  const [showAllTools, setShowAllTools] = useState(false)
   const typedText = useTypewriter([
     'Still clocking in.',
     'Still getting zero likes.',
@@ -480,6 +481,11 @@ export default function LandingPage() {
         .lp-tool-grid { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid rgba(255,255,255,0.06); border-top: none; }
         @media (max-width: 960px) { .lp-tool-grid { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 580px) { .lp-tool-grid { grid-template-columns: 1fr; } }
+        /* See more button — desktop hidden, mobile visible */
+        .lp-seemore-wrap { display: none; }
+        .lp-seemore-btn { width: 100%; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-top: none; border-radius: 0 0 8px 8px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; color: #3b82f6; letter-spacing: .04em; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background .2s; }
+        .lp-seemore-btn:hover { background: rgba(59,130,246,0.06); }
+        @media (max-width: 640px) { .lp-seemore-wrap { display: block; } }
         .lp-tool-card { padding: 28px; border-right: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); transition: background .2s; }
         .lp-tool-card:hover { background: rgba(59,130,246,0.03); }
         .lp-tool-card:nth-child(3n) { border-right: none; }
@@ -596,10 +602,27 @@ export default function LandingPage() {
         @media (max-width: 640px) {
           .lp-container { padding: 0 20px; }
           .lp-container-sm { padding: 0 20px; }
-          .lp-section { padding: 72px 0; }
+          .lp-section { padding: 64px 0; }
           .lp-nav { padding: 0 20px; }
           .lp-footer { padding: 32px 20px; }
           .lp-pill { font-size: 10px; }
+          .lp-h2 { font-size: clamp(26px, 8vw, 38px); }
+          /* Community break — desktop/tablet only */
+          .lp-community-break { display: none; }
+          /* Tools — hide extra on mobile until expanded */
+          .lp-tool-mobile-hidden { display: none; }
+          /* Phase rows — proper mobile cards */
+          .lp-phase-row { grid-template-columns: 1fr !important; gap: 10px !important; padding: 22px 18px !important; }
+          .lp-phase-row-num { font-size: 36px !important; line-height: 1 !important; margin-bottom: 2px; }
+          .lp-phase-list { margin-top: 36px !important; }
+          /* Pain items */
+          .lp-pain-num { font-size: 36px; }
+          /* Avatar row wrap */
+          .lp-avatar-row { gap: 12px; }
+          /* Hero badge smaller */
+          .lp-hero-badge { font-size: 10px; padding: 6px 12px; margin-bottom: 24px; }
+          /* Shrink hero stats */
+          .lp-hero-stats { margin-top: 36px; padding-top: 28px; }
         }
       `}</style>
 
@@ -774,11 +797,11 @@ export default function LandingPage() {
                 </Fade>
               </div>
               <Fade delay={100} className="lp-story-card-col">
-                <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 14, border: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 14, border: '1px solid rgba(255,255,255,0.08)', background: '#0a0a08' }}>
                   <img
                     src="/IMG_6327.JPG"
                     alt="Will Scott — transformation"
-                    style={{ width: '100%', height: 200, objectFit: 'cover', objectPosition: 'center top', display: 'block', filter: 'brightness(0.88) contrast(1.08) saturate(0.85)' }}
+                    style={{ width: '100%', height: 'auto', display: 'block', filter: 'brightness(0.88) contrast(1.08) saturate(0.85)' }}
                     loading="lazy"
                   />
                 </div>
@@ -822,8 +845,8 @@ export default function LandingPage() {
 
         </div>{/* ── /lp-page-frame 1 ── */}
 
-        {/* ── Community image break — full bleed ── */}
-        <div style={{ position: 'relative', height: 'clamp(300px, 38vw, 500px)', overflow: 'hidden' }}>
+        {/* ── Community image break — full bleed, desktop only ── */}
+        <div className="lp-community-break" style={{ position: 'relative', height: 'clamp(300px, 38vw, 500px)', overflow: 'hidden' }}>
           <img
             src="/IMG_7050.JPG"
             alt="Creator Cult community"
@@ -903,13 +926,16 @@ export default function LandingPage() {
             </Fade>
 
             <Fade delay={100}>
-              <div style={{ marginTop: 56, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(59,130,246,0.15)', position: 'relative', boxShadow: '0 0 80px rgba(59,130,246,0.1)', background: '#000' }}>
-                {/* Browser chrome bar */}
+              <p style={{ marginTop: 32, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#3b82f6', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                Watch the 12-minute video for a full breakdown of all the tools.
+              </p>
+              <div style={{ marginTop: 16, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(59,130,246,0.15)', position: 'relative', boxShadow: '0 0 80px rgba(59,130,246,0.1)', background: '#000' }}>
+                {/* Browser chrome bar — hidden on mobile */}
                 <div style={{ background: '#080808', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'rgba(255,80,80,0.45)' }} />
-                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'rgba(255,185,0,0.4)' }} />
-                  <div style={{ width: 12, height: 12, borderRadius: '50%', background: 'rgba(40,200,70,0.35)' }} />
-                  <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', borderRadius: 5, padding: '4px 12px', fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '0 16px', fontFamily: 'Inter, monospace' }}>
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,80,80,0.45)', flexShrink: 0 }} />
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,185,0,0.4)', flexShrink: 0 }} />
+                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(40,200,70,0.35)', flexShrink: 0 }} />
+                  <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', borderRadius: 5, padding: '4px 12px', fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '0 12px', fontFamily: 'Inter, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     cult-dashboard.vercel.app/dashboard
                   </div>
                 </div>
@@ -929,7 +955,7 @@ export default function LandingPage() {
             <div className="lp-tool-grid">
               {tools.map((t, i) => (
                 <Fade key={t.title} delay={i * 50}>
-                  <div className="lp-tool-card">
+                  <div className={`lp-tool-card${!showAllTools && i >= 3 ? ' lp-tool-mobile-hidden' : ''}`}>
                     <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
                       <div className="lp-tool-icon-wrap">{t.icon}</div>
                       {t.badge && <span className="lp-tool-badge">{t.badge}</span>}
@@ -940,6 +966,19 @@ export default function LandingPage() {
                 </Fade>
               ))}
             </div>
+
+            {/* Mobile "See all tools" button — CSS shows only on mobile */}
+            {!showAllTools && (
+              <div className="lp-seemore-wrap">
+                <button
+                  onClick={() => setShowAllTools(true)}
+                  className="lp-seemore-btn"
+                >
+                  See all 12 tools <IconPlus />
+                </button>
+              </div>
+            )}
+
             <Fade delay={60}>
               <div style={{ textAlign: 'center', paddingTop: 56 }}>
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#94a3b8', marginBottom: 20 }}>
