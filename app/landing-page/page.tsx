@@ -303,9 +303,9 @@ export default function LandingPage() {
         /* ── Pain ── */
         .lp-pain-item { padding: 40px 0; border-bottom: 1px solid rgba(255,255,255,0.05); display: grid; grid-template-columns: 72px 1fr; gap: 40px; align-items: start; }
         @media (max-width: 640px) { .lp-pain-item { grid-template-columns: 1fr; gap: 10px; } }
-        .lp-pain-num { font-family: 'Inter', sans-serif !important; font-size: 48px; font-weight: 900; color: rgba(59,130,246,0.12); line-height: 1; margin-top: -6px; letter-spacing: -.04em; }
+        .lp-pain-num { font-family: 'Inter', sans-serif !important; font-size: 48px; font-weight: 900; color: rgba(255,255,255,0.12); line-height: 1; margin-top: -6px; letter-spacing: -.04em; }
         .lp-pain-title { font-family: 'Inter', sans-serif !important; font-size: clamp(17px, 2vw, 22px); font-weight: 700; color: #f1f5f9; margin-bottom: 10px; line-height: 1.3; letter-spacing: -.02em; }
-        .lp-pain-body { font-size: 15px; color: #64748b; line-height: 1.8; }
+        .lp-pain-body { font-size: 15px; color: #94a3b8; line-height: 1.8; }
 
         /* ── Story ── */
         .lp-story-grid { display: grid; grid-template-columns: 1fr 360px; gap: 88px; align-items: start; }
