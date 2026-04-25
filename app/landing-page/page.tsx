@@ -244,12 +244,18 @@ export default function LandingPage() {
   ]
 
   const reviews = [
-    { name: 'Freddie Woodward', initials: 'FW', color: '#3b82f6', role: 'Fitness Creator', metric: 'First clients at £1,000 each', quote: "148 followers. Brand new offer. First paying clients at £1,000 each within one month. No big audience, no track record — just the system. I can't believe I spent so long trying to figure this out alone." },
-    { name: 'Brett Capstick',   initials: 'BC', color: '#6366f1', role: 'Personal Trainer', metric: 'First client in 3 weeks', quote: "18 months with zero paying clients. Three weeks in Creator Cult — signed my first. Just consistently posting, started conversations, made the offer. Simple as that." },
-    { name: 'Eddie Harding',    initials: 'EH', color: '#8b5cf6', role: 'Fitness Creator', metric: '258K views + 4,600 followers', quote: "Two posts gone viral. One reel gave me 4,600 new followers and 258K views in a week. The hooks framework is genuinely different to anything else out there." },
-    { name: 'Rokas Žebrauskas', initials: 'RŽ', color: '#0ea5e9', role: 'Creator', metric: 'Best investment ever', quote: "This is my best investment so far, 100%. I've learned more in two weeks inside this programme than in six months of watching free content. The system just makes sense." },
-    { name: 'Mateus Chapman',   initials: 'MC', color: '#10b981', role: 'Fitness Creator', metric: '2.3M reach in 30 days', quote: "1 million views in a month. My total reach is 2.3 million for the last 30 days. The content batching and posting system changed everything about how I work." },
-    { name: 'Asher Hayhoe',     initials: 'AH', color: '#f59e0b', role: 'Creator', metric: 'First sales call booked', quote: "Had my first ever sales call this week. 4 videos over 100K views in the past month. Before this programme I couldn't get consistent views let alone client enquiries." },
+    { name: 'Freddie Woodward', initials: 'FW', color: '#3b82f6', role: 'Fitness Creator',  metric: 'First clients at £1,000 each',    source: 'Circle Community', quote: "148 followers. Brand new offer. First paying clients at £1,000 each within one month. No big audience, no track record — just the system. I can't believe I spent so long trying to figure this out alone." },
+    { name: 'Brett Capstick',   initials: 'BC', color: '#6366f1', role: 'Personal Trainer', metric: 'First client in 3 weeks',           source: 'Circle Community', quote: "18 months with zero paying clients. Three weeks in Creator Cult — signed my first. Just consistently posting, started conversations, made the offer. Simple as that." },
+    { name: 'Eddie Harding',    initials: 'EH', color: '#8b5cf6', role: 'Fitness Creator',  metric: '258K views + 4,600 followers',     source: 'Circle Community', quote: "Two posts gone viral. One reel gave me 4,600 new followers and 258K views in a week. The hooks framework is genuinely different to anything else out there." },
+    { name: 'Rokas Žebrauskas', initials: 'RŽ', color: '#0ea5e9', role: 'Creator',          metric: 'Best investment ever',             source: 'Circle Community', quote: "This is my best investment so far, 100%. I've learned more in two weeks inside this programme than in six months of watching free content. The system just makes sense." },
+    { name: 'Mateus Chapman',   initials: 'MC', color: '#10b981', role: 'Fitness Creator',  metric: '2.3M reach in 30 days',            source: 'Circle Community', quote: "1 million views in a month. My total reach is 2.3 million for the last 30 days. The content batching and posting system changed everything about how I work." },
+    { name: 'Asher Hayhoe',     initials: 'AH', color: '#f59e0b', role: 'Creator',          metric: 'First sales call booked',          source: 'Circle Community', quote: "Had my first ever sales call this week. 4 videos over 100K views in the past month. Before this programme I couldn't get consistent views let alone client enquiries." },
+    { name: 'reenzo',           initials: 'RE', color: '#e11d48', role: 'Creator',          metric: '10/10 recommendation',             source: 'Whop',             quote: "Will is an absolute goat of the coaching industry. 10/10 course recommendation." },
+    { name: 'Kyriakos Parpas',  initials: 'KP', color: '#7c3aed', role: 'Creator',          metric: 'Best value for money',             source: 'Whop',             quote: "Just starting out and I already feel like it's a steal — the value Will has put into this is absolutely great. The hours of content alone are worth it." },
+    { name: 'FreeYourMind',     initials: 'FM', color: '#0891b2', role: 'Creator',          metric: 'Insightful + actively supported',  source: 'Whop',             quote: "Very insightful course and Will is actively invested in delivering maximum value. He doesn't just drop content and disappear — he's genuinely in it with you." },
+    { name: 'Matt Neems',       initials: 'MN', color: '#059669', role: 'Creator',          metric: 'Incredible free value',            source: 'Whop',             quote: "Looks great so far and I'm extremely grateful for what's available here. The quality you get from the start is not something you normally see." },
+    { name: 'Ed Kershaw',       initials: 'EK', color: '#d97706', role: 'Creator',          metric: 'Insanely good value',              source: 'Whop',             quote: "Insanely good free value. Said what I said." },
+    { name: 'Jacob B Smith',    initials: 'JS', color: '#4f46e5', role: 'Creator',          metric: 'Comprehensive & thorough',         source: 'Whop',             quote: "Comprehensive and competitive — useful and thorough. Everything you need is in here." },
   ]
 
   const avatarMembers = [
@@ -1053,7 +1059,7 @@ export default function LandingPage() {
                     </div>
                     <span className="lp-review-metric">{r.metric}</span>
                     <p className="lp-review-quote">&ldquo;{r.quote}&rdquo;</p>
-                    <div className="lp-review-source">Verified · Circle Community</div>
+                    <div className="lp-review-source">Verified · {r.source}</div>
                   </div>
                 </Fade>
               ))}
@@ -1063,32 +1069,6 @@ export default function LandingPage() {
                 <Link href="/apply" className="lp-cta-primary">Join the programme <IconArrow /></Link>
               </div>
             </Fade>
-          </div>
-        </div>
-
-        {/* ── 5-Star ratings strip ── */}
-        <div style={{ padding: '56px 0', borderTop: '1px solid rgba(255,255,255,0.05)', overflow: 'hidden' }}>
-          <div className="lp-container">
-            <Fade>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
-                <div style={{ display: 'flex', gap: 3 }}>{[1,2,3,4,5].map(s => <IconStarFill key={s} />)}</div>
-                <span style={{ fontSize: 12, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: '#94a3b8', fontFamily: 'Inter, sans-serif' }}>Verified reviews</span>
-              </div>
-            </Fade>
-          </div>
-          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingLeft: 'max(24px, calc((100vw - 1200px) / 2 + 48px))', paddingRight: 48, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-            {[
-              { img: '/testimonials/IMG_8034.jpeg', name: 'reenzo',           text: 'Will is an absolute goat of the coaching industry. 10/10 course recommendation.' },
-              { img: '/testimonials/IMG_8033.jpeg', name: 'FreeYourMind',     text: 'Very insightful course and Will is actively implicated and invested in delivering the most value!' },
-              { img: '/testimonials/IMG_8032.jpeg', name: 'Kyriakos Parpas',  text: 'Just starting out with his Course and i feel like its a steal from the value and the hours he is put down, absolutely great.' },
-              { img: '/testimonials/IMG_8031.jpeg', name: 'Matt Neems',       text: 'Looks great so far and extremely grateful that this is available at no cost.' },
-              { img: '/testimonials/IMG_8036.jpeg', name: 'Ed Kershaw',       text: 'Insanely good free value' },
-              { img: '/testimonials/IMG_8037.jpeg', name: 'Jacob B Smith',    text: 'Comprehensive and competitive, Useful and Thorough' },
-            ].map((r, i) => (
-              <div key={i} style={{ flexShrink: 0, width: 'clamp(240px, 30vw, 300px)', background: '#ffffff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 8px 40px rgba(0,0,0,0.5)' }}>
-                <img src={r.img} alt={`${r.name} review`} style={{ width: '100%', height: 'auto', display: 'block' }} loading="lazy" />
-              </div>
-            ))}
           </div>
         </div>
 
