@@ -150,13 +150,14 @@ export default function LandingPage() {
   }, [selectedWin])
 
   const tickerItems = [
-    'Freddie — £1,950 in 3 days',
+    'Freddie — First clients at £1,000 each with 148 followers',
     'Eddie — 4,600 followers in 10 days',
     'Dino — 24 million views in 3 weeks',
     'Brett Capstick — First client in 3 weeks',
     'Asfand — First paying client in 7 days',
-    'Michael Kersee — $10,000 in a single day',
-    'Tom Köster — 600 to 1,300 followers in one week',
+    'Michael Kersee — Multiple $10K days, £50K months',
+    'Tom Köster — Zero to 10K followers in one month',
+    'Zack Sinclair — Zero to 100K+ followers in 4 months',
     'Roy — 1 million views, first viral reel',
     'Mateus — 2.3M total reach in 30 days',
     'Jakub — Three viral reels back to back',
@@ -168,7 +169,7 @@ export default function LandingPage() {
     { img: '/testimonials/testimonial-michael-5k-pif.jpeg',       name: 'Michael Kersee',  win: '$5K paid in full' },
     { img: '/testimonials/testimonial-bile-first-2-clients.jpg',  name: 'Bile',            win: 'First 2 clients — €550/mo' },
     { img: '/testimonials/testimonial-brett-first-client-3weeks.jpeg', name: 'Brett',      win: 'First client in 3 weeks' },
-    { img: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg', name: 'Tom Köster', win: '600 → 1,300 followers' },
+    { img: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg', name: 'Tom Köster', win: '0 → 10K followers in 1 month' },
     { img: '/testimonials/testimonial-jakub-reels-views.jpg',     name: 'Jakub',           win: 'Three viral reels' },
     { img: '/testimonials/testimonial-freeyourmind-10k-views.jpg',name: 'FreeYourMind',    win: '10K views in 12 hours' },
   ]
@@ -176,7 +177,7 @@ export default function LandingPage() {
     { img: '/testimonials/testimonial-michael-1m-views-30days.png', name: 'Michael Kersee', win: '1M views in 30 days' },
     { img: '/testimonials/testimonial-gabrielle-first-100k-views.jpg', name: 'Gabrielle', win: 'First 100K views' },
     { img: '/testimonials/testimonial-matte-first-payout-500.jpeg', name: 'Matte Fortuna', win: 'First €500 payout' },
-    { img: '/testimonials/testimonial-zack-instagram-growth.jpg', name: 'Zack Sinclair',   win: '19K likes — one reel' },
+    { img: '/testimonials/testimonial-zack-instagram-growth.jpg', name: 'Zack Sinclair',   win: '0 → 100K+ followers in 4 months' },
     { img: '/testimonials/testimonial-asfand-first-client.png',   name: 'Asfand',          win: 'First client in 7 days' },
     { img: '/testimonials/testimonial-toshiro-first-100k.jpg',    name: 'Toshiro',         win: 'First 100K video' },
     { img: '/testimonials/testimonial-gabrielle-1k-followers.jpg',name: 'Gabrielle',        win: '1K followers + 100K views' },
@@ -217,11 +218,11 @@ export default function LandingPage() {
   ]
 
   const wins: WinItem[] = [
-    { img: '/testimonials/testimonial-michael-10k-day.jpeg',           name: 'MICHAEL KERSEE', stat: '$10K in one day',          detail: 'Two $5K paid-in-fulls before noon. From inconsistent income to $10,000 in a single day using the DM close system.',
-      quote: "$10K DAY. Two $5K PIFs for 6-month coaching. The price is just made up — once your positioning is right, people pay it. The DM system did this." },
+    { img: '/testimonials/testimonial-michael-10k-day.jpeg',           name: 'MICHAEL KERSEE', stat: 'Multiple $10K days',         detail: 'Multiple $10K single days and consistent £50K months. From zero structure to one of the programme\'s highest earners using the full Creator Cult system.',
+      quote: "Multiple $10K days, £50K months. The DM system is the real deal — once your positioning clicks, people pay what you ask. This programme is the reason." },
     { img: '/testimonials/testimonial-35k-month-sales.png',            name: '',               stat: '£35K in 1 month',         detail: 'Net volume from sales — £35,810.79 in a single month using the offer and conversion system from Phase 4.' },
-    { img: '/testimonials/testimonial-michael-1m-views-30days.png',    name: 'MICHAEL KERSEE', stat: '1M views in 30 days',      detail: 'From inconsistent posting to 1 million views in a single month after implementing the content batching system.',
-      quote: "I was posting randomly and getting nowhere. Will's content system changed everything. 1M views in 30 days is not something I thought was possible this quickly." },
+    { img: '/testimonials/testimonial-michael-1m-views-30days.png',    name: 'MICHAEL KERSEE', stat: '£50K months',              detail: 'Consistent £50K revenue months from Instagram coaching clients. Multiple $10K single days closing through DMs on a system built inside Creator Cult.',
+      quote: "£50K months are now normal. Multiple $10K days. I was posting randomly and getting nowhere before this. The system changed everything — positioning, content, DMs." },
     { img: '/testimonials/testimonial-brett-first-client-3weeks.jpeg', name: 'BRETT CAPSTICK', stat: 'First client in 3 weeks',  detail: '18 months with no clients. Rebuilt positioning from scratch. Signed first high-ticket client 3 weeks later.',
       quote: "I was stuck for 18 months. Three weeks after joining Creator Cult I had my first paying client. Just consistently posting, started convos, made the offer. That's literally it." },
     { img: '/testimonials/testimonial-bile-first-2-clients.jpg',       name: 'BILE',           stat: '€550/month — 2 clients',  detail: 'Signed first two clients at €550/month total after joining the programme. First income from content.',
@@ -230,20 +231,20 @@ export default function LandingPage() {
       quote: "Three viral reels in a row after applying the hooks framework. The content system is genuinely different to anything else I've tried." },
     { img: '/testimonials/testimonial-gabrielle-first-100k-views.jpg', name: 'GABRIELLE',      stat: 'First 100K views',        detail: 'First Instagram reel to break 100,000 views after joining Creator Cult and applying the hook writing system.',
       quote: "First reel to ever hit 100K. I've been posting for a year with nothing. One framework change and this happened." },
-    { img: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg', name: 'TOM KÖSTER',     stat: '600 → 1,300 followers',  detail: '600 to 1,300 followers in one week. Videos reaching 20K views each using the brand-first content approach.',
-      quote: "Doubled my followers in a week. The brand positioning work makes everything else click. My content finally feels like it has a direction." },
-    { img: '/testimonials/testimonial-zack-instagram-growth.jpg',      name: 'ZACK SINCLAIR',  stat: '19K likes — one reel',   detail: '19K likes and 5.1K saves on a single Instagram reel using the story-driven hooks framework.',
-      quote: "19K likes and 5.1K saves on one reel. People are saving it because it actually hits something real — that's what the storytelling training teaches you." },
+    { img: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg', name: 'TOM KÖSTER',     stat: '0 → 10K followers',      detail: 'Zero to 10,000 followers in one month. From 200 views per video to hundreds of thousands. First paying client at £2,000 — all within 30 days of joining.',
+      quote: "Zero to 10K followers in a month. 200 views to hundreds of thousands. And my first £2,000 client — all in one month. I didn't think this was possible this fast." },
+    { img: '/testimonials/testimonial-zack-instagram-growth.jpg',      name: 'ZACK SINCLAIR',  stat: '0 → 100K+ followers',    detail: 'Zero to over 100,000 followers in four months — and a brand sponsorship deal with Booked Up. Built using the content and positioning system from Creator Cult.',
+      quote: "Zero to 100K+ followers in four months. Sponsored by Booked Up. I went from nobody online to a brand deal and a real audience. The positioning system made this happen." },
     { img: '/testimonials/testimonial-matte-first-payout-500.jpeg',    name: 'MATTE FORTUNA',  stat: 'First €500 payout',      detail: 'First ever coaching payout — €500. First client landed through the DM system inside Creator Cult.',
       quote: "First ever money from content. €500. Doesn't sound huge but it proved the whole thing works. I'll be at €5K/month within 3 months." },
-    { img: '/testimonials/testimonial-michael-5k-pif.jpeg',            name: 'MICHAEL KERSEE', stat: '$5K paid in full',        detail: 'A $5K, 3-month coaching deal closed. Gross volume shown in Stripe. Closed via Instagram DMs.',
-      quote: "Closed a $5K paid-in-full deal through Instagram DMs. The call-to-close framework is next level. People literally thank you for the offer." },
+    { img: '/testimonials/testimonial-michael-5k-pif.jpeg',            name: 'MICHAEL KERSEE', stat: '$10K day on Stripe',      detail: 'One of multiple $10K single days — Stripe revenue shown. Part of a consistent pattern of £50K+ months built on the Creator Cult DM and offer system.',
+      quote: "This is one $10K day. I've had several now. The offer positioning and DM close system makes this repeatable — not a fluke." },
     { img: '/testimonials/testimonial-freeyourmind-10k-views.jpg',     name: 'FREEYOURMIND',   stat: '10K views in 12 hours',  detail: '10,000 views in under 12 hours on Instagram. Then another 10K the same week using the same hook structure.',
       quote: "10K views in 12 hours. Then another 10K later that week. I've been trying to go viral for 8 months. Took two weeks inside this programme." },
   ]
 
   const reviews = [
-    { name: 'Freddie Woodward', initials: 'FW', color: '#3b82f6', role: 'Fitness Creator', metric: '£1,950 in 72 hours', quote: "£1,950 worth of sales in 3 days. Two sales at £975 each. I just followed the system — it actually works. Can't believe I spent 18 months trying to figure this out alone." },
+    { name: 'Freddie Woodward', initials: 'FW', color: '#3b82f6', role: 'Fitness Creator', metric: 'First clients at £1,000 each', quote: "148 followers. Brand new offer. First paying clients at £1,000 each within one month. No big audience, no track record — just the system. I can't believe I spent so long trying to figure this out alone." },
     { name: 'Brett Capstick',   initials: 'BC', color: '#6366f1', role: 'Personal Trainer', metric: 'First client in 3 weeks', quote: "18 months with zero paying clients. Three weeks in Creator Cult — signed my first. Just consistently posting, started conversations, made the offer. Simple as that." },
     { name: 'Eddie Harding',    initials: 'EH', color: '#8b5cf6', role: 'Fitness Creator', metric: '258K views + 4,600 followers', quote: "Two posts gone viral. One reel gave me 4,600 new followers and 258K views in a week. The hooks framework is genuinely different to anything else out there." },
     { name: 'Rokas Žebrauskas', initials: 'RŽ', color: '#0ea5e9', role: 'Creator', metric: 'Best investment ever', quote: "This is my best investment so far, 100%. I've learned more in two weeks inside this programme than in six months of watching free content. The system just makes sense." },
@@ -392,18 +393,18 @@ export default function LandingPage() {
         .lp-story-text p:last-child { margin-bottom: 0; }
         .lp-story-text strong { color: #ffffff; font-weight: 600; }
         /* Before/After card */
-        .lp-ba-card { border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; overflow: hidden; }
-        .lp-ba-before { padding: 24px 28px; border-bottom: 1px solid rgba(255,255,255,0.08); }
-        .lp-ba-after { padding: 24px 28px; background: rgba(59,130,246,0.06); }
-        .lp-ba-label { font-size: 9px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; margin-bottom: 16px; }
+        .lp-ba-card { border-radius: 12px; overflow: hidden; box-shadow: 0 12px 48px rgba(0,0,0,0.5); }
+        .lp-ba-before { padding: 26px 28px; background: #f1f5f9; }
+        .lp-ba-after { padding: 26px 28px; background: #3b82f6; }
+        .lp-ba-label { font-size: 9px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; margin-bottom: 16px; }
         .lp-ba-before .lp-ba-label { color: #64748b; }
-        .lp-ba-after .lp-ba-label { color: #3b82f6; }
-        .lp-ba-item { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+        .lp-ba-after .lp-ba-label { color: rgba(255,255,255,0.65); }
+        .lp-ba-item { display: flex; align-items: baseline; gap: 10px; margin-bottom: 11px; }
         .lp-ba-item:last-child { margin-bottom: 0; }
-        .lp-ba-before .lp-ba-item { color: #94a3b8; font-size: 14px; }
-        .lp-ba-before .lp-ba-mark { color: #64748b; font-size: 12px; }
-        .lp-ba-after .lp-ba-item { color: #f1f5f9; font-size: 15px; font-weight: 600; }
-        .lp-ba-after .lp-ba-mark { color: #3b82f6; font-size: 12px; font-weight: 700; }
+        .lp-ba-before .lp-ba-item { color: #334155; font-size: 14px; font-weight: 500; }
+        .lp-ba-before .lp-ba-mark { color: #94a3b8; font-size: 12px; }
+        .lp-ba-after .lp-ba-item { color: #ffffff; font-size: 15px; font-weight: 700; }
+        .lp-ba-after .lp-ba-mark { color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 700; }
 
         /* ── Phase list (new design) ── */
         .lp-phase-list { margin-top: 80px; display: flex; flex-direction: column; gap: 12px; }
