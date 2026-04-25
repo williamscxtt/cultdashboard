@@ -583,7 +583,6 @@ export default function LandingPage() {
       `}</style>
 
       <div className="lp-root">
-      <div className="lp-page-frame">
 
         {/* ── Win modal ── */}
         {selectedWin && (
@@ -683,6 +682,8 @@ export default function LandingPage() {
             <div className="lp-hero-photo-overlay" />
           </div>
         </div>
+
+        <div className="lp-page-frame">
 
         {/* ── Ticker ── */}
         <div className="lp-ticker">
