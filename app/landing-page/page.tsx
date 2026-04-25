@@ -234,10 +234,10 @@ export default function LandingPage() {
         .lp-h1 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(38px, 7vw, 88px); font-weight: 900; line-height: 1.0; letter-spacing: -0.04em; color: #f1f5f9; }
         .lp-h2 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(30px, 5vw, 62px); font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; color: #f1f5f9; }
         .lp-h3 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(20px, 2.5vw, 28px); font-weight: 700; line-height: 1.2; color: #f1f5f9; }
-        .lp-body { font-size: 16px; color: #64748b; line-height: 1.75; }
+        .lp-body { font-size: 16px; color: #94a3b8; line-height: 1.75; }
         .lp-body-lg { font-size: clamp(16px, 1.5vw, 19px); color: #94a3b8; line-height: 1.75; }
         .lp-blue { color: #3b82f6; }
-        .lp-dim { color: #64748b; }
+        .lp-dim { color: #94a3b8; }
 
         /* ── Layout ── */
         .lp-container { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
@@ -286,12 +286,12 @@ export default function LandingPage() {
         .lp-avatar-text strong { color: #ffffff; font-weight: 600; }
 
         /* ── Ticker ── */
-        .lp-ticker { padding: 13px 0; overflow: hidden; background: #9f1239; }
+        .lp-ticker { padding: 13px 0; overflow: hidden; background: #1d4ed8; }
         .lp-ticker-track { display: flex; width: max-content; animation: lp-tick 36s linear infinite; }
         .lp-ticker-track:hover { animation-play-state: paused; }
         @keyframes lp-tick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         .lp-tick-item { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; padding: 0 28px; letter-spacing: .05em; text-transform: uppercase; }
-        .lp-tick-dot { color: rgba(255,255,255,0.5); font-size: 8px; }
+        .lp-tick-dot { color: rgba(255,255,255,0.45); font-size: 8px; }
 
         /* ── Social strip (member names) ── */
         .lp-social-strip { padding: 28px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
@@ -329,22 +329,26 @@ export default function LandingPage() {
         .lp-ba-after .lp-ba-item { color: #f1f5f9; font-size: 15px; font-weight: 600; }
         .lp-ba-after .lp-ba-mark { color: #3b82f6; font-size: 12px; font-weight: 700; }
 
-        /* ── Phase grid ── */
-        .lp-phase-grid { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 72px; border: 1px solid rgba(255,255,255,0.06); }
-        @media (max-width: 960px) { .lp-phase-grid { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 580px) { .lp-phase-grid { grid-template-columns: 1fr; } }
-        .lp-phase-card { padding: 32px 28px; border-right: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); transition: background .2s; }
-        .lp-phase-card:hover { background: rgba(59,130,246,0.03); }
-        .lp-phase-card:nth-child(3n) { border-right: none; }
-        @media (max-width: 960px) { .lp-phase-card:nth-child(3n) { border-right: 1px solid rgba(255,255,255,0.06); } .lp-phase-card:nth-child(2n) { border-right: none; } }
-        .lp-phase-n { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #3b82f6; margin-bottom: 16px; }
-        .lp-phase-title { font-family: 'Inter', sans-serif !important; font-size: 16px; font-weight: 700; color: #f1f5f9; margin-bottom: 10px; letter-spacing: -.02em; }
-        .lp-phase-desc { font-size: 13px; color: #94a3b8; line-height: 1.7; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.06); }
-        .lp-phase-items { display: flex; flex-direction: column; gap: 9px; }
-        .lp-phase-item { display: flex; align-items: flex-start; gap: 10px; font-size: 12px; color: #94a3b8; line-height: 1.55; }
-        .lp-phase-dash { color: #3b82f6; flex-shrink: 0; }
-        .lp-phase-support { background: rgba(59,130,246,0.03); border-top: 1px solid rgba(59,130,246,0.15) !important; }
-        .lp-phase-support .lp-phase-title { color: rgba(241,245,249,0.5); }
+        /* ── Phase list (new design) ── */
+        .lp-phase-list { margin-top: 80px; border-top: 1px solid rgba(255,255,255,0.06); }
+        .lp-phase-row { display: grid; grid-template-columns: 100px 1fr 1fr; gap: 56px; padding: 56px 0; border-bottom: 1px solid rgba(255,255,255,0.06); transition: background .3s; position: relative; overflow: hidden; }
+        .lp-phase-row::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: transparent; transition: background .3s; }
+        .lp-phase-row:hover::before { background: #3b82f6; }
+        .lp-phase-row:hover { background: rgba(59,130,246,0.025); }
+        @media (max-width: 960px) { .lp-phase-row { grid-template-columns: 70px 1fr; gap: 32px; } .lp-phase-row-bullets { display: none; } }
+        @media (max-width: 580px) { .lp-phase-row { grid-template-columns: 1fr; gap: 16px; padding: 40px 0; } }
+        .lp-phase-row-num { font-family: 'Inter', sans-serif !important; font-size: 80px; font-weight: 900; color: #3b82f6; letter-spacing: -.06em; line-height: 0.85; opacity: 0.9; }
+        .lp-phase-row-label { font-size: 10px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: #3b82f6; margin-bottom: 14px; }
+        .lp-phase-row-title { font-family: 'Inter', sans-serif !important; font-size: clamp(20px, 2.2vw, 28px); font-weight: 800; color: #ffffff; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 14px; }
+        .lp-phase-row-desc { font-size: 15px; color: #94a3b8; line-height: 1.75; }
+        .lp-phase-row-bullets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; align-content: start; padding-top: 2px; }
+        .lp-phase-row-bullet { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #94a3b8; line-height: 1.5; }
+        .lp-phase-row-bmark { color: #3b82f6; flex-shrink: 0; font-weight: 700; font-size: 14px; line-height: 1.5; }
+        /* Support (throughout) row */
+        .lp-phase-row.lp-support { grid-template-columns: 100px 1fr 1fr; background: rgba(59,130,246,0.04); border-top: 1px solid rgba(59,130,246,0.15); border-bottom: none; }
+        @media (max-width: 960px) { .lp-phase-row.lp-support { grid-template-columns: 70px 1fr; } .lp-phase-row.lp-support .lp-phase-row-bullets { display: grid; } }
+        .lp-phase-row.lp-support .lp-phase-row-num { color: rgba(59,130,246,0.25); }
+        .lp-phase-row.lp-support .lp-phase-row-title { color: rgba(255,255,255,0.7); }
 
         /* ── Dashboard mockup ── */
         .lp-dash-outer { border: 1px solid rgba(59,130,246,0.15); border-radius: 10px; overflow: hidden; margin: 56px 0 0; background: #0a0a08; }
@@ -478,14 +482,14 @@ export default function LandingPage() {
         .lp-for-col { padding: 48px 44px; }
         .lp-for-col.yes { border-right: 1px solid rgba(59,130,246,0.1); }
         @media (max-width: 640px) { .lp-for-col { padding: 36px 20px; } .lp-for-col.yes { border-right: none; border-bottom: 1px solid rgba(59,130,246,0.1); } }
-        .lp-for-col-head { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; margin-bottom: 28px; }
+        .lp-for-col-head { font-size: 10px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; margin-bottom: 28px; }
         .yes .lp-for-col-head { color: #3b82f6; }
-        .no .lp-for-col-head { color: #64748b; }
+        .no .lp-for-col-head { color: #94a3b8; }
         .lp-for-items { display: flex; flex-direction: column; gap: 14px; }
-        .lp-for-item { display: flex; gap: 14px; align-items: flex-start; font-size: 14px; line-height: 1.6; }
-        .yes .lp-for-item { color: #94a3b8; }
-        .no .lp-for-item { color: #94a3b8; }
-        .lp-for-mark { flex-shrink: 0; font-size: 11px; font-weight: 700; margin-top: 3px; }
+        .lp-for-item { display: flex; gap: 14px; align-items: flex-start; font-size: 15px; line-height: 1.65; }
+        .yes .lp-for-item { color: #e2e8f0; }
+        .no .lp-for-item { color: #64748b; }
+        .lp-for-mark { flex-shrink: 0; font-size: 12px; font-weight: 700; margin-top: 3px; }
         .yes .lp-for-mark { color: #3b82f6; }
         .no .lp-for-mark { color: #475569; }
 
@@ -659,6 +663,11 @@ export default function LandingPage() {
                 </Fade>
               ))}
             </div>
+            <Fade delay={100}>
+              <div style={{ marginTop: 56, display: 'flex', justifyContent: 'flex-start' }}>
+                <Link href="/apply" className="lp-cta-primary">Get the system. Apply now. <IconArrow /></Link>
+              </div>
+            </Fade>
           </div>
         </div>
 
@@ -730,19 +739,25 @@ export default function LandingPage() {
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Programme</span></Fade>
             <Fade delay={60}>
               <h2 className="lp-h2">Five phases.<br />One direction.</h2>
-              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 480 }}>Full-time creator.</p>
+              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 520 }}>
+                Every Creator Cult member goes through the same five phases in order. Skip one and you build on sand. Follow the sequence and the results compound.
+              </p>
             </Fade>
-            <div className="lp-phase-grid">
+
+            <div className="lp-phase-list">
               {phases.map(({ n, title, desc, items }, i) => (
-                <Fade key={n} delay={i * 60}>
-                  <div className={`lp-phase-card${n === '—' ? ' lp-phase-support' : ''}`}>
-                    <div className="lp-phase-n">{n === '—' ? 'Throughout' : `Phase ${n}`}</div>
-                    <div className="lp-phase-title">{title}</div>
-                    <div className="lp-phase-desc">{desc}</div>
-                    <div className="lp-phase-items">
+                <Fade key={n} delay={i * 50}>
+                  <div className={`lp-phase-row${n === '—' ? ' lp-support' : ''}`}>
+                    <div className="lp-phase-row-num">{n === '—' ? '∞' : n}</div>
+                    <div>
+                      <div className="lp-phase-row-label">{n === '—' ? 'Throughout' : `Phase ${n}`}</div>
+                      <div className="lp-phase-row-title">{title}</div>
+                      <div className="lp-phase-row-desc">{desc}</div>
+                    </div>
+                    <div className="lp-phase-row-bullets">
                       {items.map(item => (
-                        <div key={item} className="lp-phase-item">
-                          <span className="lp-phase-dash">—</span>{item}
+                        <div key={item} className="lp-phase-row-bullet">
+                          <span className="lp-phase-row-bmark">—</span>{item}
                         </div>
                       ))}
                     </div>
@@ -750,6 +765,16 @@ export default function LandingPage() {
                 </Fade>
               ))}
             </div>
+
+            {/* CTA after phases */}
+            <Fade delay={80}>
+              <div style={{ textAlign: 'center', paddingTop: 64 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#94a3b8', marginBottom: 24 }}>
+                  Ready to start Phase 01?
+                </p>
+                <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
+              </div>
+            </Fade>
           </div>
         </div>
 
@@ -863,6 +888,14 @@ export default function LandingPage() {
                 </Fade>
               ))}
             </div>
+            <Fade delay={60}>
+              <div style={{ textAlign: 'center', paddingTop: 56 }}>
+                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#64748b', marginBottom: 20 }}>
+                  Access unlocks when you join Creator Cult.
+                </p>
+                <Link href="/apply" className="lp-cta-primary">Apply for access <IconArrow /></Link>
+              </div>
+            </Fade>
           </div>
         </div>
 
@@ -982,6 +1015,11 @@ export default function LandingPage() {
                 </Fade>
               ))}
             </div>
+            <Fade delay={80}>
+              <div style={{ textAlign: 'center', paddingTop: 56 }}>
+                <Link href="/apply" className="lp-cta-primary">Join the programme <IconArrow /></Link>
+              </div>
+            </Fade>
           </div>
         </div>
 
