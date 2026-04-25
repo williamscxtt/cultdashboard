@@ -52,7 +52,7 @@ function Faq({ q, a }: { q: string; a: string }) {
 }
 
 /* ─── Win card ──────────────────────────────────────────────────────── */
-function Win({ name, stat, detail, delay = 0 }: { name: string; stat: string; detail: string; delay?: number }) {
+function Win({ name, stat, detail, img, delay = 0 }: { name: string; stat: string; detail: string; img?: string; delay?: number }) {
   const { ref, on } = useReveal()
   return (
     <div
@@ -62,6 +62,14 @@ function Win({ name, stat, detail, delay = 0 }: { name: string; stat: string; de
     >
       <div className="lp-win-stat">{stat}</div>
       <p className="lp-win-detail">{detail}</p>
+      {img && (
+        <img
+          src={img}
+          alt={`${name} result screenshot`}
+          className="lp-win-img"
+          loading="lazy"
+        />
+      )}
       <div className="lp-win-name">{name}</div>
     </div>
   )
@@ -344,6 +352,37 @@ export default function LandingPage() {
         .lp-pain-body { font-size: 15px; color: #888; line-height: 1.7; }
 
         /* ── Story section ── */
+        /* ── Will's story layout ── */
+        .lp-story-layout {
+          display: grid;
+          grid-template-columns: 1fr 420px;
+          gap: 80px;
+          align-items: start;
+        }
+        @media (max-width: 860px) {
+          .lp-story-layout { grid-template-columns: 1fr; gap: 48px; }
+          .lp-story-photo-wrap { order: -1; }
+        }
+        .lp-story-photo-wrap {
+          position: sticky;
+          top: 90px;
+        }
+        .lp-story-photo {
+          width: 100%;
+          border-radius: 20px;
+          object-fit: cover;
+          aspect-ratio: 3/4;
+          object-position: top;
+          border: 1px solid rgba(255,255,255,0.08);
+          display: block;
+        }
+        .lp-story-photo-caption {
+          text-align: center;
+          font-size: 12px;
+          color: #444;
+          margin-top: 12px;
+        }
+
         .lp-story-border {
           border-top: 1px solid rgba(255,255,255,0.06);
           border-bottom: 1px solid rgba(255,255,255,0.06);
@@ -509,6 +548,13 @@ export default function LandingPage() {
         .lp-win-card:hover { border-color: rgba(59,130,246,0.25); background: rgba(255,255,255,0.04); }
         .lp-win-stat { font-size: 28px; font-weight: 900; color: #3b82f6; letter-spacing: -.02em; }
         .lp-win-detail { font-size: 14px; color: #888; line-height: 1.65; flex: 1; }
+        .lp-win-img {
+          width: 100%;
+          border-radius: 10px;
+          object-fit: cover;
+          border: 1px solid rgba(255,255,255,0.07);
+          margin-top: 4px;
+        }
         .lp-win-name { font-size: 12px; color: #444; font-weight: 600; margin-top: 4px; }
 
         /* ── Included grid ── */
@@ -778,23 +824,35 @@ export default function LandingPage() {
         <div className="lp-section lp-story-border">
           <div className="lp-story-glow" />
           <div className="lp-container">
-            <div className="lp-story-inner">
-              <Fade><div className="lp-overline">Why I Built This</div></Fade>
-              <Fade delay={60}>
-                <h2 className="lp-h2">
-                  412 followers.<br />
-                  £20,000 in debt.<br />
-                  <span className="gray">Delivering pizzas in the evenings.</span>
-                </h2>
-              </Fade>
-              <Fade delay={120}>
-                <div className="lp-story-text">
-                  <p>That was me. Not long ago. I was posting every day and getting nowhere. I knew content. I knew marketing theory. I still couldn&apos;t pay my rent with it.</p>
-                  <p>I stopped copying tactics and started building a system. A real one. Positioning, story, offer, acquisition. In the right order.</p>
-                  <p>Within months, I had clients. Then a waiting list. Then a coaching programme with 40+ creators inside.</p>
-                  <p><strong>I didn&apos;t get lucky. I got structured.</strong></p>
-                  <p>Creator Cult is the system I wish I&apos;d had in year one. Every phase, every tool, every coaching call. Built to shortcut the years I wasted figuring it out alone.</p>
-                </div>
+            <div className="lp-story-layout">
+              {/* Copy side */}
+              <div>
+                <Fade><div className="lp-overline">Why I Built This</div></Fade>
+                <Fade delay={60}>
+                  <h2 className="lp-h2">
+                    412 followers.<br />
+                    £20,000 in debt.<br />
+                    <span className="gray">Delivering pizzas in the evenings.</span>
+                  </h2>
+                </Fade>
+                <Fade delay={120}>
+                  <div className="lp-story-text">
+                    <p>That was me. Not long ago. I was posting every day and getting nowhere. I knew content. I knew marketing theory. I still couldn&apos;t pay my rent with it.</p>
+                    <p>I stopped copying tactics and started building a system. A real one. Positioning, story, offer, acquisition. In the right order.</p>
+                    <p>Within months, I had clients. Then a waiting list. Then a coaching programme with 40+ creators inside.</p>
+                    <p><strong>I didn&apos;t get lucky. I got structured.</strong></p>
+                    <p>Creator Cult is the system I wish I&apos;d had in year one. Every phase, every tool, every coaching call. Built to shortcut the years I wasted figuring it out alone.</p>
+                  </div>
+                </Fade>
+              </div>
+              {/* Photo side */}
+              <Fade delay={80} className="lp-story-photo-wrap">
+                <img
+                  src="/will-hero.jpg"
+                  alt="Will Scott — Creator Cult founder"
+                  className="lp-story-photo"
+                />
+                <div className="lp-story-photo-caption">Will Scott — Creator Cult</div>
               </Fade>
             </div>
           </div>
@@ -904,12 +962,14 @@ export default function LandingPage() {
               </div>
             </Fade>
             <div className="lp-win-grid">
-              <Win name="Freddie" stat="£1,950 in 3 days" detail="Joined Creator Cult with no offer and no clients. Used the Client Acquisition phase to build and launch his first package. £1,950 in the first three days." delay={0} />
-              <Win name="Eddie" stat="5,000 followers in 10 days" detail="Applied the Brand Build phase to his fitness content. Reworked his positioning, rewrote his hooks, and hit 5,000 new followers in 10 days. First paying client came from that growth." delay={70} />
-              <Win name="Dino" stat="24 million views in 3 weeks" detail="Three weeks after joining, Dino hit 24 million views using the content frameworks from Phase 2. His DMs turned into discovery calls within days." delay={140} />
-              <Win name="Brett" stat="First client in 3 weeks" detail="Had been posting for 18 months with zero clients. Rebuilt his positioning from scratch and signed his first coaching client in 3 weeks." delay={210} />
-              <Win name="Asfand" stat="First client in 7 days" detail="Used the DM acquisition scripts and lead magnet framework from Phase 3. Had his first paid client within a week of implementing. No big following required." delay={280} />
-              <Win name="Michael" stat="$10,000 month" detail="Scaled from inconsistent one-off clients to a recurring $10K month by restructuring his offer and applying the Monetisation Mastery phase to his existing audience." delay={350} />
+              <Win name="Freddie" stat="£1,950 in 3 days" detail="No offer, no clients when he joined. Built and launched his first high-ticket package using the Client Acquisition phase. £1,950 in three days." img="https://assets-v2.circle.so/vjrs5iivuayf1j9x5te9q9u8f3bt" delay={0} />
+              <Win name="Eddie" stat="5,000 followers in 10 days" detail="Reworked his positioning and hooks using Phase 2. Two reels went viral. 5,000 new followers in 10 days. First paying client followed from that growth." img="https://assets-v2.circle.so/li0b9tx3pl289tyzwa4c1vhus6jb" delay={70} />
+              <Win name="Dino" stat="24 million views in 3 weeks" detail="Changed his username, applied the content frameworks, and hit 24 million views three weeks after joining. DMs turned into discovery calls within days." img="https://assets-v2.circle.so/7di4sesakx0atgazfw0wdz0ult0i" delay={140} />
+              <Win name="Brett" stat="First client in 3 weeks" detail="18 months of posting with zero clients. Rebuilt his positioning from scratch in Foundations. Signed his first high-ticket coaching client three weeks later." delay={210} />
+              <Win name="Asfand" stat="First client in 7 days" detail="Used the DM acquisition system and lead magnet framework from Phase 3. First paid client within a week of implementing. Launched his Instagram the Monday before." delay={280} />
+              <Win name="Michael" stat="$10K day" detail="Two $5K pay-in-fulls before noon. Went from inconsistent income to $10,000 in a single day by restructuring his offer using the Monetisation Mastery phase." img="https://assets-v2.circle.so/w5tlngk8d5r1q5dpt0bmjtq5zzxl" delay={350} />
+              <Win name="Tom" stat="6K followers in 2 months" detail="First paying clients landed while growing to 6,000 followers working with Will. His own words: 'shits bout to get crazy.'" img="https://assets-v2.circle.so/oovd23m42ybtzncmcuomqyiabjm7" delay={420} />
+              <Win name="Roy" stat="1M views — first viral reel" detail="First reel to break 1 million views after consistently posting every day for 25 days. Hit 1K followers within 2 months of starting Creator Cult." img="https://assets-v2.circle.so/0z7iywo1kuov1nlanetscbuw6o8p" delay={490} />
             </div>
             <Fade delay={80}>
               <p style={{ textAlign: 'center', fontSize: 13, color: '#333', marginTop: 40 }}>
