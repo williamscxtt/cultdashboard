@@ -812,16 +812,31 @@ export default function LandingPage() {
               </p>
             </Fade>
             <Fade delay={120}>
-              <div style={{ marginTop: 48, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+              <div style={{ marginTop: 64, borderTop: '1px solid rgba(255,255,255,0.08)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
                 {[
                   { n: '01', label: '5-Phase Curriculum', body: 'Foundations to Scale — every lesson in the sequence that actually compounds. Self-paced, but guided.' },
                   { n: '02', label: 'Live Weekly Coaching', body: 'Group calls every week. Will reviews your content, offers, and blockers live. Not pre-recorded theory.' },
                   { n: '03', label: '12 AI Tools', body: 'Private access to the Cult Dashboard — built on the Creator Cult methodology. Available to members only.' },
-                ].map(({ n, label, body }) => (
-                  <div key={n} style={{ padding: '28px 28px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 2 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.16em', color: '#3b82f6', textTransform: 'uppercase', marginBottom: 14, fontFamily: 'Inter, sans-serif' }}>{n}</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-.02em', marginBottom: 10, lineHeight: 1.3, fontFamily: 'Inter, sans-serif' }}>{label}</div>
-                    <div style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.75, fontFamily: 'Inter, sans-serif' }}>{body}</div>
+                ].map(({ n, label, body }, i) => (
+                  <div key={n} style={{
+                    padding: '40px 36px 44px',
+                    borderRight: i < 2 ? '1px solid rgba(255,255,255,0.08)' : 'none',
+                    position: 'relative',
+                    overflow: 'hidden',
+                  }}>
+                    {/* Ghost number — background texture */}
+                    <div style={{
+                      position: 'absolute', top: -16, right: 16,
+                      fontSize: 120, fontWeight: 900, lineHeight: 1,
+                      fontFamily: "'Cabinet Grotesk', Inter, sans-serif",
+                      color: '#3b82f6', opacity: 0.06,
+                      letterSpacing: '-0.06em', userSelect: 'none', pointerEvents: 'none',
+                    }}>{n}</div>
+                    <div style={{ position: 'relative' }}>
+                      <div style={{ width: 32, height: 2, background: '#3b82f6', borderRadius: 2, marginBottom: 28 }} />
+                      <div style={{ fontSize: 20, fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.025em', marginBottom: 14, lineHeight: 1.2, fontFamily: "'Cabinet Grotesk', Inter, sans-serif" }}>{label}</div>
+                      <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, fontFamily: 'Inter, sans-serif' }}>{body}</div>
+                    </div>
                   </div>
                 ))}
               </div>
