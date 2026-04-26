@@ -172,7 +172,6 @@ export default function LandingPage() {
     { img: '/testimonials/testimonial-brett-first-client-3weeks.jpeg', name: 'Brett',      win: 'First client in 3 weeks' },
     { img: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg', name: 'Tom Köster', win: '0 → 10K followers in 1 month' },
     { img: '/testimonials/testimonial-jakub-reels-views.jpg',     name: 'Jakub',           win: 'Three viral reels' },
-    { img: '/testimonials/testimonial-freeyourmind-10k-views.jpg',name: 'FreeYourMind',    win: '10K views in 12 hours' },
   ]
   const mqRow2 = [
     { img: '/testimonials/testimonial-michael-1m-views-30days.png', name: 'Michael Kersee', win: '1M views in 30 days' },
