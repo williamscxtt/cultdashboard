@@ -902,15 +902,14 @@ export default function LandingPage() {
         </div>{/* ── /lp-page-frame 1 ── */}
 
         {/* ── Community image break — full bleed, desktop only ── */}
-        {/* ── Community break — replace background with a wide photo of Will coaching/presenting live ──
-            Best options: a live event or group call screenshot, Will presenting to a room, or a wide
-            shot of Will at his desk/setup. Should feel like energy + activity, not posed.
-            When ready: <img src="/your-photo.jpg" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', filter:'brightness(0.7) contrast(1.05) saturate(0.85)' }} />
-        ── */}
         <div className="lp-community-break" style={{ position: 'relative', height: 'clamp(300px, 38vw, 500px)', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #07090f 0%, #0b0e17 40%, #070a10 100%)' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 50%, rgba(59,130,246,0.07) 0%, transparent 60%)' }} />
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(13,13,10,0.1) 0%, rgba(13,13,10,0.45) 80%)' }} />
+          <img
+            src="/IMG_7050.JPG"
+            alt="Creator Cult community"
+            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 55%', filter: 'brightness(0.75) contrast(1.06) saturate(0.85)' }}
+            loading="lazy"
+          />
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(13,13,10,0.25) 0%, rgba(13,13,10,0.65) 80%)' }} />
           <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 20px' }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 16, fontFamily: 'Inter, sans-serif' }}>The community</div>
             <div style={{ fontSize: 'clamp(26px, 4vw, 52px)', fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1.08, fontFamily: 'Inter, sans-serif', maxWidth: 700 }}>
