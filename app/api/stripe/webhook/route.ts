@@ -14,11 +14,15 @@ export const runtime = 'nodejs'
 async function upsertSubscription(sub: Stripe.Subscription) {
   const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id
 
+  // In Stripe API 2025-04-30.basil, current_period_end moved from Subscription
+  // to SubscriptionItem — read it from the first item.
+  const periodEnd = sub.items?.data?.[0]?.current_period_end ?? null
+
   const updates = {
     stripe_subscription_id: sub.id,
     subscription_status: sub.status,
-    subscription_period_end: sub.current_period_end
-      ? new Date(sub.current_period_end * 1000).toISOString()
+    subscription_period_end: periodEnd
+      ? new Date(periodEnd * 1000).toISOString()
       : null,
     subscription_trial_end: sub.trial_end
       ? new Date(sub.trial_end * 1000).toISOString()
