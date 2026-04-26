@@ -99,16 +99,24 @@ export default function ClientsManager({ initialClients }: Props) {
     setShowModal(false)
   }
 
-  async function sendInvite(email: string, name?: string | null) {
+  async function sendInvite(email: string, name?: string | null, force = false) {
     try {
       const res = await fetch('/api/admin/invite', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name }),
+        body: JSON.stringify({ email, name, force }),
       })
       const data = await res.json()
       if (!res.ok) {
         toast.error(`Error: ${data.error || res.status}`)
+        return
+      }
+      if (data.skipped) {
+        // Already active — offer to force-resend if they need a new password
+        toast(`${name || email} already has an active account. Use the password reset in their profile if they need access.`, {
+          duration: 5000,
+          icon: '✓',
+        })
         return
       }
       if (data.emailSent) {
@@ -187,35 +195,41 @@ export default function ClientsManager({ initialClients }: Props) {
   async function sendAllInvites() {
     const activeClients = clients.filter(c => c.is_active && c.email)
     if (activeClients.length === 0) { toast.error('No active clients with emails'); return }
-    toast.loading(`Generating ${activeClients.length} invite links…`, { id: 'bulk-invite' })
-    const lines: string[] = []
+    toast.loading(`Sending invites to ${activeClients.length} clients…`, { id: 'bulk-invite' })
+    let sent = 0
+    let skipped = 0
     let failed = 0
     for (const client of activeClients) {
       try {
         const res = await fetch('/api/admin/invite', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: client.email }),
+          body: JSON.stringify({ email: client.email, name: client.name }),
         })
         const data = await res.json()
-        if (res.ok && data.inviteUrl) {
-          lines.push(`${client.name || client.email}: ${data.inviteUrl}`)
-        } else {
+        if (!res.ok) {
           failed++
+        } else if (data.skipped) {
+          skipped++ // already active — don't reset their password
+        } else if (data.emailSent) {
+          sent++
+        } else {
+          failed++ // email failed to send
         }
       } catch {
         failed++
       }
     }
     toast.dismiss('bulk-invite')
-    if (lines.length > 0) {
-      await navigator.clipboard.writeText(lines.join('\n\n')).catch(() => {})
-      const msg = failed > 0
-        ? `${lines.length} invite links copied — ${failed} failed`
-        : `${lines.length} invite links copied to clipboard`
-      toast.success(msg)
+    const parts: string[] = []
+    if (sent > 0) parts.push(`${sent} invite${sent > 1 ? 's' : ''} sent`)
+    if (skipped > 0) parts.push(`${skipped} already active (skipped)`)
+    if (failed > 0) parts.push(`${failed} failed`)
+    if (parts.length === 0) parts.push('Nothing to do')
+    if (sent > 0 || skipped > 0) {
+      toast.success(parts.join(' · '))
     } else {
-      toast.error('Failed to generate any invite links')
+      toast.error(parts.join(' · '))
     }
   }
 
@@ -319,7 +333,7 @@ export default function ClientsManager({ initialClients }: Props) {
             />
           </Card>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
             {filtered.map(client => (
               <ClientCard key={client.id} client={client} onToggleActive={toggleActive} onToggleBillingExempt={toggleBillingExempt} onSendInvite={sendInvite} />
             ))}
@@ -567,6 +581,13 @@ function ClientRow({ client, onToggleActive, onToggleBillingExempt, onSendInvite
   )
 }
 
+/** Deterministic avatar colour from name/email string */
+function avatarBg(str: string): string {
+  const palette = ['#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#14b8a6', '#f97316']
+  const sum = [...(str || '?')].reduce((acc, c) => acc + c.charCodeAt(0), 0)
+  return palette[sum % palette.length]
+}
+
 function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvite }: { client: Profile; onToggleActive: (c: Profile) => void; onToggleBillingExempt: (c: Profile) => void; onSendInvite: (email: string, name?: string | null) => void }) {
   const [inviting, setInviting] = useState(false)
   const [showSetPw, setShowSetPw] = useState(false)
@@ -574,6 +595,9 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvit
   const [pwState, setPwState] = useState<'idle' | 'loading' | 'done' | 'error'>('idle')
   const [pwError, setPwError] = useState('')
   const niche = client.niche || (client.intro_structured as { specific_niche?: string } | null)?.specific_niche
+  const displayName = client.name || 'Unnamed'
+  const initial = (client.name || client.email || '?')[0].toUpperCase()
+  const joined = new Date(client.date_joined ?? client.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
 
   async function handleSetPassword(e: React.FormEvent) {
     e.preventDefault()
@@ -588,141 +612,188 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvit
     if (!res.ok) { setPwError(data.error || 'Failed'); setPwState('error'); return }
     setPwState('done')
   }
+
   return (
-    <Card style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
-      {/* Top row */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <div style={{
+      background: 'var(--card)',
+      border: '1px solid var(--border)',
+      borderRadius: 12,
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+      transition: 'border-color 0.15s',
+    }}
+    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(59,130,246,0.35)' }}
+    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+    >
+      {/* ── Card body ── */}
+      <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 14, flex: 1 }}>
+
+        {/* Header: avatar + name/email + badges */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+          {/* Avatar */}
           <div style={{
-            width: 38, height: 38, borderRadius: '50%',
-            background: 'var(--foreground)',
+            width: 40, height: 40, borderRadius: '50%', flexShrink: 0,
+            background: avatarBg(client.name || client.email || ''),
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 14, fontWeight: 700, color: 'var(--background)', flexShrink: 0,
+            fontSize: 15, fontWeight: 800, color: '#fff',
+            letterSpacing: '-0.02em',
           }}>
-            {(client.name || client.email || '?')[0].toUpperCase()}
+            {initial}
           </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--foreground)' }}>{client.name || 'Unnamed'}</div>
-            <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{client.email}</div>
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <button
-            onClick={() => onToggleActive(client)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-          >
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
-              fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999,
-              background: client.is_active ? 'rgba(34,197,94,0.12)' : 'var(--muted)',
-              color: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)',
-            }}>
-              <span style={{ width: 5, height: 5, borderRadius: '50%', background: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)', flexShrink: 0 }} />
-              {client.is_active ? 'Active' : 'Inactive'}
-            </span>
-          </button>
-          <button
-            onClick={() => onToggleBillingExempt(client)}
-            title={client.billing_exempt ? 'Free account' : 'Paid account'}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-          >
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
-              fontSize: 10, fontWeight: 700, padding: '3px 7px', borderRadius: 999,
-              background: client.billing_exempt ? 'rgba(139,92,246,0.12)' : 'rgba(59,130,246,0.08)',
-              color: client.billing_exempt ? '#a78bfa' : 'rgba(59,130,246,0.5)',
-            }}>
-              <CreditCard size={9} />
-              {client.billing_exempt ? 'Free' : '£50/mo'}
-            </span>
-          </button>
-        </div>
-      </div>
 
-      {/* Niche */}
-      {niche && (
-        <div style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.4 }}>{niche}</div>
-      )}
-
-      {/* Details row */}
-      <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
-        <div>
-          <div style={{ fontSize: 10, color: 'var(--muted-foreground)', marginBottom: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Instagram</div>
-          <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
-            {client.ig_username ? `@${client.ig_username}` : '—'}
-          </div>
-        </div>
-        <div>
-          <div style={{ fontSize: 10, color: 'var(--muted-foreground)', marginBottom: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Phase</div>
-          <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
-            {client.phase_number ? `Phase ${client.phase_number}` : '—'}
-          </div>
-        </div>
-        {client.followers_count ? (
-          <div>
-            <div style={{ fontSize: 10, color: 'var(--muted-foreground)', marginBottom: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Followers</div>
-            <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
-              {client.followers_count.toLocaleString()}
+          {/* Name + email */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1.3, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {displayName}
             </div>
+            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {client.email || '—'}
+            </div>
+          </div>
+
+          {/* Status badges — stacked vertically on the right */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
+            {/* Active / Inactive toggle */}
+            <button
+              onClick={() => onToggleActive(client)}
+              title="Toggle active status"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+            >
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 999,
+                background: client.is_active ? 'rgba(34,197,94,0.12)' : 'var(--muted)',
+                color: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)',
+                border: `1px solid ${client.is_active ? 'rgba(34,197,94,0.25)' : 'var(--border)'}`,
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: '50%', background: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)', flexShrink: 0 }} />
+                {client.is_active ? 'Active' : 'Inactive'}
+              </span>
+            </button>
+
+            {/* Billing toggle */}
+            <button
+              onClick={() => onToggleBillingExempt(client)}
+              title={client.billing_exempt ? 'Free account — click to require subscription' : 'Paying £50/mo — click to mark as free'}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+            >
+              <span style={{
+                display: 'inline-flex', alignItems: 'center', gap: 5,
+                fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 999,
+                background: client.billing_exempt ? 'rgba(139,92,246,0.12)' : 'rgba(59,130,246,0.1)',
+                color: client.billing_exempt ? '#a78bfa' : '#60a5fa',
+                border: `1px solid ${client.billing_exempt ? 'rgba(139,92,246,0.25)' : 'rgba(59,130,246,0.25)'}`,
+              }}>
+                <CreditCard size={10} />
+                {client.billing_exempt ? 'Free' : '£50/mo'}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {/* Niche — 2-line clamp */}
+        {niche ? (
+          <div style={{
+            fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.55,
+            display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2, overflow: 'hidden',
+          }}>
+            {niche}
           </div>
         ) : (
-          <div>
-            <div style={{ fontSize: 10, color: 'var(--muted-foreground)', marginBottom: 2, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Joined</div>
-            <div style={{ fontSize: 13, color: 'var(--foreground)', fontWeight: 500 }}>
-              {new Date(client.date_joined ?? client.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+          <div style={{ fontSize: 12, color: 'var(--muted-foreground)', fontStyle: 'italic', opacity: 0.5 }}>No niche set</div>
+        )}
+
+        {/* Stats — always 3 columns */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 8 }}>
+          {[
+            {
+              label: 'Instagram',
+              value: client.ig_username ? `@${client.ig_username}` : '—',
+              mono: !!client.ig_username,
+            },
+            {
+              label: 'Phase',
+              value: client.phase_number ? `Phase ${client.phase_number}` : '—',
+            },
+            {
+              label: client.followers_count ? 'Followers' : 'Joined',
+              value: client.followers_count ? client.followers_count.toLocaleString() : joined,
+            },
+          ].map(({ label, value, mono }) => (
+            <div key={label} style={{
+              background: 'var(--muted)', borderRadius: 7, padding: '8px 10px',
+            }}>
+              <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted-foreground)', marginBottom: 4 }}>
+                {label}
+              </div>
+              <div style={{
+                fontSize: 12, fontWeight: 600, color: 'var(--foreground)',
+                fontFamily: mono ? 'monospace' : 'inherit',
+                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+              }}>
+                {value}
+              </div>
             </div>
+          ))}
+        </div>
+
+        {/* Set password form */}
+        {showSetPw && pwState !== 'done' && (
+          <form onSubmit={handleSetPassword} style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+            <input
+              type="text"
+              value={tempPw}
+              onChange={e => setTempPw(e.target.value)}
+              placeholder="New password (min 8 chars)"
+              autoFocus
+              style={{ fontSize: 13, fontFamily: 'inherit' }}
+            />
+            {pwError && <div style={{ fontSize: 11, color: 'hsl(0 72% 51%)' }}>{pwError}</div>}
+            <div style={{ display: 'flex', gap: 6 }}>
+              <button type="submit" disabled={pwState === 'loading'} style={{
+                flex: 1, height: 30, borderRadius: 5, fontSize: 12, fontWeight: 600,
+                background: '#3B82F6', color: '#fff', border: 'none',
+                cursor: pwState === 'loading' ? 'default' : 'pointer',
+                opacity: pwState === 'loading' ? 0.6 : 1, fontFamily: 'inherit',
+              }}>
+                {pwState === 'loading' ? 'Setting…' : 'Set password'}
+              </button>
+              <button type="button" onClick={() => { setShowSetPw(false); setTempPw(''); setPwState('idle'); setPwError('') }} style={{
+                height: 30, padding: '0 10px', borderRadius: 5, fontSize: 12,
+                background: 'var(--muted)', color: 'var(--muted-foreground)',
+                border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'inherit',
+              }}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+        {pwState === 'done' && (
+          <div style={{
+            background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
+            borderRadius: 6, padding: '8px 12px', fontSize: 12, color: '#22C55E', fontWeight: 600,
+          }}>
+            ✓ Password set:{' '}
+            <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>{tempPw}</span>
+            <span
+              onClick={() => { setPwState('idle'); setTempPw(''); setShowSetPw(false) }}
+              style={{ marginLeft: 10, color: 'var(--muted-foreground)', cursor: 'pointer', fontWeight: 400, fontSize: 11 }}
+            >
+              dismiss
+            </span>
           </div>
         )}
       </div>
 
-      {/* Set temp password inline form */}
-      {showSetPw && pwState !== 'done' && (
-        <form onSubmit={handleSetPassword} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <input
-            type="text"
-            value={tempPw}
-            onChange={e => setTempPw(e.target.value)}
-            placeholder="New password (min 8 chars)"
-            autoFocus
-            style={{ fontSize: 13, fontFamily: 'inherit' }}
-          />
-          {pwError && <div style={{ fontSize: 11, color: 'hsl(0 72% 51%)' }}>{pwError}</div>}
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button type="submit" disabled={pwState === 'loading'} style={{
-              flex: 1, height: 30, borderRadius: 5, fontSize: 12, fontWeight: 600,
-              background: '#3B82F6', color: '#fff', border: 'none',
-              cursor: pwState === 'loading' ? 'default' : 'pointer',
-              opacity: pwState === 'loading' ? 0.6 : 1, fontFamily: 'inherit',
-            }}>
-              {pwState === 'loading' ? 'Setting…' : 'Set password'}
-            </button>
-            <button type="button" onClick={() => { setShowSetPw(false); setTempPw(''); setPwState('idle'); setPwError('') }} style={{
-              height: 30, padding: '0 10px', borderRadius: 5, fontSize: 12,
-              background: 'var(--muted)', color: 'var(--muted-foreground)',
-              border: '1px solid var(--border)', cursor: 'pointer', fontFamily: 'inherit',
-            }}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      )}
-      {pwState === 'done' && (
-        <div style={{
-          background: 'rgba(34,197,94,0.08)', border: '1px solid rgba(34,197,94,0.2)',
-          borderRadius: 6, padding: '8px 12px', fontSize: 12, color: '#22C55E', fontWeight: 600,
-        }}>
-          ✓ Password set — tell them: <span style={{ fontFamily: 'monospace', letterSpacing: '0.05em' }}>{tempPw}</span>
-          <span
-            onClick={() => { setPwState('idle'); setTempPw(''); setShowSetPw(false) }}
-            style={{ marginLeft: 10, color: 'var(--muted-foreground)', cursor: 'pointer', fontWeight: 400, fontSize: 11 }}
-          >
-            dismiss
-          </span>
-        </div>
-      )}
-
-      {/* CTA row */}
-      <div style={{ display: 'flex', gap: 8 }}>
+      {/* ── Action footer — always at bottom ── */}
+      <div style={{
+        borderTop: '1px solid var(--border)',
+        padding: '10px 14px',
+        display: 'flex', gap: 8, alignItems: 'center',
+        background: 'rgba(0,0,0,0.15)',
+      }}>
+        {/* Send invite */}
         <button
           onClick={async () => {
             if (!client.email) return
@@ -731,44 +802,62 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvit
             setInviting(false)
           }}
           disabled={inviting || !client.email}
+          title="Send login credentials email"
           style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-            height: 34, borderRadius: 6, fontSize: 12, fontWeight: 600, flexShrink: 0,
-            padding: '0 14px', border: '1px solid var(--border)',
-            background: 'transparent', color: 'var(--muted-foreground)',
-            cursor: inviting ? 'wait' : 'pointer', fontFamily: 'inherit',
-            opacity: inviting ? 0.5 : 1,
+            display: 'flex', alignItems: 'center', gap: 5,
+            height: 30, padding: '0 12px', borderRadius: 6,
+            fontSize: 12, fontWeight: 600, flexShrink: 0,
+            border: '1px solid var(--border)', background: 'transparent',
+            color: 'var(--muted-foreground)', cursor: inviting ? 'wait' : 'pointer',
+            fontFamily: 'inherit', opacity: inviting ? 0.5 : 1,
+            transition: 'background 0.12s, color 0.12s',
           }}
+          onMouseEnter={e => { if (!inviting) { (e.currentTarget as HTMLElement).style.background = 'var(--muted)'; (e.currentTarget as HTMLElement).style.color = 'var(--foreground)' } }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)' }}
         >
           <Mail size={12} />
-          {inviting ? 'Sending…' : 'Send invite'}
+          {inviting ? 'Sending…' : 'Invite'}
         </button>
+
+        {/* Set password */}
         <button
           onClick={() => { setShowSetPw(v => !v); setPwState('idle'); setTempPw('') }}
+          title="Set a custom password for this client"
           style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            height: 34, padding: '0 12px', borderRadius: 6, fontSize: 12, fontWeight: 600, flexShrink: 0,
-            border: '1px solid var(--border)', background: 'transparent',
-            color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: 'inherit',
+            display: 'flex', alignItems: 'center', gap: 5,
+            height: 30, padding: '0 12px', borderRadius: 6,
+            fontSize: 12, fontWeight: 600, flexShrink: 0,
+            border: '1px solid var(--border)', background: showSetPw ? 'var(--muted)' : 'transparent',
+            color: showSetPw ? 'var(--foreground)' : 'var(--muted-foreground)',
+            cursor: 'pointer', fontFamily: 'inherit',
+            transition: 'background 0.12s, color 0.12s',
           }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--muted)'; (e.currentTarget as HTMLElement).style.color = 'var(--foreground)' }}
+          onMouseLeave={e => { if (!showSetPw) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)' } }}
         >
-          Set pw
+          Set password
         </button>
+
+        {/* View dashboard — fills remaining space */}
         <Link
           href={`/dashboard/clients/${client.id}`}
           style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 1,
-            height: 34, borderRadius: 6, fontSize: 13, fontWeight: 600,
-            background: 'var(--muted)', color: 'var(--foreground)',
-            textDecoration: 'none', transition: 'opacity 0.15s',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            flex: 1, height: 30, borderRadius: 6,
+            fontSize: 12, fontWeight: 700,
+            background: 'rgba(59,130,246,0.1)',
+            color: '#60a5fa',
+            border: '1px solid rgba(59,130,246,0.2)',
+            textDecoration: 'none', transition: 'background 0.12s, color 0.12s',
+            whiteSpace: 'nowrap',
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.7' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#3b82f6'; (e.currentTarget as HTMLElement).style.color = '#fff' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(59,130,246,0.1)'; (e.currentTarget as HTMLElement).style.color = '#60a5fa' }}
         >
-          View dashboard →
+          Open dashboard →
         </Link>
       </div>
-    </Card>
+    </div>
   )
 }
 

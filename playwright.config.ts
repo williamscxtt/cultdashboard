@@ -35,6 +35,21 @@ export default defineConfig({
         storageState: ADMIN_AUTH,
       },
     },
+    // Setup: log in as test client via Supabase magic link
+    {
+      name: 'client-setup',
+      testMatch: /client\.setup\.ts/,
+    },
+    // Tests running as a real client user
+    {
+      name: 'client',
+      testMatch: /client\.spec\.ts/,
+      dependencies: ['client-setup'],
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: path.join(__dirname, 'playwright/.auth/client.json'),
+      },
+    },
     // Tests that run without auth (public pages)
     {
       name: 'public',

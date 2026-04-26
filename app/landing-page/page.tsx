@@ -127,10 +127,10 @@ export default function LandingPage() {
   const typedText = useTypewriter([
     'Still clocking in.',
     'Still getting zero likes.',
-    'Still posting into the void.',
+    'Still posting blind.',
     'Still broke at 11pm.',
     'Still figuring it out alone.',
-    'Still working your 9-to-5.',
+    'Still stuck at the 9-to-5.',
     'Still waiting for results.',
     'Still watching others win.',
   ])
@@ -648,13 +648,18 @@ export default function LandingPage() {
 
         {/* ── Nav ── */}
         <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
-          <a href="/landing-page" className="lp-nav-logo">
+          <a href="/" className="lp-nav-logo">
             <LogoMark size={28} />
             Creator Cult
           </a>
-          <Link href="/apply" className="lp-nav-cta">
-            Apply Now <IconArrow />
-          </Link>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <Link href="/login" className="lp-cta-ghost-sm">
+              Client login
+            </Link>
+            <Link href="/apply" className="lp-nav-cta">
+              Apply Now <IconArrow />
+            </Link>
+          </div>
         </nav>
 
         {/* ── Hero ── */}
@@ -675,7 +680,7 @@ export default function LandingPage() {
               <h1 className="lp-h1">
                 You&apos;ve been<br />
                 <span style={{ color: '#ffffff' }}>posting for months.</span><br />
-                <span className="lp-blue" style={{ display: 'block', minHeight: '1.05em' }}>{typedText}<span className="lp-cursor">|</span></span>
+                <span className="lp-blue" style={{ display: 'block', minHeight: '1.05em', whiteSpace: 'nowrap', overflow: 'hidden' }}>{typedText}<span className="lp-cursor">|</span></span>
               </h1>
             </Fade>
             <Fade delay={160}>
@@ -684,12 +689,15 @@ export default function LandingPage() {
               </p>
             </Fade>
             <Fade delay={240}>
-              <div style={{ marginTop: 40, display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+              <div style={{ marginTop: 40, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                 <Link href="/apply" className="lp-cta-primary">
                   Apply for a Spot <IconArrow />
                 </Link>
-                <span className="lp-dim" style={{ fontSize: 12, fontFamily: 'Inter, sans-serif' }}>Applications reviewed personally.</span>
+                <Link href="/login" className="lp-cta-ghost">
+                  Already a client? Log in
+                </Link>
               </div>
+              <p style={{ marginTop: 14, fontSize: 12, color: '#64748b', fontFamily: 'Inter, sans-serif' }}>Applications reviewed personally.</p>
             </Fade>
             <Fade delay={320}>
               {/* Avatar social proof strip */}
@@ -767,6 +775,36 @@ export default function LandingPage() {
             <Fade delay={100}>
               <div style={{ marginTop: 56, display: 'flex', justifyContent: 'flex-start' }}>
                 <Link href="/apply" className="lp-cta-primary">Get the system. Apply now. <IconArrow /></Link>
+              </div>
+            </Fade>
+          </div>
+        </div>
+
+        <div className="lp-hr" />
+
+        {/* ── What is Creator Cult — bridge section ── */}
+        <div className="lp-section" style={{ paddingBottom: 80 }}>
+          <div className="lp-container-sm">
+            <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Solution</span></Fade>
+            <Fade delay={60}>
+              <h2 className="lp-h2">A programme built<br /><span style={{ color: '#ffffff' }}>around one outcome.</span></h2>
+              <p className="lp-body-lg" style={{ marginTop: 20, maxWidth: 560 }}>
+                Creator Cult is a structured coaching programme that takes you from stuck creator to full-time personal brand — in a specific order, with real support at every stage.
+              </p>
+            </Fade>
+            <Fade delay={120}>
+              <div style={{ marginTop: 48, display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+                {[
+                  { n: '01', label: '5-Phase Curriculum', body: 'Foundations to Scale — every lesson in the sequence that actually compounds. Self-paced, but guided.' },
+                  { n: '02', label: 'Live Weekly Coaching', body: 'Group calls every week. Will reviews your content, offers, and blockers live. Not pre-recorded theory.' },
+                  { n: '03', label: '12 AI Tools', body: 'Private access to the Cult Dashboard — built on the Creator Cult methodology. Available to members only.' },
+                ].map(({ n, label, body }) => (
+                  <div key={n} style={{ padding: '28px 28px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 2 }}>
+                    <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.16em', color: '#3b82f6', textTransform: 'uppercase', marginBottom: 14, fontFamily: 'Inter, sans-serif' }}>{n}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-.02em', marginBottom: 10, lineHeight: 1.3, fontFamily: 'Inter, sans-serif' }}>{label}</div>
+                    <div style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.75, fontFamily: 'Inter, sans-serif' }}>{body}</div>
+                  </div>
+                ))}
               </div>
             </Fade>
           </div>

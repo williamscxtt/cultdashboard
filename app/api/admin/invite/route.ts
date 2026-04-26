@@ -1,6 +1,13 @@
 /**
- * POST { email, name? }
- * Admin-only: reset a client's password to a new temp password and email them their credentials.
+ * POST { email, name?, force? }
+ * Admin-only: send a client their login credentials via email.
+ *
+ * Behaviour:
+ *   - If the client has NEVER signed in (last_sign_in_at is null):
+ *       reset their password to a fresh temp password + email credentials.
+ *   - If the client HAS already signed in:
+ *       return { skipped: true } — we don't wipe out a working account.
+ *       Pass force: true to override this and resend anyway (e.g. they forgot their password).
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
@@ -102,17 +109,24 @@ export async function POST(req: NextRequest) {
   const user = await assertAdmin()
   if (!user) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const body = await req.json().catch(() => ({})) as { email?: string; name?: string }
+  const body = await req.json().catch(() => ({})) as { email?: string; name?: string; force?: boolean }
   const email = body.email
   const name = body.name ?? null
+  const force = body.force ?? false
   if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 })
 
-  // Look up the user by email to get their ID
+  // Look up the user by email
   const { data: { users }, error: listError } = await admin.auth.admin.listUsers()
   if (listError) return NextResponse.json({ error: listError.message }, { status: 400 })
 
   const targetUser = users.find(u => u.email === email)
   if (!targetUser) return NextResponse.json({ error: 'No account found for that email' }, { status: 404 })
+
+  // If the client has already signed in AND we're not forcing, skip them.
+  // Resetting their password would log them out and break a working account.
+  if (targetUser.last_sign_in_at && !force) {
+    return NextResponse.json({ skipped: true, reason: 'already_active' })
+  }
 
   // Generate and set a new temp password
   const tempPassword = genTempPassword()
