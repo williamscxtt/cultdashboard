@@ -8,7 +8,8 @@ const adminClient = createAdmin(
   process.env.SUPABASE_SERVICE_KEY!
 )
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://dash.scottvip.com'
+const rawUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://dash.scottvip.com'
+const APP_URL = rawUrl.startsWith('http') ? rawUrl.replace(/\/$/, '') : `https://${rawUrl.replace(/\/$/, '')}`
 
 export async function POST() {
   try {
