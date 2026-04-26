@@ -57,9 +57,10 @@ const NavTools = () => <Ic d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l
 const NavDM = () => <Ic d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" size={14} />
 
 function useTypewriter(words: string[], typingSpeed = 72, deletingSpeed = 38, pauseMs = 2000) {
-  const [display, setDisplay] = useState('')
+  // Start with the first phrase already visible so the hero never loads with an empty line
+  const [display, setDisplay] = useState(words[0] ?? '')
   const [wordIdx, setWordIdx] = useState(0)
-  const [phase, setPhase] = useState<'typing' | 'pausing' | 'deleting'>('typing')
+  const [phase, setPhase] = useState<'typing' | 'pausing' | 'deleting'>('pausing')
 
   useEffect(() => {
     const word = words[wordIdx % words.length]
@@ -85,14 +86,16 @@ function useTypewriter(words: string[], typingSpeed = 72, deletingSpeed = 38, pa
   return display
 }
 
+const IconChevronDown = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+
 function Faq({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
     <div style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
       <button onClick={() => setOpen(!open)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 0', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'Inter, -apple-system, sans-serif', fontSize: '15px', fontWeight: 500, color: '#e2e8f0', lineHeight: 1.5, gap: 24 }}>
         <span>{q}</span>
-        <span style={{ flexShrink: 0, color: '#3b82f6', display: 'inline-flex', transition: 'transform .2s' }}>
-          {open ? <IconMinus /> : <IconPlus />}
+        <span style={{ flexShrink: 0, color: '#3b82f6', display: 'inline-flex', transition: 'transform .25s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+          <IconChevronDown />
         </span>
       </button>
       {open && <div style={{ paddingBottom: 22, fontSize: 15, color: '#94a3b8', lineHeight: 1.8, maxWidth: 680, fontFamily: 'Inter, -apple-system, sans-serif' }}>{a}</div>}
@@ -241,19 +244,14 @@ export default function LandingPage() {
       quote: "This is one $10K day. I've had several now. The offer positioning and DM close system makes this repeatable — not a fluke." },
   ]
 
+  // Whop reviews removed — generic "good value" comments undermine the specific wins above
   const reviews = [
-    { name: 'Freddie Woodward', initials: 'FW', color: '#3b82f6', role: 'Fitness Creator',  metric: 'First clients at £1,000 each',    source: 'Circle Community', quote: "148 followers. Brand new offer. First paying clients at £1,000 each within one month. No big audience, no track record — just the system. I can't believe I spent so long trying to figure this out alone." },
-    { name: 'Brett Capstick',   initials: 'BC', color: '#6366f1', role: 'Personal Trainer', metric: 'First client in 3 weeks',           source: 'Circle Community', quote: "18 months with zero paying clients. Three weeks in Creator Cult — signed my first. Just consistently posting, started conversations, made the offer. Simple as that." },
-    { name: 'Eddie Harding',    initials: 'EH', color: '#8b5cf6', role: 'Fitness Creator',  metric: '258K views + 4,600 followers',     source: 'Circle Community', quote: "Two posts gone viral. One reel gave me 4,600 new followers and 258K views in a week. The hooks framework is genuinely different to anything else out there." },
-    { name: 'Rokas Žebrauskas', initials: 'RŽ', color: '#0ea5e9', role: 'Creator',          metric: 'Best investment ever',             source: 'Circle Community', quote: "This is my best investment so far, 100%. I've learned more in two weeks inside this programme than in six months of watching free content. The system just makes sense." },
-    { name: 'Mateus Chapman',   initials: 'MC', color: '#10b981', role: 'Fitness Creator',  metric: '2.3M reach in 30 days',            source: 'Circle Community', quote: "1 million views in a month. My total reach is 2.3 million for the last 30 days. The content batching and posting system changed everything about how I work." },
-    { name: 'Asher Hayhoe',     initials: 'AH', color: '#f59e0b', role: 'Creator',          metric: 'First sales call booked',          source: 'Circle Community', quote: "Had my first ever sales call this week. 4 videos over 100K views in the past month. Before this programme I couldn't get consistent views let alone client enquiries." },
-    { name: 'reenzo',           initials: 'RE', color: '#e11d48', role: 'Creator',          metric: '10/10 recommendation',             source: 'Whop',             quote: "Will is an absolute goat of the coaching industry. 10/10 course recommendation." },
-    { name: 'Kyriakos Parpas',  initials: 'KP', color: '#7c3aed', role: 'Creator',          metric: 'Best value for money',             source: 'Whop',             quote: "Just starting out and I already feel like it's a steal — the value Will has put into this is absolutely great. The hours of content alone are worth it." },
-    { name: 'FreeYourMind',     initials: 'FM', color: '#0891b2', role: 'Creator',          metric: 'Insightful + actively supported',  source: 'Whop',             quote: "Very insightful course and Will is actively invested in delivering maximum value. He doesn't just drop content and disappear — he's genuinely in it with you." },
-    { name: 'Matt Neems',       initials: 'MN', color: '#059669', role: 'Creator',          metric: 'Incredible free value',            source: 'Whop',             quote: "Looks great so far and I'm extremely grateful for what's available here. The quality you get from the start is not something you normally see." },
-    { name: 'Ed Kershaw',       initials: 'EK', color: '#d97706', role: 'Creator',          metric: 'Insanely good value',              source: 'Whop',             quote: "Insanely good free value. Said what I said." },
-    { name: 'Jacob B Smith',    initials: 'JS', color: '#4f46e5', role: 'Creator',          metric: 'Comprehensive & thorough',         source: 'Whop',             quote: "Comprehensive and competitive — useful and thorough. Everything you need is in here." },
+    { name: 'Freddie Woodward', initials: 'FW', color: '#3b82f6', role: 'Fitness Creator',        metric: 'First clients at £1,000 each — 148 followers', source: 'Circle Community', quote: "148 followers. Brand new offer. First paying clients at £1,000 each within one month. No big audience, no track record — just the system. I can't believe I spent so long trying to figure this out alone." },
+    { name: 'Brett Capstick',   initials: 'BC', color: '#6366f1', role: 'Personal Trainer',       metric: 'First client in 3 weeks',                      source: 'Circle Community', quote: "18 months with zero paying clients. Three weeks in Creator Cult — signed my first. Just consistently posting, started conversations, made the offer. Simple as that." },
+    { name: 'Eddie Harding',    initials: 'EH', color: '#8b5cf6', role: 'Fitness Creator',        metric: '258K views + 4,600 followers in one week',     source: 'Circle Community', quote: "Two posts gone viral. One reel gave me 4,600 new followers and 258K views in a week. The hooks framework is genuinely different to anything else out there." },
+    { name: 'Rokas Žebrauskas', initials: 'RŽ', color: '#0ea5e9', role: 'Creator',               metric: 'Best investment ever made',                    source: 'Circle Community', quote: "This is my best investment so far, 100%. I've learned more in two weeks inside this programme than in six months of watching free content. The system just makes sense." },
+    { name: 'Mateus Chapman',   initials: 'MC', color: '#10b981', role: 'Fitness Creator',        metric: '2.3M total reach in 30 days',                  source: 'Circle Community', quote: "1 million views in a month. My total reach is 2.3 million for the last 30 days. The content batching and posting system changed everything about how I work." },
+    { name: 'Asher Hayhoe',     initials: 'AH', color: '#f59e0b', role: 'Creator',               metric: 'First sales call + 4 videos over 100K views',  source: 'Circle Community', quote: "Had my first ever sales call this week. 4 videos over 100K views in the past month. Before this programme I couldn't get consistent views let alone client enquiries." },
   ]
 
   const avatarMembers = [
@@ -308,7 +306,7 @@ export default function LandingPage() {
         /* ── Layout ── */
         .lp-container { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
         .lp-container-sm { max-width: 840px; margin: 0 auto; padding: 0 48px; }
-        .lp-section { padding: 112px 0; }
+        .lp-section { padding: 80px 0; }
         .lp-hr { height: 1px; background: rgba(59,130,246,0.12); }
 
         /* ── Cursor blink ── */
@@ -369,10 +367,10 @@ export default function LandingPage() {
 
         /* ── Ticker ── */
         .lp-ticker { padding: 13px 0; overflow: hidden; background: #1d4ed8; }
-        .lp-ticker-track { display: flex; width: max-content; animation: lp-tick 36s linear infinite; }
+        .lp-ticker-track { display: flex; width: max-content; animation: lp-tick 58s linear infinite; }
         .lp-ticker-track:hover { animation-play-state: paused; }
         @keyframes lp-tick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        @media (max-width: 640px) { .lp-ticker-track { animation-duration: 16s; } }
+        @media (max-width: 640px) { .lp-ticker-track { animation-duration: 28s; } }
         .lp-tick-item { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; padding: 0 28px; letter-spacing: .05em; text-transform: uppercase; }
         .lp-tick-dot { color: rgba(255,255,255,0.45); font-size: 8px; }
 
@@ -595,6 +593,26 @@ export default function LandingPage() {
         .lp-footer-links a:hover { color: #cbd5e1; }
         .lp-footer-copy { font-size: 12px; color: #64748b; }
 
+        /* ── Sticky mobile CTA ── */
+        .lp-sticky-cta { display: none; }
+        @media (max-width: 768px) {
+          .lp-sticky-cta {
+            display: flex; align-items: center; justify-content: center;
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+            padding: 12px 20px 18px;
+            background: linear-gradient(to top, rgba(13,13,10,1) 0%, rgba(13,13,10,0.92) 100%);
+            border-top: 1px solid rgba(59,130,246,0.15);
+          }
+          .lp-sticky-cta a {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; max-width: 400px; height: 52px; border-radius: 10px;
+            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            color: #fff; font-size: 15px; font-weight: 700; text-decoration: none;
+            font-family: 'Inter', sans-serif; letter-spacing: -.01em;
+            box-shadow: 0 0 32px rgba(59,130,246,0.4);
+          }
+        }
+
         /* ── Global mobile ── */
         @media (max-width: 640px) {
           .lp-container { padding: 0 20px; }
@@ -685,7 +703,7 @@ export default function LandingPage() {
             </Fade>
             <Fade delay={160}>
               <p className="lp-body-lg" style={{ maxWidth: 500, marginTop: 28 }}>
-                Creator Cult is the coaching programme that turns consistent creators into full-time personal brands. A real system. Not recycled advice.
+                Most creators know content. What they&apos;re missing is the system behind it — positioning, acquisition, offer. Creator Cult is that system.
               </p>
             </Fade>
             <Fade delay={240}>
@@ -724,6 +742,9 @@ export default function LandingPage() {
                 <div><div className="lp-stat-n">1M+</div><div className="lp-stat-l">Combined followers</div></div>
                 <div><div className="lp-stat-n">£50K+</div><div className="lp-stat-l">Monthly revenue</div></div>
               </div>
+              <p style={{ marginTop: 16, fontSize: 11, color: '#475569', letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
+                Combined across all Creator Cult members
+              </p>
             </Fade>
           </div>
           <div className="lp-hero-photo-col" style={{ position: 'relative', zIndex: 1 }}>
@@ -774,7 +795,7 @@ export default function LandingPage() {
             </div>
             <Fade delay={100}>
               <div style={{ marginTop: 56, display: 'flex', justifyContent: 'flex-start' }}>
-                <Link href="/apply" className="lp-cta-primary">Get the system. Apply now. <IconArrow /></Link>
+                <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
               </div>
             </Fade>
           </div>
@@ -1019,7 +1040,7 @@ export default function LandingPage() {
                 <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#94a3b8', marginBottom: 20 }}>
                   Access unlocks when you join Creator Cult.
                 </p>
-                <Link href="/apply" className="lp-cta-primary">Apply for access <IconArrow /></Link>
+                <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
               </div>
             </Fade>
           </div>
@@ -1143,7 +1164,7 @@ export default function LandingPage() {
             </div>
             <Fade delay={80}>
               <div style={{ textAlign: 'center', paddingTop: 56 }}>
-                <Link href="/apply" className="lp-cta-primary">Join the programme <IconArrow /></Link>
+                <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
               </div>
             </Fade>
           </div>
@@ -1159,10 +1180,12 @@ export default function LandingPage() {
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />What You Get</span></Fade>
             <Fade delay={60}><h2 className="lp-h2">Everything<br /><span style={{ color: '#ffffff' }}>in one place.</span></h2></Fade>
             <div className="lp-incl-grid">
-              {included.map(({ icon, title, desc }, i) => (
+              {included.map(({ title, desc }, i) => (
                 <Fade key={title} delay={(i % 2) * 70}>
                   <div className="lp-incl-card">
-                    <div className="lp-incl-icon">{icon}</div>
+                    <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 900, color: '#3b82f6', letterSpacing: '-.04em', lineHeight: 1, flexShrink: 0, minWidth: 36, opacity: 0.8 }}>
+                      {String(i + 1).padStart(2, '0')}
+                    </div>
                     <div>
                       <div className="lp-incl-title">{title}</div>
                       <div className="lp-incl-desc">{desc}</div>
@@ -1216,7 +1239,7 @@ export default function LandingPage() {
           <Fade>
             <span className="lp-pill" style={{ marginBottom: 20 }}><span className="lp-pill-dot" />Apply</span>
             <h2 className="lp-h2" style={{ marginBottom: 20 }}>Ready to stop figuring<br /><span style={{ color: '#ffffff' }}>it out alone?</span></h2>
-            <p className="lp-body-lg" style={{ marginBottom: 36 }}>Applications take 3 minutes. No commitment to apply.<br />Will reviews every one personally.</p>
+            <p className="lp-body-lg" style={{ marginBottom: 36 }}>Applications take 3 minutes. Will reviews every one personally.<br />Cohort size is limited — not everyone who applies gets in.</p>
             <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
           </Fade>
         </div>
@@ -1230,6 +1253,7 @@ export default function LandingPage() {
             <Fade delay={60}><h2 className="lp-h2" style={{ marginBottom: 56 }}>Common questions.</h2></Fade>
             <Fade delay={100}>
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+                <Faq q="What&apos;s the investment?" a="Creator Cult is an application-only programme. Pricing is shared after your application is reviewed. This keeps the cohort focused on people who are serious — not impulse sign-ups. Applications take 3 minutes and there&apos;s no commitment until you decide to join." />
                 <Faq q="What exactly do I get when I join Creator Cult?" a="You get access to the full 5-phase curriculum, weekly live group coaching calls with recordings, 1:1 access to Will between calls, content and offer reviews, the Cult Dashboard with all 12 AI tools, and the private Circle community. Ongoing support at every stage." />
                 <Faq q="How long does the programme run?" a="Creator Cult is an ongoing coaching programme. Most clients see their first real results within 30 to 60 days of starting. There is no set end date. You stay in as long as you are growing." />
                 <Faq q="Do I need a big following to join?" a="No. Several of our members signed their first clients with under 1,000 followers. Following size does not determine your results. Your system does. We build the system first." />
@@ -1272,6 +1296,21 @@ export default function LandingPage() {
         </div>
 
         {/* ── Footer ── */}
+        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)', maxWidth: 1200, margin: '0 auto', padding: '28px 48px 16px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, justifyContent: 'center', paddingBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+            {[
+              { n: '140+', l: 'Creators enrolled' },
+              { n: '350M+', l: 'Combined views' },
+              { n: '£500K+', l: 'Verified member wins' },
+              { n: '15+', l: 'Countries represented' },
+            ].map(({ n, l }) => (
+              <div key={l} style={{ textAlign: 'center', minWidth: 100 }}>
+                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 900, color: '#f1f5f9', letterSpacing: '-.03em', lineHeight: 1 }}>{n}</div>
+                <div style={{ fontSize: 10, color: '#475569', fontWeight: 500, letterSpacing: '.08em', textTransform: 'uppercase', marginTop: 5 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
         <div className="lp-footer">
           <div className="lp-footer-logo">
             <LogoMark size={22} />
@@ -1286,6 +1325,12 @@ export default function LandingPage() {
         </div>
 
       </div>
+
+        {/* ── Sticky mobile CTA ── */}
+        <div className="lp-sticky-cta">
+          <Link href="/apply">Apply for a Spot <IconArrow /></Link>
+        </div>
+
       </div>
     </>
   )
