@@ -137,6 +137,8 @@ export interface Profile {
   subscription_status?: 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | null
   subscription_period_end?: string | null
   subscription_trial_end?: string | null
+  // Billing exempt — higher-tier clients who aren't charged the £50/month
+  billing_exempt?: boolean
 }
 
 export interface WeeklyReport {

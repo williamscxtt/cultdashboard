@@ -40,7 +40,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   // ── Subscription gate (clients only, not admins, not impersonation sessions) ──
   const isAdmin = realProfile.role === 'admin'
-  if (!isAdmin && !impersonatingAs) {
+  if (!isAdmin && !impersonatingAs && !realProfile.billing_exempt) {
     const status = realProfile.subscription_status as string | null | undefined
     if (!isSubscriptionActive(status)) {
       const isPastDue = status === 'past_due' || status === 'unpaid'

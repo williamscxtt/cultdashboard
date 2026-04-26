@@ -468,12 +468,12 @@ function SidebarContent({
           {!collapsed && (isDark ? 'Light mode' : 'Dark mode')}
         </button>
 
-        {/* Billing — clients only */}
-        {!isAdmin && (
+        {/* Billing — visible to all except billing-exempt clients */}
+        {!displayProfile.billing_exempt && (
           <button
             onClick={openBillingPortal}
             disabled={billingLoading}
-            title={collapsed ? 'Manage billing' : undefined}
+            title={collapsed ? (isAdmin ? 'Preview subscribe page' : 'Manage billing') : undefined}
             style={{
               display: 'flex', alignItems: 'center',
               justifyContent: collapsed ? 'center' : 'flex-start',
@@ -495,7 +495,7 @@ function SidebarContent({
             }}
           >
             <CreditCard size={14} />
-            {!collapsed && (billingLoading ? 'Opening…' : 'Manage billing')}
+            {!collapsed && (billingLoading ? 'Opening…' : isAdmin ? 'Preview billing' : 'Manage billing')}
           </button>
         )}
 

@@ -23,7 +23,8 @@ export async function POST() {
       .single()
 
     if (!profile?.stripe_customer_id) {
-      return NextResponse.json({ error: 'No billing account found' }, { status: 404 })
+      // Admin previewing — send them to the subscribe page to see what clients see
+      return NextResponse.json({ url: `${APP_URL}/subscribe` })
     }
 
     const session = await stripe.billingPortal.sessions.create({

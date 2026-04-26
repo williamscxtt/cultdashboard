@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
 import { Card, Badge, Button, PageHeader, EmptyState, StatCard } from '@/components/ui'
-import { Users, Grid3X3, Table2, AlertTriangle, LayoutGrid, Mail, RefreshCw } from 'lucide-react'
+import { Users, Grid3X3, Table2, AlertTriangle, LayoutGrid, Mail, RefreshCw, CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ClientHealth {
@@ -75,6 +75,22 @@ export default function ClientsManager({ initialClients }: Props) {
     } else {
       setClients(prev => prev.map(c => c.id === client.id ? { ...c, is_active: newVal } : c))
       toast.success(`${client.name || client.email} ${newVal ? 'activated' : 'deactivated'}`)
+    }
+  }
+
+  async function toggleBillingExempt(client: Profile) {
+    const supabase = createClient()
+    const newVal = !client.billing_exempt
+    const { error } = await supabase
+      .from('profiles')
+      .update({ billing_exempt: newVal })
+      .eq('id', client.id)
+
+    if (error) {
+      toast.error(error.message)
+    } else {
+      setClients(prev => prev.map(c => c.id === client.id ? { ...c, billing_exempt: newVal } : c))
+      toast.success(`${client.name || client.email}: ${newVal ? 'set to free account' : 'set to paid account'}`)
     }
   }
 
@@ -305,7 +321,7 @@ export default function ClientsManager({ initialClients }: Props) {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(290px, 1fr))', gap: 12 }}>
             {filtered.map(client => (
-              <ClientCard key={client.id} client={client} onToggleActive={toggleActive} onSendInvite={sendInvite} />
+              <ClientCard key={client.id} client={client} onToggleActive={toggleActive} onToggleBillingExempt={toggleBillingExempt} onSendInvite={sendInvite} />
             ))}
           </div>
         )
@@ -402,7 +418,7 @@ export default function ClientsManager({ initialClients }: Props) {
               </tr>
             ) : (
               filtered.map(client => (
-                <ClientRow key={client.id} client={client} onToggleActive={toggleActive} onSendInvite={sendInvite} onSyncIG={syncIG} isSyncing={syncingId === client.id} />
+                <ClientRow key={client.id} client={client} onToggleActive={toggleActive} onToggleBillingExempt={toggleBillingExempt} onSendInvite={sendInvite} onSyncIG={syncIG} isSyncing={syncingId === client.id} />
               ))
             )}
           </tbody>
@@ -419,9 +435,10 @@ export default function ClientsManager({ initialClients }: Props) {
   )
 }
 
-function ClientRow({ client, onToggleActive, onSendInvite, onSyncIG, isSyncing }: {
+function ClientRow({ client, onToggleActive, onToggleBillingExempt, onSendInvite, onSyncIG, isSyncing }: {
   client: Profile
   onToggleActive: (c: Profile) => void
+  onToggleBillingExempt: (c: Profile) => void
   onSendInvite: (email: string, name?: string | null) => void
   onSyncIG: (c: Profile) => void
   isSyncing: boolean
@@ -462,23 +479,40 @@ function ClientRow({ client, onToggleActive, onSendInvite, onSyncIG, isSyncing }
           : new Date(client.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
       </td>
       <td style={{ padding: '12px 16px' }}>
-        <button
-          onClick={() => onToggleActive(client)}
-          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-        >
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999,
-            background: client.is_active ? 'rgba(34,197,94,0.12)' : 'var(--muted)',
-            color: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)',
-          }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'nowrap' }}>
+          <button
+            onClick={() => onToggleActive(client)}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', flexShrink: 0 }}
+          >
             <span style={{
-              width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
-              background: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)',
-            }} />
-            {client.is_active ? 'Active' : 'Inactive'}
-          </span>
-        </button>
+              display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
+              fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999,
+              background: client.is_active ? 'rgba(34,197,94,0.12)' : 'var(--muted)',
+              color: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)',
+            }}>
+              <span style={{
+                width: 5, height: 5, borderRadius: '50%', flexShrink: 0,
+                background: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)',
+              }} />
+              {client.is_active ? 'Active' : 'Inactive'}
+            </span>
+          </button>
+          <button
+            onClick={() => onToggleBillingExempt(client)}
+            title={client.billing_exempt ? 'Free account — click to require subscription' : 'Paid account — click to mark as free'}
+            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', flexShrink: 0 }}
+          >
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
+              fontSize: 10, fontWeight: 700, padding: '3px 7px', borderRadius: 999,
+              background: client.billing_exempt ? 'rgba(139,92,246,0.12)' : 'rgba(59,130,246,0.08)',
+              color: client.billing_exempt ? '#a78bfa' : 'rgba(59,130,246,0.5)',
+            }}>
+              <CreditCard size={9} />
+              {client.billing_exempt ? 'Free' : '£50/mo'}
+            </span>
+          </button>
+        </div>
       </td>
       <td style={{ padding: '12px 16px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -533,7 +567,7 @@ function ClientRow({ client, onToggleActive, onSendInvite, onSyncIG, isSyncing }
   )
 }
 
-function ClientCard({ client, onToggleActive, onSendInvite }: { client: Profile; onToggleActive: (c: Profile) => void; onSendInvite: (email: string, name?: string | null) => void }) {
+function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvite }: { client: Profile; onToggleActive: (c: Profile) => void; onToggleBillingExempt: (c: Profile) => void; onSendInvite: (email: string, name?: string | null) => void }) {
   const [inviting, setInviting] = useState(false)
   const [showSetPw, setShowSetPw] = useState(false)
   const [tempPw, setTempPw] = useState('')
@@ -572,20 +606,37 @@ function ClientCard({ client, onToggleActive, onSendInvite }: { client: Profile;
             <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{client.email}</div>
           </div>
         </div>
-        <button
-          onClick={() => onToggleActive(client)}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-        >
-          <span style={{
-            display: 'inline-flex', alignItems: 'center', gap: 5,
-            fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999,
-            background: client.is_active ? 'rgba(34,197,94,0.12)' : 'var(--muted)',
-            color: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)',
-          }}>
-            <span style={{ width: 5, height: 5, borderRadius: '50%', background: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)', flexShrink: 0 }} />
-            {client.is_active ? 'Active' : 'Inactive'}
-          </span>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+          <button
+            onClick={() => onToggleActive(client)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+          >
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
+              fontSize: 11, fontWeight: 600, padding: '3px 8px', borderRadius: 999,
+              background: client.is_active ? 'rgba(34,197,94,0.12)' : 'var(--muted)',
+              color: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)',
+            }}>
+              <span style={{ width: 5, height: 5, borderRadius: '50%', background: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)', flexShrink: 0 }} />
+              {client.is_active ? 'Active' : 'Inactive'}
+            </span>
+          </button>
+          <button
+            onClick={() => onToggleBillingExempt(client)}
+            title={client.billing_exempt ? 'Free account' : 'Paid account'}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
+          >
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
+              fontSize: 10, fontWeight: 700, padding: '3px 7px', borderRadius: 999,
+              background: client.billing_exempt ? 'rgba(139,92,246,0.12)' : 'rgba(59,130,246,0.08)',
+              color: client.billing_exempt ? '#a78bfa' : 'rgba(59,130,246,0.5)',
+            }}>
+              <CreditCard size={9} />
+              {client.billing_exempt ? 'Free' : '£50/mo'}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Niche */}
