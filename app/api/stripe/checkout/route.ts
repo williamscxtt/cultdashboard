@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { stripe, STRIPE_PRICE_ID, TRIAL_DAYS } from '@/lib/stripe'
@@ -8,11 +8,9 @@ const adminClient = createAdmin(
   process.env.SUPABASE_SERVICE_KEY!
 )
 
-// Normalise: ensure protocol is always present
-const rawUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://dash.scottvip.com'
-const APP_URL = rawUrl.startsWith('http') ? rawUrl.replace(/\/$/, '') : `https://${rawUrl.replace(/\/$/, '')}`
-
-export async function POST() {
+export async function POST(req: NextRequest) {
+  // Derive base URL from the request itself — works on any domain, no env var needed
+  const origin = new URL(req.url).origin
   try {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -53,8 +51,8 @@ export async function POST() {
       mode: 'subscription',
       line_items: [{ price: STRIPE_PRICE_ID, quantity: 1 }],
       subscription_data: { trial_period_days: TRIAL_DAYS },
-      success_url: `${APP_URL}/dashboard?subscribed=1`,
-      cancel_url: `${APP_URL}/subscribe?canceled=1`,
+      success_url: `${origin}/dashboard?subscribed=1`,
+      cancel_url: `${origin}/subscribe?canceled=1`,
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
     })
