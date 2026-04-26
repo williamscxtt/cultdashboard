@@ -92,13 +92,13 @@ function Faq({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
     <div style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-      <button onClick={() => setOpen(!open)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '22px 0', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'Inter, -apple-system, sans-serif', fontSize: '15px', fontWeight: 500, color: '#e2e8f0', lineHeight: 1.5, gap: 24 }}>
+      <button onClick={() => setOpen(!open)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'Inter, -apple-system, sans-serif', fontSize: '15px', fontWeight: 600, color: '#E2E8F0', lineHeight: 1.5, gap: 24 }}>
         <span>{q}</span>
-        <span style={{ flexShrink: 0, color: '#3b82f6', display: 'inline-flex', transition: 'transform .25s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+        <span style={{ flexShrink: 0, color: 'rgba(255,255,255,0.4)', display: 'inline-flex', transition: 'transform .25s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
           <IconChevronDown />
         </span>
       </button>
-      {open && <div style={{ paddingBottom: 22, fontSize: 15, color: '#94a3b8', lineHeight: 1.8, maxWidth: 680, fontFamily: 'Inter, -apple-system, sans-serif' }}>{a}</div>}
+      {open && <div style={{ padding: '0 24px 22px', fontSize: 15, color: '#94a3b8', lineHeight: 1.8, maxWidth: 680, fontFamily: 'Inter, -apple-system, sans-serif' }}>{a}</div>}
     </div>
   )
 }
@@ -265,6 +265,8 @@ export default function LandingPage() {
 
   return (
     <>
+      <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="" />
+      <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,900&display=swap" rel="stylesheet" />
       <style>{`
         .lp-root { all: initial; display: block; }
         .lp-root *, .lp-root *::before, .lp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -275,8 +277,8 @@ export default function LandingPage() {
           min-height: 100vh; overflow-x: hidden;
           -webkit-font-smoothing: antialiased;
           background-image:
-            linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+            linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px);
           background-size: 48px 48px;
         }
         /* ── Page frame ── */
@@ -295,11 +297,11 @@ export default function LandingPage() {
         }
 
         /* ── Typography ── */
-        .lp-h1 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(38px, 7vw, 88px); font-weight: 900; line-height: 1.0; letter-spacing: -0.04em; color: #f1f5f9; }
-        .lp-h2 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(30px, 5vw, 62px); font-weight: 800; line-height: 1.05; letter-spacing: -0.03em; color: #f1f5f9; }
+        .lp-h1 { font-family: 'Cabinet Grotesk', 'Inter', -apple-system, sans-serif; font-size: clamp(38px, 7vw, 88px); font-weight: 900; line-height: 1.02; letter-spacing: -0.03em; color: #f1f5f9; }
+        .lp-h2 { font-family: 'Cabinet Grotesk', 'Inter', -apple-system, sans-serif; font-size: clamp(30px, 5vw, 62px); font-weight: 900; line-height: 1.08; letter-spacing: -0.025em; color: #f1f5f9; }
         .lp-h3 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(20px, 2.5vw, 28px); font-weight: 700; line-height: 1.2; color: #f1f5f9; }
-        .lp-body { font-size: 16px; color: #ffffff; line-height: 1.75; }
-        .lp-body-lg { font-size: clamp(16px, 1.5vw, 19px); color: #ffffff; line-height: 1.75; }
+        .lp-body { font-size: 16px; color: rgba(255,255,255,0.72); line-height: 1.75; }
+        .lp-body-lg { font-size: clamp(16px, 1.5vw, 19px); color: rgba(255,255,255,0.72); line-height: 1.75; }
         .lp-blue { color: #3b82f6; }
         .lp-dim { color: #b0bec5; }
 
@@ -327,11 +329,11 @@ export default function LandingPage() {
         .lp-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; flex-shrink: 0; }
 
         /* ── CTAs ── */
-        .lp-cta-primary { display: inline-flex; align-items: center; gap: 10px; font-family: 'Inter', sans-serif !important; font-size: 15px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); padding: 16px 36px; border-radius: 10px; box-shadow: 0 0 32px rgba(59,130,246,0.3); transition: box-shadow .25s, transform .2s; cursor: pointer; border: none; }
-        .lp-cta-primary:hover { box-shadow: 0 0 60px rgba(59,130,246,0.5); transform: translateY(-1px); }
-        .lp-cta-ghost { display: inline-flex; align-items: center; gap: 10px; font-family: 'Inter', sans-serif !important; font-size: 13px; font-weight: 600; letter-spacing: .02em; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.3); padding: 12px 28px; border-radius: 8px; transition: background .2s, border-color .2s; cursor: pointer; background: transparent; }
+        .lp-cta-primary { display: inline-flex; align-items: center; gap: 10px; font-family: 'Inter', sans-serif !important; font-size: 14px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 14px 32px; border-radius: 8px; box-shadow: 0 0 24px rgba(59,130,246,0.35); transition: background .15s, box-shadow .25s, transform .2s; cursor: pointer; border: none; }
+        .lp-cta-primary:hover { background: #2563eb; box-shadow: 0 0 48px rgba(59,130,246,0.5); transform: translateY(-1px); }
+        .lp-cta-ghost { display: inline-flex; align-items: center; gap: 10px; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.3); padding: 9px 20px; border-radius: 8px; transition: background .2s, border-color .2s; cursor: pointer; background: transparent; }
         .lp-cta-ghost:hover { background: rgba(59,130,246,0.08); border-color: rgba(96,165,250,0.5); }
-        .lp-cta-ghost-sm { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 600; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.25); padding: 9px 18px; border-radius: 6px; transition: background .2s; cursor: pointer; background: transparent; }
+        .lp-cta-ghost-sm { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 600; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.25); padding: 9px 20px; border-radius: 8px; transition: background .2s; cursor: pointer; background: transparent; }
         .lp-cta-ghost-sm:hover { background: rgba(59,130,246,0.08); }
         .lp-nav-cta { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 13px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 10px 22px; border-radius: 8px; transition: background .2s, transform .15s, box-shadow .2s; cursor: pointer; border: none; box-shadow: 0 0 24px rgba(59,130,246,0.35); }
         .lp-nav-cta:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 0 36px rgba(59,130,246,0.55); }
@@ -366,13 +368,13 @@ export default function LandingPage() {
         .lp-avatar-text strong { color: #ffffff; font-weight: 600; }
 
         /* ── Ticker ── */
-        .lp-ticker { padding: 13px 0; overflow: hidden; background: #1d4ed8; }
+        .lp-ticker { padding: 13px 0; overflow: hidden; background: rgba(59,130,246,0.12); border-top: 1px solid rgba(59,130,246,0.25); border-bottom: 1px solid rgba(59,130,246,0.25); }
         .lp-ticker-track { display: flex; width: max-content; animation: lp-tick 58s linear infinite; }
         .lp-ticker-track:hover { animation-play-state: paused; }
         @keyframes lp-tick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         @media (max-width: 640px) { .lp-ticker-track { animation-duration: 28s; } }
-        .lp-tick-item { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 700; color: #fff; white-space: nowrap; padding: 0 28px; letter-spacing: .05em; text-transform: uppercase; }
-        .lp-tick-dot { color: rgba(255,255,255,0.45); font-size: 8px; }
+        .lp-tick-item { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif !important; font-size: 11px; font-weight: 700; color: #ffffff; white-space: nowrap; padding: 0 28px; letter-spacing: .08em; text-transform: uppercase; }
+        .lp-tick-dot { color: rgba(255,255,255,0.4); font-size: 8px; }
 
         /* ── Social strip (member names) ── */
         .lp-social-strip { padding: 28px 0; border-bottom: 1px solid rgba(255,255,255,0.06); }
@@ -399,15 +401,15 @@ export default function LandingPage() {
         .lp-story-text strong { color: #ffffff; font-weight: 600; }
         /* Before/After card */
         .lp-ba-card { border-radius: 12px; overflow: hidden; box-shadow: 0 12px 48px rgba(0,0,0,0.5); }
-        .lp-ba-before { padding: 26px 28px; background: #f1f5f9; }
+        .lp-ba-before { padding: 26px 28px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.12); border-bottom: none; }
         .lp-ba-after { padding: 26px 28px; background: #3b82f6; }
         .lp-ba-label { font-size: 9px; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; margin-bottom: 16px; }
-        .lp-ba-before .lp-ba-label { color: #64748b; }
+        .lp-ba-before .lp-ba-label { color: rgba(255,255,255,0.4); }
         .lp-ba-after .lp-ba-label { color: rgba(255,255,255,0.65); }
         .lp-ba-item { display: flex; align-items: baseline; gap: 10px; margin-bottom: 11px; }
         .lp-ba-item:last-child { margin-bottom: 0; }
-        .lp-ba-before .lp-ba-item { color: #334155; font-size: 14px; font-weight: 500; }
-        .lp-ba-before .lp-ba-mark { color: #94a3b8; font-size: 12px; }
+        .lp-ba-before .lp-ba-item { color: #CBD5E1; font-size: 14px; font-weight: 500; }
+        .lp-ba-before .lp-ba-mark { color: #475569; font-size: 12px; }
         .lp-ba-after .lp-ba-item { color: #ffffff; font-size: 15px; font-weight: 700; }
         .lp-ba-after .lp-ba-mark { color: rgba(255,255,255,0.55); font-size: 12px; font-weight: 700; }
 
@@ -499,9 +501,8 @@ export default function LandingPage() {
         @keyframes lp-mq-r { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
         .lp-imgmq-card { width: 200px; flex-shrink: 0; border-right: 1px solid rgba(255,255,255,0.05); }
         @media (max-width: 640px) { .lp-imgmq-card { width: 160px; } }
-        .lp-imgmq-img-wrap { width: 100%; height: 220px; background: #0a0a08; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        @media (max-width: 640px) { .lp-imgmq-img-wrap { height: 180px; } }
-        .lp-imgmq-img { width: 100%; height: 100%; object-fit: contain; object-position: center; display: block; }
+        .lp-imgmq-img-wrap { width: 100%; aspect-ratio: 16/10; background: #0a0a08; overflow: hidden; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .lp-imgmq-img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
         .lp-imgmq-foot { padding: 12px 14px 14px; }
         .lp-imgmq-win { font-size: 12px; font-weight: 700; color: #e2e8f0; line-height: 1.3; letter-spacing: -.01em; }
         .lp-imgmq-name { font-size: 10px; color: #94a3b8; margin-top: 4px; font-weight: 500; letter-spacing: .04em; }
@@ -516,8 +517,8 @@ export default function LandingPage() {
         .lp-win-card:hover::after { opacity: 1; }
         .lp-win-card:nth-child(3n) { border-right: none; }
         @media (max-width: 900px) { .lp-win-card:nth-child(3n) { border-right: 1px solid rgba(255,255,255,0.06); } .lp-win-card:nth-child(2n) { border-right: none; } }
-        .lp-win-img-wrap { background: #0a0a08; border-bottom: 1px solid rgba(255,255,255,0.05); overflow: hidden; height: 200px; }
-        .lp-win-img { width: 100%; height: 100%; display: block; object-fit: contain; object-position: top; }
+        .lp-win-img-wrap { background: #0a0a08; border-bottom: 1px solid rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); overflow: hidden; aspect-ratio: 16/10; }
+        .lp-win-img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: top; border-radius: 0; }
         .lp-win-body { padding: 20px 22px 24px; flex: 1; display: flex; flex-direction: column; }
         .lp-win-stat { font-family: 'Inter', sans-serif !important; font-size: 18px; font-weight: 800; color: #f1f5f9; letter-spacing: -.02em; margin-bottom: 7px; line-height: 1.2; }
         .lp-win-detail { font-size: 12px; color: #b0bec5; line-height: 1.65; margin-bottom: 10px; flex: 1; }
@@ -605,8 +606,8 @@ export default function LandingPage() {
           }
           .lp-sticky-cta a {
             display: flex; align-items: center; justify-content: center; gap: 8px;
-            width: 100%; max-width: 400px; height: 52px; border-radius: 10px;
-            background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+            width: 100%; max-width: 400px; height: 52px; border-radius: 8px;
+            background: #3b82f6;
             color: #fff; font-size: 15px; font-weight: 700; text-decoration: none;
             font-family: 'Inter', sans-serif; letter-spacing: -.01em;
             box-shadow: 0 0 32px rgba(59,130,246,0.4);
@@ -684,8 +685,7 @@ export default function LandingPage() {
         <div className="lp-hero">
           {/* Background radial glow */}
           <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-            <div style={{ position: 'absolute', top: '-30%', left: '15%', width: '70%', height: '110%', background: 'radial-gradient(ellipse at center, rgba(59,130,246,0.08) 0%, transparent 60%)' }} />
-            <div style={{ position: 'absolute', bottom: '-20%', right: '0', width: '40%', height: '60%', background: 'radial-gradient(ellipse at bottom right, rgba(99,102,241,0.05) 0%, transparent 55%)' }} />
+            <div style={{ position: 'absolute', top: '-30%', left: '0', width: '55%', height: '110%', background: 'radial-gradient(ellipse at 40% 50%, rgba(59,130,246,0.08) 0%, transparent 65%)' }} />
           </div>
           <div className="lp-hero-left" style={{ position: 'relative', zIndex: 1 }}>
             <Fade>
@@ -769,9 +769,8 @@ export default function LandingPage() {
         <div className="lp-hr" />
 
         {/* ── Pain ── */}
-        <div className="lp-section">
+        <div className="lp-section" style={{ paddingTop: 120, paddingBottom: 80 }}>
           <div className="lp-container">
-            <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Real Problem</span></Fade>
             <Fade delay={60}>
               <h2 className="lp-h2">You don&apos;t have<br /><span style={{ color: '#ffffff' }}>a content problem.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 500 }}>You have a system problem. And there&apos;s a difference.</p>
@@ -804,9 +803,8 @@ export default function LandingPage() {
         <div className="lp-hr" />
 
         {/* ── What is Creator Cult — bridge section ── */}
-        <div className="lp-section" style={{ paddingBottom: 80 }}>
+        <div className="lp-section">
           <div className="lp-container-sm">
-            <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Solution</span></Fade>
             <Fade delay={60}>
               <h2 className="lp-h2">A programme built<br /><span style={{ color: '#ffffff' }}>around one outcome.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 20, maxWidth: 560 }}>
@@ -834,7 +832,7 @@ export default function LandingPage() {
         <div className="lp-hr" />
 
         {/* ── Story ── */}
-        <div className="lp-section">
+        <div className="lp-section" style={{ paddingTop: 120 }}>
           <div className="lp-container">
             <div className="lp-story-grid">
               <div>
@@ -926,7 +924,7 @@ export default function LandingPage() {
         {/* ── Programme ── */}
         <div className="lp-section">
           <div className="lp-container">
-            <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Programme</span></Fade>
+            <Fade><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>The Programme</div></Fade>
             <Fade delay={60}>
               <h2 className="lp-h2">Five phases.<br /><span style={{ color: '#ffffff' }}>One direction.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 520 }}>
@@ -971,9 +969,8 @@ export default function LandingPage() {
         <div className="lp-hr" />
 
         {/* ── Cult Dashboard ── */}
-        <div className="lp-section">
+        <div className="lp-section" style={{ paddingTop: 96, paddingBottom: 64 }}>
           <div className="lp-container">
-            <Fade><span className="lp-pill"><span className="lp-pill-dot" />Exclusive to Creator Cult</span></Fade>
             <Fade delay={60}>
               <h2 className="lp-h2">The Cult Dashboard.<br /><span style={{ color: '#ffffff', fontSize: '0.7em', fontWeight: 700, letterSpacing: '-.02em' }}>12 AI tools. Yours when you join.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 580 }}>
@@ -981,33 +978,6 @@ export default function LandingPage() {
               </p>
             </Fade>
 
-            <Fade delay={100}>
-              <p style={{ marginTop: 32, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#3b82f6', letterSpacing: '.06em', textTransform: 'uppercase' }}>
-                A full walkthrough of the dashboard — all 12 tools, live.
-              </p>
-              {/* ── Video placeholder — swap src for real video when ready ── */}
-              <div style={{ marginTop: 16, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(59,130,246,0.15)', boxShadow: '0 0 80px rgba(59,130,246,0.1)', background: '#060608' }}>
-                <div style={{ background: '#080808', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,80,80,0.45)', flexShrink: 0 }} />
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,185,0,0.4)', flexShrink: 0 }} />
-                  <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(40,200,70,0.35)', flexShrink: 0 }} />
-                  <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', borderRadius: 5, padding: '4px 12px', fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '0 12px', fontFamily: 'Inter, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    cultdashboard.com/dashboard
-                  </div>
-                </div>
-                <div style={{ position: 'relative', paddingBottom: '56.25%', background: 'radial-gradient(ellipse at 50% 60%, rgba(59,130,246,0.06) 0%, #060608 65%)' }}>
-                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
-                    <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <svg width="28" height="28" viewBox="0 0 24 24" fill="#3b82f6" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                    </div>
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700, color: '#e2e8f0', letterSpacing: '-.01em' }}>Creator Cult Dashboard — Full Walkthrough</div>
-                      <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#475569', marginTop: 8, letterSpacing: '.06em', textTransform: 'uppercase' }}>Video coming soon</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Fade>
 
             <div className="lp-tool-grid">
               {tools.map((t, i) => (
@@ -1053,6 +1023,7 @@ export default function LandingPage() {
         <div className="lp-section">
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Results</span></Fade>
+
             <Fade delay={60}>
               <h2 className="lp-h2">What happens when you have<br /><span style={{ color: '#ffffff' }}>a system instead of a strategy.</span></h2>
             </Fade>
@@ -1133,7 +1104,7 @@ export default function LandingPage() {
         {/* ── Community Reviews ── */}
         <div className="lp-section" style={{ background: 'rgba(59,130,246,0.01)' }}>
           <div className="lp-container">
-            <Fade><span className="lp-pill"><span className="lp-pill-dot" />From The Community</span></Fade>
+            <Fade><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>From The Community</div></Fade>
             <Fade delay={60}>
               <h2 className="lp-h2">What members<br /><span style={{ color: '#ffffff' }}>are saying.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 520 }}>
@@ -1178,7 +1149,7 @@ export default function LandingPage() {
         {/* ── What's Included ── */}
         <div className="lp-section">
           <div className="lp-container">
-            <Fade><span className="lp-pill"><span className="lp-pill-dot" />What You Get</span></Fade>
+            <Fade><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>What You Get</div></Fade>
             <Fade delay={60}><h2 className="lp-h2">Everything<br /><span style={{ color: '#ffffff' }}>in one place.</span></h2></Fade>
             <div className="lp-incl-grid">
               {included.map(({ title, desc }, i) => (
@@ -1236,9 +1207,8 @@ export default function LandingPage() {
         <div className="lp-hr" />
 
         {/* ── Mid CTA ── */}
-        <div className="lp-cta-block">
+        <div className="lp-cta-block" style={{ padding: '140px 48px 100px' }}>
           <Fade>
-            <span className="lp-pill" style={{ marginBottom: 20 }}><span className="lp-pill-dot" />Apply</span>
             <h2 className="lp-h2" style={{ marginBottom: 20 }}>Ready to stop figuring<br /><span style={{ color: '#ffffff' }}>it out alone?</span></h2>
             <p className="lp-body-lg" style={{ marginBottom: 36 }}>Applications take 3 minutes. Will reviews every one personally.<br />Cohort size is limited — not everyone who applies gets in.</p>
             <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
@@ -1250,10 +1220,9 @@ export default function LandingPage() {
         {/* ── FAQ ── */}
         <div className="lp-section">
           <div className="lp-container-sm">
-            <Fade><span className="lp-pill"><span className="lp-pill-dot" />FAQ</span></Fade>
-            <Fade delay={60}><h2 className="lp-h2" style={{ marginBottom: 56 }}>Common questions.</h2></Fade>
+            <Fade delay={60}><h2 className="lp-h2" style={{ marginBottom: 48 }}>Common questions.</h2></Fade>
             <Fade delay={100}>
-              <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
+              <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
                 <Faq q="How do I apply and what happens next?" a="Fill in the short application — it takes 3 minutes. Will reviews every application personally and reaches out directly if it&apos;s a good fit. There is no automated funnel, no sales team. Just a real conversation about whether Creator Cult is right for you." />
                 <Faq q="What exactly do I get when I join Creator Cult?" a="You get access to the full 5-phase curriculum, weekly live group coaching calls with recordings, 1:1 access to Will between calls, content and offer reviews, the Cult Dashboard with all 12 AI tools, and the private Circle community. Ongoing support at every stage." />
                 <Faq q="How long does the programme run?" a="Creator Cult is an ongoing coaching programme. Most clients see their first real results within 30 to 60 days of starting. There is no set end date. You stay in as long as you are growing." />
@@ -1271,7 +1240,7 @@ export default function LandingPage() {
         <div className="lp-hr" />
 
         {/* ── Final CTA ── */}
-        <div className="lp-cta-block" style={{ padding: '120px 48px', position: 'relative', overflow: 'hidden' }}>
+        <div className="lp-cta-block" style={{ padding: '140px 48px 100px', position: 'relative', overflow: 'hidden' }}>
           <img
             src="/19241A27-9CDA-4FE2-8DBF-066F8E62E29E.jpg"
             alt=""
@@ -1281,7 +1250,6 @@ export default function LandingPage() {
           <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center bottom, rgba(13,13,10,0.4) 0%, rgba(13,13,10,0.85) 65%, rgba(13,13,10,0.98) 100%)' }} />
           <div style={{ position: 'relative', zIndex: 1 }}>
             <Fade>
-              <span className="lp-pill" style={{ marginBottom: 24 }}><span className="lp-pill-dot" />One last thing</span>
               <h2 className="lp-h2" style={{ marginBottom: 20 }}>Stop posting<br /><span style={{ color: '#ffffff' }}>into the void.</span></h2>
               <p className="lp-body-lg" style={{ marginBottom: 44, maxWidth: 480, margin: '0 auto 44px' }}>
                 You&apos;re three minutes away from finding out if Creator Cult is the right fit. Apply now. No commitment. No sales call unless you want one.
@@ -1306,8 +1274,8 @@ export default function LandingPage() {
               { n: '15+', l: 'Countries represented' },
             ].map(({ n, l }) => (
               <div key={l} style={{ textAlign: 'center', minWidth: 100 }}>
-                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 20, fontWeight: 900, color: '#f1f5f9', letterSpacing: '-.03em', lineHeight: 1 }}>{n}</div>
-                <div style={{ fontSize: 10, color: '#475569', fontWeight: 500, letterSpacing: '.08em', textTransform: 'uppercase', marginTop: 5 }}>{l}</div>
+                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 700, color: 'rgba(255,255,255,0.9)', letterSpacing: '-.03em', lineHeight: 1 }}>{n}</div>
+                <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 500, letterSpacing: '.12em', textTransform: 'uppercase', marginTop: 6 }}>{l}</div>
               </div>
             ))}
           </div>
