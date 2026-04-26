@@ -902,14 +902,15 @@ export default function LandingPage() {
         </div>{/* ── /lp-page-frame 1 ── */}
 
         {/* ── Community image break — full bleed, desktop only ── */}
+        {/* ── Community break — replace background with a wide photo of Will coaching/presenting live ──
+            Best options: a live event or group call screenshot, Will presenting to a room, or a wide
+            shot of Will at his desk/setup. Should feel like energy + activity, not posed.
+            When ready: <img src="/your-photo.jpg" style={{ position:'absolute', inset:0, width:'100%', height:'100%', objectFit:'cover', objectPosition:'center 40%', filter:'brightness(0.7) contrast(1.05) saturate(0.85)' }} />
+        ── */}
         <div className="lp-community-break" style={{ position: 'relative', height: 'clamp(300px, 38vw, 500px)', overflow: 'hidden' }}>
-          <img
-            src="/IMG_7050.JPG"
-            alt="Creator Cult community"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 55%', filter: 'brightness(0.75) contrast(1.06) saturate(0.85)' }}
-            loading="lazy"
-          />
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(13,13,10,0.25) 0%, rgba(13,13,10,0.65) 80%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(135deg, #07090f 0%, #0b0e17 40%, #070a10 100%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 50%, rgba(59,130,246,0.07) 0%, transparent 60%)' }} />
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(13,13,10,0.1) 0%, rgba(13,13,10,0.45) 80%)' }} />
           <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 20px' }}>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 16, fontFamily: 'Inter, sans-serif' }}>The community</div>
             <div style={{ fontSize: 'clamp(26px, 4vw, 52px)', fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1.08, fontFamily: 'Inter, sans-serif', maxWidth: 700 }}>
@@ -983,27 +984,28 @@ export default function LandingPage() {
 
             <Fade delay={100}>
               <p style={{ marginTop: 32, fontFamily: 'Inter, sans-serif', fontSize: 13, fontWeight: 600, color: '#3b82f6', letterSpacing: '.06em', textTransform: 'uppercase' }}>
-                Watch the 12-minute video for a full breakdown of all the tools.
+                A full walkthrough of the dashboard — all 12 tools, live.
               </p>
-              <div style={{ marginTop: 16, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(59,130,246,0.15)', position: 'relative', boxShadow: '0 0 80px rgba(59,130,246,0.1)', background: '#000' }}>
-                {/* Browser chrome bar — hidden on mobile */}
+              {/* ── Video placeholder — swap src for real video when ready ── */}
+              <div style={{ marginTop: 16, borderRadius: 14, overflow: 'hidden', border: '1px solid rgba(59,130,246,0.15)', boxShadow: '0 0 80px rgba(59,130,246,0.1)', background: '#060608' }}>
                 <div style={{ background: '#080808', borderBottom: '1px solid rgba(255,255,255,0.05)', padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,80,80,0.45)', flexShrink: 0 }} />
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(255,185,0,0.4)', flexShrink: 0 }} />
                   <div style={{ width: 10, height: 10, borderRadius: '50%', background: 'rgba(40,200,70,0.35)', flexShrink: 0 }} />
                   <div style={{ flex: 1, background: 'rgba(255,255,255,0.03)', borderRadius: 5, padding: '4px 12px', fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', margin: '0 12px', fontFamily: 'Inter, monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    cult-dashboard.vercel.app/dashboard
+                    cultdashboard.com/dashboard
                   </div>
                 </div>
-                {/* 16:9 YouTube embed */}
-                <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0 }}>
-                  <iframe
-                    src="https://www.youtube.com/embed/_ZA94MQqnOs?start=10&rel=0&modestbranding=1&color=white"
-                    title="Creator Cult Dashboard — Full Walkthrough"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                    allowFullScreen
-                    style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', display: 'block' }}
-                  />
+                <div style={{ position: 'relative', paddingBottom: '56.25%', background: 'radial-gradient(ellipse at 50% 60%, rgba(59,130,246,0.06) 0%, #060608 65%)' }}>
+                  <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+                    <div style={{ width: 72, height: 72, borderRadius: '50%', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="#3b82f6" stroke="none"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                    </div>
+                    <div style={{ textAlign: 'center' }}>
+                      <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 15, fontWeight: 700, color: '#e2e8f0', letterSpacing: '-.01em' }}>Creator Cult Dashboard — Full Walkthrough</div>
+                      <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 12, color: '#475569', marginTop: 8, letterSpacing: '.06em', textTransform: 'uppercase' }}>Video coming soon</div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </Fade>
@@ -1253,7 +1255,7 @@ export default function LandingPage() {
             <Fade delay={60}><h2 className="lp-h2" style={{ marginBottom: 56 }}>Common questions.</h2></Fade>
             <Fade delay={100}>
               <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}>
-                <Faq q="What&apos;s the investment?" a="Creator Cult is an application-only programme. Pricing is shared after your application is reviewed. This keeps the cohort focused on people who are serious — not impulse sign-ups. Applications take 3 minutes and there&apos;s no commitment until you decide to join." />
+                <Faq q="How do I apply and what happens next?" a="Fill in the short application — it takes 3 minutes. Will reviews every application personally and reaches out directly if it&apos;s a good fit. There is no automated funnel, no sales team. Just a real conversation about whether Creator Cult is right for you." />
                 <Faq q="What exactly do I get when I join Creator Cult?" a="You get access to the full 5-phase curriculum, weekly live group coaching calls with recordings, 1:1 access to Will between calls, content and offer reviews, the Cult Dashboard with all 12 AI tools, and the private Circle community. Ongoing support at every stage." />
                 <Faq q="How long does the programme run?" a="Creator Cult is an ongoing coaching programme. Most clients see their first real results within 30 to 60 days of starting. There is no set end date. You stay in as long as you are growing." />
                 <Faq q="Do I need a big following to join?" a="No. Several of our members signed their first clients with under 1,000 followers. Following size does not determine your results. Your system does. We build the system first." />
@@ -1317,6 +1319,7 @@ export default function LandingPage() {
             Creator Cult
           </div>
           <div className="lp-footer-links">
+            <a href="https://www.instagram.com/williamscxtt" target="_blank" rel="noopener noreferrer">@williamscxtt</a>
             <a href="/privacy">Privacy</a>
             <a href="/data-deletion">Data Deletion</a>
             <Link href="/apply">Apply</Link>
