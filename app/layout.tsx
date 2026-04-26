@@ -1,14 +1,21 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { DM_Sans, Syne } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 
-const inter = Inter({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600"],
   display: "swap",
-  variable: "--inter",
+  variable: "--font-dm-sans",
+});
+
+const syne = Syne({
+  subsets: ["latin"],
+  weight: ["600", "700", "800"],
+  display: "swap",
+  variable: "--font-syne",
 });
 
 export const metadata: Metadata = {
@@ -32,7 +39,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           } catch(e) { document.documentElement.classList.add('dark'); }
         ` }} />
       </head>
-      <body className={inter.className} style={{ minHeight: '100vh' }}>
+      <body
+        className={`${dmSans.variable} ${syne.variable} ${dmSans.className}`}
+        style={{ minHeight: '100vh' }}
+      >
         {children}
         <SpeedInsights />
         <Analytics />

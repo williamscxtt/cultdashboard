@@ -47,7 +47,7 @@ export function Badge({ children, variant = 'default', style = {} }: {
     error:   { background: 'rgba(248, 113, 113, 0.12)', color: '#f87171', border: '1px solid rgba(248, 113, 113, 0.2)' },
     accent:  { background: 'var(--accent-subtle)', color: 'var(--accent)', border: '1px solid var(--accent-subtle-border)' },
     muted:   { background: 'var(--muted)', color: 'var(--muted-foreground)' },
-    info:    { background: 'rgba(59, 130, 246, 0.12)', color: '#93C5FD', border: '1px solid rgba(59, 130, 246, 0.25)' },
+    info:    { background: 'var(--accent-subtle)', color: 'var(--accent)', border: '1px solid var(--accent-subtle-border)' },
   }
   return (
     <span style={{
@@ -93,10 +93,10 @@ export function Button({
   }
   const variants: Record<ButtonVariant, React.CSSProperties> = {
     primary:     { background: 'var(--foreground)', color: 'var(--background)', boxShadow: 'var(--shadow-sm)' },
-    accent:      { background: 'var(--accent)', color: 'var(--accent-foreground)', boxShadow: '0 1px 8px rgba(59, 130, 246, 0.35), 0 0 20px rgba(59, 130, 246, 0.15)' },
+    accent:      { background: 'var(--accent)', color: 'var(--accent-foreground)', boxShadow: '0 1px 8px var(--accent-glow)' },
     secondary:   { background: 'var(--muted)', color: 'var(--foreground)', border: '1px solid var(--border)' },
     ghost:       { background: 'transparent', color: 'var(--muted-foreground)' },
-    destructive: { background: 'var(--destructive)', color: 'var(--destructive-foreground)', boxShadow: 'var(--shadow-xs)' },
+    destructive: { background: 'var(--destructive)', color: 'var(--destructive-foreground)' },
   }
   return (
     <button
@@ -106,12 +106,28 @@ export function Button({
       onMouseEnter={e => {
         if (disabled || loading) return
         const el = e.currentTarget as HTMLElement
-        el.style.filter = 'brightness(0.9)'
+        if (variant === 'accent') {
+          el.style.background = '#ef9d67'
+          el.style.transform = 'translateY(-1px)'
+          el.style.boxShadow = '0 4px 12px rgba(232,135,74,0.4)'
+        } else if (variant === 'primary') {
+          el.style.opacity = '0.88'
+        } else if (variant === 'secondary') {
+          el.style.background = 'rgba(255,255,255,0.08)'
+          el.style.borderColor = 'rgba(255,255,255,0.2)'
+        } else if (variant === 'ghost') {
+          el.style.background = 'rgba(255,255,255,0.06)'
+          el.style.color = 'var(--foreground)'
+        }
       }}
       onMouseLeave={e => {
         const el = e.currentTarget as HTMLElement
-        el.style.filter = ''
+        el.style.background = ''
         el.style.transform = ''
+        el.style.boxShadow = ''
+        el.style.opacity = ''
+        el.style.borderColor = ''
+        el.style.color = ''
       }}
       onMouseDown={e => {
         if (disabled || loading) return
@@ -120,7 +136,7 @@ export function Button({
       }}
       onMouseUp={e => {
         const el = e.currentTarget as HTMLElement
-        el.style.transform = ''
+        el.style.transform = variant === 'accent' ? 'translateY(-1px)' : ''
       }}
     >
       {loading ? <Spinner size={size === 'xs' || size === 'sm' ? 12 : 14} /> : null}
@@ -222,31 +238,22 @@ export function StatCard({
         overflow: 'hidden',
       }}
     >
-      {/* Ambient glow spot */}
-      <div style={{
-        position: 'absolute', top: -20, right: -20,
-        width: 80, height: 80, borderRadius: '50%',
-        background: 'rgba(59, 130, 246, 0.06)',
-        filter: 'blur(20px)',
-        pointerEvents: 'none',
-      }} />
-
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
         <div style={{
-          fontSize: 11, fontWeight: 700,
+          fontSize: 11, fontWeight: 500,
           color: 'var(--muted-foreground)',
           textTransform: 'uppercase',
-          letterSpacing: '0.08em',
+          letterSpacing: '0.05em',
         }}>
           {label}
         </div>
         {icon && (
           <div style={{
-            width: 28, height: 28, borderRadius: 8,
-            background: 'rgba(59, 130, 246, 0.1)',
-            border: '1px solid rgba(59, 130, 246, 0.2)',
+            width: 28, height: 28, borderRadius: 'var(--radius-md)',
+            background: 'var(--accent-subtle)',
+            border: '1px solid var(--accent-subtle-border)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#93C5FD',
+            color: 'var(--accent)',
           }}>
             {icon}
           </div>
@@ -257,10 +264,7 @@ export function StatCard({
         className="animate-number-up"
         style={{
           fontSize: 30, fontWeight: 800,
-          background: 'linear-gradient(135deg, var(--foreground) 60%, hsl(0 5% 65%))',
-          backgroundClip: 'text',
-          WebkitBackgroundClip: 'text',
-          color: 'transparent',
+          color: 'var(--foreground)',
           letterSpacing: '-1px',
           lineHeight: 1,
           fontFamily: 'var(--font-display)',

@@ -1,8 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-sans: Inter, Arial, sans-serif;
+  --font-sans: var(--font-dm-sans), 'DM Sans', Arial, sans-serif;
 }
 
 /* ── Design Tokens ────────────────────────────────────────────────────── */
@@ -16,34 +15,38 @@
   --muted-foreground:    hsl(0 0% 44%);
   --border:              hsl(0 0% 90%);
   --input:               hsl(0 0% 100%);
-  --ring:                #3B82F6;
-  --accent:              #3B82F6;
+  --ring:                #e8874a;
+  --accent:              #e8874a;
   --accent-foreground:   #ffffff;
-  --accent-subtle:       rgba(59, 130, 246, 0.12);
-  --accent-subtle-border:rgba(59, 130, 246, 0.25);
-  --accent-glow:         rgba(59, 130, 246, 0.25);
+  --accent-subtle:       rgba(232, 135, 74, 0.12);
+  --accent-subtle-border:rgba(232, 135, 74, 0.25);
+  --accent-glow:         rgba(232, 135, 74, 0.25);
+  --accent-violet:       #8b5cf6;
+  --accent-violet-subtle:rgba(139, 92, 246, 0.12);
   --destructive:         hsl(0 72% 51%);
   --destructive-foreground: hsl(0 0% 100%);
   --success:             hsl(142 71% 35%);
   --warning:             hsl(38 92% 40%);
 
   /* Typography */
-  --font-display: 'Plus Jakarta Sans', sans-serif;
-  --font-body: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  --font-display: var(--font-syne), 'Syne', sans-serif;
+  --font-body:    var(--font-dm-sans), 'DM Sans', sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
 
-  /* Geometry */
-  --radius:    6px;
-  --radius-lg: 10px;
-  --radius-xl: 14px;
+  /* Geometry — 3-stop radius system */
+  --radius:    6px;   /* alias → --radius-sm */
+  --radius-sm: 6px;   /* inputs, badges, toggles */
+  --radius-md: 8px;   /* nav items, pills, buttons */
+  --radius-lg: 12px;  /* cards, modals */
 
-  /* No decorative shadows — borders define structure */
-  --shadow-xs: none;
-  --shadow-sm: none;
-  --shadow-md: none;
-  --shadow-lg: none;
-  --shadow-xl: none;
-  --shadow-glow: none;
+  /* Shadows — borders define structure; only floating UI uses shadow */
+  --shadow-xs:    none;
+  --shadow-sm:    none;
+  --shadow-md:    none;
+  --shadow-lg:    none;
+  --shadow-xl:    none;
+  --shadow-glow:  none;
+  --shadow-float: 0 8px 32px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3);
 
   /* Layout */
   --sidebar-width:           220px;
@@ -51,28 +54,31 @@
   --topbar-height:           48px;
 }
 
-/* ── Dark Mode — Pure black, Resend-style ───────────────────────────────── */
+/* ── Dark Mode ──────────────────────────────────────────────────────────── */
 .dark {
-  --background:          #000000;
-  --foreground:          #ffffff;
-  --card:                #000000;
-  --card-foreground:     #ffffff;
+  --background:          #0c0b0a;
+  --foreground:          #f0ede8;
+  --card:                #131210;
+  --card-foreground:     #f0ede8;
   --muted:               rgba(255, 255, 255, 0.04);
-  --muted-foreground:    #888888;
-  --border:              rgba(255, 255, 255, 0.12);
-  --input:               rgba(255, 255, 255, 0.04);
-  --accent:              #3B82F6;
-  --accent-foreground:   #ffffff;
-  --accent-subtle:       rgba(59, 130, 246, 0.15);
-  --accent-subtle-border:rgba(59, 130, 246, 0.3);
-  --accent-glow:         rgba(59, 130, 246, 0.3);
+  --muted-foreground:    #7a7670;
+  --border:              rgba(255, 255, 255, 0.1);
+  --input:               rgba(255, 255, 255, 0.05);
+  --accent:              #e8874a;
+  --accent-foreground:   #0c0b0a;
+  --accent-subtle:       rgba(232, 135, 74, 0.12);
+  --accent-subtle-border:rgba(232, 135, 74, 0.25);
+  --accent-glow:         rgba(232, 135, 74, 0.3);
+  --accent-violet:       #8b5cf6;
+  --accent-violet-subtle:rgba(139, 92, 246, 0.12);
   --destructive:         hsl(0 72% 51%);
-  --shadow-xs: none;
-  --shadow-sm: none;
-  --shadow-md: none;
-  --shadow-lg: none;
-  --shadow-xl: none;
-  --shadow-glow: none;
+  --shadow-xs:    none;
+  --shadow-sm:    none;
+  --shadow-md:    none;
+  --shadow-lg:    none;
+  --shadow-xl:    none;
+  --shadow-glow:  none;
+  --shadow-float: 0 8px 32px rgba(0,0,0,0.6), 0 2px 8px rgba(0,0,0,0.35);
 }
 
 /* ── Reset ────────────────────────────────────────────────────────────── */
@@ -90,13 +96,11 @@ body {
   color: var(--foreground);
   font-family: var(--font-body);
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   overflow-x: hidden;
-  /* Prevent any long unbroken text (AI-generated content, URLs, etc.) from
-     blowing out the layout on mobile */
   overflow-wrap: break-word;
   word-break: break-word;
 }
@@ -133,19 +137,19 @@ input, textarea, select {
   background: var(--input);
   border: 1px solid var(--border);
   color: var(--foreground);
-  border-radius: var(--radius);
+  border-radius: var(--radius-sm);
   padding: 0 12px;
   height: 38px;
   outline: none;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 400;
   font-family: var(--font-body);
   width: 100%;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 input:focus, textarea:focus, select:focus {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  box-shadow: 0 0 0 3px rgba(232, 135, 74, 0.12);
 }
 input::placeholder, textarea::placeholder { color: var(--muted-foreground); opacity: 0.65; }
 textarea { height: auto; padding: 10px 12px; line-height: 1.6; }
@@ -159,41 +163,22 @@ select { padding-right: 32px; appearance: none; cursor: pointer; }
 
 /* ── Dashboard mobile ─────────────────────────────────────────────────── */
 @media (max-width: 768px) {
-  /* Hide desktop sidebar — restores full viewport width for content */
   .sidebar-desktop { display: none !important; }
-
-  /* Ensure block-level containers never exceed viewport */
   div, section, article, aside, main, p, li { max-width: 100%; }
   img, video, canvas, svg, iframe { max-width: 100%; height: auto; }
-
-  /* Layout */
   .dash-page { padding: 12px !important; }
-
-  /* Grids */
   .stats-grid-4 { grid-template-columns: repeat(2, 1fr) !important; }
   .stats-grid-3 { grid-template-columns: repeat(2, 1fr) !important; }
   .stats-grid-2 { grid-template-columns: 1fr !important; }
   .grid-2col   { grid-template-columns: 1fr !important; }
-
-  /* Flex */
   .card-row   { flex-direction: column !important; }
   .flex-wrap-mobile { flex-wrap: wrap !important; }
   .hide-mobile { display: none !important; }
   .full-width-mobile { width: 100% !important; }
-
-  /* Tables */
   .table-wrap { overflow-x: auto !important; }
-
-  /* Cards */
   .card-padded { padding: 14px !important; }
-
-  /* Tabs */
   .tabs-container { overflow-x: auto !important; flex-wrap: nowrap !important; }
-
-  /* Touch targets — minimum 44px for interactive elements */
   button, a, [role="button"] { min-height: 36px; }
-
-  /* Weekly Package history sidebar → horizontal scroll strip */
   .wp-history-sidebar {
     display: flex !important;
     flex-direction: row !important;
@@ -209,19 +194,11 @@ select { padding-right: 32px; appearance: none; cursor: pointer; }
     white-space: nowrap !important;
     width: auto !important;
   }
-
-  /* Reel card grid → 1 column on very small screens */
   .reel-grid { grid-template-columns: 1fr 1fr !important; }
-
-  /* Page headers */
   .page-header-row { flex-direction: column !important; align-items: flex-start !important; }
   .page-header-actions { width: 100% !important; }
-
-  /* Forms */
   .form-row { flex-direction: column !important; }
   .form-row > * { width: 100% !important; }
-
-  /* Topbar: shrink breadcrumb on mobile */
   .topbar-breadcrumb-label { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
@@ -265,8 +242,8 @@ select { padding-right: 32px; appearance: none; cursor: pointer; }
   100% { background-position: 200% 0; }
 }
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 8px rgba(59, 130, 246, 0.3); }
-  50%       { box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), 0 0 40px rgba(59, 130, 246, 0.15); }
+  0%, 100% { box-shadow: 0 0 8px rgba(232, 135, 74, 0.3); }
+  50%       { box-shadow: 0 0 20px rgba(232, 135, 74, 0.5), 0 0 40px rgba(232, 135, 74, 0.15); }
 }
 @keyframes border-spin {
   to { --angle: 360deg; }
@@ -303,21 +280,22 @@ select { padding-right: 32px; appearance: none; cursor: pointer; }
 /* Sidebar transition */
 .sidebar-transition { transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
 
-/* ── Sidebar active state ─────────────────────────────────────────────── */
+/* ── Sidebar active nav state ─────────────────────────────────────────── */
 .nav-item-active {
-  background: rgba(255, 255, 255, 0.08) !important;
-  color: #ededed !important;
+  background: rgba(232, 135, 74, 0.08) !important;
+  color: var(--foreground) !important;
+  box-shadow: inset 2px 0 0 var(--accent) !important;
 }
 
-/* ── Violet focus rings ───────────────────────────────────────────────── */
+/* ── Focus rings ──────────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid rgba(59, 130, 246, 0.7);
+  outline: 2px solid rgba(232, 135, 74, 0.7);
   outline-offset: 2px;
 }
 
 /* ── Accent gradient text ─────────────────────────────────────────────── */
 .accent-underline {
-  background: linear-gradient(90deg, #3B82F6, #93C5FD);
+  background: linear-gradient(90deg, #e8874a, #f0b88a);
   background-clip: text;
   -webkit-background-clip: text;
   color: transparent;
