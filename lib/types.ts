@@ -131,6 +131,12 @@ export interface Profile {
   call_transcripts?: Array<{ id: string; label: string; content: string; added_at: string }> | null
   roadmap_json?: Record<string, unknown> | null
   roadmap_generated_at?: string | null
+  // Stripe subscription
+  stripe_customer_id?: string | null
+  stripe_subscription_id?: string | null
+  subscription_status?: 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | null
+  subscription_period_end?: string | null
+  subscription_trial_end?: string | null
 }
 
 export interface WeeklyReport {

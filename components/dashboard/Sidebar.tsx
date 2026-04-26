@@ -7,7 +7,7 @@ import {
   Settings, Users, LogOut, Calendar, Copy, Search,
   BookOpen, TrendingUp, PhoneCall,
   ChevronDown, ChevronUp, Send, Zap, PanelLeft, User, X,
-  Sun, Moon, Lock,
+  Sun, Moon, Lock, CreditCard,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
@@ -198,6 +198,18 @@ function SidebarContent({
   const isAdmin = realProfile.role === 'admin'
   const displayProfile = isImpersonating ? effectiveProfile : realProfile
   const toolsNav = [...toolsNavBase, clientOnboardingItem]
+  const [billingLoading, setBillingLoading] = useState(false)
+
+  async function openBillingPortal() {
+    setBillingLoading(true)
+    try {
+      const res = await fetch('/api/stripe/portal', { method: 'POST' })
+      const data = await res.json()
+      if (data.url) window.location.href = data.url
+    } finally {
+      setBillingLoading(false)
+    }
+  }
 
   // Lock nav items for clients who haven't completed ≥75% of the Onboarding Hub
   // Admins are always unlocked; impersonating admins see the client's locked state
@@ -455,6 +467,37 @@ function SidebarContent({
           {isDark ? <Sun size={14} /> : <Moon size={14} />}
           {!collapsed && (isDark ? 'Light mode' : 'Dark mode')}
         </button>
+
+        {/* Billing — clients only */}
+        {!isAdmin && (
+          <button
+            onClick={openBillingPortal}
+            disabled={billingLoading}
+            title={collapsed ? 'Manage billing' : undefined}
+            style={{
+              display: 'flex', alignItems: 'center',
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              gap: 9, padding: collapsed ? '0' : '0 10px', height: 32, borderRadius: 7,
+              width: '100%', background: 'transparent', border: 'none', cursor: billingLoading ? 'wait' : 'pointer',
+              color: 'var(--muted-foreground)', fontSize: 13, fontWeight: 500, fontFamily: 'inherit',
+              transition: 'background 0.12s, color 0.12s',
+              opacity: billingLoading ? 0.6 : 1,
+            }}
+            onMouseEnter={e => {
+              const el = e.currentTarget as HTMLElement
+              el.style.background = 'rgba(255,255,255,0.05)'
+              el.style.color = 'var(--foreground)'
+            }}
+            onMouseLeave={e => {
+              const el = e.currentTarget as HTMLElement
+              el.style.background = 'transparent'
+              el.style.color = 'var(--muted-foreground)'
+            }}
+          >
+            <CreditCard size={14} />
+            {!collapsed && (billingLoading ? 'Opening…' : 'Manage billing')}
+          </button>
+        )}
 
         <button
           onClick={signOut}

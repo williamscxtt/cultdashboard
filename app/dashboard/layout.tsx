@@ -5,6 +5,7 @@ import DashboardShell from '@/components/dashboard/DashboardShell'
 import { SyncProgressProvider } from '@/components/dashboard/SyncProgress'
 import { Toaster } from 'sonner'
 import { getImpersonatedId } from '@/lib/effective-user'
+import { isSubscriptionActive } from '@/lib/stripe'
 import type { Profile } from '@/lib/types'
 
 const adminClient = createAdmin(
@@ -35,6 +36,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
       .eq('id', impersonatingAs)
       .single()
     if (data) effectiveProfile = data as Profile
+  }
+
+  // ── Subscription gate (clients only, not admins, not impersonation sessions) ──
+  const isAdmin = realProfile.role === 'admin'
+  if (!isAdmin && !impersonatingAs) {
+    const status = realProfile.subscription_status as string | null | undefined
+    if (!isSubscriptionActive(status)) {
+      const isPastDue = status === 'past_due' || status === 'unpaid'
+      redirect(`/subscribe${isPastDue ? '?past_due=1' : ''}`)
+    }
   }
 
   if (!realProfile.is_active && !impersonatingAs) {
