@@ -6,15 +6,9 @@ import {
   BarChart2, Lightbulb, MessageSquare,
   Settings, Users, LogOut, Calendar, Copy, Search,
   BookOpen, TrendingUp, PhoneCall,
-  ChevronDown, ChevronUp, Send, PanelLeft, User, X,
+  ChevronDown, ChevronUp, Send, Zap, PanelLeft, User, X,
   Sun, Moon, Lock, CreditCard,
 } from 'lucide-react'
-
-function avatarColor(name: string): string {
-  const palette = ['#c07a3e', '#9b6bc7', '#3e9bc0', '#3ec07a', '#c03e6b', '#c0963e', '#6b9bc0']
-  const sum = [...(name || '?')].reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  return palette[sum % palette.length]
-}
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
 import { useState, useEffect } from 'react'
@@ -87,9 +81,9 @@ function NavItem({
         fontWeight: active ? 700 : 500,
         marginBottom: 1,
         transition: 'background 0.12s, color 0.12s',
-        background: active ? 'rgba(232, 135, 74, 0.08)' : 'transparent',
-        color: active ? 'var(--foreground)' : 'var(--muted-foreground)',
-        boxShadow: active ? 'inset 2px 0 0 var(--accent)' : 'none',
+        background: active ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
+        color: active ? '#ededed' : 'var(--muted-foreground)',
+        boxShadow: 'none',
         position: 'relative',
         overflow: 'hidden',
         flexShrink: 0,
@@ -98,8 +92,8 @@ function NavItem({
       onMouseEnter={e => {
         if (!active) {
           const el = e.currentTarget as HTMLElement
-          el.style.background = 'rgba(255, 255, 255, 0.07)'
-          el.style.color = 'var(--foreground)'
+          el.style.background = 'rgba(255, 255, 255, 0.05)'
+          el.style.color = '#ededed'
         }
       }}
       onMouseLeave={e => {
@@ -117,7 +111,7 @@ function NavItem({
         flexShrink: 0,
         paddingLeft: 0,
       }}>
-        <Icon size={active ? 15 : 14} strokeWidth={active ? 1.75 : 2} />
+        <Icon size={14} />
       </span>
       {!collapsed && (
         <span style={{ letterSpacing: '-0.15px' }}>{label}</span>
@@ -265,20 +259,18 @@ function SidebarContent({
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
-              fontSize: 15, fontWeight: 800,
-              color: 'var(--foreground)',
-              letterSpacing: '-0.04em',
-              fontFamily: 'var(--font-display)',
+              width: 28, height: 28, borderRadius: 8,
+              background: 'rgba(255,255,255,0.1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
-              lineHeight: 1,
             }}>
-              CC
+              <Zap size={14} color="white" fill="white" />
             </div>
             {!collapsed && (
               <div style={{
-                fontSize: 13, fontWeight: 600,
-                color: 'var(--muted-foreground)',
-                letterSpacing: '-0.02em',
+                fontSize: 13, fontWeight: 800,
+                color: 'var(--foreground)',
+                letterSpacing: '-0.3px',
                 fontFamily: 'var(--font-display)',
               }}>
                 Creator Cult
@@ -308,11 +300,11 @@ function SidebarContent({
             background: 'var(--muted)', border: '1px solid var(--border)',
           }}>
             <div style={{
-              width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
-              background: isImpersonating ? 'var(--accent)' : avatarColor(displayProfile.name || displayProfile.email || ''),
+              width: 26, height: 26, borderRadius: 7, flexShrink: 0,
+              background: isImpersonating ? 'var(--accent)' : 'var(--foreground)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 11, fontWeight: 700,
-              color: '#fff',
+              fontSize: 11, fontWeight: 800,
+              color: isImpersonating ? '#fff' : 'var(--background)',
               fontFamily: 'var(--font-display)',
             }}>
               {avatarLetter}
@@ -372,8 +364,8 @@ function SidebarContent({
             margin: '8px 2px 4px',
             padding: '10px 12px',
             borderRadius: 8,
-            background: 'var(--accent-subtle)',
-            border: '1px solid var(--accent-subtle-border)',
+            background: 'rgba(59,130,246,0.08)',
+            border: '1px solid rgba(59,130,246,0.2)',
             fontSize: 11,
             color: 'rgba(255,255,255,0.5)',
             lineHeight: 1.5,

@@ -4,12 +4,6 @@ import { usePathname } from 'next/navigation'
 import type { Profile } from '@/lib/types'
 import { Command, Menu } from 'lucide-react'
 
-function avatarColor(name: string): string {
-  const palette = ['#c07a3e', '#9b6bc7', '#3e9bc0', '#3ec07a', '#c03e6b', '#c0963e', '#6b9bc0']
-  const sum = [...(name || '?')].reduce((acc, c) => acc + c.charCodeAt(0), 0)
-  return palette[sum % palette.length]
-}
-
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard':               'Home',
   '/dashboard/analytics':     'Analytics',
@@ -148,21 +142,20 @@ export default function TopBar({ profile, isImpersonating, onMobileMenuOpen }: P
 
           {/* Avatar */}
           <div style={{
-            width: 32,
-            height: 32,
-            borderRadius: '50%',
-            background: isImpersonating ? 'var(--accent)' : avatarColor(profile.name || profile.email || ''),
+            width: 28,
+            height: 28,
+            borderRadius: 8,
+            background: isImpersonating ? 'var(--accent)' : 'var(--foreground)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            fontSize: 12,
-            fontWeight: 700,
-            color: '#fff',
+            fontSize: 11,
+            fontWeight: 800,
+            color: isImpersonating ? '#fff' : 'var(--background)',
             flexShrink: 0,
             cursor: 'pointer',
             letterSpacing: '-0.2px',
             fontFamily: 'var(--font-display)',
-            border: '1.5px solid rgba(255,255,255,0.15)',
           }}>
             {avatarLetter}
           </div>

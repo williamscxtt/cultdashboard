@@ -830,40 +830,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
               {total > 0 ? `${total} reels tracked · Instagram` : 'Connect Instagram in Settings to start'}
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
-            <button
-              onClick={handleSync}
-              disabled={syncing}
-              title="Sync latest reels from Instagram"
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: 6,
-                height: 30, padding: '0 12px',
-                background: 'var(--muted)', border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-md)', cursor: syncing ? 'wait' : 'pointer',
-                color: syncing ? 'var(--muted-foreground)' : 'var(--foreground)',
-                fontSize: 12, fontWeight: 600, fontFamily: 'inherit',
-                opacity: syncing ? 0.6 : 1, transition: 'all 0.13s ease',
-                whiteSpace: 'nowrap',
-              }}
-              onMouseEnter={e => {
-                if (syncing) return
-                const el = e.currentTarget as HTMLElement
-                el.style.background = 'rgba(255,255,255,0.08)'
-                el.style.borderColor = 'rgba(255,255,255,0.2)'
-              }}
-              onMouseLeave={e => {
-                const el = e.currentTarget as HTMLElement
-                el.style.background = 'var(--muted)'
-                el.style.borderColor = 'var(--border)'
-              }}
-            >
-              <RefreshCw
-                size={13}
-                style={{ animation: syncing ? 'spin 0.7s linear infinite' : 'none', flexShrink: 0 }}
-              />
-              {syncing ? 'Syncing…' : 'Sync'}
-            </button>
-          </div>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }} />
         </div>
 
         {/* Bio + weekly focus */}
