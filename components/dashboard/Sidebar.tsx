@@ -42,6 +42,7 @@ const clientOnboardingItem = { href: '/dashboard/onboarding', label: 'My Profile
 
 const adminNav = [
   { href: '/dashboard/clients',   label: 'Clients',          icon: Users },
+  { href: '/dashboard/circle',    label: 'Circle Briefing',  icon: Users },
   { href: '/dashboard/reports',   label: 'Progress Reports', icon: TrendingUp },
   { href: '/dashboard/knowledge', label: 'Knowledge Base',   icon: BookOpen },
 ]
@@ -65,7 +66,7 @@ function NavItem({
 }: {
   href: string
   label: string
-  icon: React.ComponentType<{ size?: number }>
+  icon: React.ComponentType<{ size?: number; strokeWidth?: number }>
   active: boolean
   collapsed: boolean
 }) {
