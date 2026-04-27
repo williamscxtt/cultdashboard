@@ -77,9 +77,11 @@ type FormData = {
   business_mindset: string
 }
 
-function isDisqualified(form: FormData): boolean {
-  const approachDisq = INVESTMENT_APPROACH_OPTIONS.find(o => o.label === form.investment_approach)?.disqualify
-  return !!(approachDisq || form.business_mindset === 'No')
+type Outcome = 'qualified' | 'payment' | 'disqualified'
+
+function getOutcome(form: FormData): Outcome {
+  if (form.monthly_income === 'Under £1,200' || form.investment_approach !== 'I can invest immediately' || form.business_mindset === 'No') return 'payment'
+  return 'qualified'
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -87,7 +89,7 @@ function isDisqualified(form: FormData): boolean {
 export default function ApplyPage() {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [done, setDone] = useState<'qualified' | 'disqualified' | null>(null)
+  const [done, setDone] = useState<Outcome | null>(null)
   const [form, setForm] = useState<FormData>({
     first_name: '', last_name: '', date_of_birth: '', email: '', phone: '',
     instagram_handle: '', platforms: [], posting_frequency: '', niche: '',
@@ -126,16 +128,16 @@ export default function ApplyPage() {
     if (step < 4) { setStep(s => s + 1); return }
 
     setLoading(true)
-    const qualified = !isDisqualified(form)
+    const outcome = getOutcome(form)
     try {
       await fetch('/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, qualified }),
+        body: JSON.stringify({ ...form, outcome }),
       })
     } catch { /* non-blocking */ }
     setLoading(false)
-    setDone(qualified ? 'qualified' : 'disqualified')
+    setDone(outcome)
   }
 
   const totalSteps = 4
@@ -158,6 +160,71 @@ export default function ApplyPage() {
           </p>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 28 }}>
             In the meantime, follow Will on Instagram for free content strategy tips.
+          </p>
+        </div>
+      </PageShell>
+    )
+  }
+
+  // ── Payment tier screen ────────────────────────────────────────────────────
+  if (done === 'payment') {
+    return (
+      <PageShell>
+        <div style={{ animation: 'fadeUp 0.4s ease both', textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+            <Check size={26} color="rgba(59,130,246,0.9)" strokeWidth={2.5} />
+          </div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f0f0f0', marginBottom: 10, letterSpacing: '-0.5px' }}>
+            You&apos;re in{firstName ? `, ${firstName}` : ''}.
+          </h1>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 400, margin: '0 auto 32px' }}>
+            Creator Cult has a self-serve entry point built for exactly where you are right now. No call needed — pick your plan below and get started today.
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 400, margin: '0 auto' }}>
+            {/* Monthly plan */}
+            <a
+              href="https://buy.stripe.com/14A9AS0Ee0ihe8Cagc9IQ1G"
+              style={{
+                display: 'block', padding: '20px 24px', borderRadius: 12, textDecoration: 'none',
+                background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.35)',
+                transition: 'background 0.15s, border-color 0.15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(59,130,246,0.18)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(59,130,246,0.6)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(59,130,246,0.1)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(59,130,246,0.35)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>Monthly</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: '#93c5fd', letterSpacing: '-0.5px' }}>£495<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.35)' }}>/mo</span></div>
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>Cancel anytime <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} /></div>
+              </div>
+            </a>
+
+            {/* 6-month plan */}
+            <a
+              href="https://buy.stripe.com/7sY5kC86Gc0ZaWqgEA9IQ1H"
+              style={{
+                display: 'block', padding: '20px 24px', borderRadius: 12, textDecoration: 'none',
+                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                transition: 'background 0.15s, border-color 0.15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.2)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.1)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>6 Months</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: '#f0f0f0', letterSpacing: '-0.5px' }}>£3,000<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.35)' }}> total</span></div>
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>Best value <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} /></div>
+              </div>
+            </a>
+          </div>
+
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 28, lineHeight: 1.6 }}>
+            Questions? DM Will on Instagram before you commit.
           </p>
         </div>
       </PageShell>
@@ -231,6 +298,7 @@ export default function ApplyPage() {
                 {form.phone.trim() && !form.phone.trim().startsWith('+') && (
                   <p style={{ fontSize: 11, color: 'rgba(255,110,60,0.9)', marginTop: 5 }}>Start with your country code — e.g. +44 for UK, +1 for US</p>
                 )}
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', marginTop: 5 }}>Make sure it&apos;s the number you use on WhatsApp.</p>
               </Field>
               <Field label="Instagram handle">
                 <input className="apply-input" type="text" placeholder="@yourhandle" value={form.instagram_handle} onChange={e => set('instagram_handle', e.target.value)} />

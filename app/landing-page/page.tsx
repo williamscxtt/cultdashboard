@@ -88,6 +88,522 @@ function useTypewriter(words: string[], typingSpeed = 72, deletingSpeed = 38, pa
 
 const IconChevronDown = () => <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
 
+// ── Showcase animation helpers ─────────────────────────────────────────────
+
+function useCountUp(target: number, on: boolean, dur = 1600) {
+  const [val, setVal] = useState(0)
+  useEffect(() => {
+    if (!on) return
+    const start = Date.now()
+    const tick = () => {
+      const t = Math.min(1, (Date.now() - start) / dur)
+      const ease = 1 - Math.pow(1 - t, 3)
+      setVal(Math.round(ease * target))
+      if (t < 1) requestAnimationFrame(tick)
+    }
+    requestAnimationFrame(tick)
+  }, [on, target, dur])
+  return val
+}
+
+// ── New tool mock data ─────────────────────────────────────────────────────
+
+const STORY_SLIDES_DATA = [
+  { label: 'Hook', text: "I went from 412 followers to 1M in 18 months. No ads. No big budget. Here's the exact system.", color: '#3b82f6' },
+  { label: 'Problem', text: "You're posting every day. Nothing moves. Not because your content is bad — because the system is missing.", color: '#f59e0b' },
+  { label: 'Solution', text: "The fix isn't more posts. It's a sequence: positioning → story → offer → acquisition. In that exact order.", color: '#22c55e' },
+  { label: 'CTA', text: "Comment \"SYSTEM\" below and I'll send you the full framework for free. 👇", color: '#a78bfa' },
+]
+
+const AUDIT_SCORES = [
+  { label: 'Bio Clarity', score: 72, color: '#f59e0b', issue: 'No clear transformation promise in bio' },
+  { label: 'CTA Strength', score: 41, color: '#ef4444', issue: 'Link in bio has no offer attached' },
+  { label: 'Content Clarity', score: 88, color: '#22c55e', issue: 'Strong niche signal — keep consistent' },
+  { label: 'Offer Visibility', score: 34, color: '#ef4444', issue: 'Offer never mentioned in last 12 posts' },
+]
+
+const LM_OUTLINE = [
+  'Hook: The 3-second frame that gets saves',
+  'Section 1: Why your current hooks fail',
+  'Section 2: The 5-word formula used by 1M+ creators',
+  'Section 3: 12 hook templates — copy exactly',
+  'CTA slide: Drives DMs via comment keyword',
+]
+
+const OFFER_FIELDS = [
+  { label: 'Offer Name', value: 'Instagram Growth Accelerator', delay: 150 },
+  { label: 'Core Outcome', value: 'First paying client in 30 days or a full refund', delay: 350 },
+  { label: 'Price Point', value: '£1,500 paid in full · £599/month', delay: 550 },
+  { label: 'Delivery Format', value: '8 weeks · Weekly calls · Dashboard access', delay: 750 },
+  { label: 'Urgency Frame', value: '4 spots this cohort — closes Friday', delay: 950 },
+]
+
+// ── New mock components ────────────────────────────────────────────────────
+
+function StoryMock({ on }: { on: boolean }) {
+  const [slide, setSlide] = useState(0)
+  useEffect(() => {
+    if (!on) return
+    const iv = setInterval(() => setSlide(s => (s + 1) % STORY_SLIDES_DATA.length), 2000)
+    return () => clearInterval(iv)
+  }, [on])
+  const s = STORY_SLIDES_DATA[slide]
+  return (
+    <div className="lp-mock">
+      <div className="lp-mock-chrome">
+        <div className="lp-mock-dots"><span /><span /><span /></div>
+        <div className="lp-mock-url">cult.dashboard / story-generator</div>
+      </div>
+      <div className="lp-mock-body">
+        <div className="lp-mock-input-row">
+          <div className="lp-mock-tag active">Instagram Story</div>
+          <div className="lp-mock-tag">4-Slide Arc</div>
+          <div className="lp-mock-tag">Coaching</div>
+        </div>
+        <div style={{ display: 'flex', gap: 5 }}>
+          {STORY_SLIDES_DATA.map((sd, i) => (
+            <div key={i} style={{ flex: 1, height: 3, borderRadius: 2, background: i <= slide ? sd.color : 'rgba(255,255,255,0.07)', transition: 'background 0.5s ease' }} />
+          ))}
+        </div>
+        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '18px 16px', minHeight: 100, position: 'relative' }}>
+          <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: s.color, marginBottom: 8, transition: 'color 0.4s' }}>Slide {slide + 1} — {s.label}</div>
+          {STORY_SLIDES_DATA.map((sd, i) => (
+            <div key={i} style={{ position: i === 0 ? 'relative' : 'absolute', inset: i === 0 ? undefined : '48px 16px 16px', opacity: slide === i ? 1 : 0, transform: slide === i ? 'none' : 'translateY(6px)', transition: 'opacity 0.4s ease, transform 0.4s ease', fontSize: 12, color: '#e2e8f0', lineHeight: 1.65, fontWeight: 500 }}>
+              {sd.text}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 5 }}>
+          {STORY_SLIDES_DATA.map((_, i) => (
+            <div key={i} style={{ width: slide === i ? 14 : 5, height: 5, borderRadius: 3, background: slide === i ? '#3b82f6' : 'rgba(255,255,255,0.12)', transition: 'all 0.3s ease' }} />
+          ))}
+        </div>
+        <div className="lp-mock-actions">
+          <button className="lp-mock-btn">Copy All Slides</button>
+          <button className="lp-mock-btn ghost">Regenerate</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ProfileAuditMock({ on }: { on: boolean }) {
+  return (
+    <div className="lp-mock">
+      <div className="lp-mock-chrome">
+        <div className="lp-mock-dots"><span /><span /><span /></div>
+        <div className="lp-mock-url">cult.dashboard / profile-audit</div>
+      </div>
+      <div className="lp-mock-body">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, paddingBottom: 10, borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+          <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', flexShrink: 0 }} />
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: '#e2e8f0' }}>@fitnesscoach_will</div>
+            <div style={{ fontSize: 9, color: '#64748b', marginTop: 1 }}>3,847 followers · Analysing...</div>
+          </div>
+          <div style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 700, color: '#3b82f6', background: 'rgba(59,130,246,0.1)', padding: '3px 8px', borderRadius: 4 }}>AI Audit</div>
+        </div>
+        {AUDIT_SCORES.map((item, i) => (
+          <div key={item.label} style={{ opacity: on ? 1 : 0, transform: on ? 'none' : 'translateX(-8px)', transition: `opacity .4s ${180 + i * 160}ms ease, transform .4s ${180 + i * 160}ms ease` }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 3 }}>
+              <span style={{ fontSize: 10, fontWeight: 600, color: '#94a3b8' }}>{item.label}</span>
+              <span style={{ fontSize: 10, fontWeight: 700, color: item.color }}>{item.score}/100</span>
+            </div>
+            <div style={{ height: 4, background: 'rgba(255,255,255,0.06)', borderRadius: 2, marginBottom: 5, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: on ? `${item.score}%` : '0%', background: item.color, borderRadius: 2, transition: `width 1s ${300 + i * 200}ms cubic-bezier(.16,1,.3,1)` }} />
+            </div>
+            <div style={{ fontSize: 10, color: '#64748b', marginBottom: 9, paddingLeft: 8, borderLeft: `2px solid ${item.color}44`, lineHeight: 1.45 }}>{item.issue}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function LeadMagnetMock({ on }: { on: boolean }) {
+  const [vis, setVis] = useState(0)
+  useEffect(() => {
+    if (!on) { setVis(0); return }
+    const timers: ReturnType<typeof setTimeout>[] = []
+    LM_OUTLINE.forEach((_, i) => {
+      timers.push(setTimeout(() => setVis(v => Math.max(v, i + 1)), 300 + i * 240))
+    })
+    return () => timers.forEach(clearTimeout)
+  }, [on])
+  return (
+    <div className="lp-mock">
+      <div className="lp-mock-chrome">
+        <div className="lp-mock-dots"><span /><span /><span /></div>
+        <div className="lp-mock-url">cult.dashboard / lead-magnet</div>
+      </div>
+      <div className="lp-mock-body">
+        <div className="lp-mock-input-row">
+          <div className="lp-mock-tag active">PDF Guide</div>
+          <div className="lp-mock-tag">Hook Writing</div>
+        </div>
+        <div style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)', borderRadius: 6, padding: '11px 13px' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.12em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 5 }}>Generated Title</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#f1f5f9', lineHeight: 1.4 }}>&ldquo;5 Hooks That Got Me 4,600 Followers in 10 Days&rdquo;</div>
+        </div>
+        <div>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#64748b', marginBottom: 6 }}>Content Outline</div>
+          {LM_OUTLINE.map((item, i) => (
+            <div key={i} style={{ fontSize: 10.5, color: '#94a3b8', paddingLeft: 9, borderLeft: '2px solid rgba(59,130,246,0.2)', marginBottom: 5, lineHeight: 1.45, opacity: vis > i ? 1 : 0, transform: vis > i ? 'none' : 'translateX(-6px)', transition: 'opacity .3s ease, transform .3s ease' }}>{item}</div>
+          ))}
+        </div>
+        <div style={{ opacity: vis >= LM_OUTLINE.length ? 1 : 0, transition: 'opacity .4s .2s', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 6, padding: '9px 11px' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.1em', color: '#64748b', marginBottom: 4 }}>Caption CTA</div>
+          <div style={{ fontSize: 11, color: '#e2e8f0' }}>Comment <span style={{ color: '#3b82f6', fontWeight: 700 }}>&ldquo;HOOKS&rdquo;</span> and I&apos;ll send it straight to your DMs 🔥</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function OfferMock({ on }: { on: boolean }) {
+  return (
+    <div className="lp-mock">
+      <div className="lp-mock-chrome">
+        <div className="lp-mock-dots"><span /><span /><span /></div>
+        <div className="lp-mock-url">cult.dashboard / offer-builder</div>
+      </div>
+      <div className="lp-mock-body">
+        <div className="lp-mock-input-row">
+          <div className="lp-mock-tag active">High-Ticket Coaching</div>
+          <div className="lp-mock-tag">Instagram Niche</div>
+        </div>
+        {OFFER_FIELDS.map(f => (
+          <div key={f.label} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6, padding: '10px 12px', opacity: on ? 1 : 0, transform: on ? 'none' : 'translateY(8px)', transition: `opacity .4s ${f.delay}ms ease, transform .4s ${f.delay}ms ease` }}>
+            <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 3 }}>{f.label}</div>
+            <div style={{ fontSize: 11.5, color: '#e2e8f0', fontWeight: 500, lineHeight: 1.4 }}>{f.value}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ── New showcase panel data ────────────────────────────────────────────────
+
+const PANEL_BULLETS_4 = ['Hook → Problem → Solution → CTA in seconds', 'Four slide types built into every sequence', 'Written in your brand voice automatically', 'Comment keyword and CTA baked in']
+const PANEL_BULLETS_5 = ['Bio, CTA, offer visibility — all scored instantly', 'Specific fixes ranked by impact order', 'Knows what Instagram rewards right now', 'Feed the URL — results in under 60 seconds']
+const PANEL_BULLETS_6 = ['Title, concept, and full outline generated', 'Comment keyword CTA built-in automatically', 'Formatted to drive DMs — not just saves', 'Ready to post in under 5 minutes']
+const PANEL_BULLETS_7 = ['Outcome promise, pricing structure, and format', 'Built for high-ticket coaching positioning', 'Urgency and scarcity framing included', 'Ready to pitch — not a template to fill in']
+
+function ShowcasePanel4() {
+  const { ref, on } = useReveal()
+  return (
+    <div ref={ref} className="lp-showcase-pair" style={{ opacity: on ? 1 : 0, transform: on ? 'none' : 'translateY(32px)', transition: 'opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1)' }}>
+      <div className="lp-showcase-text">
+        <div className="lp-showcase-tag">AI Story Generator</div>
+        <h3 className="lp-showcase-h3">Four-slide story.<br />In seconds.</h3>
+        <p className="lp-showcase-desc">Input your niche, offer, and audience. Get a complete Instagram story arc — hook, problem, solution, CTA — written in your voice, ready to screenshot and post.</p>
+        <div className="lp-showcase-bullets">
+          {PANEL_BULLETS_4.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
+        </div>
+      </div>
+      <StoryMock on={on} />
+    </div>
+  )
+}
+
+function ShowcasePanel5() {
+  const { ref, on } = useReveal()
+  return (
+    <div ref={ref} className="lp-showcase-pair" style={{ opacity: on ? 1 : 0, transform: on ? 'none' : 'translateY(32px)', transition: 'opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1)' }}>
+      <ProfileAuditMock on={on} />
+      <div className="lp-showcase-text">
+        <div className="lp-showcase-tag">Profile Audit AI</div>
+        <h3 className="lp-showcase-h3">Know exactly what<br />to fix — and when.</h3>
+        <p className="lp-showcase-desc">Feed your Instagram URL. Get a scored audit: bio clarity, CTA strength, offer visibility, content gaps — ranked by what&apos;s actually costing you followers and clients right now.</p>
+        <div className="lp-showcase-bullets">
+          {PANEL_BULLETS_5.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ShowcasePanel6() {
+  const { ref, on } = useReveal()
+  return (
+    <div ref={ref} className="lp-showcase-pair" style={{ opacity: on ? 1 : 0, transform: on ? 'none' : 'translateY(32px)', transition: 'opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1)' }}>
+      <div className="lp-showcase-text">
+        <div className="lp-showcase-tag">Lead Magnet Generator</div>
+        <h3 className="lp-showcase-h3">Lead magnet built.<br />Ready to post.</h3>
+        <p className="lp-showcase-desc">Choose your angle. Get a complete lead magnet: a scroll-stopping title, full content outline, and a comment-keyword CTA that drives DMs on autopilot — every time you post it.</p>
+        <div className="lp-showcase-bullets">
+          {PANEL_BULLETS_6.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
+        </div>
+      </div>
+      <LeadMagnetMock on={on} />
+    </div>
+  )
+}
+
+function ShowcasePanel7() {
+  const { ref, on } = useReveal()
+  return (
+    <div ref={ref} className="lp-showcase-pair" style={{ opacity: on ? 1 : 0, transform: on ? 'none' : 'translateY(32px)', transition: 'opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1)' }}>
+      <OfferMock on={on} />
+      <div className="lp-showcase-text">
+        <div className="lp-showcase-tag">Offer Builder</div>
+        <h3 className="lp-showcase-h3">Your offer structured.<br />Ready to pitch.</h3>
+        <p className="lp-showcase-desc">Describe what you do and who you help. Get a complete high-ticket coaching offer: name, outcome promise, pricing structure, delivery format, and urgency framing — ready to sell immediately.</p>
+        <div className="lp-showcase-bullets">
+          {PANEL_BULLETS_7.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Static data defined outside components for stable references
+const SCRIPT_LINES: { text: string; strong?: boolean }[] = [
+  { text: 'Stop overthinking your content.', strong: true },
+  { text: "Here's what nobody tells you:" },
+  { text: "You don't need more ideas." },
+  { text: 'You need a system that works.' },
+  { text: '' },
+  { text: 'I spent 3 years posting into the void.' },
+  { text: 'Same as you, probably.' },
+  { text: 'Then I built one framework...' },
+]
+const INTEL_ROWS = [
+  { rank: '01', handle: '@fitnesscoach_uk', views: '2.4M', delta: '+340%', hook: '"Stop training like it\'s 2019"' },
+  { rank: '02', handle: '@nutrition.will', views: '891K', delta: '+180%', hook: '"This diet mistake is costing you"' },
+  { rank: '03', handle: '@mindset.creator', views: '1.2M', delta: '+220%', hook: '"Nobody talks about this..."' },
+]
+const INTEL_ANGLES = [
+  '"The mistake everyone in [niche] is making"',
+  '"Why your [pain point] isn\'t getting better"',
+  '"I tracked 3 months — here\'s what I found"',
+]
+
+// ── Animated mock components ───────────────────────────────────────────────
+
+function AnalyticsMock({ on }: { on: boolean }) {
+  const followers = useCountUp(12847, on, 1800)
+  const views = useCountUp(284, on, 2000)
+  const reach = useCountUp(67, on, 1400)
+  return (
+    <div className="lp-mock">
+      <div className="lp-mock-chrome">
+        <div className="lp-mock-dots"><span /><span /><span /></div>
+        <div className="lp-mock-url">cult.dashboard / analytics</div>
+      </div>
+      <div className="lp-mock-body">
+        <div className="lp-mock-metrics">
+          {[
+            { val: followers.toLocaleString(), lbl: 'Followers', delta: '+2.4K this week', green: true },
+            { val: `${views}K`, lbl: 'Total Views', delta: '+18% vs last week', green: true },
+            { val: `${reach}%`, lbl: 'Engagement', delta: 'Above avg', green: true },
+          ].map(({ val, lbl, delta, green }) => (
+            <div key={lbl} className="lp-mock-metric">
+              <div className="lp-mock-metric-val">{val}</div>
+              <div className="lp-mock-metric-lbl">{lbl}</div>
+              <div style={{ fontSize: 10, color: green ? '#22c55e' : '#f59e0b', fontWeight: 600, marginTop: 3 }}>{delta}</div>
+            </div>
+          ))}
+        </div>
+        <div className="lp-mock-chart-wrap">
+          <div className="lp-mock-chart-lbl">Follower Growth — Last 30 Days</div>
+          <svg viewBox="0 0 400 72" preserveAspectRatio="none" style={{ width: '100%', height: 66, display: 'block' }}>
+            <line x1="0" y1="18" x2="400" y2="18" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+            <line x1="0" y1="36" x2="400" y2="36" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+            <line x1="0" y1="54" x2="400" y2="54" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
+            <path d="M0,70 C30,66 60,60 95,52 C130,44 160,38 200,30 C235,23 268,17 305,11 C335,6 368,4 400,2 L400,72 L0,72 Z" fill="rgba(59,130,246,0.07)" />
+            <path
+              d="M0,70 C30,66 60,60 95,52 C130,44 160,38 200,30 C235,23 268,17 305,11 C335,6 368,4 400,2"
+              fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round"
+              style={{ strokeDasharray: 700, strokeDashoffset: on ? 0 : 700, transition: 'stroke-dashoffset 2s cubic-bezier(.16,1,.3,1)' }}
+            />
+            <circle cx="400" cy="2" r="3.5" fill="#3b82f6" style={{ opacity: on ? 1 : 0, transition: 'opacity .4s 1.6s' }} />
+          </svg>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 7 }}>
+          {[
+            { lbl: 'Viral Reel', val: '284K views', c: '#22c55e' },
+            { lbl: 'Profile Visits', val: '+1,240 this week', c: '#3b82f6' },
+          ].map(({ lbl, val, c }) => (
+            <div key={lbl} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: 6, padding: '9px 11px' }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: 3 }}>{lbl}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: c }}>{val}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ScriptMock({ on }: { on: boolean }) {
+  const [vis, setVis] = useState(0)
+  useEffect(() => {
+    if (!on) return
+    const timers: ReturnType<typeof setTimeout>[] = []
+    SCRIPT_LINES.forEach((_, i) => {
+      timers.push(setTimeout(() => setVis(v => Math.max(v, i + 1)), 400 + i * 190))
+    })
+    return () => timers.forEach(clearTimeout)
+  }, [on])
+  return (
+    <div className="lp-mock">
+      <div className="lp-mock-chrome">
+        <div className="lp-mock-dots"><span /><span /><span /></div>
+        <div className="lp-mock-url">cult.dashboard / reel-scripts</div>
+      </div>
+      <div className="lp-mock-body">
+        <div className="lp-mock-input-row">
+          <div className="lp-mock-tag">Story Arc</div>
+          <div className="lp-mock-tag active">Bold Claim</div>
+          <div className="lp-mock-tag">Controversy</div>
+        </div>
+        <div className="lp-mock-script">
+          {SCRIPT_LINES.map((l, i) => (
+            <div key={i} style={{
+              opacity: vis > i ? 1 : 0,
+              transform: vis > i ? 'none' : 'translateY(5px)',
+              transition: 'opacity .3s ease, transform .3s ease',
+              minHeight: l.text === '' ? 8 : undefined,
+              fontSize: 12.5, lineHeight: 1.7,
+              color: l.strong ? '#60a5fa' : 'rgba(255,255,255,0.68)',
+              fontWeight: l.strong ? 700 : 400,
+            }}>{l.text}</div>
+          ))}
+          <span style={{ display: 'inline-block', width: 2, height: 13, background: '#3b82f6', verticalAlign: 'middle', marginLeft: 2, animation: 'lp-blink .65s step-end infinite' }} />
+        </div>
+        <div className="lp-mock-actions">
+          <button className="lp-mock-btn">Copy Script</button>
+          <button className="lp-mock-btn ghost">Regenerate</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function IntelMock({ on }: { on: boolean }) {
+  return (
+    <div className="lp-mock">
+      <div className="lp-mock-chrome">
+        <div className="lp-mock-dots"><span /><span /><span /></div>
+        <div className="lp-mock-url">cult.dashboard / competitor-intel</div>
+        <div className="lp-mock-badge-pill">Auto-Weekly</div>
+      </div>
+      <div className="lp-mock-body">
+        <div className="lp-mock-intel-head">
+          <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', letterSpacing: '.1em', textTransform: 'uppercase' }}>Viral — Your Niche — Last 7 Days</div>
+          <div style={{ fontSize: 9, color: '#3b82f6', fontWeight: 600 }}>Mon 06:00 ✓</div>
+        </div>
+        {INTEL_ROWS.map((r, i) => (
+          <div key={r.rank} style={{
+            display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0',
+            borderBottom: '1px solid rgba(255,255,255,0.04)',
+            opacity: on ? 1 : 0, transform: on ? 'none' : 'translateX(-12px)',
+            transition: `opacity .45s ${180 + i * 140}ms ease, transform .45s ${180 + i * 140}ms ease`,
+          }}>
+            <div className="lp-mock-intel-rank">{r.rank}</div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 11, fontWeight: 600, color: '#e2e8f0' }}>{r.handle}</div>
+              <div style={{ fontSize: 10, color: '#64748b', marginTop: 1, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.hook}</div>
+            </div>
+            <div style={{ textAlign: 'right', flexShrink: 0 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#f1f5f9', fontFamily: 'Inter, sans-serif' }}>{r.views}</div>
+              <div style={{ fontSize: 10, color: '#22c55e', fontWeight: 600 }}>{r.delta}</div>
+            </div>
+          </div>
+        ))}
+        <div style={{
+          marginTop: 4, padding: '11px 13px',
+          background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.12)', borderRadius: 7,
+          opacity: on ? 1 : 0, transition: 'opacity .5s 700ms',
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: '#3b82f6', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 7 }}>AI Script Angles — Ready to Use</div>
+          {INTEL_ANGLES.map((a, i) => (
+            <div key={i} style={{ fontSize: 10.5, color: '#94a3b8', paddingLeft: 9, borderLeft: '2px solid rgba(59,130,246,0.2)', marginBottom: i < 2 ? 5 : 0, lineHeight: 1.5 }}>{a}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Showcase feature panels ────────────────────────────────────────────────
+
+const PANEL_BULLETS_1 = ['Follower growth tracked daily', 'Per-reel view & engagement breakdown', 'Competitor performance at a glance', 'Goal pacing — know if you\'re on track']
+const PANEL_BULLETS_2 = ['12 proven hook styles to choose from', 'Built on 1,000+ viral reel frameworks', 'Rewrites itself in your brand voice', 'One-click copy — post-ready instantly']
+const PANEL_BULLETS_3 = ['Delivered every Monday at 6am', 'Viral hook patterns across your niche', '5 AI-written script angles per week', 'Zero research needed — ever again']
+
+function ShowcasePanel1() {
+  const { ref, on } = useReveal()
+  return (
+    <div ref={ref} className="lp-showcase-pair" style={{ opacity: on ? 1 : 0, transform: on ? 'none' : 'translateY(32px)', transition: 'opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1)' }}>
+      <div className="lp-showcase-text">
+        <div className="lp-showcase-tag">Analytics</div>
+        <h3 className="lp-showcase-h3">See every metric<br />that matters.</h3>
+        <p className="lp-showcase-desc">Live follower tracking, viral reel breakdowns, engagement rates — all in one clean view. Know what&apos;s working before your competitors do.</p>
+        <div className="lp-showcase-bullets">
+          {PANEL_BULLETS_1.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
+        </div>
+      </div>
+      <AnalyticsMock on={on} />
+    </div>
+  )
+}
+
+function ShowcasePanel2() {
+  const { ref, on } = useReveal()
+  return (
+    <div ref={ref} className="lp-showcase-pair" style={{ opacity: on ? 1 : 0, transform: on ? 'none' : 'translateY(32px)', transition: 'opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1)' }}>
+      <ScriptMock on={on} />
+      <div className="lp-showcase-text">
+        <div className="lp-showcase-tag">Script Generator</div>
+        <h3 className="lp-showcase-h3">Full reel scripts.<br />In seconds.</h3>
+        <p className="lp-showcase-desc">Pick a hook style, describe your angle, and get a complete reel script — built on 1,000+ of Will&apos;s viral frameworks. One click to copy.</p>
+        <div className="lp-showcase-bullets">
+          {PANEL_BULLETS_2.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ShowcasePanel3() {
+  const { ref, on } = useReveal()
+  return (
+    <div ref={ref} className="lp-showcase-pair" style={{ opacity: on ? 1 : 0, transform: on ? 'none' : 'translateY(32px)', transition: 'opacity .9s cubic-bezier(.16,1,.3,1), transform .9s cubic-bezier(.16,1,.3,1)' }}>
+      <div className="lp-showcase-text">
+        <div className="lp-showcase-tag">Competitor Intel Engine</div>
+        <h3 className="lp-showcase-h3">What&apos;s viral in your<br />niche. Every Monday.</h3>
+        <p className="lp-showcase-desc">Auto-generated every week: a full breakdown of what your competitors posted, what went viral, and 5 ready-to-use script angles — all based on what&apos;s already working.</p>
+        <div className="lp-showcase-bullets">
+          {PANEL_BULLETS_3.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
+        </div>
+      </div>
+      <IntelMock on={on} />
+    </div>
+  )
+}
+
+function ShowcaseConnector() {
+  const { ref, on } = useReveal()
+  return (
+    <div ref={ref} style={{ display: 'flex', justifyContent: 'center', padding: '2px 0' }}>
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
+        <path
+          d="M26 2 C40 10 12 20 26 28 C40 36 12 44 26 50"
+          stroke="rgba(59,130,246,0.22)"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeDasharray="7 5"
+          style={{ strokeDashoffset: on ? 0 : 180, transition: 'stroke-dashoffset 1.2s cubic-bezier(.16,1,.3,1) .1s' }}
+        />
+        <circle cx="26" cy="50" r="2.5" fill="#3b82f6" style={{ opacity: on ? 0.45 : 0, transition: 'opacity .3s .85s' }} />
+      </svg>
+    </div>
+  )
+}
+
 function Faq({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
@@ -255,12 +771,12 @@ export default function LandingPage() {
   ]
 
   const avatarMembers = [
-    { initials: 'MK', bg: '#0ea5e9' },
-    { initials: 'FW', bg: '#3b82f6' },
-    { initials: 'BC', bg: '#6366f1' },
-    { initials: 'EH', bg: '#8b5cf6' },
-    { initials: 'MC', bg: '#10b981' },
-    { initials: 'RŽ', bg: '#f59e0b' },
+    'https://i.pravatar.cc/150?img=47',
+    'https://i.pravatar.cc/150?img=11',
+    'https://i.pravatar.cc/150?img=32',
+    'https://i.pravatar.cc/150?img=5',
+    'https://i.pravatar.cc/150?img=68',
+    'https://i.pravatar.cc/150?img=15',
   ]
 
   return (
@@ -333,10 +849,12 @@ export default function LandingPage() {
         .lp-cta-primary:hover { background: #2563eb; box-shadow: 0 0 48px rgba(59,130,246,0.5); transform: translateY(-1px); }
         .lp-cta-ghost { display: inline-flex; align-items: center; gap: 10px; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 600; letter-spacing: .02em; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.3); padding: 9px 20px; border-radius: 8px; transition: background .2s, border-color .2s; cursor: pointer; background: transparent; }
         .lp-cta-ghost:hover { background: rgba(59,130,246,0.08); border-color: rgba(96,165,250,0.5); }
-        .lp-cta-ghost-sm { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 600; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.25); padding: 9px 20px; border-radius: 8px; transition: background .2s; cursor: pointer; background: transparent; }
+        .lp-cta-ghost-sm { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 13px; font-weight: 700; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.25); padding: 10px 20px; border-radius: 8px; transition: background .2s; cursor: pointer; background: transparent; }
         .lp-cta-ghost-sm:hover { background: rgba(59,130,246,0.08); }
         .lp-nav-cta { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 13px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 10px 22px; border-radius: 8px; transition: background .2s, transform .15s, box-shadow .2s; cursor: pointer; border: none; box-shadow: 0 0 24px rgba(59,130,246,0.35); }
         .lp-nav-cta:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 0 36px rgba(59,130,246,0.55); }
+        .lp-client-login { font-family: 'Inter', sans-serif !important; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,0.45); text-decoration: none; padding: 7px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); transition: color .2s, border-color .2s, background .2s; white-space: nowrap; }
+        .lp-client-login:hover { color: rgba(255,255,255,0.75); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); }
 
         /* ── Nav ── */
         .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; transition: background .3s, border-color .3s; }
@@ -619,7 +1137,8 @@ export default function LandingPage() {
           .lp-container { padding: 0 20px; }
           .lp-container-sm { padding: 0 20px; }
           .lp-section { padding: 64px 0; }
-          .lp-nav { padding: 0 20px; }
+          .lp-nav { padding: 0 16px; }
+          .lp-client-login { font-size: 10px; padding: 6px 10px; letter-spacing: .04em; }
           .lp-footer { padding: 32px 20px; }
           .lp-pill { font-size: 10px; }
           .lp-h2 { font-size: clamp(26px, 8vw, 38px); }
@@ -639,6 +1158,88 @@ export default function LandingPage() {
           .lp-hero-badge { font-size: 10px; padding: 6px 12px; margin-bottom: 24px; }
           /* Shrink hero stats */
           .lp-hero-stats { margin-top: 36px; padding-top: 28px; }
+        }
+
+        /* ── Dashboard showcase ── */
+        .lp-showcase-pair {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 72px;
+          align-items: center;
+          padding: 72px 0;
+          border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .lp-showcase-pair:first-child { border-top: none; padding-top: 0; }
+        @media (max-width: 900px) {
+          .lp-showcase-pair { grid-template-columns: 1fr; gap: 28px; padding: 52px 0; }
+          .lp-showcase-pair:first-child { padding-top: 0; }
+          .lp-showcase-text { order: 1; }
+          .lp-mock { order: 2; }
+        }
+        .lp-showcase-tag { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #3b82f6; margin-bottom: 18px; }
+        .lp-showcase-h3 { font-family: 'Cabinet Grotesk', 'Inter', -apple-system, sans-serif; font-size: clamp(22px, 2.8vw, 34px); font-weight: 900; color: #f1f5f9; letter-spacing: -.025em; line-height: 1.1; margin-bottom: 18px; }
+        .lp-showcase-desc { font-size: 14px; color: rgba(255,255,255,0.56); line-height: 1.82; margin-bottom: 26px; }
+        .lp-showcase-bullets { display: flex; flex-direction: column; gap: 10px; }
+        .lp-showcase-bullet { display: flex; align-items: center; gap: 12px; font-size: 13px; color: rgba(255,255,255,0.48); }
+        .lp-showcase-bdot { width: 5px; height: 5px; border-radius: 50%; background: #3b82f6; flex-shrink: 0; opacity: 0.6; }
+
+        /* ── Mock window ── */
+        .lp-mock { background: #090907; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; overflow: hidden; box-shadow: 0 24px 72px rgba(0,0,0,0.58), 0 0 0 1px rgba(59,130,246,0.06); }
+        .lp-mock-chrome { display: flex; align-items: center; gap: 7px; padding: 10px 14px; background: #050504; border-bottom: 1px solid rgba(255,255,255,0.04); }
+        .lp-mock-dots { display: flex; gap: 5px; }
+        .lp-mock-dots span { display: block; width: 9px; height: 9px; border-radius: 50%; }
+        .lp-mock-dots span:nth-child(1) { background: rgba(255,80,80,0.38); }
+        .lp-mock-dots span:nth-child(2) { background: rgba(255,185,0,0.32); }
+        .lp-mock-dots span:nth-child(3) { background: rgba(40,200,70,0.28); }
+        .lp-mock-url { flex: 1; text-align: center; font-size: 10px; color: rgba(255,255,255,0.17); background: rgba(255,255,255,0.03); padding: 3px 10px; border-radius: 4px; margin: 0 10px; font-family: 'Inter', monospace; letter-spacing: -.01em; }
+        .lp-mock-badge-pill { font-size: 9px; font-weight: 700; color: #3b82f6; background: rgba(59,130,246,0.1); padding: 2px 8px; border-radius: 4px; letter-spacing: .07em; text-transform: uppercase; flex-shrink: 0; }
+        .lp-mock-body { padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+        .lp-mock-metrics { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+        .lp-mock-metric { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); border-radius: 6px; padding: 11px 12px; }
+        .lp-mock-metric-val { font-size: 17px; font-weight: 900; color: #f1f5f9; letter-spacing: -.03em; line-height: 1; font-family: 'Inter', sans-serif; }
+        .lp-mock-metric-lbl { font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: .08em; margin-top: 4px; }
+        .lp-mock-chart-wrap { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 6px; padding: 13px; }
+        .lp-mock-chart-lbl { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #64748b; margin-bottom: 8px; }
+        .lp-mock-input-row { display: flex; gap: 6px; flex-wrap: wrap; }
+        .lp-mock-tag { font-size: 10px; font-weight: 600; padding: 4px 10px; border-radius: 5px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07); color: #94a3b8; cursor: pointer; }
+        .lp-mock-tag.active { background: rgba(59,130,246,0.1); border-color: rgba(59,130,246,0.25); color: #60a5fa; }
+        .lp-mock-script { background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); border-radius: 6px; padding: 14px; min-height: 128px; }
+        .lp-mock-actions { display: flex; gap: 7px; }
+        .lp-mock-btn { font-size: 11px; font-weight: 700; padding: 7px 14px; border-radius: 5px; border: none; cursor: pointer; font-family: 'Inter', sans-serif; }
+        .lp-mock-btn:not(.ghost) { background: #3b82f6; color: #fff; }
+        .lp-mock-btn.ghost { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: #94a3b8; }
+        .lp-mock-intel-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 9px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .lp-mock-intel-rank { width: 20px; height: 20px; border-radius: 4px; background: rgba(59,130,246,0.08); border: 1px solid rgba(59,130,246,0.12); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; color: #3b82f6; flex-shrink: 0; font-family: 'Inter', sans-serif; }
+
+        /* ── Bridge grid — 3 cols → 1 col on mobile ── */
+        .lp-bridge-grid { display: grid; grid-template-columns: repeat(3, 1fr); }
+        @media (max-width: 700px) {
+          .lp-bridge-grid { grid-template-columns: 1fr; }
+          .lp-bridge-grid > div { border-right: none !important; border-bottom: 1px solid rgba(255,255,255,0.08); padding: 28px 20px !important; }
+          .lp-bridge-grid > div:last-child { border-bottom: none; }
+        }
+
+        /* ── Nav — always frosted on mobile ── */
+        @media (max-width: 768px) {
+          .lp-nav { background: rgba(13,13,10,0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+        }
+
+        /* ── Hero photo — mobile: bigger, later fade, text overlaps the fade zone ── */
+        @media (max-width: 900px) {
+          .lp-hero-photo-col { height: 88vw !important; max-height: 480px !important; min-height: 320px !important; }
+          .lp-hero-photo-overlay { background: linear-gradient(to top, #0d0d0a 0%, #0d0d0a 6%, rgba(13,13,10,0.7) 20%, transparent 44%), linear-gradient(to bottom, rgba(13,13,10,0.55) 0%, transparent 18%) !important; }
+          .lp-hero-left { margin-top: -88px !important; padding-top: 0 !important; position: relative; z-index: 2; }
+        }
+        @media (max-width: 640px) {
+          .lp-hero-photo-col { height: 92vw !important; max-height: 440px !important; }
+          .lp-hero-left { margin-top: -100px !important; }
+        }
+
+        /* ── Hero CTA buttons — hide on mobile (sticky bar covers it) ── */
+        @media (max-width: 768px) {
+          .lp-hero-ctas { display: none !important; }
+          .lp-cta-row { justify-content: center !important; }
+          .lp-cta-primary { width: 100%; max-width: 320px; justify-content: center; }
         }
       `}</style>
 
@@ -671,12 +1272,9 @@ export default function LandingPage() {
             <LogoMark size={28} />
             Creator Cult
           </a>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <Link href="/login" className="lp-cta-ghost-sm">
-              Client login
-            </Link>
-            <Link href="/apply" className="lp-nav-cta">
-              Apply Now <IconArrow />
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Link href="/login" className="lp-client-login">
+              Client Login
             </Link>
           </div>
         </nav>
@@ -707,7 +1305,7 @@ export default function LandingPage() {
               </p>
             </Fade>
             <Fade delay={240}>
-              <div style={{ marginTop: 40, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+              <div className="lp-hero-ctas" style={{ marginTop: 40, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                 <Link href="/apply" className="lp-cta-primary">
                   Apply for a Spot <IconArrow />
                 </Link>
@@ -721,9 +1319,9 @@ export default function LandingPage() {
               {/* Avatar social proof strip */}
               <div className="lp-avatar-row" style={{ marginTop: 32 }}>
                 <div className="lp-avatar-stack">
-                  {avatarMembers.map((a, i) => (
-                    <div key={i} className="lp-avatar" style={{ background: a.bg, marginLeft: i > 0 ? -10 : 0, zIndex: 10 - i }}>
-                      {a.initials}
+                  {avatarMembers.map((src, i) => (
+                    <div key={i} className="lp-avatar" style={{ marginLeft: i > 0 ? -10 : 0, zIndex: 10 - i, background: '#1e293b', padding: 0, overflow: 'hidden' }}>
+                      <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', borderRadius: '50%' }} />
                     </div>
                   ))}
                   <div className="lp-avatar" style={{ background: '#1e293b', marginLeft: -10, zIndex: 4, fontSize: 9 }}>
@@ -793,7 +1391,7 @@ export default function LandingPage() {
               ))}
             </div>
             <Fade delay={100}>
-              <div style={{ marginTop: 56, display: 'flex', justifyContent: 'flex-start' }}>
+              <div className="lp-cta-row" style={{ marginTop: 56, display: 'flex', justifyContent: 'flex-start' }}>
                 <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
               </div>
             </Fade>
@@ -812,7 +1410,7 @@ export default function LandingPage() {
               </p>
             </Fade>
             <Fade delay={120}>
-              <div style={{ marginTop: 64, borderTop: '1px solid rgba(255,255,255,0.08)', display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)' }}>
+              <div className="lp-bridge-grid" style={{ marginTop: 64, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 {[
                   { n: '01', label: '5-Phase Curriculum', body: 'Foundations to Scale — every lesson in the sequence that actually compounds. Self-paced, but guided.' },
                   { n: '02', label: 'Live Weekly Coaching', body: 'Group calls every week. Will reviews your content, offers, and blockers live. Not pre-recorded theory.' },
@@ -984,42 +1582,60 @@ export default function LandingPage() {
         <div className="lp-hr" />
 
         {/* ── Cult Dashboard ── */}
-        <div className="lp-section" style={{ paddingTop: 96, paddingBottom: 64 }}>
+        <div className="lp-section" style={{ paddingTop: 96, paddingBottom: 80 }}>
           <div className="lp-container">
             <Fade delay={60}>
-              <h2 className="lp-h2">The Cult Dashboard.<br /><span style={{ color: '#ffffff', fontSize: '0.7em', fontWeight: 700, letterSpacing: '-.02em' }}>12 AI tools. Yours when you join.</span></h2>
-              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 580 }}>
-                Every member gets private access to a dashboard built specifically for Creator Cult. 12 AI tools trained on the methodology — including weekly competitor analysis that writes your content ideas for you.
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>The Cult Dashboard</div>
+              <h2 className="lp-h2">12 AI tools. Yours<br /><span style={{ color: '#ffffff' }}>the moment you join.</span></h2>
+              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 560 }}>
+                Every member gets private access to a dashboard built for Creator Cult — trained on the methodology, updated automatically each week.
               </p>
             </Fade>
 
-
-            <div className="lp-tool-grid">
-              {tools.map((t, i) => (
-                <Fade key={t.title} delay={i * 50}>
-                  <div className={`lp-tool-card${!showAllTools && i >= 3 ? ' lp-tool-mobile-hidden' : ''}`}>
-                    <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
-                      <div className="lp-tool-icon-wrap">{t.icon}</div>
-                      {t.badge && <span className="lp-tool-badge">{t.badge}</span>}
-                    </div>
-                    <div className="lp-tool-title">{t.title}</div>
-                    <div className="lp-tool-desc">{t.desc}</div>
-                  </div>
-                </Fade>
-              ))}
+            {/* ── Feature Showcase ── */}
+            <div style={{ marginTop: 80 }}>
+              <ShowcasePanel1 />
+              <ShowcaseConnector />
+              <ShowcasePanel2 />
+              <ShowcaseConnector />
+              <ShowcasePanel3 />
+              <ShowcaseConnector />
+              <ShowcasePanel4 />
+              <ShowcaseConnector />
+              <ShowcasePanel5 />
+              <ShowcaseConnector />
+              <ShowcasePanel6 />
+              <ShowcaseConnector />
+              <ShowcasePanel7 />
             </div>
 
-            {/* Mobile "See all tools" button — CSS shows only on mobile */}
-            {!showAllTools && (
-              <div className="lp-seemore-wrap">
-                <button
-                  onClick={() => setShowAllTools(true)}
-                  className="lp-seemore-btn"
-                >
-                  See all 12 tools <IconPlus />
-                </button>
+            {/* ── All 12 tools grid ── */}
+            <div style={{ marginTop: 80, paddingTop: 64, borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <Fade>
+                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.28)', marginBottom: 32 }}>All 12 Tools Included</div>
+              </Fade>
+              <div className="lp-tool-grid">
+                {tools.map((t, i) => (
+                  <Fade key={t.title} delay={i * 40}>
+                    <div className={`lp-tool-card${!showAllTools && i >= 3 ? ' lp-tool-mobile-hidden' : ''}`}>
+                      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+                        <div className="lp-tool-icon-wrap">{t.icon}</div>
+                        {t.badge && <span className="lp-tool-badge">{t.badge}</span>}
+                      </div>
+                      <div className="lp-tool-title">{t.title}</div>
+                      <div className="lp-tool-desc">{t.desc}</div>
+                    </div>
+                  </Fade>
+                ))}
               </div>
-            )}
+              {!showAllTools && (
+                <div className="lp-seemore-wrap">
+                  <button onClick={() => setShowAllTools(true)} className="lp-seemore-btn">
+                    See all 12 tools <IconPlus />
+                  </button>
+                </div>
+              )}
+            </div>
 
             <Fade delay={60}>
               <div style={{ textAlign: 'center', paddingTop: 56 }}>
@@ -1255,25 +1871,31 @@ export default function LandingPage() {
         <div className="lp-hr" />
 
         {/* ── Final CTA ── */}
-        <div className="lp-cta-block" style={{ padding: '140px 48px 100px', position: 'relative', overflow: 'hidden' }}>
-          <img
-            src="/19241A27-9CDA-4FE2-8DBF-066F8E62E29E.jpg"
-            alt=""
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 60%', filter: 'brightness(0.25) saturate(0.5) contrast(1.1)' }}
-            loading="lazy"
-          />
-          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center bottom, rgba(13,13,10,0.4) 0%, rgba(13,13,10,0.85) 65%, rgba(13,13,10,0.98) 100%)' }} />
-          <div style={{ position: 'relative', zIndex: 1 }}>
+        <div style={{ position: 'relative', overflow: 'hidden' }}>
+          {/* Radial glow — blue pool rising from bottom */}
+          <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at 50% 130%, rgba(59,130,246,0.14) 0%, transparent 65%)', pointerEvents: 'none' }} />
+          {/* Top edge line */}
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.28) 50%, transparent 100%)' }} />
+          {/* Bottom edge line */}
+          <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 1, background: 'linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.15) 50%, transparent 100%)' }} />
+
+          <div className="lp-cta-block" style={{ padding: '140px 48px 120px', position: 'relative', zIndex: 1 }}>
             <Fade>
-              <h2 className="lp-h2" style={{ marginBottom: 20 }}>Stop posting<br /><span style={{ color: '#ffffff' }}>into the void.</span></h2>
-              <p className="lp-body-lg" style={{ marginBottom: 44, maxWidth: 480, margin: '0 auto 44px' }}>
-                You&apos;re three minutes away from finding out if Creator Cult is the right fit. Apply now. No commitment. No sales call unless you want one.
-              </p>
-              <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
-              <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center', gap: 28, flexWrap: 'wrap' }}>
-                {['Takes 3 minutes', 'Reviewed personally by Will', 'No commitment to apply'].map(c => (
-                  <span key={c} className="lp-dim" style={{ fontSize: 12, letterSpacing: '.08em', fontFamily: 'Inter, sans-serif' }}>— {c}</span>
-                ))}
+              {/* Big ambient number behind the text */}
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: 'clamp(180px, 28vw, 340px)', fontWeight: 900, fontFamily: "'Cabinet Grotesk', Inter, sans-serif", color: 'rgba(255,255,255,0.018)', lineHeight: 1, letterSpacing: '-.06em', userSelect: 'none', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+                NOW
+              </div>
+              <div style={{ position: 'relative' }}>
+                <h2 className="lp-h2" style={{ marginBottom: 20 }}>Stop posting<br /><span style={{ color: '#ffffff' }}>into the void.</span></h2>
+                <p className="lp-body-lg" style={{ marginBottom: 44, maxWidth: 480, margin: '0 auto 44px' }}>
+                  You&apos;re three minutes away from finding out if Creator Cult is the right fit. Apply now. No commitment. No sales call unless you want one.
+                </p>
+                <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
+                <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center', gap: 28, flexWrap: 'wrap' }}>
+                  {['Takes 3 minutes', 'Reviewed personally by Will', 'No commitment to apply'].map(c => (
+                    <span key={c} style={{ fontSize: 12, letterSpacing: '.08em', color: 'rgba(255,255,255,0.32)', fontFamily: 'Inter, sans-serif' }}>— {c}</span>
+                  ))}
+                </div>
               </div>
             </Fade>
           </div>

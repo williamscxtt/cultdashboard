@@ -27,7 +27,7 @@ async function sendSlackNotification(data: Record<string, unknown>, isQualified:
   const dob = String(data.date_of_birth || '')
 
   const header = isQualified
-    ? '🔔 New Creator Cult Application'
+    ? '🔔 New Creator Cult Application — Qualified'
     : '🟡 Application — Auto-Disqualified (worth a look)'
 
   const contactLine = isQualified
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
     platforms, posting_frequency, niche,
     if_nothing_changes, biggest_obstacle, strategies_tried,
     monthly_income, investment_approach, investment_amount, income_goal, business_mindset,
-    qualified,
+    outcome,
   } = body
 
   if (!email || !first_name) {
@@ -104,7 +104,8 @@ export async function POST(req: Request) {
   }
 
   const name = `${first_name} ${last_name}`.trim()
-  const status = qualified === false ? 'disqualified' : 'pending'
+  const statusMap: Record<string, string> = { qualified: 'pending', payment: 'payment_tier', disqualified: 'disqualified' }
+  const status = statusMap[outcome] ?? 'pending'
 
   // Save to DB — non-blocking if it fails
   const { error } = await adminClient.from('applications').insert({
@@ -128,10 +129,11 @@ export async function POST(req: Request) {
 
   // Ping Slack for all real submissions — qualified ones get the urgent message,
   // disqualified ones get a low-priority heads-up. Skip if no real data (fake/test entries).
+  // Payment tier self-serves — no Slack needed. Qualified and disqualified both ping.
   const hasRealData = Boolean(first_name && (phone || niche || biggest_obstacle))
-  if (hasRealData) {
+  if (hasRealData && outcome !== 'payment') {
     try {
-      await sendSlackNotification(body, qualified !== false)
+      await sendSlackNotification(body, outcome === 'qualified')
     } catch (err) {
       console.error('[applications] slack error:', err)
     }

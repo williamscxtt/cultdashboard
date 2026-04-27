@@ -647,7 +647,10 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvit
             <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1.3, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {displayName}
             </div>
-            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <div
+              title={client.email || undefined}
+              style={{ fontSize: 11, color: 'var(--muted-foreground)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', cursor: 'default' }}
+            >
               {client.email || '—'}
             </div>
           </div>
@@ -786,64 +789,65 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvit
         )}
       </div>
 
-      {/* ── Action footer — always at bottom ── */}
+      {/* ── Action footer — two rows ── */}
       <div style={{
         borderTop: '1px solid var(--border)',
         padding: '10px 14px',
-        display: 'flex', gap: 8, alignItems: 'center',
+        display: 'flex', flexDirection: 'column', gap: 7,
         background: 'rgba(0,0,0,0.15)',
       }}>
-        {/* Send invite */}
-        <button
-          onClick={async () => {
-            if (!client.email) return
-            setInviting(true)
-            await onSendInvite(client.email, client.name)
-            setInviting(false)
-          }}
-          disabled={inviting || !client.email}
-          title="Send login credentials email"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            height: 30, padding: '0 12px', borderRadius: 6,
-            fontSize: 12, fontWeight: 600, flexShrink: 0,
-            border: '1px solid var(--border)', background: 'transparent',
-            color: 'var(--muted-foreground)', cursor: inviting ? 'wait' : 'pointer',
-            fontFamily: 'inherit', opacity: inviting ? 0.5 : 1,
-            transition: 'background 0.12s, color 0.12s',
-          }}
-          onMouseEnter={e => { if (!inviting) { (e.currentTarget as HTMLElement).style.background = 'var(--muted)'; (e.currentTarget as HTMLElement).style.color = 'var(--foreground)' } }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)' }}
-        >
-          <Mail size={12} />
-          {inviting ? 'Sending…' : 'Invite'}
-        </button>
+        {/* Row 1: Invite + Set password */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={async () => {
+              if (!client.email) return
+              setInviting(true)
+              await onSendInvite(client.email, client.name)
+              setInviting(false)
+            }}
+            disabled={inviting || !client.email}
+            title="Send login credentials email"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 5,
+              height: 30, padding: '0 12px', borderRadius: 6, flex: 1,
+              fontSize: 12, fontWeight: 600,
+              border: '1px solid var(--border)', background: 'transparent',
+              color: 'var(--muted-foreground)', cursor: inviting ? 'wait' : 'pointer',
+              fontFamily: 'inherit', opacity: inviting ? 0.5 : 1,
+              transition: 'background 0.12s, color 0.12s', justifyContent: 'center',
+            }}
+            onMouseEnter={e => { if (!inviting) { (e.currentTarget as HTMLElement).style.background = 'var(--muted)'; (e.currentTarget as HTMLElement).style.color = 'var(--foreground)' } }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)' }}
+          >
+            <Mail size={12} />
+            {inviting ? 'Sending…' : 'Invite'}
+          </button>
 
-        {/* Set password */}
-        <button
-          onClick={() => { setShowSetPw(v => !v); setPwState('idle'); setTempPw('') }}
-          title="Set a custom password for this client"
-          style={{
-            display: 'flex', alignItems: 'center', gap: 5,
-            height: 30, padding: '0 12px', borderRadius: 6,
-            fontSize: 12, fontWeight: 600, flexShrink: 0,
-            border: '1px solid var(--border)', background: showSetPw ? 'var(--muted)' : 'transparent',
-            color: showSetPw ? 'var(--foreground)' : 'var(--muted-foreground)',
-            cursor: 'pointer', fontFamily: 'inherit',
-            transition: 'background 0.12s, color 0.12s',
-          }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--muted)'; (e.currentTarget as HTMLElement).style.color = 'var(--foreground)' }}
-          onMouseLeave={e => { if (!showSetPw) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)' } }}
-        >
-          Set password
-        </button>
+          <button
+            onClick={() => { setShowSetPw(v => !v); setPwState('idle'); setTempPw('') }}
+            title="Set a custom password for this client"
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+              height: 30, padding: '0 12px', borderRadius: 6, flex: 1,
+              fontSize: 12, fontWeight: 600,
+              border: '1px solid var(--border)', background: showSetPw ? 'var(--muted)' : 'transparent',
+              color: showSetPw ? 'var(--foreground)' : 'var(--muted-foreground)',
+              cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'background 0.12s, color 0.12s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--muted)'; (e.currentTarget as HTMLElement).style.color = 'var(--foreground)' }}
+            onMouseLeave={e => { if (!showSetPw) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)' } }}
+          >
+            Set password
+          </button>
+        </div>
 
-        {/* View dashboard — fills remaining space */}
+        {/* Row 2: Open dashboard — full width */}
         <Link
           href={`/dashboard/clients/${client.id}`}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-            flex: 1, height: 30, borderRadius: 6,
+            height: 32, borderRadius: 6,
             fontSize: 12, fontWeight: 700,
             background: 'rgba(59,130,246,0.1)',
             color: '#60a5fa',
