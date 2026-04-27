@@ -672,14 +672,14 @@ export default function LandingPage() {
   const tickerItems = [
     'Freddie — First clients at £1,000 each with 148 followers',
     'Eddie — 4,600 followers in 10 days',
-    'Dino — 24 million views in 3 weeks',
+    'Dino — 14M views 3 weeks after joining, then 24M the following week',
     'Brett Capstick — First client in 3 weeks',
     'Asfand — First paying client in 7 days',
     'Michael Kersee — Multiple $10K days, £50K months',
     'Tom Köster — Zero to 10K followers in one month',
     'Zack Sinclair — Zero to 100K+ followers in 4 months',
     'Roy — 1 million views, first viral reel',
-    'Mateus — 2.3M total reach in 30 days',
+    'Mateus — 1M views on one reel, 2.3M reach in under 2 weeks',
     'Jakub — Three viral reels back to back',
   ]
 
@@ -758,6 +758,12 @@ export default function LandingPage() {
       quote: "First ever money from content. €500. Doesn't sound huge but it proved the whole thing works. I'll be at €5K/month within 3 months." },
     { img: '/testimonials/testimonial-michael-5k-pif.jpeg',            name: 'MICHAEL KERSEE', stat: '$10K day',                detail: 'One of multiple $10K single days — revenue shown. Part of a consistent pattern of £50K+ months built on the Creator Cult DM and offer system.',
       quote: "This is one $10K day. I've had several now. The offer positioning and DM close system makes this repeatable — not a fluke." },
+    { img: 'https://assets-v2.circle.so/ru1z4o2a28u49h1507tw13m9wy04', name: 'DINO FUNEZ',      stat: '14M views — 3 weeks in',  detail: 'Tweaked his bio, used trial reels, and changed the first 3 seconds of every video. In just 5 posts he gained 3K new followers and 10 million more views than the prior period — three weeks after joining Creator Cult.',
+      quote: "Did a couple tweaks — changing my bio, utilizing trial reels, analyzing the graphs and performance, changing 3 second intro hooks. In 5 posts I gained 3k followers and 10 million more views in comparison to last period. But so far so good!" },
+    { img: 'https://assets-v2.circle.so/7di4sesakx0atgazfw0wdz0ult0i', name: 'DINO FUNEZ',      stat: '24M views — +5K followers', detail: 'The week after hitting 14M: changed username, hit 5K more followers, and pushed from 14M to 24M total views. All in the same month of joining Creator Cult. Next goal: build a product and convert followers into coaching clients.',
+      quote: "Changed my username to a more simple-to-understand one, hit 5K more followers and went from 14 million views to 24 million this week. Next goal is to start attracting real customers, turning these followers into clients. MAIN GOAL." },
+    { img: 'https://assets-v2.circle.so/u56hibgmkl1i5kdiywr1uovlzpe5', name: 'MATEUS CHAPMAN',  stat: '1M views — 2.3M reach',   detail: 'Fitness creator. Hit 1 million views on a single reel with TNF commenting on it. Total reach of 2.3 million in under 30 days of content — in reality less than 2 weeks of it actually taking off. Most videos now average 3,000+ views consistently.',
+      quote: "My total reach is at 2.3 million for the last 30 days — in reality it's been not even 2 weeks since things started blowing up. Most of my videos get 3K views consistently now. I didn't believe it could happen this fast." },
   ]
 
   // Whop reviews removed — generic "good value" comments undermine the specific wins above

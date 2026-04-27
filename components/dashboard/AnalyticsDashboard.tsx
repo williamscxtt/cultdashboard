@@ -569,10 +569,11 @@ interface Props {
   profileName?: string
   dashboardBio?: string
   focusThisWeek?: string
+  willFollowerViewRatio?: number | null
 }
 interface SyncResult { synced: number; total: number; classified?: number; warning?: string }
 
-export default function AnalyticsDashboard({ profileId, followersCount, igUsername, followerHistory = [], profileName, dashboardBio, focusThisWeek }: Props) {
+export default function AnalyticsDashboard({ profileId, followersCount, igUsername, followerHistory = [], profileName, dashboardBio, focusThisWeek, willFollowerViewRatio }: Props) {
   const { startSync, updateProgress, finishSync } = useSyncProgress()
   const isMobile = useIsMobile()
   const [reels, setReels] = useState<ClientReel[]>([])
@@ -791,11 +792,26 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
   // ── engagement breakdown ──────────────────────────────────────────────────
   const engBreakdown = useMemo(() => [
-    { label: 'Likes',    value: currentReels.reduce((a, r) => a + (r.likes ?? 0), 0),    color: 'rgba(255,255,255,0.75)' },
-    { label: 'Comments', value: currentReels.reduce((a, r) => a + (r.comments ?? 0), 0), color: 'rgba(255,255,255,0.5)' },
-    { label: 'Saves',    value: currentReels.reduce((a, r) => a + (r.saves ?? 0), 0),    color: 'rgba(255,255,255,0.3)' },
-    { label: 'Shares',   value: currentReels.reduce((a, r) => a + (r.shares ?? 0), 0),   color: 'rgba(255,255,255,0.2)' },
+    { label: 'Likes',    value: currentReels.reduce((a, r) => a + (r.likes ?? 0), 0),    color: 'rgba(255,255,255,0.85)' },
+    { label: 'Comments', value: currentReels.reduce((a, r) => a + (r.comments ?? 0), 0), color: 'rgba(255,255,255,0.6)' },
+    { label: 'Saves',    value: currentReels.reduce((a, r) => a + (r.saves ?? 0), 0),    color: 'rgba(255,255,255,0.4)' },
+    { label: 'Shares',   value: currentReels.reduce((a, r) => a + (r.shares ?? 0), 0),   color: 'rgba(255,255,255,0.25)' },
   ], [currentReels])
+
+  // ── follower-to-view ratio (fixed 30-day window for benchmark comparison) ──
+  const thirtyDayReels = useMemo(() => filterByDays(reels, 30, 0), [reels])
+  const thirtyDayViews = useMemo(
+    () => thirtyDayReels.reduce((a, r) => a + (r.views ?? 0), 0),
+    [thirtyDayReels]
+  )
+  const userViewsPerFollower = useMemo(() => {
+    const cutoff = Date.now() - 30 * 86400000
+    const snaps30 = followerHistory.filter(s => new Date(s.date).getTime() >= cutoff)
+    if (snaps30.length < 2 || thirtyDayViews === 0) return null
+    const gain = snaps30[snaps30.length - 1].count - snaps30[0].count
+    if (gain <= 0) return null
+    return Math.round(thirtyDayViews / gain)
+  }, [followerHistory, thirtyDayViews])
 
   if (loading) {
     return (
@@ -1061,17 +1077,45 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                         </span>
                       </div>
                       <div style={{ height: 5, borderRadius: 999, background: 'var(--muted)', overflow: 'hidden' }}>
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${pctVal}%` }}
-                          transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 }}
-                          style={{ height: '100%', borderRadius: 999, background: `linear-gradient(90deg, ${color}, ${color}aa)` }}
+                        <div
+                          style={{
+                            height: '100%',
+                            borderRadius: 999,
+                            background: color,
+                            width: `${pctVal}%`,
+                            transition: 'width 0.8s ease',
+                          }}
                         />
                       </div>
                     </div>
                   )
                 })}
               </div>
+              {/* Follower-to-view ratio */}
+              {(userViewsPerFollower !== null || (willFollowerViewRatio != null && willFollowerViewRatio > 0)) && (
+                <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                    Follower-to-View Ratio · 30 days
+                  </div>
+                  {userViewsPerFollower !== null && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                      <span style={{ fontSize: 12, color: 'var(--foreground)' }}>Your page</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--foreground)' }}>
+                        1 follower per {userViewsPerFollower.toLocaleString()} views
+                      </span>
+                    </div>
+                  )}
+                  {willFollowerViewRatio != null && willFollowerViewRatio > 0 && (
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>Will&apos;s benchmark</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#3B82F6' }}>
+                        1 follower per {Math.round(willFollowerViewRatio).toLocaleString()} views
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Top Reel</div>
                 {(() => {
