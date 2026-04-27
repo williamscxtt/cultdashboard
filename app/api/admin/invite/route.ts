@@ -115,12 +115,17 @@ export async function POST(req: NextRequest) {
   const force = body.force ?? false
   if (!email) return NextResponse.json({ error: 'email required' }, { status: 400 })
 
-  // Look up the user by email
-  const { data: { users }, error: listError } = await admin.auth.admin.listUsers()
-  if (listError) return NextResponse.json({ error: listError.message }, { status: 400 })
+  // Look up the profile by email to get the auth user ID, then fetch the user
+  const { data: profileRow } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('email', email)
+    .maybeSingle()
 
-  const targetUser = users.find(u => u.email === email)
-  if (!targetUser) return NextResponse.json({ error: 'No account found for that email' }, { status: 404 })
+  if (!profileRow) return NextResponse.json({ error: 'No account found for that email' }, { status: 404 })
+
+  const { data: { user: targetUser }, error: getUserError } = await admin.auth.admin.getUserById(profileRow.id)
+  if (getUserError || !targetUser) return NextResponse.json({ error: 'No account found for that email' }, { status: 404 })
 
   // If the client has already signed in AND we're not forcing, skip them.
   // Resetting their password would log them out and break a working account.
