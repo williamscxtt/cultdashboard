@@ -19,8 +19,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/onboarding':    'My Profile',
   '/dashboard/settings':      'Settings',
   '/dashboard/clients':       'Clients',
-  '/dashboard/circle':        'Circle Briefing',
-  '/dashboard/reports':       'Progress Reports',
+'/dashboard/reports':       'Progress Reports',
   '/dashboard/intel':         'Global Intel',
   '/dashboard/knowledge':     'Knowledge Base',
 }
