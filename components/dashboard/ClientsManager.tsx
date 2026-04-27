@@ -877,6 +877,7 @@ function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [tempPassword, setTempPassword] = useState<string | null>(null)
+  const [emailSent, setEmailSent] = useState(false)
   const [copied, setCopied] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -899,6 +900,7 @@ function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
     }
 
     setTempPassword(data.tempPassword)
+    setEmailSent(!!data.emailSent)
     setLoading(false)
 
     onSuccess({
@@ -958,17 +960,22 @@ function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
         <h2 style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)', marginBottom: 20 }}>Add New Client</h2>
 
         {tempPassword ? (
-          <div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div style={{
-              background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.5)',
-              borderRadius: 8, padding: 16, marginBottom: 16,
+              background: 'rgba(34,197,94,0.07)', border: '1px solid rgba(34,197,94,0.2)',
+              borderRadius: 8, padding: 16,
             }}>
-              <div style={{ fontSize: 13, color: '#3B82F6', fontWeight: 600, marginBottom: 8 }}>
-                Client created successfully!
+              <div style={{ fontSize: 13, color: '#22c55e', fontWeight: 700, marginBottom: 4 }}>
+                Account created ✓
               </div>
-              <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 8 }}>
-                Temporary password (share with client):
+              <div style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
+                {emailSent
+                  ? `Login details have been emailed to ${email}. Do not click "Invite" — that would reset this password.`
+                  : `Email not sent (check RESEND_API_KEY). Share the password below directly with the client.`}
               </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: 6, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Temporary password</div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <code style={{
                   flex: 1, display: 'block', background: 'var(--muted)',

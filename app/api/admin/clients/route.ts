@@ -97,10 +97,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
-  // Update profile with name and ig_username
+  // Update profile — billing_exempt so admin-added clients bypass the subscription gate
   const { error: profileError } = await adminClient
     .from('profiles')
-    .update({ name, ig_username: ig_username || null })
+    .update({ name, ig_username: ig_username || null, billing_exempt: true, is_active: true })
     .eq('id', newUser.user!.id)
 
   if (profileError) {
