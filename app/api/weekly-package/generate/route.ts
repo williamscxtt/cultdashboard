@@ -201,6 +201,7 @@ interface CompReel {
   format_type?: string | null
   date?: string | null
   scraped_week?: string | null
+  hook?: string | null
 }
 
 function buildKnowledgeContext(
@@ -293,23 +294,6 @@ function buildKnowledgeContext(
     lines.push('')
   }
 
-  // Top hooks this week (by views)
-  const thisWeekComp = compReels
-    .filter(r => r.date && r.date >= sevenDaysAgoStr)
-    .sort((a, b) => (b.views ?? 0) - (a.views ?? 0))
-    .slice(0, 15)
-
-  // Only show openings from real transcripts — not captions
-  const thisWeekWithTranscript = thisWeekComp.filter(r => r.transcript && r.transcript.trim().length > 50)
-  if (thisWeekWithTranscript.length > 0) {
-    lines.push('=== TOP TRANSCRIPT OPENINGS THIS WEEK — what high-performing creators say ===')
-    for (const r of thisWeekWithTranscript) {
-      const opening = r.transcript!.slice(0, 300).trim()
-      lines.push(`• [@${r.account} | ${(r.views ?? 0).toLocaleString()} views] "${opening}"`)
-    }
-    lines.push('')
-  }
-
   // Account highlights
   const acctGroups: Record<string, number[]> = {}
   const thisWeekAllComp = compReels.filter(r => r.date && r.date >= sevenDaysAgoStr)
@@ -336,6 +320,63 @@ function buildKnowledgeContext(
   }
 
   return lines.join('\n') || 'No historical data yet.'
+}
+
+// ── Per-account outlier detection ────────────────────────────────────────────
+
+function buildOutlierContext(compReels: CompReel[]): string {
+  if (!compReels.length) return ''
+
+  // Group by account
+  const byAccount: Record<string, CompReel[]> = {}
+  for (const r of compReels) {
+    if (!byAccount[r.account]) byAccount[r.account] = []
+    byAccount[r.account].push(r)
+  }
+
+  const outliers: Array<{ reel: CompReel; multiplier: number; accountAvg: number }> = []
+
+  for (const reels of Object.values(byAccount)) {
+    const reelsWithViews = reels.filter(r => r.views && r.views > 0)
+    if (!reelsWithViews.length) continue
+
+    const totalViews = reelsWithViews.reduce((sum, r) => sum + (r.views ?? 0), 0)
+    const accountAvg = totalViews / reelsWithViews.length
+
+    for (const reel of reelsWithViews) {
+      // Single-reel accounts show at 1.0x so they're always represented
+      const multiplier = reelsWithViews.length === 1
+        ? 1.0
+        : (reel.views ?? 0) / accountAvg
+      if (multiplier >= 1.2 || reelsWithViews.length === 1) {
+        outliers.push({ reel, multiplier, accountAvg })
+      }
+    }
+  }
+
+  if (!outliers.length) return ''
+
+  // Sort by multiplier descending
+  outliers.sort((a, b) => b.multiplier - a.multiplier)
+
+  const lines = [
+    '=== OUTLIER REELS — significantly above each account\'s own average ===',
+    'These outperformed vs. the creator\'s own baseline. Prioritise these specific angles when choosing topics for scripts.',
+    '',
+  ]
+
+  for (const { reel, multiplier, accountAvg } of outliers.slice(0, 15)) {
+    const multStr = multiplier === 1.0
+      ? '(only reel this week)'
+      : `${multiplier.toFixed(1)}× above account avg (avg: ${Math.round(accountAvg).toLocaleString()})`
+    const hook = reel.transcript
+      ? reel.transcript.slice(0, 120).split(/[.!?]/)[0]?.trim() ?? ''
+      : (reel.hook ?? '')
+    lines.push(`• @${reel.account} — ${(reel.views ?? 0).toLocaleString()} views ${multStr}`)
+    if (hook) lines.push(`  Opening: "${hook}"`)
+  }
+
+  return lines.join('\n')
 }
 
 // Detect if a reel is conversion-focused based on transcript content
@@ -529,6 +570,123 @@ function buildTranscriptContext(reels: Reel[]): string {
   return lines.join('\n')
 }
 
+// ── Voice calibration ─────────────────────────────────────────────────────────
+
+interface VoiceCalibration {
+  distilled_rules: string
+  weekly_observations: string
+}
+
+async function loadVoiceCalibration(profileId: string): Promise<VoiceCalibration | null> {
+  const { data, error } = await adminClient
+    .from('voice_calibrations')
+    .select('distilled_rules, weekly_observations')
+    .eq('profile_id', profileId)
+    .single()
+  if (error || !data) return null
+  return data as VoiceCalibration
+}
+
+async function runVoiceCalibration(
+  profileId: string,
+  weekStart: string,
+  ownReels: Reel[],
+): Promise<void> {
+  // Get last week's generated scripts
+  const lastWeek = new Date(weekStart)
+  lastWeek.setDate(lastWeek.getDate() - 7)
+  const lastWeekStart = lastWeek.toISOString().split('T')[0]
+
+  const { data: lastPackage } = await adminClient
+    .from('weekly_scripts')
+    .select('scripts_md')
+    .eq('profile_id', profileId)
+    .eq('week_start', lastWeekStart)
+    .single()
+
+  if (!lastPackage?.scripts_md) return
+
+  // Filmed reels this week with real transcripts (evidence of what was actually posted)
+  const filmedReels = ownReels.filter(r =>
+    r.transcript && r.transcript.trim().length > 80 &&
+    r.date && r.date >= lastWeekStart
+  )
+  if (!filmedReels.length) return
+
+  const existing = await loadVoiceCalibration(profileId)
+
+  const filmedContext = filmedReels.slice(0, 5).map(r =>
+    `--- ${r.date} | ${(r.views ?? 0).toLocaleString()} views ---\n${r.transcript!.trim()}`
+  ).join('\n\n')
+
+  const prompt = `Compare these generated scripts (what Claude wrote last week) against what was actually filmed and posted.
+
+GENERATED SCRIPTS LAST WEEK:
+${lastPackage.scripts_md.slice(0, 8000)}
+
+ACTUALLY FILMED THIS WEEK (real transcripts from posted reels):
+${filmedContext}
+
+EXISTING DISTILLED RULES (patterns already confirmed from previous weeks):
+${existing?.distilled_rules || '(none yet)'}
+
+Your task:
+1. Compare how Claude writes vs how this creator actually speaks. Note specific differences in vocabulary, pacing, structure, or style.
+2. Identify 2–3 NEW patterns not already in the distilled rules.
+3. Suggest 0–2 rules to PROMOTE to the permanent distilled rules — only patterns confirmed across multiple reels.
+
+Respond in this exact JSON format:
+{
+  "observation": "1-2 sentence summary of key differences between scripted and filmed",
+  "new_patterns": ["pattern 1", "pattern 2"],
+  "promote_to_rules": ["permanent rule 1"]
+}
+
+Return ONLY valid JSON. No extra text.`
+
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-5',
+      max_tokens: 800,
+      messages: [{ role: 'user', content: prompt }],
+    })
+
+    const text = message.content[0].type === 'text' ? message.content[0].text.trim() : ''
+    // Strip markdown code blocks if Claude wrapped the JSON
+    const jsonText = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
+    const parsed = JSON.parse(jsonText) as {
+      observation: string
+      new_patterns: string[]
+      promote_to_rules: string[]
+    }
+
+    // Keep last 8 weekly observations
+    const obsLines = (existing?.weekly_observations || '').split('\n\n').filter(Boolean)
+    const newObs = `[${weekStart}] ${parsed.observation}${parsed.new_patterns.length ? '\nPatterns: ' + parsed.new_patterns.join('; ') : ''}`
+    obsLines.unshift(newObs)
+    const newObservations = obsLines.slice(0, 8).join('\n\n')
+
+    // Promote confirmed rules
+    const existingRules = (existing?.distilled_rules || '').split('\n').map(s => s.trim()).filter(Boolean)
+    const newRules = parsed.promote_to_rules.map(s => s.trim()).filter(Boolean)
+    const allRules = [...new Set([...existingRules, ...newRules])]
+    const newDistilled = allRules.join('\n')
+
+    await adminClient
+      .from('voice_calibrations')
+      .upsert({
+        profile_id: profileId,
+        distilled_rules: newDistilled,
+        weekly_observations: newObservations,
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'profile_id' })
+
+    console.log(`[weekly-package/generate] Voice calibration updated for ${profileId} — ${newRules.length} rules promoted`)
+  } catch (err) {
+    console.warn('[weekly-package/generate] Voice calibration failed (non-fatal):', String(err))
+  }
+}
+
 // ── System prompt ─────────────────────────────────────────────────────────────
 
 interface CreatorStyleGuide {
@@ -684,6 +842,7 @@ function buildCreatorSystemPrompt(
   intro: Record<string, unknown>,
   profile: Record<string, unknown>,
   creatorStyle: string | null,
+  calibration: VoiceCalibration | null = null,
 ): string {
   const niche = (intro.content_niche as string) || (intro.specific_niche as string) || (profile.niche as string) || 'their niche'
   const audience = (intro.target_audience as string) || (profile.target_audience as string) || ''
@@ -720,7 +879,10 @@ ${guide.contentStyle}
 CTAs — audience growth (NOT coaching/sales):
 ${guide.ctas}
 - Vary the wording — don't repeat the same CTA across multiple scripts
-- Never write "DM me" or coaching/programme CTAs for this account`
+- Never write "DM me" or coaching/programme CTAs for this account${calibration?.distilled_rules ? `
+
+VOICE CALIBRATION (confirmed patterns from comparing scripted vs filmed — follow these strictly):
+${calibration.distilled_rules}` : ''}`
 }
 
 function buildCoachSystemPrompt(
@@ -728,6 +890,7 @@ function buildCoachSystemPrompt(
   igHandle: string,
   intro: Record<string, unknown>,
   profile: Record<string, unknown>,
+  calibration: VoiceCalibration | null = null,
 ): string {
   const niche = (intro.specific_niche as string) || (intro.what_you_coach as string) || (profile.niche as string) || 'their niche'
   const idealClient = (intro.ideal_client as string) || (profile.target_audience as string) || ''
@@ -761,7 +924,10 @@ CONTENT STYLE:
 
 CTAs — ${name}'s own:
 - Coaching/program CTA: "DM me ${ctaKeyword}"
-- Use a natural variation each time — don't repeat the same wording across all 7 scripts`
+- Use a natural variation each time — don't repeat the same wording across all 7 scripts${calibration?.distilled_rules ? `
+
+VOICE CALIBRATION (confirmed patterns from comparing scripted vs filmed — follow these strictly):
+${calibration.distilled_rules}` : ''}`
 }
 
 function buildSystemPrompt(
@@ -771,17 +937,19 @@ function buildSystemPrompt(
   profile: Record<string, unknown>,
   isCreator = false,
   creatorStyle: string | null = null,
+  calibration: VoiceCalibration | null = null,
 ): string {
   if (isCreator) {
-    return buildCreatorSystemPrompt(name, igHandle, intro, profile, creatorStyle)
+    return buildCreatorSystemPrompt(name, igHandle, intro, profile, creatorStyle, calibration)
   }
-  return buildCoachSystemPrompt(name, igHandle, intro, profile)
+  return buildCoachSystemPrompt(name, igHandle, intro, profile, calibration)
 }
 
 // ── User prompt ───────────────────────────────────────────────────────────────
 
 function buildUserPrompt(
   competitorReport: string,
+  outlierContext: string,
   kbContext: string,
   brandContext: string,
   transcriptContext: string,
@@ -800,10 +968,17 @@ function buildUserPrompt(
 ===================================================================
 STEP 1 — WHAT'S WORKING IN THE NICHE RIGHT NOW (your primary source for ideas)
 ===================================================================
-Study these competitor reels. These are the angles, hooks, and structures that are actually getting views this week. This is where the ideas come from.
+Study these competitor reels carefully. These are the angles, hooks, and structures that are actually getting views this week. This is where all ideas come from.
 
-${competitorReport.slice(0, 60000)}
+${competitorReport.slice(0, 55000)}
+${outlierContext ? `
+===================================================================
+STEP 1B — OUTLIER REELS (prioritise these specific angles)
+===================================================================
+These specific reels significantly outperformed compared to the creator's own historical average — not just high in absolute views, but unusually strong relative to their baseline. The topic/angle resonated in a way their normal content doesn't. These are the highest-signal ideas this week.
 
+${outlierContext}
+` : ''}
 ===================================================================
 STEP 2 — HOW ${name.toUpperCase()} ACTUALLY SOUNDS (your primary source for voice)
 ===================================================================
@@ -825,19 +1000,20 @@ NOW WRITE THE SCRIPTS
 ===================================================================
 
 RULES:
-- Ideas must come from what competitors are actually posting — don't invent topics from scratch.
+- Ideas MUST come from what competitors are actually posting — especially the outlier reels flagged in Step 1B. Do not invent topics from scratch.
 - Draw inspiration from ALL competitors, not just the highest-view accounts.
 - Spread ideas across competitors — aim for at least one script inspired by each tracked account.
+- Each script MUST include a SOURCE line citing the exact competitor reel it was inspired by. Format: @account — "[opening line from their reel]" (N,NNN views). No script without a source.
 ${isCreator ? `- For each script: lead with what's working in the niche (competitor intelligence), written in ${name}'s voice, from their unique perspective
 - CTAs must drive follows, saves, shares, or engagement — NEVER coaching DMs or "work with me" language
 - The content should build ${name}'s audience and brand, not convert to a service` : `- For conversion scripts: look at how competitors pitch their offer, what objections they handle, what results they showcase — then write ${name}'s version
 - Voice must match ${name}'s transcripts — not generic coaching language
-- Across the 7 scripts, include at least 2 that are explicitly designed to drive DMs/enquiries`}
+- Across the scripts, include at least 2 explicitly designed to drive DMs/enquiries`}
 - Do NOT copy competitor scripts — take the angle/structure/topic and rewrite it completely in ${name}'s voice with their own story, proof, or perspective
 - If ${name} has performance data, weight towards formats that work for them
-- Do not repeat any format more than twice across the 7 scripts
+- Do not repeat any format more than twice
 - Each script must be a different angle — no two scripts on the same topic
-- You MUST write exactly 7 scripts. Count them before you finish. Do not stop at 6.
+- Write between 5–8 scripts depending on how many distinct quality angles the competitor data shows this week. Aim for 7. Write more when the data is rich with varied ideas, fewer when it's sparse.
 
 OUTPUT FORMAT (follow exactly):
 
@@ -853,7 +1029,9 @@ Write one bullet for EACH competitor account that has reels this week. Every tra
 
 ---
 
-### 🎬 Reel 1 — Monday | [FORMAT / STYLE]
+### 🎬 Reel 1 | [FORMAT / STYLE]
+
+**Source:** @account — "[opening line from the competitor reel that inspired this]" (N,NNN views)
 
 **Hook:** [Opening line]
 
@@ -868,7 +1046,9 @@ Write one bullet for EACH competitor account that has reels this week. Every tra
 
 ---
 
-### 🎬 Reel 2 — Tuesday | [FORMAT / STYLE]
+### 🎬 Reel 2 | [FORMAT / STYLE]
+
+**Source:** @account — "[opening line]" (N,NNN views)
 
 **Hook:** [Opening line]
 
@@ -883,7 +1063,9 @@ Write one bullet for EACH competitor account that has reels this week. Every tra
 
 ---
 
-### 🎬 Reel 3 — Wednesday | [FORMAT / STYLE]
+### 🎬 Reel 3 | [FORMAT / STYLE]
+
+**Source:** @account — "[opening line]" (N,NNN views)
 
 **Hook:** [Opening line]
 
@@ -898,7 +1080,9 @@ Write one bullet for EACH competitor account that has reels this week. Every tra
 
 ---
 
-### 🎬 Reel 4 — Thursday | [FORMAT / STYLE]
+### 🎬 Reel 4 | [FORMAT / STYLE]
+
+**Source:** @account — "[opening line]" (N,NNN views)
 
 **Hook:** [Opening line]
 
@@ -913,7 +1097,9 @@ Write one bullet for EACH competitor account that has reels this week. Every tra
 
 ---
 
-### 🎬 Reel 5 — Friday | [FORMAT / STYLE]
+### 🎬 Reel 5 | [FORMAT / STYLE]
+
+**Source:** @account — "[opening line]" (N,NNN views)
 
 **Hook:** [Opening line]
 
@@ -928,7 +1114,9 @@ Write one bullet for EACH competitor account that has reels this week. Every tra
 
 ---
 
-### 🎬 Reel 6 — Saturday | [FORMAT / STYLE]
+### 🎬 Reel 6 | [FORMAT / STYLE]
+
+**Source:** @account — "[opening line]" (N,NNN views)
 
 **Hook:** [Opening line]
 
@@ -943,7 +1131,9 @@ Write one bullet for EACH competitor account that has reels this week. Every tra
 
 ---
 
-### 🎬 Reel 7 — Sunday | [FORMAT / STYLE]
+### 🎬 Reel 7 | [FORMAT / STYLE]
+
+**Source:** @account — "[opening line]" (N,NNN views)
 
 **Hook:** [Opening line]
 
@@ -1019,7 +1209,7 @@ export async function POST(req: NextRequest) {
   const { data: compReels } = handles.length > 0
     ? await adminClient
         .from('competitor_reels')
-        .select('account, views, likes, comments, transcript, format_type, date, scraped_week')
+        .select('account, views, likes, comments, transcript, format_type, date, scraped_week, hook')
         .in('account', handles)
         .gte('date', sevenDaysAgoStr)
         .order('views', { ascending: false })
@@ -1029,8 +1219,12 @@ export async function POST(req: NextRequest) {
   const ownReelsList = (ownReels ?? []) as Reel[]
   const compReelsList = (compReels ?? []) as CompReel[]
 
+  // Load voice calibration (non-blocking on failure)
+  const calibration = await loadVoiceCalibration(profileId).catch(() => null)
+
   // Build all context sections
   const competitorReport = buildCompetitorReport(compReelsList)
+  const outlierContext = buildOutlierContext(compReelsList)
   const kbContext = buildKnowledgeContext(ownReelsList, compReelsList, weekStart)
   const brandContext = buildBrandContext(intro, profileRow as Record<string, unknown>, isCreator, creatorStyle)
   const transcriptContext = buildTranscriptContext(ownReelsList)
@@ -1042,10 +1236,10 @@ export async function POST(req: NextRequest) {
     const message = await anthropic.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 16000,
-      system: buildSystemPrompt(name, igHandle || 'creator', intro, profileRow as Record<string, unknown>, isCreator, creatorStyle),
+      system: buildSystemPrompt(name, igHandle || 'creator', intro, profileRow as Record<string, unknown>, isCreator, creatorStyle, calibration),
       messages: [{
         role: 'user',
-        content: buildUserPrompt(competitorReport, kbContext, brandContext, transcriptContext, commentContext, weekStart, name, isCreator, creatorStyle),
+        content: buildUserPrompt(competitorReport, outlierContext, kbContext, brandContext, transcriptContext, commentContext, weekStart, name, isCreator, creatorStyle),
       }],
     })
     scriptsMarkdown = message.content[0].type === 'text' ? message.content[0].text : ''
@@ -1118,6 +1312,10 @@ export async function POST(req: NextRequest) {
       top_hooks: topHooks,
     }, { onConflict: 'week_start' })
     .then(() => {}, () => {})
+
+  // Fire voice calibration asynchronously — compare this week's filmed reels
+  // against last week's generated scripts. Non-blocking; errors are swallowed.
+  runVoiceCalibration(profileId, weekStart, ownReelsList).catch(() => {})
 
   return NextResponse.json({
     ok: true,
