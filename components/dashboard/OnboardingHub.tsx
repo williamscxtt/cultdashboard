@@ -6,6 +6,7 @@ import { ChevronDown, ChevronUp, CheckCircle, Sparkles, Save, CalendarCheck } fr
 import type { Profile, IntroStructured, IntroInsights } from '@/lib/types'
 import { Button } from '@/components/ui'
 import { ONBOARDING_UNLOCK_THRESHOLD } from '@/lib/onboarding-keys'
+import PathSwitcher from '@/components/dashboard/PathSwitcher'
 
 // ─── Section definitions ──────────────────────────────────────────────────────
 
@@ -649,12 +650,23 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
         <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.5px', margin: '0 0 6px' }}>
           {adminView ? `${profile.name || 'Client'}'s Profile` : 'Onboarding Hub'}
         </h1>
-        <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.5 }}>
-          {adminView
-            ? 'Client profile data — all onboarding fields.'
-            : 'The more you put in, the better your AI gets. Come back and update whenever something changes.'
-          }
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+          <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.5 }}>
+            {adminView
+              ? 'Client profile data — all onboarding fields.'
+              : 'The more you put in, the better your AI gets. Come back and update whenever something changes.'
+            }
+          </p>
+          {!adminView && (
+            <PathSwitcher
+              profileId={profile.id}
+              currentType={profile.user_type ?? null}
+              currentStyle={profile.creator_style ?? null}
+              mode="self"
+              variant="button"
+            />
+          )}
+        </div>
       </div>
 
       {/* Progress bar */}

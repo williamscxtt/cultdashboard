@@ -140,12 +140,14 @@ export async function PATCH(req: NextRequest) {
 
   const adminClient = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!)
   const body = await req.json()
-  const { id, is_active, dm_keyword } = body
+  const { id, is_active, dm_keyword, user_type, creator_style } = body
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
   const updates: Record<string, unknown> = {}
   if (is_active !== undefined) updates.is_active = is_active
   if (dm_keyword !== undefined) updates.dm_keyword = dm_keyword || null
+  if (user_type !== undefined) updates.user_type = user_type || null
+  if ('creator_style' in body) updates.creator_style = creator_style || null
 
   const { error } = await adminClient.from('profiles').update(updates).eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -407,32 +407,64 @@ function buildCompetitorReport(compReels: CompReel[]): string {
   return lines.join('\n')
 }
 
-function buildBrandContext(intro: Record<string, unknown>, profile: Record<string, unknown>): string {
+function buildBrandContext(
+  intro: Record<string, unknown>,
+  profile: Record<string, unknown>,
+  isCreator = false,
+  creatorStyle: string | null = null,
+): string {
   const lines: string[] = ['# Client Brand Knowledge']
 
-  const fields: Array<[string, string]> = [
-    ['specific_niche', 'Niche'],
-    ['what_you_coach', 'What they coach'],
-    ['ideal_client', 'Ideal client'],
-    ['client_transformation', 'Transformation delivered'],
-    ['dream_outcome', 'Dream outcome for clients'],
-    ['brand_voice', 'Brand voice'],
-    ['hook_style', 'Hook style'],
-    ['unique_story', 'Their story'],
-    ['goal_90_days', '90-day goal'],
-    ['biggest_problem', 'Biggest challenge they solve'],
-    ['why_joined', 'Why they joined Creator Cult'],
-    ['dm_goal', 'DM / sales goal'],
-  ]
-
-  for (const [key, label] of fields) {
-    const val = (intro[key] ?? profile[key] ?? '') as string
-    if (val?.trim()) lines.push(`${label}: ${val.trim()}`)
-  }
-
-  const contentPillars = intro.content_pillars ?? profile.content_pillars
-  if (Array.isArray(contentPillars) && contentPillars.length > 0) {
-    lines.push(`Content pillars: ${contentPillars.join(', ')}`)
+  if (isCreator) {
+    const fields: Array<[string, string]> = [
+      ['content_niche', 'Content niche'],
+      ['content_description', 'What they create'],
+      ['target_audience', 'Target audience'],
+      ['what_your_content_gives_them', 'What their content gives viewers'],
+      ['creator_goal', 'Creator goal'],
+      ['brand_voice', 'Brand voice'],
+      ['hook_style', 'Preferred hook style'],
+      ['unique_story', 'Their story'],
+      ['creator_biggest_challenge', 'Biggest challenge'],
+      ['specific_niche', 'Niche'],
+    ]
+    for (const [key, label] of fields) {
+      const val = (intro[key] ?? profile[key] ?? '') as string
+      if (val?.trim()) lines.push(`${label}: ${val.trim()}`)
+    }
+    // Monetization model (may be an array)
+    const mono = intro.monetization_model
+    if (Array.isArray(mono) && mono.length > 0) {
+      lines.push(`Monetization: ${mono.join(', ')}`)
+    } else if (mono && typeof mono === 'string') {
+      lines.push(`Monetization: ${mono}`)
+    }
+    if (creatorStyle) {
+      lines.push(`Creator style: ${creatorStyle}`)
+    }
+  } else {
+    const fields: Array<[string, string]> = [
+      ['specific_niche', 'Niche'],
+      ['what_you_coach', 'What they coach'],
+      ['ideal_client', 'Ideal client'],
+      ['client_transformation', 'Transformation delivered'],
+      ['dream_outcome', 'Dream outcome for clients'],
+      ['brand_voice', 'Brand voice'],
+      ['hook_style', 'Hook style'],
+      ['unique_story', 'Their story'],
+      ['goal_90_days', '90-day goal'],
+      ['biggest_problem', 'Biggest challenge they solve'],
+      ['why_joined', 'Why they joined Creator Cult'],
+      ['dm_goal', 'DM / sales goal'],
+    ]
+    for (const [key, label] of fields) {
+      const val = (intro[key] ?? profile[key] ?? '') as string
+      if (val?.trim()) lines.push(`${label}: ${val.trim()}`)
+    }
+    const contentPillars = intro.content_pillars ?? profile.content_pillars
+    if (Array.isArray(contentPillars) && contentPillars.length > 0) {
+      lines.push(`Content pillars: ${contentPillars.join(', ')}`)
+    }
   }
 
   return lines.join('\n')
@@ -499,7 +531,199 @@ function buildTranscriptContext(reels: Reel[]): string {
 
 // ── System prompt ─────────────────────────────────────────────────────────────
 
-function buildSystemPrompt(
+interface CreatorStyleGuide {
+  description: string
+  split: string
+  contentStyle: string
+  ctas: string
+}
+
+function getCreatorStyleGuide(style: string): CreatorStyleGuide {
+  const guides: Record<string, CreatorStyleGuide> = {
+    educational: {
+      description: 'They teach. Every reel must leave the viewer with something actionable — a tip, a framework, a perspective shift. Save-worthy and share-worthy.',
+      split: `- 4 educational/value scripts: teach one clear thing per reel, lead with the payoff, use the "insight → proof → apply" structure
+- 2 personal story/journey scripts: what they've learned, mistakes they made, results they got — told from experience, not theory
+- 1 engagement script: ask the audience a question, challenge a belief, or spark a debate in the comments`,
+      contentStyle: `- Lead with the payoff — don't build up to the value, open with it
+- Specific numbers, timelines, and results outperform vague advice every time
+- "Here's what most people get wrong about X" and "The reason you're not getting Y" are strong openers
+- End with a clear takeaway the viewer can screenshot or save`,
+      ctas: `- "Save this for later"
+- "Follow for more [topic] tips"
+- "Comment your biggest takeaway"
+- "Part 2 coming if this gets [X] saves"`,
+    },
+    entertainment: {
+      description: 'They entertain. Relatable, funny, unexpected — entertainment first, information second. Virality comes from the feeling the viewer gets, not the facts they learn.',
+      split: `- 4 entertainment/viral scripts: funny moments, relatable scenarios, unexpected twists, POV formats, trending structures
+- 1 confessional/story script: something embarrassing, vulnerable, or surprising that actually happened
+- 1 rant/hot take: a strong opinion delivered with energy and specificity
+- 1 educational with entertainment packaging: genuinely useful info wrapped in a format that makes people laugh or share`,
+      contentStyle: `- Hook must trigger immediate emotional reaction — laugh, cringe, "omg same", or surprise
+- Punchlines, callbacks, and timing matter more than information density
+- "POV:", "Tell me why", "the audacity of", reaction formats tend to travel
+- Relatable > informative for this style — the viewer needs to feel seen, not taught
+- Study what's trending in competitor reels — entertainment is the most trend-dependent style`,
+      ctas: `- "Follow for more [chaos / content / this type of thing]"
+- "Share this with someone who needs to see it"
+- "Comment [emoji] if this is you"
+- "Part 2 if this gets [X] shares"`,
+    },
+    motivational: {
+      description: 'They inspire. Every reel should shift someone\'s belief about what\'s possible. Transformation stories, mindset reframes, and real encouragement — never generic.',
+      split: `- 3 mindset/belief shift scripts: challenge a limiting belief, flip a perspective, or show a new way of thinking
+- 2 personal transformation scripts: their real journey — the actual struggle, the turning point, the outcome (with specifics)
+- 1 challenge/accountability script: give the viewer one thing to do TODAY
+- 1 audience mirror script: describe exactly how the viewer is feeling or thinking right now, then offer the reframe`,
+      contentStyle: `- Lead with the belief you're challenging or the truth you're about to share
+- Speak directly to the person who is exactly where you were at your lowest
+- Real, raw, specific — not generic "you've got this" platitudes; those don't perform
+- Emotional resonance over information density — the feeling should linger after the video ends
+- End with a clear belief statement or one action the viewer can take today`,
+      ctas: `- "Follow if this resonated"
+- "Save this for when you need it"
+- "Tag someone who needs to hear this"
+- "Tell me in the comments: what's holding you back right now"`,
+    },
+    lifestyle: {
+      description: 'They invite viewers into their world. Aesthetic, aspirational, and real. People follow for the vibe, the perspective, and the glimpse into a life they want.',
+      split: `- 3 day-in-the-life/behind-the-scenes scripts: real moments, morning routines, how they work, travel, decisions
+- 2 opinion/hot take scripts: strong takes on something in their world — relationships, work, aesthetics, choices
+- 1 product/place/experience reveal: honest take on something they've tried, visited, or bought
+- 1 personal story: a real thing that happened, a decision they made, a turning point`,
+      contentStyle: `- Invite them in — "come with me", "let me show you", "here's what I actually do"
+- Mix aspirational (the highlight) with real (the reality behind it) — authenticity builds loyalty
+- Opinions and specificity matter — "I hate minimalist kitchens and here's why" beats "today's aesthetic"
+- Suggest visual approaches where relevant — these scripts are often more visual than talking-head`,
+      ctas: `- "Follow to come along"
+- "Save for inspo"
+- "Tell me — would you try this?"
+- "Link in bio for [product / place / booking]"`,
+    },
+    fitness: {
+      description: 'They educate and inspire in the fitness and wellness space — a mix of teaching technique, sharing real results, and making fitness feel achievable.',
+      split: `- 3 workout/exercise/technique scripts: teach a move, programme, or protocol — specific, filmable, immediately useful
+- 2 transformation/results scripts: their journey or results they've seen — real numbers, honest timelines
+- 1 nutrition/recovery/lifestyle script: the non-training side of fitness that most people ignore
+- 1 myth-busting script: challenge a common misconception in their niche with evidence or experience`,
+      contentStyle: `- Specific beats generic — "3 sets of 8 at RPE 8" beats "do more volume"
+- Lead with the outcome, then teach how to get there — "here's why your [muscle group] isn't growing"
+- Challenge myths and common mistakes — these drive saves because viewers want to be sure they're not making the error
+- Mix beginner-accessible with more advanced content in the same week`,
+      ctas: `- "Save this workout"
+- "Follow for more fitness content"
+- "Try this and tell me in the comments"
+- "Programme linked in bio"`,
+    },
+    finance: {
+      description: 'They make money concepts accessible and inspire financial action — practical tips, personal finance stories, and demystifying wealth building for regular people.',
+      split: `- 3 money tip/strategy scripts: one actionable thing per reel, clear and specific
+- 2 personal finance journey scripts: what they did, what changed, real numbers where possible
+- 1 myth-busting/hot take: challenge mainstream financial advice with a contrarian take
+- 1 beginner guide: make one intimidating concept feel achievable in under 60 seconds`,
+      contentStyle: `- Use real numbers wherever possible — "I saved £500 in 30 days by doing X" beats vague advice
+- Simplify jargon — explain it to the viewer like you're talking to a friend who doesn't care about finance
+- Aspirational but grounded — the viewer needs to believe it's achievable for someone like them
+- "Everyone says X, but actually Y" is a high-performing opener in this niche`,
+      ctas: `- "Save this"
+- "Follow for more money tips"
+- "Comment your income goal"
+- "Free guide linked in bio"`,
+    },
+    beauty: {
+      description: 'They create in the beauty, makeup, or skincare space — tutorials, honest reviews, transformations, and strong opinions on products and trends.',
+      split: `- 3 tutorial/how-to scripts: teach a technique, routine, or look — step-by-step, filmable
+- 2 product reveal/review scripts: honest take on something they've tried — what worked, what didn't
+- 1 transformation script: before/after, glow-up, or routine change with visible results
+- 1 hot take/opinion: challenge a beauty myth or trend with a confident point of view`,
+      contentStyle: `- Suggest what the viewer will see on screen — beauty content is more visual than most niches
+- "Get ready with me" and "I tried X so you don't have to" formats travel well
+- Be honest about products — trust is the currency in beauty; overselling kills credibility
+- Trending sounds, aesthetics, and formats matter more in this niche than most`,
+      ctas: `- "Save this tutorial"
+- "Follow for beauty tips"
+- "Comment what you want to see next"
+- "Products linked in bio"`,
+    },
+    gaming: {
+      description: 'They create gaming content — strategies, reactions, highlights, and community moments. Speak the language; energy and specificity are everything.',
+      split: `- 3 tips/strategies/secrets scripts: something that will make the viewer better or give them an advantage
+- 2 gameplay highlight/reaction scripts: a wild moment, clutch play, or genuine reaction to something in the community
+- 1 hot take: strong opinion about a game, mechanic, update, or the gaming community at large
+- 1 tutorial/breakdown: deep dive into a specific skill, character, build, or strategy`,
+      contentStyle: `- Speak the language of the gaming community — don't over-explain slang or water down the specificity
+- Energy and enthusiasm matter — flat delivery kills gaming content regardless of how good the tip is
+- "Nobody's talking about this" and "I tested this so you don't have to" are reliable openers
+- Be specific about the game, mode, platform, and patch version where relevant`,
+      ctas: `- "Follow for more [game] content"
+- "Share this with your squad"
+- "Comment your rank"
+- "Turn on notifications — posting daily"`,
+    },
+    other: {
+      description: 'They create content with a unique or cross-niche perspective. Their distinct point of view is the differentiator — lean into what makes their take unlike everyone else\'s.',
+      split: `- 4 value/educational scripts: one clear takeaway or insight per reel
+- 2 personal story scripts: their real journey, real lessons, honest perspective
+- 1 engagement/opinion script: a strong take that invites conversation`,
+      contentStyle: `- Lead with the most interesting or unexpected thing first
+- Specificity is the antidote to generic content — real details, real numbers, real moments
+- Their unique perspective is the differentiator — write from that angle every time`,
+      ctas: `- "Follow for more"
+- "Save this"
+- "Comment your take"`,
+    },
+  }
+
+  return guides[style] ?? guides['other']
+}
+
+function buildCreatorSystemPrompt(
+  name: string,
+  igHandle: string,
+  intro: Record<string, unknown>,
+  profile: Record<string, unknown>,
+  creatorStyle: string | null,
+): string {
+  const niche = (intro.content_niche as string) || (intro.specific_niche as string) || (profile.niche as string) || 'their niche'
+  const audience = (intro.target_audience as string) || (profile.target_audience as string) || ''
+  const style = creatorStyle || 'educational'
+  const guide = getCreatorStyleGuide(style)
+
+  return `You are a content strategist and ghostwriter for ${name} (@${igHandle}), a ${style} creator in the ${niche} space${audience ? ` for ${audience}` : ''}.
+
+YOUR JOB:
+Write 7 reel scripts each week that grow their audience, maximise engagement, and feel completely native to their voice and style. These are real scripts that will be filmed — they must be specific, authentic, and immediately filmable.
+
+CREATOR STYLE: ${style.toUpperCase()}
+${guide.description}
+
+THE 7 SCRIPTS:
+${guide.split}
+
+HOW TO DO IT:
+1. Study every competitor reel — what topics, angles, formats, and hooks are getting views right now in this niche. This is where the ideas come from.
+2. Study ${name}'s own transcripts — this is their real voice. Match their rhythm, vocabulary, energy, and natural speech patterns exactly. Note what they've already covered so you don't repeat it.
+3. Use their brand context to personalise — their story, their experiences, their specific perspective.
+4. Combine: competitor's winning angle/format + ${name}'s voice + their unique take on it.
+
+CONTENT STYLE:
+${guide.contentStyle}
+- Most scripts are straight-to-camera — the creator speaks directly, no props needed
+- Some scripts can suggest a visual format where it genuinely fits (split screen, reaction content, side-by-side — the creator will find the specific clip; just describe the type)
+- Every script must be filmable as described
+- 45–90 seconds when spoken aloud (120–250 words)
+- ONE clear idea per reel
+- Vary energy across the 7 scripts — some fast and punchy, some slower and more personal
+- No filler openers: no "so today", "in this video", "hey guys"
+
+CTAs — audience growth (NOT coaching/sales):
+${guide.ctas}
+- Vary the wording — don't repeat the same CTA across multiple scripts
+- Never write "DM me" or coaching/programme CTAs for this account`
+}
+
+function buildCoachSystemPrompt(
   name: string,
   igHandle: string,
   intro: Record<string, unknown>,
@@ -540,6 +764,20 @@ CTAs — ${name}'s own:
 - Use a natural variation each time — don't repeat the same wording across all 7 scripts`
 }
 
+function buildSystemPrompt(
+  name: string,
+  igHandle: string,
+  intro: Record<string, unknown>,
+  profile: Record<string, unknown>,
+  isCreator = false,
+  creatorStyle: string | null = null,
+): string {
+  if (isCreator) {
+    return buildCreatorSystemPrompt(name, igHandle, intro, profile, creatorStyle)
+  }
+  return buildCoachSystemPrompt(name, igHandle, intro, profile)
+}
+
 // ── User prompt ───────────────────────────────────────────────────────────────
 
 function buildUserPrompt(
@@ -550,6 +788,8 @@ function buildUserPrompt(
   commentContext: string,
   weekStart: string,
   name: string,
+  isCreator = false,
+  creatorStyle: string | null = null,
 ): string {
   const formattedWeek = new Date(weekStart + 'T00:00:00Z').toLocaleDateString('en-GB', {
     day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC',
@@ -585,16 +825,18 @@ NOW WRITE THE SCRIPTS
 ===================================================================
 
 RULES:
-- Ideas must come from what competitors are actually posting — both their viral content AND their conversion content. Do not invent topics from scratch.
-- Draw inspiration from ALL competitors, not just the highest-view accounts. A competitor with lower views may be posting content that's more niche-relevant or closer to the type of content ${name} should make.
+- Ideas must come from what competitors are actually posting — don't invent topics from scratch.
+- Draw inspiration from ALL competitors, not just the highest-view accounts.
 - Spread ideas across competitors — aim for at least one script inspired by each tracked account.
-- For conversion scripts: look at how competitors pitch their offer, what objections they handle, what results they showcase, what CTAs they use — then write ${name}'s version
+${isCreator ? `- For each script: lead with what's working in the niche (competitor intelligence), written in ${name}'s voice, from their unique perspective
+- CTAs must drive follows, saves, shares, or engagement — NEVER coaching DMs or "work with me" language
+- The content should build ${name}'s audience and brand, not convert to a service` : `- For conversion scripts: look at how competitors pitch their offer, what objections they handle, what results they showcase — then write ${name}'s version
 - Voice must match ${name}'s transcripts — not generic coaching language
+- Across the 7 scripts, include at least 2 that are explicitly designed to drive DMs/enquiries`}
 - Do NOT copy competitor scripts — take the angle/structure/topic and rewrite it completely in ${name}'s voice with their own story, proof, or perspective
 - If ${name} has performance data, weight towards formats that work for them
 - Do not repeat any format more than twice across the 7 scripts
 - Each script must be a different angle — no two scripts on the same topic
-- Across the 7 scripts, include at least 2 that are explicitly designed to drive DMs/enquiries
 - You MUST write exactly 7 scripts. Count them before you finish. Do not stop at 6.
 
 OUTPUT FORMAT (follow exactly):
@@ -622,7 +864,7 @@ Write one bullet for EACH competitor account that has reels this week. Every tra
 
 **Caption:** [2–3 lines. No hashtag spam.]
 
-**CTA:** [Their specific CTA — varied wording each reel]
+**CTA:** [${isCreator ? 'Audience growth CTA: follow / save / share / engage — varied each reel' : 'Their specific CTA — varied wording each reel'}]
 
 ---
 
@@ -764,6 +1006,8 @@ export async function POST(req: NextRequest) {
   const intro = (profileRow.intro_structured ?? {}) as Record<string, unknown>
   const name = (profileRow.name as string) || 'Creator'
   const igHandle = (profileRow.ig_username as string) || ''
+  const isCreator = (profileRow.user_type as string) === 'creator'
+  const creatorStyle = (profileRow.creator_style as string | null) ?? null
 
   // Sync own reels from Instagram first (fresh data for generation)
   if (igHandle) {
@@ -788,7 +1032,7 @@ export async function POST(req: NextRequest) {
   // Build all context sections
   const competitorReport = buildCompetitorReport(compReelsList)
   const kbContext = buildKnowledgeContext(ownReelsList, compReelsList, weekStart)
-  const brandContext = buildBrandContext(intro, profileRow as Record<string, unknown>)
+  const brandContext = buildBrandContext(intro, profileRow as Record<string, unknown>, isCreator, creatorStyle)
   const transcriptContext = buildTranscriptContext(ownReelsList)
   const commentContext = buildCommentContext(ownReelsList)
 
@@ -798,10 +1042,10 @@ export async function POST(req: NextRequest) {
     const message = await anthropic.messages.create({
       model: 'claude-opus-4-6',
       max_tokens: 16000,
-      system: buildSystemPrompt(name, igHandle || 'creator', intro, profileRow as Record<string, unknown>),
+      system: buildSystemPrompt(name, igHandle || 'creator', intro, profileRow as Record<string, unknown>, isCreator, creatorStyle),
       messages: [{
         role: 'user',
-        content: buildUserPrompt(competitorReport, kbContext, brandContext, transcriptContext, commentContext, weekStart, name),
+        content: buildUserPrompt(competitorReport, kbContext, brandContext, transcriptContext, commentContext, weekStart, name, isCreator, creatorStyle),
       }],
     })
     scriptsMarkdown = message.content[0].type === 'text' ? message.content[0].text : ''

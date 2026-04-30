@@ -6,6 +6,7 @@ import Link from 'next/link'
 import ClientDetailActions from '@/components/dashboard/ClientDetailActions'
 import ClientDetailTabs from '@/components/dashboard/ClientDetailTabs'
 import AdminClientOverview from '@/components/dashboard/AdminClientOverview'
+import PathSwitcher from '@/components/dashboard/PathSwitcher'
 import { Card, Badge } from '@/components/ui'
 import { ArrowLeft } from 'lucide-react'
 
@@ -100,6 +101,13 @@ export default async function ClientDetailPage({
           <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>@{profile.ig_username}</div>
         )}
         <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <PathSwitcher
+            profileId={profile.id}
+            currentType={profile.user_type ?? null}
+            currentStyle={profile.creator_style ?? null}
+            mode="admin"
+            variant="badge"
+          />
           <Badge variant={profile.is_active ? 'success' : 'muted'}>
             {profile.is_active ? 'Active' : 'Inactive'}
           </Badge>
