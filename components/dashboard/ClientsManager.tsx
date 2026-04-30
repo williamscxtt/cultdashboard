@@ -927,6 +927,7 @@ function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
       starting_active_clients: null, intro_structured: null,
       intro_freeform: null, intro_insights: null, dashboard_bio: null,
       weekly_checklist: null, onboarding_hub_complete: false,
+      user_type: null, creator_style: null,
     })
   }
 

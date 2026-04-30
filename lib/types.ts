@@ -98,6 +98,9 @@ export interface Profile {
   onboarding_completed: boolean
   onboarding_hub_complete: boolean
   created_at: string
+  // Path type — defaults to 'coach' for all existing clients
+  user_type: 'coach' | 'creator' | null
+  creator_style: 'educational' | 'entertainment' | 'motivational' | 'lifestyle' | 'fitness' | 'finance' | 'beauty' | 'gaming' | 'other' | null
   yt_channel_id?: string | null
   tiktok_handle?: string | null
   // Core onboarding fields

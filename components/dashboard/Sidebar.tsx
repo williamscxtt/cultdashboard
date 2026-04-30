@@ -7,7 +7,7 @@ import {
   Settings, Users, LogOut, Calendar, Copy, Search,
   BookOpen, TrendingUp, PhoneCall,
   ChevronDown, ChevronUp, Send, Zap, PanelLeft, User, X,
-  Sun, Moon, Lock, CreditCard,
+  Sun, Moon, Lock, CreditCard, List,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
@@ -16,15 +16,18 @@ import { useState, useEffect } from 'react'
 // ─── nav definitions ──────────────────────────────────────────────────────────
 
 // Same nav for everyone — admin just gets the extra section at the bottom
-const mainNav = [
-  { href: '/dashboard/analytics',   label: 'Dashboard',        icon: BarChart2 },
-  { href: '/dashboard/content',     label: 'Content Studio',   icon: Lightbulb },
-  { href: '/dashboard/calendar',    label: 'Content Calendar', icon: Calendar },
-  { href: '/dashboard/dm-sales',    label: 'DM Sales',         icon: PhoneCall },
-  { href: '/dashboard/ai',          label: 'Ask Will AI',      icon: MessageSquare },
+// DM Sales label changes to "Sales & Deals" for creators (passed as prop to SidebarContent)
+const makeMainNav = (isCreator: boolean) => [
+  { href: '/dashboard/analytics',   label: 'Dashboard',                           icon: BarChart2 },
+  { href: '/dashboard/content',     label: 'Content Studio',                      icon: Lightbulb },
+  { href: '/dashboard/calendar',    label: 'Content Calendar',                    icon: Calendar },
+  { href: '/dashboard/dm-sales',    label: isCreator ? 'Sales & Deals' : 'DM Sales', icon: PhoneCall },
+  { href: '/dashboard/ai',          label: 'Ask Will AI',                         icon: MessageSquare },
 ]
 
 const toolsNavBase = [
+  { href: '/dashboard/hook-lab',      label: 'Hook Lab',         icon: Zap },
+  { href: '/dashboard/series-planner', label: 'Series Planner',  icon: List },
   { href: '/dashboard/outreach',      label: 'Outreach',         icon: Send },
   { href: '/dashboard/reel-copy',     label: 'Reel Analyser',    icon: Copy },
   { href: '/dashboard/profile-audit', label: 'Profile Tools',    icon: Search },
@@ -197,6 +200,8 @@ function SidebarContent({
 
   const isAdmin = realProfile.role === 'admin'
   const displayProfile = isImpersonating ? effectiveProfile : realProfile
+  const isCreator = (isImpersonating ? effectiveProfile : realProfile).user_type === 'creator'
+  const mainNav = makeMainNav(isCreator)
   const toolsNav = [...toolsNavBase, clientOnboardingItem]
   const [billingLoading, setBillingLoading] = useState(false)
 

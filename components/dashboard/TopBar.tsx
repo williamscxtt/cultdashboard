@@ -18,10 +18,12 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/profile-audit': 'Profile Audit',
   '/dashboard/onboarding':    'My Profile',
   '/dashboard/settings':      'Settings',
-  '/dashboard/clients':       'Clients',
-'/dashboard/reports':       'Progress Reports',
-  '/dashboard/intel':         'Global Intel',
-  '/dashboard/knowledge':     'Knowledge Base',
+  '/dashboard/clients':        'Clients',
+  '/dashboard/reports':        'Progress Reports',
+  '/dashboard/intel':          'Global Intel',
+  '/dashboard/knowledge':      'Knowledge Base',
+  '/dashboard/hook-lab':       'Hook Lab',
+  '/dashboard/series-planner': 'Series Planner',
 }
 
 interface Props {

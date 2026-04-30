@@ -25,44 +25,142 @@ interface SectionDef {
   fields: FieldDef[]
 }
 
-const SECTIONS: SectionDef[] = [
-  {
-    number: 1,
-    title: 'Who You Are',
-    description: 'The basics. Tell us about you as a person, not just as a coach.',
-    fields: [
-      { key: 'full_name', label: 'Full name', placeholder: 'William Scott' },
-      { key: 'age', label: 'Age', placeholder: '25', type: 'number' },
-      { key: 'location', label: "Where you're based", placeholder: 'England, UK' },
-      { key: 'occupation_before', label: 'What did you do before coaching?', placeholder: 'e.g. Personal trainer, delivery driver, teacher', type: 'textarea' },
-      { key: 'how_long_coaching', label: 'How long have you been coaching?', placeholder: 'e.g. 2 years', type: 'text' },
-      { key: 'active_clients', label: 'How many active 1-1 clients do you have right now?', placeholder: 'e.g. 8' },
-      { key: 'monthly_revenue_current', label: 'What is your current monthly revenue?', placeholder: 'e.g. £3,500/month', type: 'text' },
-      { key: 'highest_revenue', label: "What's the highest monthly revenue you've ever hit?", placeholder: 'e.g. £6,000', type: 'text' },
-      { key: 'offer_price', label: "What's the price of your main offer?", placeholder: 'e.g. £300/month, £1,200 upfront', type: 'text' },
-      { key: 'offer_description', label: 'Describe your offer in one sentence.', placeholder: 'e.g. 12-week 1:1 coaching to help men over 40 build muscle without pain', type: 'textarea' },
-      { key: 'personality_type', label: "How would you describe your personality?", placeholder: 'e.g. Introvert, straight-talker, motivator', type: 'text' },
-      { key: 'fun_fact', label: 'One fun or surprising fact about you.', placeholder: 'e.g. I used to be a semi-professional footballer', type: 'text' },
-      { key: 'values', label: 'What are your top 3 personal values?', placeholder: 'e.g. Discipline, honesty, family', type: 'text' },
-    ],
-  },
-  {
-    number: 2,
-    title: 'Your Business',
-    description: 'Tell us about what you do and who you do it for.',
-    fields: [
-      { key: 'specific_niche', label: 'What is your specific niche?', placeholder: 'e.g. Fitness coaches personal brand growth', type: 'textarea' },
-      { key: 'what_you_coach', label: 'What do you coach people on?', placeholder: 'e.g. I help online coaches grow their Instagram and close clients through DMs', type: 'textarea' },
-      { key: 'ideal_client', label: 'Who is your ideal client?', placeholder: 'e.g. A fitness coach stuck between £3K–£7K a month with a working offer but weak content', type: 'textarea' },
-      { key: 'client_transformation', label: "What's the #1 transformation your clients get?", placeholder: 'e.g. From £2K/month to £10K/month in 90 days', type: 'textarea' },
-      { key: 'unique_mechanism', label: 'What is your unique method or framework?', placeholder: "e.g. The CULT System — Content, Upsell, Lead, Trust", type: 'textarea' },
-      { key: 'why_different', label: 'Why are you different from other coaches in your space?', placeholder: "e.g. I've done it myself with no big brand. I teach organic only.", type: 'textarea' },
-      { key: 'main_platforms', label: 'Which platforms are you on?', placeholder: 'e.g. Instagram, TikTok, YouTube Shorts', type: 'text' },
-      { key: 'revenue_goal_90', label: 'Revenue goal in 90 days?', placeholder: 'e.g. £10,000/month', type: 'text' },
-      { key: 'revenue_goal_12m', label: 'Revenue goal in 12 months?', placeholder: 'e.g. £25,000/month', type: 'text' },
-      { key: 'follower_goal_90', label: 'Follower goal in 90 days?', placeholder: 'e.g. 10,000', type: 'text' },
-    ],
-  },
+// ─── Section definitions — base + creator overrides ──────────────────────────
+
+const SECTION_1_COACH: SectionDef = {
+  number: 1,
+  title: 'Who You Are',
+  description: 'The basics. Tell us about you as a person, not just as a coach.',
+  fields: [
+    { key: 'full_name', label: 'Full name', placeholder: 'William Scott' },
+    { key: 'age', label: 'Age', placeholder: '25', type: 'number' },
+    { key: 'location', label: "Where you're based", placeholder: 'England, UK' },
+    { key: 'occupation_before', label: 'What did you do before coaching?', placeholder: 'e.g. Personal trainer, delivery driver, teacher', type: 'textarea' },
+    { key: 'how_long_coaching', label: 'How long have you been coaching?', placeholder: 'e.g. 2 years', type: 'text' },
+    { key: 'active_clients', label: 'How many active 1-1 clients do you have right now?', placeholder: 'e.g. 8' },
+    { key: 'monthly_revenue_current', label: 'What is your current monthly revenue?', placeholder: 'e.g. £3,500/month', type: 'text' },
+    { key: 'highest_revenue', label: "What's the highest monthly revenue you've ever hit?", placeholder: 'e.g. £6,000', type: 'text' },
+    { key: 'offer_price', label: "What's the price of your main offer?", placeholder: 'e.g. £300/month, £1,200 upfront', type: 'text' },
+    { key: 'offer_description', label: 'Describe your offer in one sentence.', placeholder: 'e.g. 12-week 1:1 coaching to help men over 40 build muscle without pain', type: 'textarea' },
+    { key: 'personality_type', label: "How would you describe your personality?", placeholder: 'e.g. Introvert, straight-talker, motivator', type: 'text' },
+    { key: 'fun_fact', label: 'One fun or surprising fact about you.', placeholder: 'e.g. I used to be a semi-professional footballer', type: 'text' },
+    { key: 'values', label: 'What are your top 3 personal values?', placeholder: 'e.g. Discipline, honesty, family', type: 'text' },
+  ],
+}
+
+const SECTION_1_CREATOR: SectionDef = {
+  number: 1,
+  title: 'Who You Are',
+  description: 'The basics. Tell us about you as a person, not just as a creator.',
+  fields: [
+    { key: 'full_name', label: 'Full name', placeholder: 'William Scott' },
+    { key: 'age', label: 'Age', placeholder: '25', type: 'number' },
+    { key: 'location', label: "Where you're based", placeholder: 'England, UK' },
+    { key: 'occupation_before', label: 'What did you do before creating?', placeholder: 'e.g. Marketing exec, fitness coach, student', type: 'textarea' },
+    { key: 'how_long_creating', label: 'How long have you been creating content?', placeholder: 'e.g. 2 years', type: 'text' },
+    { key: 'brand_partnerships_done', label: 'How many brand deals or partnerships have you done?', placeholder: 'e.g. 3 — all gifted so far', type: 'text' },
+    { key: 'monthly_revenue_current', label: 'What is your current monthly income from content?', placeholder: 'e.g. £800/month from brand deals', type: 'text' },
+    { key: 'monetization_model_hub', label: 'How do you currently monetise (or plan to)?', placeholder: 'e.g. Brand deals, digital products, platform revenue, UGC', type: 'textarea' },
+    { key: 'content_description', label: 'Describe your content in one sentence.', placeholder: 'e.g. Short-form finance education for 20-somethings who want to stop living paycheck to paycheck', type: 'textarea' },
+    { key: 'personality_type', label: "How would you describe your personality?", placeholder: 'e.g. Introvert, straight-talker, entertainer', type: 'text' },
+    { key: 'fun_fact', label: 'One fun or surprising fact about you.', placeholder: 'e.g. I used to be a semi-professional footballer', type: 'text' },
+    { key: 'values', label: 'What are your top 3 personal values?', placeholder: 'e.g. Authenticity, creativity, consistency', type: 'text' },
+  ],
+}
+
+const SECTION_2_COACH: SectionDef = {
+  number: 2,
+  title: 'Your Business',
+  description: 'Tell us about what you do and who you do it for.',
+  fields: [
+    { key: 'specific_niche', label: 'What is your specific niche?', placeholder: 'e.g. Fitness coaches personal brand growth', type: 'textarea' },
+    { key: 'what_you_coach', label: 'What do you coach people on?', placeholder: 'e.g. I help online coaches grow their Instagram and close clients through DMs', type: 'textarea' },
+    { key: 'ideal_client', label: 'Who is your ideal client?', placeholder: 'e.g. A fitness coach stuck between £3K–£7K a month with a working offer but weak content', type: 'textarea' },
+    { key: 'client_transformation', label: "What's the #1 transformation your clients get?", placeholder: 'e.g. From £2K/month to £10K/month in 90 days', type: 'textarea' },
+    { key: 'unique_mechanism', label: 'What is your unique method or framework?', placeholder: "e.g. The CULT System — Content, Upsell, Lead, Trust", type: 'textarea' },
+    { key: 'why_different', label: 'Why are you different from other coaches in your space?', placeholder: "e.g. I've done it myself with no big brand. I teach organic only.", type: 'textarea' },
+    { key: 'main_platforms', label: 'Which platforms are you on?', placeholder: 'e.g. Instagram, TikTok, YouTube Shorts', type: 'text' },
+    { key: 'revenue_goal_90', label: 'Revenue goal in 90 days?', placeholder: 'e.g. £10,000/month', type: 'text' },
+    { key: 'revenue_goal_12m', label: 'Revenue goal in 12 months?', placeholder: 'e.g. £25,000/month', type: 'text' },
+    { key: 'follower_goal_90', label: 'Follower goal in 90 days?', placeholder: 'e.g. 10,000', type: 'text' },
+  ],
+}
+
+const SECTION_2_CREATOR: SectionDef = {
+  number: 2,
+  title: 'Your Brand',
+  description: 'Tell us about your content, your audience, and what makes you different.',
+  fields: [
+    { key: 'specific_niche', label: 'What is your content niche?', placeholder: 'e.g. Personal finance education for people in their 20s and 30s', type: 'textarea' },
+    { key: 'content_transformation', label: "What transformation does your content create for viewers?", placeholder: 'e.g. They go from confused and overwhelmed about money to confident and in control', type: 'textarea' },
+    { key: 'ideal_client', label: 'Who is your target audience?', placeholder: 'e.g. 22–35 year olds who want to take control of their finances but find traditional advice dry', type: 'textarea' },
+    { key: 'creator_style_hub', label: 'How would you describe your content style?', placeholder: 'e.g. Educational but entertaining — like a smart friend giving advice, not a lecturer', type: 'textarea' },
+    { key: 'why_different', label: 'What makes your content different from others in your niche?', placeholder: "e.g. I make complex financial concepts feel simple and funny — not intimidating", type: 'textarea' },
+    { key: 'main_platforms', label: 'Which platforms are you on?', placeholder: 'e.g. Instagram, TikTok, YouTube Shorts', type: 'text' },
+    { key: 'follower_goal_90', label: 'Follower goal in 90 days?', placeholder: 'e.g. 10,000', type: 'text' },
+    { key: 'follower_goal_12m', label: 'Follower goal in 12 months?', placeholder: 'e.g. 100,000', type: 'text' },
+    { key: 'income_goal_content', label: 'Income goal from content in 12 months?', placeholder: 'e.g. £3,000/month from brand deals and digital products', type: 'text' },
+  ],
+}
+
+const SECTION_4_COACH: SectionDef = {
+  number: 4,
+  title: "Where You're Stuck",
+  description: 'Be honest. The more detail here, the better I can help.',
+  fields: [
+    { key: 'biggest_problem', label: "What's your #1 problem right now?", placeholder: 'e.g. Views are stuck at 500–1K no matter what I post', type: 'textarea' },
+    { key: 'what_tried_before', label: "What have you tried that hasn't worked?", placeholder: 'e.g. Posting daily, trending audios, viral hooks — nothing moved the needle', type: 'textarea' },
+    { key: 'what_held_back', label: "What do you think is holding you back?", placeholder: 'e.g. My hooks are weak and I don\'t know who I\'m talking to', type: 'textarea' },
+    { key: 'previous_coaches', label: 'Have you worked with any coaches or programmes before?', placeholder: 'e.g. Yes — bought two courses, hired a business coach for 3 months', type: 'textarea' },
+    { key: 'content_consistency', label: 'How consistent have you been with content?', placeholder: 'e.g. Post 2–3x/week but then burn out and go quiet for 2 weeks', type: 'textarea' },
+    { key: 'dm_sales_experience', label: 'How are your DM conversations going?', placeholder: 'e.g. Getting some leads but they ghost when I mention price', type: 'textarea' },
+  ],
+}
+
+const SECTION_4_CREATOR: SectionDef = {
+  number: 4,
+  title: "Where You're Stuck",
+  description: 'Be honest. The more detail here, the better I can help.',
+  fields: [
+    { key: 'biggest_problem', label: "What's your #1 problem right now?", placeholder: 'e.g. Views are stuck at 2K per reel and I don\'t know how to break through', type: 'textarea' },
+    { key: 'what_tried_before', label: "What have you tried that hasn't worked?", placeholder: 'e.g. Trending audios, posting daily, better editing — nothing shifted the numbers', type: 'textarea' },
+    { key: 'what_held_back', label: "What do you think is holding you back?", placeholder: 'e.g. My hooks aren\'t strong enough and I don\'t have a clear enough niche', type: 'textarea' },
+    { key: 'previous_coaches', label: 'Have you worked with any coaches or programmes before?', placeholder: 'e.g. Yes — bought a content course, tried a growth service', type: 'textarea' },
+    { key: 'content_consistency', label: 'How consistent have you been with posting?', placeholder: 'e.g. Post 2–3x/week but inconsistent — sometimes go quiet for 2 weeks', type: 'textarea' },
+    { key: 'brand_deal_experience', label: 'Any experience with brand deals or sponsorships?', placeholder: 'e.g. A few gifted deals but haven\'t been able to secure paid ones yet', type: 'textarea' },
+    { key: 'monetization_clarity', label: 'How clear are you on your monetisation path?', placeholder: 'e.g. I know I want brand deals but have no idea how to approach brands', type: 'textarea' },
+  ],
+}
+
+const SECTION_5_COACH: SectionDef = {
+  number: 5,
+  title: 'What You Want',
+  description: 'Be specific. Vague goals get vague results.',
+  fields: [
+    { key: 'goal_90_days', label: 'What do you want to achieve in 90 days?', placeholder: 'e.g. Hit £10K/month, get to 10K followers, close 3 new high-ticket clients', type: 'textarea' },
+    { key: 'goal_12_months', label: 'Where do you want to be in 12 months?', placeholder: 'e.g. Running a £25K/month business with a team, known in my niche', type: 'textarea' },
+    { key: 'what_success_looks_like', label: 'What does success look like to you beyond money?', placeholder: 'e.g. Freedom to work from anywhere, time with family, making a real impact', type: 'textarea' },
+    { key: 'why_now', label: 'Why is now the right time for this?', placeholder: "e.g. I'm done playing small. I've seen others do it and I know I can.", type: 'textarea' },
+    { key: 'why_cult', label: "Why did you join CULT specifically?", placeholder: "e.g. I've followed Will for 2 years and his system is the only one that made sense", type: 'textarea' },
+  ],
+}
+
+const SECTION_5_CREATOR: SectionDef = {
+  number: 5,
+  title: 'What You Want',
+  description: 'Be specific. Vague goals get vague results.',
+  fields: [
+    { key: 'goal_90_days', label: 'What do you want to achieve in 90 days?', placeholder: 'e.g. Hit 20K followers, land my first paid brand deal, post consistently', type: 'textarea' },
+    { key: 'goal_12_months', label: 'Where do you want to be in 12 months?', placeholder: 'e.g. 100K followers, £2K/month from content, recognized in my niche', type: 'textarea' },
+    { key: 'brand_deal_goal', label: 'What brand deal / monetisation goal do you have?', placeholder: 'e.g. 2 paid brand deals per month averaging £500 each by end of year', type: 'textarea' },
+    { key: 'what_success_looks_like', label: 'What does success look like to you beyond numbers?', placeholder: 'e.g. Making content I\'m proud of, building a community, doing this full-time', type: 'textarea' },
+    { key: 'why_now', label: 'Why is now the right time for this?', placeholder: "e.g. I've been putting it off for 2 years. I'm committing fully now.", type: 'textarea' },
+    { key: 'why_cult', label: "Why did you join CULT specifically?", placeholder: "e.g. Will's approach to content growth is the most practical I've seen", type: 'textarea' },
+  ],
+}
+
+// Shared sections (3, 6, 7, 8) — same for both coaches and creators
+const SECTIONS_SHARED: SectionDef[] = [
   {
     number: 3,
     title: 'Your Content',
@@ -76,31 +174,6 @@ const SECTIONS: SectionDef[] = [
       { key: 'brand_voice', label: 'Describe your brand voice.', placeholder: 'e.g. Tough love, no BS, big brother energy', type: 'textarea' },
       { key: 'topics_covered', label: 'What topics do you cover in your content?', placeholder: 'e.g. Mindset, content strategy, DM sales, consistency', type: 'textarea' },
       { key: 'content_frequency_goal', label: 'How often do you want to post going forward?', placeholder: 'e.g. Daily, 5x/week', type: 'text' },
-    ],
-  },
-  {
-    number: 4,
-    title: "Where You're Stuck",
-    description: 'Be honest. The more detail here, the better I can help.',
-    fields: [
-      { key: 'biggest_problem', label: "What's your #1 problem right now?", placeholder: 'e.g. Views are stuck at 500–1K no matter what I post', type: 'textarea' },
-      { key: 'what_tried_before', label: "What have you tried that hasn't worked?", placeholder: 'e.g. Posting daily, trending audios, viral hooks — nothing moved the needle', type: 'textarea' },
-      { key: 'what_held_back', label: "What do you think is holding you back?", placeholder: 'e.g. My hooks are weak and I don\'t know who I\'m talking to', type: 'textarea' },
-      { key: 'previous_coaches', label: 'Have you worked with any coaches or programmes before?', placeholder: 'e.g. Yes — bought two courses, hired a business coach for 3 months', type: 'textarea' },
-      { key: 'content_consistency', label: 'How consistent have you been with content?', placeholder: 'e.g. Post 2–3x/week but then burn out and go quiet for 2 weeks', type: 'textarea' },
-      { key: 'dm_sales_experience', label: 'How are your DM conversations going?', placeholder: 'e.g. Getting some leads but they ghost when I mention price', type: 'textarea' },
-    ],
-  },
-  {
-    number: 5,
-    title: 'What You Want',
-    description: 'Be specific. Vague goals get vague results.',
-    fields: [
-      { key: 'goal_90_days', label: 'What do you want to achieve in 90 days?', placeholder: 'e.g. Hit £10K/month, get to 10K followers, close 3 new high-ticket clients', type: 'textarea' },
-      { key: 'goal_12_months', label: 'Where do you want to be in 12 months?', placeholder: 'e.g. Running a £25K/month business with a team, known in my niche', type: 'textarea' },
-      { key: 'what_success_looks_like', label: 'What does success look like to you beyond money?', placeholder: 'e.g. Freedom to work from anywhere, time with family, making a real impact', type: 'textarea' },
-      { key: 'why_now', label: 'Why is now the right time for this?', placeholder: "e.g. I'm done playing small. I've seen others do it and I know I can.", type: 'textarea' },
-      { key: 'why_cult', label: "Why did you join CULT specifically?", placeholder: "e.g. I've followed Will for 2 years and his system is the only one that made sense", type: 'textarea' },
     ],
   },
   {
@@ -185,8 +258,23 @@ const SECTIONS: SectionDef[] = [
   },
 ]
 
+// ─── Section assembly ─────────────────────────────────────────────────────────
+function getSections(isCreator: boolean): SectionDef[] {
+  const [s3, s6, s7, s8] = SECTIONS_SHARED
+  return [
+    isCreator ? SECTION_1_CREATOR : SECTION_1_COACH,
+    isCreator ? SECTION_2_CREATOR : SECTION_2_COACH,
+    s3,
+    isCreator ? SECTION_4_CREATOR : SECTION_4_COACH,
+    isCreator ? SECTION_5_CREATOR : SECTION_5_COACH,
+    s6, s7, s8,
+  ]
+}
+
 // ─── All field keys in one flat list ──────────────────────────────────────────
-const ALL_KEYS = SECTIONS.flatMap(s => s.fields.map(f => f.key))
+function getAllKeys(isCreator: boolean): string[] {
+  return getSections(isCreator).flatMap(s => s.fields.map(f => f.key))
+}
 
 // ─── Build initial form state ──────────────────────────────────────────────────
 function buildInitialForm(profile: Profile): Record<string, string> {
@@ -315,6 +403,19 @@ function buildInitialForm(profile: Profile): Record<string, string> {
     story_primary_keyword:   iVal('story_primary_keyword') || '',
     story_secondary_keyword: iVal('story_secondary_keyword') || '',
     story_lead_magnet:       iVal('story_lead_magnet') || '',
+
+    // ── Creator-specific fields ──────────────────────────────────────────────
+    how_long_creating:       iVal('how_long_creating', 'how_long_coaching', 'coaching_experience') || '',
+    brand_partnerships_done: iVal('brand_partnerships_done') || '',
+    monetization_model_hub:  iVal('monetization_model_hub', 'monetization_model') || '',
+    content_description:     iVal('content_description', 'offer_description') || '',
+    content_transformation:  iVal('content_transformation', 'client_transformation') || '',
+    creator_style_hub:       iVal('creator_style_hub', 'content_style_description', 'content_style') || '',
+    follower_goal_12m:       iVal('follower_goal_12m') || '',
+    income_goal_content:     iVal('income_goal_content', 'revenue_goal_12m') || '',
+    brand_deal_experience:   iVal('brand_deal_experience', 'dm_sales_experience') || '',
+    monetization_clarity:    iVal('monetization_clarity') || '',
+    brand_deal_goal:         iVal('brand_deal_goal', 'revenue_goal_90') || '',
   }
 }
 
@@ -444,6 +545,10 @@ interface Props { profile: Profile; adminView?: boolean }
 
 export default function OnboardingHub({ profile, adminView = false }: Props) {
   const router = useRouter()
+  const isCreator = profile.user_type === 'creator'
+  const sections = getSections(isCreator)
+  const ALL_KEYS = getAllKeys(isCreator)
+
   const [form, setForm] = useState<Record<string, string>>(() => buildInitialForm(profile))
   const [saving, setSaving] = useState(false)
   const [savedMsg, setSavedMsg] = useState(false)
@@ -644,7 +749,7 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
       )}
 
       {/* Accordion sections */}
-      {SECTIONS.map(section => (
+      {sections.map(section => (
         <AccordionSection
           key={section.number}
           section={section}
