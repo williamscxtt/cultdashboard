@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Download, ChevronDown, ChevronUp, Search, ExternalLink, Magnet } from 'lucide-react'
+import { Download, ChevronDown, ChevronUp, Search, ExternalLink, Magnet, ArrowUpRight } from 'lucide-react'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -36,6 +36,16 @@ const TOOL_LABELS: Record<string, string> = {
   'offer-builder': 'Offer Builder',
   'profile-audit': 'Profile Audit',
 }
+
+// Tools that are live — add new ones here as they're built
+const LIVE_TOOLS: Array<{ key: string; label: string; description: string; url: string }> = [
+  {
+    key: 'offer-builder',
+    label: 'Offer Builder',
+    description: 'Builds a Precision Offer Blueprint from 9 wizard questions.',
+    url: '/offer-builder',
+  },
+]
 
 function toolLabel(tool: string) {
   return TOOL_LABELS[tool] ?? tool
@@ -325,6 +335,52 @@ export default function LeadMagnetsView({ initialSubmissions }: Props) {
           <Download size={12} />
           Export CSV{filtered.length !== totalLeads ? ` (${filtered.length})` : ''}
         </button>
+      </div>
+
+      {/* Live tools */}
+      <div style={{ marginBottom: 20 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted-foreground)', marginBottom: 8 }}>
+          Live Tools
+        </div>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          {LIVE_TOOLS.map(tool => (
+            <a
+              key={tool.key}
+              href={tool.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10,
+                padding: '10px 14px',
+                background: 'var(--card)',
+                border: '1px solid var(--border)',
+                borderRadius: 10,
+                textDecoration: 'none',
+                transition: 'border-color 0.12s, background 0.12s',
+                cursor: 'pointer',
+              }}
+              onMouseEnter={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = 'var(--accent)'
+                el.style.background = 'rgba(255,255,255,0.03)'
+              }}
+              onMouseLeave={e => {
+                const el = e.currentTarget as HTMLElement
+                el.style.borderColor = 'var(--border)'
+                el.style.background = 'var(--card)'
+              }}
+            >
+              <Magnet size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', letterSpacing: '-0.2px', display: 'flex', alignItems: 'center', gap: 5 }}>
+                  {tool.label}
+                  <ArrowUpRight size={11} style={{ color: 'var(--muted-foreground)' }} />
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 1 }}>{tool.description}</div>
+              </div>
+            </a>
+          ))}
+        </div>
       </div>
 
       {/* Stats */}
