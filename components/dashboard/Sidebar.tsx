@@ -7,7 +7,7 @@ import {
   Settings, Users, LogOut, Calendar, Copy, Search,
   BookOpen, TrendingUp, PhoneCall,
   ChevronDown, ChevronUp, Send, Zap, PanelLeft, User, X,
-  Sun, Moon, Lock, CreditCard, List,
+  Sun, Moon, Lock, CreditCard, List, Magnet,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
@@ -38,9 +38,10 @@ const toolsNavBase = [
 const clientOnboardingItem = { href: '/dashboard/onboarding', label: 'My Profile', icon: User }
 
 const adminNav = [
-  { href: '/dashboard/clients',   label: 'Clients',          icon: Users },
-{ href: '/dashboard/reports',   label: 'Progress Reports', icon: TrendingUp },
-  { href: '/dashboard/knowledge', label: 'Knowledge Base',   icon: BookOpen },
+  { href: '/dashboard/clients',       label: 'Clients',          icon: Users },
+  { href: '/dashboard/reports',       label: 'Progress Reports', icon: TrendingUp },
+  { href: '/dashboard/knowledge',     label: 'Knowledge Base',   icon: BookOpen },
+  { href: '/dashboard/lead-magnets',  label: 'Lead Magnets',     icon: Magnet },
 ]
 
 // ─── props ────────────────────────────────────────────────────────────────────
