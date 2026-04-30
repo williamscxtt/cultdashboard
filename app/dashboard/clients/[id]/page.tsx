@@ -85,22 +85,27 @@ export default async function ClientDetailPage({
   return (
     <div style={{ padding: '16px', maxWidth: 1024, margin: '0 auto' }}>
       {/* Admin banner */}
-      <Card style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
-        <Link
-          href="/dashboard/clients"
-          style={{ display: 'flex', alignItems: 'center', gap: 6, color: 'var(--muted-foreground)', textDecoration: 'none', fontSize: 13, fontWeight: 500 }}
-        >
-          <ArrowLeft size={13} />
-          Clients
-        </Link>
-        <div style={{ width: 1, height: 14, background: 'var(--border)' }} />
-        <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', fontFamily: 'var(--font-display)' }}>
-          {profile.name || 'Unnamed Client'}
+      <Card style={{ padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+        {/* Left: breadcrumb + name */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+          <Link
+            href="/dashboard/clients"
+            style={{ display: 'flex', alignItems: 'center', gap: 5, color: 'var(--muted-foreground)', textDecoration: 'none', fontSize: 12, fontWeight: 500 }}
+          >
+            <ArrowLeft size={12} />
+            Clients
+          </Link>
+          <div style={{ width: 1, height: 13, background: 'var(--border)' }} />
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', fontFamily: 'var(--font-display)' }}>
+            {profile.name || 'Unnamed Client'}
+          </div>
+          {profile.ig_username && (
+            <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>@{profile.ig_username}</div>
+          )}
         </div>
-        {profile.ig_username && (
-          <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>@{profile.ig_username}</div>
-        )}
-        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+
+        {/* Right: badges + actions */}
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
           <PathSwitcher
             profileId={profile.id}
             currentType={profile.user_type ?? null}
@@ -111,6 +116,7 @@ export default async function ClientDetailPage({
           <Badge variant={profile.is_active ? 'success' : 'muted'}>
             {profile.is_active ? 'Active' : 'Inactive'}
           </Badge>
+          <div style={{ width: 1, height: 16, background: 'var(--border)', margin: '0 2px' }} />
           <ClientDetailActions
             clientId={profile.id}
             clientName={profile.name || profile.email || 'Client'}

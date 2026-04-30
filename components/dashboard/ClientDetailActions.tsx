@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, Power, Trash2, Check } from 'lucide-react'
+import { Eye, Power, Trash2, Check, MessageCircle } from 'lucide-react'
 
 interface Props {
   clientId: string
@@ -88,68 +88,91 @@ export default function ClientDetailActions({ clientId, clientName, isActive, dm
     }
   }
 
-  const btn: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: 5,
-    padding: '5px 10px', borderRadius: 6, border: '1px solid var(--border)',
-    background: 'var(--card)', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-    color: 'var(--muted-foreground)', fontFamily: 'inherit',
-    transition: 'opacity 0.1s',
+  // Shared base — every button is the same height and font
+  const base: React.CSSProperties = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 5,
+    height: 30,
+    padding: '0 11px',
+    borderRadius: 7,
+    border: '1px solid var(--border)',
+    background: 'transparent',
+    fontSize: 12,
+    fontWeight: 600,
+    color: 'var(--muted-foreground)',
+    cursor: 'pointer',
+    fontFamily: 'inherit',
+    whiteSpace: 'nowrap' as const,
+    transition: 'all 0.12s',
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexWrap: 'wrap' }}>
 
-      {/* DM keyword inline editor */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-          DM
-        </span>
-        {editingKeyword ? (
-          <>
-            <input
-              autoFocus
-              value={keyword}
-              onChange={e => setKeyword(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') saveKeyword(); if (e.key === 'Escape') setEditingKeyword(false) }}
-              placeholder="keyword"
-              style={{
-                fontSize: 12, fontWeight: 600, padding: '3px 8px',
-                borderRadius: 5, border: '1px solid var(--accent)',
-                background: 'var(--card)', color: 'var(--foreground)',
-                width: 90, outline: 'none', fontFamily: 'inherit',
-              }}
-            />
-            <button
-              onClick={saveKeyword}
-              disabled={loading === 'keyword'}
-              style={{ ...btn, padding: '4px 8px', background: 'var(--accent)', color: 'var(--accent-foreground)', border: 'none' }}
-            >
-              <Check size={11} />
-            </button>
-          </>
-        ) : (
-          <button
-            onClick={() => setEditingKeyword(true)}
-            style={{
-              ...btn,
-              padding: '3px 8px',
-              color: keyword ? 'var(--foreground)' : 'var(--muted-foreground)',
-              borderStyle: keyword ? 'solid' : 'dashed',
-              background: keywordSaved ? 'rgba(34,197,94,0.1)' : 'var(--card)',
-              borderColor: keywordSaved ? 'hsl(142 71% 45%)' : 'var(--border)',
+      {/* DM keyword */}
+      {editingKeyword ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <input
+            autoFocus
+            value={keyword}
+            onChange={e => setKeyword(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') saveKeyword()
+              if (e.key === 'Escape') setEditingKeyword(false)
             }}
-            title="Click to set DM keyword for script CTAs"
+            placeholder="DM keyword"
+            style={{
+              height: 30,
+              padding: '0 10px',
+              fontSize: 12,
+              fontWeight: 600,
+              borderRadius: 7,
+              border: '1px solid var(--accent)',
+              background: 'var(--card)',
+              color: 'var(--foreground)',
+              width: 110,
+              outline: 'none',
+              fontFamily: 'inherit',
+            }}
+          />
+          <button
+            onClick={saveKeyword}
+            disabled={loading === 'keyword'}
+            style={{ ...base, border: 'none', background: 'var(--accent)', color: 'white', padding: '0 10px' }}
           >
-            {keywordSaved ? <Check size={11} style={{ color: 'hsl(142 71% 45%)' }} /> : null}
-            {keyword || 'Set keyword'}
+            <Check size={12} />
           </button>
-        )}
-      </div>
+          <button
+            onClick={() => setEditingKeyword(false)}
+            style={{ ...base, padding: '0 9px', fontSize: 13 }}
+          >
+            ✕
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setEditingKeyword(true)}
+          style={{
+            ...base,
+            color: keyword ? 'var(--foreground)' : 'var(--muted-foreground)',
+            borderStyle: keyword ? 'solid' : 'dashed',
+            background: keywordSaved ? 'rgba(34,197,94,0.08)' : 'transparent',
+            borderColor: keywordSaved ? 'hsl(142 71% 45%)' : 'var(--border)',
+          }}
+          title="DM keyword for script CTAs — click to edit"
+        >
+          {keywordSaved
+            ? <Check size={11} style={{ color: 'hsl(142 71% 45%)' }} />
+            : <MessageCircle size={11} />
+          }
+          {keyword || 'DM keyword'}
+        </button>
+      )}
 
-      <div style={{ width: 1, height: 16, background: 'var(--border)' }} />
-
+      {/* View as Client */}
       <button
-        style={{ ...btn, background: 'hsl(220 90% 56%)', color: '#fff', border: 'none' }}
+        style={{ ...base, border: 'none', background: 'var(--accent)', color: 'white' }}
         onClick={viewAs}
         disabled={loading === 'view'}
       >
@@ -157,8 +180,9 @@ export default function ClientDetailActions({ clientId, clientName, isActive, dm
         {loading === 'view' ? 'Switching…' : 'View as Client'}
       </button>
 
+      {/* Activate / Deactivate */}
       <button
-        style={{ ...btn }}
+        style={{ ...base }}
         onClick={toggleActive}
         disabled={loading === 'active'}
         title={isActive ? 'Deactivate account' : 'Activate account'}
@@ -167,8 +191,9 @@ export default function ClientDetailActions({ clientId, clientName, isActive, dm
         {loading === 'active' ? '…' : isActive ? 'Deactivate' : 'Activate'}
       </button>
 
+      {/* Delete — solid red */}
       <button
-        style={{ ...btn, color: 'hsl(0 72% 51%)', borderColor: 'hsl(0 70% 85%)' }}
+        style={{ ...base, border: 'none', background: 'hsl(0 72% 51%)', color: 'white' }}
         onClick={deleteClient}
         disabled={loading === 'delete'}
         title="Delete account permanently"
@@ -176,6 +201,7 @@ export default function ClientDetailActions({ clientId, clientName, isActive, dm
         <Trash2 size={12} />
         {loading === 'delete' ? 'Deleting…' : 'Delete'}
       </button>
+
     </div>
   )
 }
