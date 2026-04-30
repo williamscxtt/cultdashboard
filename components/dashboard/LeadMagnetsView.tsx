@@ -100,10 +100,13 @@ function AnswerRow({ label, value }: { label: string; value: string }) {
 const ANSWER_LABELS: Record<string, string> = {
   skills:           'Skills & expertise',
   content_direction:'Content direction',
+  ideal_client:     'Ideal client',
+  main_problem:     '#1 problem',
+  dream_outcome:    'Dream outcome',
   own_story:        'Their story',
-  who_to_help:      'Who to help',
-  dream_result:     'Dream result',
-  format_idea:      'Format & price idea',
+  unique_mechanism: 'Unique approach',
+  proof:            'Proof & credentials',
+  format_and_price: 'Format & price',
 }
 
 function ExpandedRow({ sub }: { sub: Submission }) {

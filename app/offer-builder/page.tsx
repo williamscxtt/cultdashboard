@@ -7,44 +7,64 @@ import {
   ChevronRight,
 } from 'lucide-react'
 
-// ── Wizard questions — built for people starting from scratch ─────────────────
+// ── Wizard questions ──────────────────────────────────────────────────────────
+// Works for complete beginners and experienced coaches alike.
+// Every question accepts "I don't know" — Claude fills the gaps intelligently.
 
 const STEPS = [
   {
     key: 'skills',
-    question: 'What are you genuinely good at?',
-    hint: 'Think beyond your job title. Fitness, business, finance, relationships, mindset, creativity — anything you\'ve spent real time on. What do people already come to you for advice on? Qualifications, personal results, life experience — all counts.',
-    placeholder: 'e.g. I\'ve been training in the gym for 8 years, lost 25lbs myself, qualified personal trainer but never used the qualification, know everything about nutrition for busy people...',
+    question: 'What are you good at? What\'s your background or experience?',
+    hint: 'Skills, qualifications, years in a field, results you\'ve achieved yourself — anything counts. The more you give here, the more specific your offer will be.',
+    placeholder: 'Detailed: "8 years of gym experience, certified PT, lost 25lbs myself, know everything about nutrition for busy people, used to work in finance..."\n\nOr just: "I\'m good with fitness and helping people get in shape, I don\'t know how to describe it yet"',
   },
   {
     key: 'content_direction',
     question: 'What topics do you want to create content about?',
-    hint: 'What could you post about endlessly, even if nobody paid you? What do you already consume, debate, and care deeply about? This tells us where your passion meets an audience.',
-    placeholder: 'e.g. Men\'s health and fitness after 30, morning routines, discipline, eating well without dieting, staying consistent when life gets busy...',
+    hint: 'What could you post about endlessly, even if nobody paid you? This defines your niche. Type "I don\'t know" if you\'re not sure — we\'ll figure it out from your other answers.',
+    placeholder: 'Detailed: "Men\'s fitness after 30, morning routines, discipline, cutting body fat without giving up beer, staying consistent when life is chaotic..."\n\nOr: "Something in the health and fitness space, not sure exactly"',
+  },
+  {
+    key: 'ideal_client',
+    question: 'Who do you want to help? Describe your ideal client.',
+    hint: 'As specific or as vague as you like — even "people like me a few years ago" gives us something to work with. Type "I don\'t know" and we\'ll build the avatar from your story.',
+    placeholder: 'Detailed: "Dads aged 35–50, carry extra weight, did sport when they were younger, too busy for the gym, feel embarrassed taking their shirt off, want their energy back..."\n\nOr: "I don\'t know yet — probably people similar to me"',
+  },
+  {
+    key: 'main_problem',
+    question: 'What\'s the #1 problem your ideal client is stuck with?',
+    hint: 'What are they struggling with right now? What have they already tried that hasn\'t worked? Type "I don\'t know" — we\'ll predict this from your niche.',
+    placeholder: 'Detailed: "They start every diet on Monday and quit by Thursday. They feel like they\'ve tried everything. Deep down they think they\'re the problem, not the plan..."\n\nOr: "I don\'t know"',
+  },
+  {
+    key: 'dream_outcome',
+    question: 'What transformation do you want to create for them?',
+    hint: 'Not just the result — the feeling, the identity shift, the thing they\'d finally stop dreading. Type "I don\'t know" and we\'ll craft this from your dream result.',
+    placeholder: 'Detailed: "Lose 20lbs, feel genuinely confident again, stop avoiding cameras, keep up with their kids at the park, have their partner notice before they say anything..."\n\nOr: "I don\'t know exactly, something around feeling confident and healthy again"',
   },
   {
     key: 'own_story',
-    question: 'What\'s your own transformation or story?',
-    hint: 'Have you solved a problem yourself that others struggle with? Your personal before-and-after is your most powerful asset — even small wins count. If you fixed it for yourself, you can fix it for others.',
-    placeholder: 'e.g. I was 30lbs overweight after having kids, constantly exhausted, felt like I\'d completely lost myself. Turned it around in 6 months and now feel better than I did at 25...',
+    question: 'What\'s your own story or transformation?',
+    hint: 'Your personal before-and-after is your most powerful credibility. Even a small win counts. Skip this or type "I don\'t have one" if you\'d rather not use your personal story.',
+    placeholder: 'Detailed: "I was 30lbs overweight after my second kid, completely exhausted, avoided mirrors. Fixed it in 6 months and now feel better than I did at 25..."\n\nOr: "I don\'t have a dramatic story" / "I\'d rather not use my personal story"',
   },
   {
-    key: 'who_to_help',
-    question: 'Who would you love to help — even loosely?',
-    hint: 'Think about people you already give advice to informally. Who reminds you of who you used to be? Who do you understand better than most? Don\'t overthink it — just describe the type of person.',
-    placeholder: 'e.g. Dads in their 30s and 40s who\'ve let their health slip, busy professionals who feel like they\'ve lost their identity, people who\'ve tried every diet and always quit...',
+    key: 'unique_mechanism',
+    question: 'Do you have a specific method or approach that makes you different?',
+    hint: 'Your system, philosophy, or unfair advantage. If you don\'t have one yet — type "I don\'t know" and we\'ll invent a proprietary mechanism name for you.',
+    placeholder: 'Detailed: "I focus on habit stacking rather than willpower, 20-minute home workouts only, no calorie counting, designed for people with unpredictable schedules..."\n\nOr: "I don\'t know — create something for me"',
   },
   {
-    key: 'dream_result',
-    question: 'If you could give someone one specific result — what would it be?',
-    hint: 'Dream big. If you could guarantee one outcome for someone who worked with you, what would their life look like after? Not just the physical or practical change — the feeling, the confidence, the thing they\'d finally stop dreading.',
-    placeholder: 'e.g. Help someone lose their first 20lbs and genuinely feel confident again — stop avoiding cameras, keep up with their kids, feel proud when they look in the mirror...',
+    key: 'proof',
+    question: 'What proof do you have that this works?',
+    hint: 'Client results, your own transformation, credentials, years of experience. If you\'re just starting out, type "None yet" — we\'ll write around it honestly.',
+    placeholder: 'Detailed: "Lost 25lbs myself using this approach, helped 3 friends do the same, qualified PT since 2020, 40+ clients over 2 years, client John lost 18lbs in 10 weeks..."\n\nOr: "None yet, I\'m just starting out" / "Just my own results so far"',
   },
   {
-    key: 'format_idea',
-    question: 'How do you imagine working with people — and roughly what you\'d charge?',
-    hint: '1:1 coaching, group programme, online course? Weekly calls, WhatsApp support, video check-ins? Even a rough idea helps. If you have no idea what to charge, say so — we\'ll suggest something based on your market.',
-    placeholder: 'e.g. Probably 1:1 online coaching, maybe 3 months, weekly video calls and daily WhatsApp check-ins. No idea what to charge — maybe somewhere between £500 and £2,000?',
+    key: 'format_and_price',
+    question: 'How would you work with clients, and what would you charge?',
+    hint: '1:1 coaching, group programme, 3 months, weekly calls, WhatsApp support? If you have no idea what to charge — say so, we\'ll suggest a price that fits your market.',
+    placeholder: 'Detailed: "12-week 1:1 online coaching, 2x weekly video calls, daily WhatsApp check-ins, custom plan, £1,497 or 3x £540..."\n\nOr: "I don\'t know what to charge, probably 1:1 coaching but not sure on the format"',
   },
 ]
 
@@ -380,13 +400,13 @@ export default function OfferBuilderPage() {
                   <Sparkles size={10} /> Free Tool
                 </div>
                 <h1 style={{ fontSize: 'clamp(26px, 5vw, 38px)', fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.2, margin: '0 0 16px', letterSpacing: '-0.5px' }}>
-                  Turn your skills into<br />a real coaching offer
+                  Build your Precision<br />Offer Blueprint
                 </h1>
                 <p style={{ fontSize: 15, color: 'var(--muted-foreground)', lineHeight: 1.65, maxWidth: 500, margin: '0 auto 8px' }}>
-                  You don&apos;t need to know your niche, your ideal client, or what to charge. Answer 6 questions about your skills and story — we&apos;ll build the complete offer for you.
+                  Know exactly what you want to offer? Fill everything in and get something deeply specific. Starting from scratch? Answer what you can and type &ldquo;I don&apos;t know&rdquo; for the rest — we&apos;ll figure it out.
                 </p>
                 <p style={{ fontSize: 13, color: 'var(--muted-foreground)', opacity: 0.7 }}>
-                  6 questions. Completely free. Built from scratch.
+                  9 questions. Completely free. No coaching experience needed.
                 </p>
               </div>
 
@@ -455,7 +475,7 @@ export default function OfferBuilderPage() {
 
               {/* Trust row */}
               <div style={{ display: 'flex', justifyContent: 'center', gap: 28, marginTop: 28, flexWrap: 'wrap' }}>
-                {['Takes 5 minutes', 'No experience needed', '100% free'].map(t => (
+                {['Takes 5 minutes', 'No login required', '100% free'].map(t => (
                   <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted-foreground)' }}>
                     <Check size={12} style={{ color: 'hsl(142 71% 45%)' }} />
                     {t}
@@ -646,7 +666,7 @@ export default function OfferBuilderPage() {
                   </div>
 
                   <a
-                    href="https://content.scottvip.com"
+                    href="https://cultdashboard.com"
                     target="_blank"
                     rel="noopener noreferrer"
                     style={{

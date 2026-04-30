@@ -24,86 +24,103 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
 // ── Offer framework ───────────────────────────────────────────────────────────
 
 const OFFER_FRAMEWORK = `
-You are Will Scott's AI offer architect. Your job is to take someone's raw skills, story, and content interests and BUILD them a complete, specific coaching offer from scratch — deciding the niche, avatar, mechanism, price point, and everything else.
+You are Will Scott's AI offer architect. You build complete, specific Precision Offer Blueprints for coaches and creators at any stage — from complete beginners with only a rough sense of their skills, to experienced coaches who know exactly their niche and just want it built out properly.
 
-CRITICAL CONTEXT: This person does NOT have an existing coaching business or offer. They have skills, a story, and a sense of who they want to help. Your job is to make DECISIONS for them — not ask them to decide. Be opinionated, specific, and confident.
+CRITICAL READING RULE: Before you write anything, scan every answer. For each field:
+- If it contains real, specific information → use it exactly as the foundation and build on it
+- If it says "I don't know", is blank, vague, or says "not sure" → YOU make the decision for them based on the other answers. Be opinionated and specific. Do not hedge or say "consider doing X" — just decide.
+
+This means the same tool must work for two very different people:
+1. Someone who writes "I don't know" in 6 out of 9 fields → you build 90% of the offer for them
+2. Someone who fills every field with detailed, specific answers → you refine and amplify what they gave you, adding depth and professional framing
 
 THE PRINCIPLES YOU MUST APPLY:
 
-1. NICHE FROM SKILLS + STORY: The best niche sits at the intersection of what they know deeply, who they can help most credibly, and what the market will pay for. Use their story as the niche anchor — "I went through X and now I help people who are where I was."
+1. NICHE FIRST: The offer doesn't matter if you're selling to the wrong market. Use their skills + story + content direction to pin down the most specific, defensible niche. "Fitness for busy dads over 40" beats "fitness coach" every time.
 
-2. AVATAR FROM WHO THEY RELATE TO: The ideal client is usually a version of who they used to be. Use their story + who they'd love to help to build a specific, vivid avatar. Not "busy professionals" — "men aged 35-50 who built a successful career but completely neglected their health and now feel invisible in their own body."
+2. AVATAR — BUILD OR SHARPEN: If they described their ideal client in detail, use it. If they said "I don't know" or "people like me" — build the avatar from their story. The best avatar is usually a version of who they used to be.
 
-3. INVENT THE MECHANISM: Give their approach a proprietary name. It doesn't matter that they haven't named it yet — you name it for them. "The 4-Phase Identity Reset" or "The Dad Strength Protocol" or "The Quiet Confidence Method." Make it feel like a system only they could deliver.
+3. THE VALUE EQUATION: Value = (Dream Outcome × Likelihood of Success) / (Time Delay × Effort). Maximise outcome vividness and reduce perceived difficulty. Paint the "after" in detail.
 
-4. SUGGEST A PRICE: Based on their market and the transformation described, suggest a realistic but aspirational price. Don't be timid — high-ticket coaching (£1,000–£3,000 for 3 months) is standard for the Creator Cult model. If the transformation is big, the price should reflect it.
+4. MECHANISM — NAME IT: Give their approach a proprietary name. If they have one, refine it. If they said "I don't know" — invent one. "The 90-Day Dad Reset Protocol" or "The Quiet Confidence Method" or "The 4-Phase Metabolic Rebuild." A named system implies exclusivity and expertise.
 
-5. DREAM OUTCOME: Paint the "after" picture as vividly as possible. Not "lose weight" — "look in the mirror and actually like what you see for the first time in 5 years, have your partner notice the difference before you say anything, keep up with your kids at the park without gasping."
+5. PRICE — SUGGEST IF UNKNOWN: If they gave a price, build the value stack around making it feel like a steal. If they said "I don't know" — suggest a specific price. High-ticket coaching (£997–£2,997 for 3 months) is standard. Match the price to the transformation size.
 
-6. PREDICT OBJECTIONS: Based on the niche and market, predict the 3-4 objections this avatar will have before buying. Don't wait for the user to tell you — you know the market.
+6. OBJECTIONS — PREDICT IF UNKNOWN: If they listed objections, address them. If they said "I don't know" — predict the 3-4 most common objections for this specific niche and avatar. You know the market.
 
-7. VALUE STACK: Build out 4-6 deliverables that make the price feel like a steal. Include: main coaching component, accountability/check-ins, a bonus (PDF guide, community, resource library), and a fast-action bonus.
+7. PROOF — WORK WITH WHAT THEY HAVE: If they have results or credentials, use them. If they said "None yet" or "just starting out" — write the offer honestly around that. Beginning coaches can still build compelling offers — lean on their personal transformation story and their conviction.
 
-8. GUARANTEE: Create a specific, bold guarantee that removes all buying risk. Concrete with stakes — not "I'll work hard for you."
-
-THE GOLDEN RULE: Every sentence in the output should reference this specific person's situation. No generic coaching language. Read their answers and write for them, not for a template.
+THE GOLDEN RULE: Every sentence must reference this specific person's situation, niche, and avatar. Zero generic coaching language. Read their answers and write for them, not for a template.
 `.trim()
 
 function formatAnswers(answers: Record<string, string>): string {
   const labels: Record<string, string> = {
-    skills:           'Their skills, expertise, and experience',
+    skills:           'Skills, expertise, background',
     content_direction:'Topics they want to create content about',
-    own_story:        'Their personal transformation / story',
-    who_to_help:      'Who they want to help (rough idea)',
-    dream_result:     'The result they\'d most love to create for someone',
-    format_idea:      'How they imagine working with clients + rough price idea',
+    ideal_client:     'Ideal client description',
+    main_problem:     '#1 problem their ideal client has',
+    dream_outcome:    'Dream outcome / transformation',
+    own_story:        'Their personal story / transformation',
+    unique_mechanism: 'Their unique method or approach',
+    proof:            'Proof, results, credentials',
+    format_and_price: 'Service format and price',
   }
-  return Object.entries(labels)
-    .map(([key, label]) => `${label}: ${answers[key] || 'Not provided'}`)
+  // Show all provided keys, falling back to the labels above
+  const allKeys = Object.keys(labels)
+  const extraKeys = Object.keys(answers).filter(k => !allKeys.includes(k))
+  const keys = [...allKeys, ...extraKeys]
+
+  return keys
+    .filter(k => answers[k])
+    .map(k => `${labels[k] ?? k}: ${answers[k]}`)
     .join('\n')
 }
 
 async function generateOffer(answers: Record<string, string>): Promise<Record<string, unknown>> {
   const prompt = `${OFFER_FRAMEWORK}
 
-=== THEIR RAW INPUTS ===
+=== THEIR ANSWERS ===
 ${formatAnswers(answers)}
 
+=== HOW TO INTERPRET THESE ANSWERS ===
+- Any answer containing "I don't know", "not sure", "no idea", or that is blank: YOU decide for them — make a specific, confident decision based on everything else they said
+- Any answer with real detail: use it, build on it, and make it sharper
+
 === YOUR TASK ===
-Build their complete Precision Offer Blueprint from scratch. You are making DECISIONS for them — decide their niche, name their mechanism, specify the avatar, set the price, predict their objections. Be brutally specific throughout. This must feel like it was built by someone who spent an hour studying exactly their situation.
+Build their complete Precision Offer Blueprint. Where they gave detail, amplify it. Where they said "I don't know", decide for them. Every output field must be ruthlessly specific — names, numbers, timeframes, emotions. Nothing generic.
 
 Return ONLY valid JSON in this exact structure:
 {
-  "one_liner": "The single most compelling sentence describing their offer. Formula: I help [hyper-specific avatar] [achieve vivid outcome] in [timeframe] without [biggest fear/objection]. Max 25 words. Use specifics from their inputs.",
-  "bio_headline": "Instagram bio first line. Under 60 characters. Punchy, scroll-stopping, specific. Do NOT use emojis.",
-  "target_avatar": "2-3 sentences. The exact person this is for — so specific the right person reads it and thinks 'that's literally me.' Build this from their story and who they said they want to help.",
-  "core_promise": "2-3 sentences. Before vs after. Vivid, emotional, specific. What does their life look like on the other side?",
-  "unique_mechanism": "Name their proprietary method — INVENT a compelling name if they don't have one. 2-3 sentences explaining why this approach works when other things haven't. Make it feel systematic and exclusive to them.",
+  "one_liner": "The single most compelling sentence describing their offer. Formula: I help [hyper-specific avatar] [achieve vivid outcome] in [timeframe] without [biggest fear/objection]. Max 25 words.",
+  "bio_headline": "Instagram bio first line. Under 60 characters. Punchy, scroll-stopping, specific. No emojis.",
+  "target_avatar": "2-3 sentences. The exact person this is for — so specific the right person reads it and thinks 'that's literally me.'",
+  "core_promise": "2-3 sentences. Vivid before vs after. Emotional. What does life actually look like on the other side?",
+  "unique_mechanism": "Name their proprietary method — invent a compelling name if they don't have one. 2-3 sentences on why this works when other approaches haven't.",
   "value_stack": [
     {
       "name": "Deliverable name",
-      "description": "What it includes and why it matters for this specific avatar",
-      "perceived_value": "Suggested value e.g. £500 value"
+      "description": "What it includes and why it matters for this specific person",
+      "perceived_value": "e.g. £500 value"
     }
   ],
-  "guarantee": "A specific, bold, concrete guarantee with real stakes. Something that eliminates the #1 reason people don't buy.",
-  "who_its_for": "3-4 bullet points. Each starts with 'This is for you if...' — use their avatar's specific situation, not generic language.",
-  "who_its_not_for": "2-3 bullet points. Who this is NOT for. Be honest — it builds trust and filters out bad fits.",
-  "urgency_angle": "1-2 sentences. The real cost of staying where they are. Make it emotional and specific to this avatar's life.",
+  "guarantee": "A specific, bold, concrete guarantee with real stakes. Eliminates the #1 reason people don't buy.",
+  "who_its_for": "3-4 bullet points starting with 'This is for you if...' — use this avatar's specific situation.",
+  "who_its_not_for": "2-3 bullet points. Specific, honest — builds trust and filters bad fits.",
+  "urgency_angle": "1-2 sentences. The real emotional cost of staying where they are right now.",
   "objection_crushers": [
     {
       "objection": "The specific objection this avatar will have",
-      "response": "How the offer structure pre-empts or destroys this objection"
+      "response": "How the offer structure pre-empts or destroys it"
     }
   ]
 }
 
 Rules:
-- value_stack: 4-6 items — include the main coaching component, accountability/check-ins, at least one bonus, and suggest a total price that makes the actual price feel like a steal
-- objection_crushers: 3-4 items — predict these yourself based on the niche/market, don't wait for them to tell you
-- unique_mechanism: MUST have a proprietary name you invent — something specific and memorable
-- Everything references their actual story, skills, and situation — zero generic coaching filler
-- If they said they don't know what to charge, suggest a specific price in the value_stack that makes sense for the transformation (typically £997–£2,997 for 3-month 1:1 coaching)`
+- value_stack: 4-6 items — main coaching component, accountability structure, at least one bonus, fast-action bonus where appropriate
+- objection_crushers: 3-4 items — use their stated objections if provided, otherwise predict for the niche
+- unique_mechanism: MUST have a proprietary name — specific and memorable
+- If no price was given: suggest one in the value_stack (total perceived value vs actual price)
+- Everything references their actual words, niche, and situation — zero filler`
 
   const msg = await anthropic.messages.create({
     model: 'claude-sonnet-4-6',
