@@ -7,62 +7,44 @@ import {
   ChevronRight,
 } from 'lucide-react'
 
-// ── Wizard questions (identical to dashboard OfferBuilder) ────────────────────
+// ── Wizard questions — built for people starting from scratch ─────────────────
 
 const STEPS = [
   {
-    key: 'niche',
-    question: 'What do you do and what\'s your niche?',
-    hint: 'Be broad here — we\'ll sharpen it. What problem do you solve and in what space?',
-    placeholder: 'e.g. Online fitness coaching, business mentoring for agency owners, dating coaching for introverted men...',
+    key: 'skills',
+    question: 'What are you genuinely good at?',
+    hint: 'Think beyond your job title. Fitness, business, finance, relationships, mindset, creativity — anything you\'ve spent real time on. What do people already come to you for advice on? Qualifications, personal results, life experience — all counts.',
+    placeholder: 'e.g. I\'ve been training in the gym for 8 years, lost 25lbs myself, qualified personal trainer but never used the qualification, know everything about nutrition for busy people...',
   },
   {
-    key: 'ideal_client',
-    question: 'Who is your ideal client? Describe them in detail.',
-    hint: 'Think: age, gender, job, situation, what their life looks like right now. The more specific, the better your offer.',
-    placeholder: 'e.g. Men aged 30-45, business owners or high earners, carrying 20+ extra lbs, too busy for the gym, feel embarrassed without their shirt off at the beach...',
+    key: 'content_direction',
+    question: 'What topics do you want to create content about?',
+    hint: 'What could you post about endlessly, even if nobody paid you? What do you already consume, debate, and care deeply about? This tells us where your passion meets an audience.',
+    placeholder: 'e.g. Men\'s health and fitness after 30, morning routines, discipline, eating well without dieting, staying consistent when life gets busy...',
   },
   {
-    key: 'main_problem',
-    question: 'What\'s the #1 painful problem they\'re stuck with right now?',
-    hint: 'Go emotional. What\'s keeping them up at night? What have they already tried that hasn\'t worked?',
-    placeholder: 'e.g. They\'ve tried every diet and gym plan but always quit after 3 weeks. They feel like they\'ve lost their identity and confidence...',
+    key: 'own_story',
+    question: 'What\'s your own transformation or story?',
+    hint: 'Have you solved a problem yourself that others struggle with? Your personal before-and-after is your most powerful asset — even small wins count. If you fixed it for yourself, you can fix it for others.',
+    placeholder: 'e.g. I was 30lbs overweight after having kids, constantly exhausted, felt like I\'d completely lost myself. Turned it around in 6 months and now feel better than I did at 25...',
   },
   {
-    key: 'dream_outcome',
-    question: 'What\'s the dream outcome they desperately want?',
-    hint: 'Not just the surface result — the feeling, the identity shift, the life change they\'re really buying.',
-    placeholder: 'e.g. To feel confident and energetic again, keep up with their kids, look good in photos, have their partner notice the difference...',
+    key: 'who_to_help',
+    question: 'Who would you love to help — even loosely?',
+    hint: 'Think about people you already give advice to informally. Who reminds you of who you used to be? Who do you understand better than most? Don\'t overthink it — just describe the type of person.',
+    placeholder: 'e.g. Dads in their 30s and 40s who\'ve let their health slip, busy professionals who feel like they\'ve lost their identity, people who\'ve tried every diet and always quit...',
   },
   {
-    key: 'unique_mechanism',
-    question: 'What makes your approach different or unique?',
-    hint: 'Your system, method, or unfair advantage. Why does yours work when everything else hasn\'t?',
-    placeholder: 'e.g. I focus only on habits that fit a busy lifestyle — no 2-hour gym sessions or restrictive diets. My 3-phase system works around your schedule...',
+    key: 'dream_result',
+    question: 'If you could give someone one specific result — what would it be?',
+    hint: 'Dream big. If you could guarantee one outcome for someone who worked with you, what would their life look like after? Not just the physical or practical change — the feeling, the confidence, the thing they\'d finally stop dreading.',
+    placeholder: 'e.g. Help someone lose their first 20lbs and genuinely feel confident again — stop avoiding cameras, keep up with their kids, feel proud when they look in the mirror...',
   },
   {
-    key: 'timeframe',
-    question: 'What timeframe can clients expect real, visible results?',
-    hint: 'Be specific. A concrete number is far more powerful than "results vary."',
-    placeholder: 'e.g. Most clients see noticeable changes in 4 weeks and lose their first 10lbs by week 8. Full transformation in 90 days...',
-  },
-  {
-    key: 'objections',
-    question: 'What are the top objections or fears people have before buying?',
-    hint: 'Why do they hesitate? Price, trust, "I\'ve tried before and failed", no time, not sure online coaching works?',
-    placeholder: 'e.g. Too expensive compared to a gym, worried it won\'t work because they\'ve failed before, don\'t have enough time...',
-  },
-  {
-    key: 'proof',
-    question: 'What proof do you have that your approach works?',
-    hint: 'Your own story, client transformations, credentials, specific results with numbers.',
-    placeholder: 'e.g. I lost 25lbs myself using this method. Helped 40+ clients in 2 years. Client John lost 18lbs in 10 weeks while working 60-hour weeks...',
-  },
-  {
-    key: 'format_and_price',
-    question: 'What format does your service take, and what\'s the price?',
-    hint: 'How do clients work with you? What do they get? What does it cost?',
-    placeholder: 'e.g. 12-week 1:1 online coaching, 2x weekly check-in calls, daily WhatsApp support, custom training + nutrition plan. £1,497 or 3x £540...',
+    key: 'format_idea',
+    question: 'How do you imagine working with people — and roughly what you\'d charge?',
+    hint: '1:1 coaching, group programme, online course? Weekly calls, WhatsApp support, video check-ins? Even a rough idea helps. If you have no idea what to charge, say so — we\'ll suggest something based on your market.',
+    placeholder: 'e.g. Probably 1:1 online coaching, maybe 3 months, weekly video calls and daily WhatsApp check-ins. No idea what to charge — maybe somewhere between £500 and £2,000?',
   },
 ]
 
@@ -398,13 +380,13 @@ export default function OfferBuilderPage() {
                   <Sparkles size={10} /> Free Tool
                 </div>
                 <h1 style={{ fontSize: 'clamp(26px, 5vw, 38px)', fontWeight: 800, color: 'var(--foreground)', lineHeight: 1.2, margin: '0 0 16px', letterSpacing: '-0.5px' }}>
-                  Build your Precision<br />Offer Blueprint
+                  Turn your skills into<br />a real coaching offer
                 </h1>
-                <p style={{ fontSize: 15, color: 'var(--muted-foreground)', lineHeight: 1.65, maxWidth: 480, margin: '0 auto 8px' }}>
-                  Stop saying &ldquo;I help people lose weight.&rdquo; In 5 minutes, you&apos;ll have a specific, compelling offer — a one-liner, bio headline, value stack, guarantee, and objection crushers.
+                <p style={{ fontSize: 15, color: 'var(--muted-foreground)', lineHeight: 1.65, maxWidth: 500, margin: '0 auto 8px' }}>
+                  You don&apos;t need to know your niche, your ideal client, or what to charge. Answer 6 questions about your skills and story — we&apos;ll build the complete offer for you.
                 </p>
                 <p style={{ fontSize: 13, color: 'var(--muted-foreground)', opacity: 0.7 }}>
-                  9 questions. Completely free. No credit card.
+                  6 questions. Completely free. Built from scratch.
                 </p>
               </div>
 
@@ -414,7 +396,7 @@ export default function OfferBuilderPage() {
                   Where should we send your offer?
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 22, lineHeight: 1.5 }}>
-                  Your results will display instantly on screen. We&apos;ll also keep your details safe.
+                  Your results appear instantly on screen. No email needed — but we&apos;ll save your details so we can reach out with how to actually launch this offer.
                 </div>
                 <form onSubmit={submitLead} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   <div>
@@ -473,7 +455,7 @@ export default function OfferBuilderPage() {
 
               {/* Trust row */}
               <div style={{ display: 'flex', justifyContent: 'center', gap: 28, marginTop: 28, flexWrap: 'wrap' }}>
-                {['Takes 5 minutes', 'No login required', '100% free'].map(t => (
+                {['Takes 5 minutes', 'No experience needed', '100% free'].map(t => (
                   <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--muted-foreground)' }}>
                     <Check size={12} style={{ color: 'hsl(142 71% 45%)' }} />
                     {t}

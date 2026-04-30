@@ -98,15 +98,12 @@ function AnswerRow({ label, value }: { label: string; value: string }) {
 }
 
 const ANSWER_LABELS: Record<string, string> = {
-  niche: 'Niche',
-  ideal_client: 'Ideal Client',
-  main_problem: '#1 Problem',
-  dream_outcome: 'Dream Outcome',
-  unique_mechanism: 'Unique Mechanism',
-  timeframe: 'Timeframe',
-  objections: 'Objections',
-  proof: 'Proof',
-  format_and_price: 'Format & Price',
+  skills:           'Skills & expertise',
+  content_direction:'Content direction',
+  own_story:        'Their story',
+  who_to_help:      'Who to help',
+  dream_result:     'Dream result',
+  format_idea:      'Format & price idea',
 }
 
 function ExpandedRow({ sub }: { sub: Submission }) {
