@@ -291,7 +291,7 @@ export default function DmSalesPipeline({ initialLeads }: Props) {
   const panelOpen = selected && !isMobile
 
   return (
-    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 900, margin: '0 auto', paddingRight: panelOpen ? 404 : (isMobile ? 12 : 24) }}>
+    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1400, margin: '0 auto', paddingRight: panelOpen ? 404 : (isMobile ? 12 : 24) }}>
       <PageHeader
         title="Sales"
         description="Track your client wins and revenue."

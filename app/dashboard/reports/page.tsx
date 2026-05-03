@@ -341,7 +341,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 900, margin: '0 auto' }}>
+    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Progress Reports"
         description="Weekly AI-generated coaching reports for every client. Use these in your check-ins."

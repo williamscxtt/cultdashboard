@@ -183,7 +183,7 @@ export default function OutreachView({
   ]
 
   return (
-    <div style={{ padding: '24px', maxWidth: 860, margin: '0 auto' }}>
+    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader title="Outreach" description="Log your daily DMs, generate replies, and save your best templates." />
 
       {/* Stats row */}

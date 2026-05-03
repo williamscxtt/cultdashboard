@@ -234,7 +234,7 @@ export default function ClientsManager({ initialClients }: Props) {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1024, margin: '0 auto' }}>
+    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Clients"
         description="Manage client accounts and access their dashboards."

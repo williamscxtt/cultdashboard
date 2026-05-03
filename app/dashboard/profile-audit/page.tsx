@@ -180,7 +180,7 @@ export default function ProfileAuditPage() {
   const canAudit = !loading && screenshot !== null
 
   return (
-    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Profile Tools"
         description="Audit your Instagram profile, build your offer, and generate story sequences."

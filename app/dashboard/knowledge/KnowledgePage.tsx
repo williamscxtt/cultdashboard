@@ -188,7 +188,7 @@ export default function KnowledgePage() {
   })
 
   return (
-    <div style={{ padding: '24px', maxWidth: 860, margin: '0 auto' }}>
+    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Knowledge Base"
         description="Paste content, drop a file, or describe what you're adding — AI organises it automatically."

@@ -83,7 +83,7 @@ export default async function ClientDetailPage({
   )
 
   return (
-    <div style={{ padding: '16px', maxWidth: 1024, margin: '0 auto' }}>
+    <div style={{ padding: '16px', maxWidth: 1400, margin: '0 auto' }}>
       {/* Admin banner */}
       <Card style={{ padding: '8px 14px', display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
         {/* Left: breadcrumb + name */}

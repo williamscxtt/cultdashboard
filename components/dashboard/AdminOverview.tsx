@@ -29,7 +29,7 @@ export default function AdminOverview({ clients, totalClients, activeClients }: 
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1024, margin: '0 auto' }}>
+    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Clients"
         description="Manage and view your clients' dashboards"

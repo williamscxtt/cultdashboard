@@ -31,7 +31,7 @@ export default async function IntelPage() {
     : null
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1024, margin: '0 auto' }}>
+    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Competitor Intel"
         description={weekLabel ? `Week of ${weekLabel}` : 'Weekly competitor analysis and trending content.'}

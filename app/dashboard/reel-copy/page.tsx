@@ -148,7 +148,7 @@ export default function ReelCopyPage() {
   const verdictStyle = VERDICT_COLORS[verdict] ?? VERDICT_COLORS.Average
 
   return (
-    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Reel Copy Tool"
         description="Drop an Instagram reel link — get a full AI breakdown, personalised adaptation advice, and a rewritten hook for your niche."

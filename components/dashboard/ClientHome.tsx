@@ -275,7 +275,7 @@ function RichDashboard({ profile, reels }: { profile: Profile; reels: ClientReel
   const firstName = profile.name?.split(' ')[0] || 'there'
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1024, margin: '0 auto' }}>
+    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
 
       <PageHeader
         title={`Welcome back, ${firstName}`}

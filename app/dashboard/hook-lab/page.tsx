@@ -108,7 +108,7 @@ export default function HookLabPage() {
   const formats = ['Bold Claim', 'Story Open', 'Question', 'Stat Hook', 'Trend-jack']
 
   return (
-    <div style={{ padding: '24px', maxWidth: 860, margin: '0 auto' }}>
+    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>

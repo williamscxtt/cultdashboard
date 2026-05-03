@@ -213,7 +213,7 @@ export default function WeeklyLogView({ profileName, logs }: Props) {
   const pastLogs = logs.filter(l => l.date !== thisWeek)
 
   return (
-    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 900, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Weekly Log"
         description="Track your numbers every week. Honesty over performance."

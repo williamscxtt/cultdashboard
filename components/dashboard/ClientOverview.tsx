@@ -48,7 +48,7 @@ export default function ClientOverview({ profile, reels, latestScript }: Props) 
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1024, margin: '0 auto' }}>
+    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title={`${getGreeting()}, ${firstName}`}
         description={today}

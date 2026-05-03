@@ -898,7 +898,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
   if (loading) {
     return (
-      <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1100, margin: '0 auto' }}>
+      <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1400, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
           {[...Array(isMobile ? 2 : 4)].map((_, i) => (
             <div key={i} style={{ height: 100, borderRadius: 12, background: 'var(--muted)', animation: 'pulse 1.5s ease-in-out infinite' }} />
@@ -915,7 +915,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   }
 
   return (
-    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1100, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1400, margin: '0 auto' }}>
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div style={{ marginBottom: 24 }}>

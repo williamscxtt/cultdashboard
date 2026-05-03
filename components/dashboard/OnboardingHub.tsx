@@ -632,7 +632,7 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
   const hasAiData = insights || aiNiche || aiIdealClient || aiTransformation || aiContentAngle
 
   return (
-    <div style={{ padding: '24px', maxWidth: 800, margin: '0 auto' }}>
+    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
 
       {/* Admin read-only notice */}
       {adminView && (

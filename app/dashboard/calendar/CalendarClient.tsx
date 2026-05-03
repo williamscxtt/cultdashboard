@@ -562,7 +562,7 @@ export default function CalendarClient({ profileId, reels }: Props) {
   }))
 
   return (
-    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1024, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Content Calendar"
         description="See what you've posted and plan what's coming next."
