@@ -87,7 +87,15 @@ function parsePackage(md: string, weekStart: string): ParsedPackage {
   const perfMatch = intelRaw.match(/###\s*Performance Last Week[^\n]*\n([\s\S]*?)(\n###|---|\n\n\n|$)/)
   const performanceNote = perfMatch ? perfMatch[1].trim() : ''
 
-  const reelBlocks = reelsRaw.split(/\n###\s*🎬\s*Reel\s*\d+/).filter(Boolean)
+  // Capture reel headers (format lives on the ### line itself) before splitting
+  const reelHeaderPattern = /###\s*🎬\s*Reel\s*\d+\s*[|·]?\s*([^\n]*)/g
+  const reelFormats: string[] = []
+  let hm
+  while ((hm = reelHeaderPattern.exec(reelsRaw)) !== null) {
+    reelFormats.push((hm[1]?.trim() || '').replace(/^\[|\]$/g, '').trim())
+  }
+
+  const reelBlocks = reelsRaw.split(/\n###\s*🎬\s*Reel\s*\d+[^\n]*/).filter(Boolean)
   const reels: ParsedReel[] = []
 
   for (let i = 0; i < reelBlocks.length; i++) {
@@ -95,9 +103,8 @@ function parsePackage(md: string, weekStart: string): ParsedPackage {
     const block = accountsIdx > 0 ? reelBlocks[i].slice(0, accountsIdx) : reelBlocks[i]
     if (!block.trim()) continue
 
-    const headerMatch = block.match(/^[^\n]*—\s*([A-Za-z]+)\s*[|·]\s*([^\n]+)/)
-    const day = headerMatch?.[1]?.trim() || `Day ${i + 1}`
-    const format = headerMatch?.[2]?.trim() || 'unknown'
+    const day = `Day ${i + 1}`
+    const format = reelFormats[i] || 'unknown'
 
     const hookMatch = block.match(/\*\*Hook:\*\*\s*([^\n]+)/)
     const hook = hookMatch?.[1]?.trim() || ''
