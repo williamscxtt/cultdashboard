@@ -1191,28 +1191,77 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
               )}
 
               <div style={{ marginTop: 20, paddingTop: 16, borderTop: '1px solid var(--border)' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>Top Reel</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>Top Reel</div>
                 {(() => {
                   const top = [...currentReels].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0]
-                  if (!top) return null
-                  const hookText = top.hook?.trim() || top.caption?.slice(0, 80)?.trim()
+                  if (!top) return <p style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>No reels in this period</p>
+                  const avgV = currentReels.length > 1
+                    ? Math.round(currentReels.reduce((a, r) => a + (r.views ?? 0), 0) / currentReels.length)
+                    : 0
+                  const multiplier = avgV > 0 ? ((top.views ?? 0) / avgV) : 0
+                  const hookText = top.hook && top.hook.trim().length > 3 ? top.hook.trim() : top.caption?.trim()
+                  const topEng = (top.likes ?? 0) + (top.comments ?? 0) + (top.saves ?? 0)
+                  const engRate = (top.views ?? 0) > 0 ? ((topEng / (top.views ?? 1)) * 100).toFixed(1) : null
                   return (
                     <div>
-                      <div style={{ fontSize: 22, fontWeight: 800, color: '#3B82F6', letterSpacing: '-0.5px', lineHeight: 1, marginBottom: 5 }}>
-                        {fmtNum(top.views ?? 0)} <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted-foreground)' }}>views</span>
+                      {/* Views + multiplier */}
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginBottom: 8 }}>
+                        <span style={{ fontSize: 24, fontWeight: 800, color: '#3B82F6', letterSpacing: '-0.5px', lineHeight: 1 }}>
+                          {fmtNum(top.views ?? 0)}
+                        </span>
+                        <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted-foreground)' }}>views</span>
+                        {multiplier >= 1.2 && (
+                          <span style={{
+                            fontSize: 11, fontWeight: 700, color: '#22c55e',
+                            background: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.2)',
+                            borderRadius: 5, padding: '1px 6px',
+                          }}>
+                            {multiplier.toFixed(1)}× avg
+                          </span>
+                        )}
                       </div>
-                      {hookText ? (
-                        <p style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.55, margin: '0 0 4px', fontStyle: 'italic' }}>
-                          &ldquo;{hookText.slice(0, 80)}{hookText.length > 80 ? '…' : ''}&rdquo;
+
+                      {/* Hook */}
+                      {hookText && hookText.length > 3 ? (
+                        <p style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.55, margin: '0 0 10px', fontStyle: 'italic', borderLeft: '2px solid #3B82F6', paddingLeft: 8 }}>
+                          &ldquo;{hookText.slice(0, 120)}{hookText.length > 120 ? '…' : ''}&rdquo;
                         </p>
                       ) : (
-                        <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '0 0 4px', fontStyle: 'italic' }}>Hook not recorded for this reel</p>
+                        <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '0 0 10px', fontStyle: 'italic' }}>Hook not recorded</p>
                       )}
-                      {top.format_type && (
-                        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                          {top.format_type.replace(/_/g, ' ')}
-                        </span>
-                      )}
+
+                      {/* Engagement row */}
+                      <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 8 }}>
+                        {[
+                          { label: '❤️', value: fmtNum(top.likes ?? 0) },
+                          { label: '💬', value: fmtNum(top.comments ?? 0) },
+                          { label: '🔖', value: fmtNum(top.saves ?? 0) },
+                          ...(engRate ? [{ label: 'eng', value: `${engRate}%` }] : []),
+                        ].map(({ label, value }) => (
+                          <div key={label} style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+                            {label} <span style={{ color: 'var(--foreground)', fontWeight: 600 }}>{value}</span>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Format + date */}
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+                        {top.format_type && (
+                          <span style={{
+                            fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)',
+                            textTransform: 'uppercase', letterSpacing: '0.06em',
+                            background: 'var(--muted)', border: '1px solid var(--border)',
+                            borderRadius: 4, padding: '2px 6px',
+                          }}>
+                            {top.format_type.replace(/_/g, ' ')}
+                          </span>
+                        )}
+                        {top.date && (
+                          <span style={{ fontSize: 10, color: 'var(--muted-foreground)' }}>
+                            {new Date(top.date + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   )
                 })()}
