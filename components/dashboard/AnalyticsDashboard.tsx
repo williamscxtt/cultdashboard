@@ -560,6 +560,78 @@ function ReelCard({ reel, idx, profileId }: { reel: ClientReel; idx: number; pro
   )
 }
 
+// ─── weekly analysis ──────────────────────────────────────────────────────────
+interface WeeklyAnalysisData {
+  what_worked: string
+  what_to_improve: string
+  this_week: string
+}
+
+function WeeklyAnalysisCard({ analysis, isMobile, updatedDaysAgo }: { analysis: WeeklyAnalysisData; isMobile: boolean; updatedDaysAgo: number | null }) {
+  const sections: { key: keyof WeeklyAnalysisData; label: string; color: string }[] = [
+    { key: 'what_worked',    label: 'What worked',    color: '#4ade80' },
+    { key: 'what_to_improve', label: 'Improve',       color: 'hsl(38 92% 60%)' },
+    { key: 'this_week',      label: 'This week',      color: '#3B82F6' },
+  ]
+  const hasSections = analysis.what_to_improve || analysis.this_week
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, ease: 'easeOut', delay: 0.08 }}
+      style={{
+        background: 'var(--card)', border: '1px solid var(--border)',
+        borderRadius: 12, overflow: 'hidden', marginBottom: 16,
+      }}
+    >
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '10px 16px', borderBottom: '1px solid var(--border)',
+        background: 'rgba(59,130,246,0.04)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+          <Zap size={12} color="#3B82F6" fill="#3B82F6" />
+          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--foreground)', letterSpacing: '0.02em' }}>
+            Weekly Analysis
+          </span>
+        </div>
+        {updatedDaysAgo !== null && (
+          <span style={{ fontSize: 10, color: 'var(--muted-foreground)' }}>
+            {updatedDaysAgo === 0 ? 'Updated today' : `Updated ${updatedDaysAgo}d ago`}
+          </span>
+        )}
+      </div>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile || !hasSections ? '1fr' : 'repeat(3, 1fr)',
+      }}>
+        {sections.map(({ key, label, color }, i) => {
+          const text = analysis[key]
+          if (!text) return null
+          return (
+            <div key={key} style={{
+              padding: '14px 16px',
+              borderRight: (!isMobile && hasSections && i < 2) ? '1px solid var(--border)' : 'none',
+              borderBottom: (isMobile && hasSections && i < 2) ? '1px solid var(--border)' : 'none',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 7 }}>
+                <div style={{ width: 6, height: 6, borderRadius: '50%', background: color, flexShrink: 0 }} />
+                <span style={{ fontSize: 9, fontWeight: 700, color, textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+              </div>
+              <p style={{
+                fontSize: 12, color: 'var(--foreground)', lineHeight: 1.65, margin: 0,
+                fontWeight: key === 'this_week' ? 600 : 400,
+              }}>
+                {text}
+              </p>
+            </div>
+          )
+        })}
+      </div>
+    </motion.div>
+  )
+}
+
 // ─── main export ──────────────────────────────────────────────────────────────
 interface Props {
   profileId: string
@@ -576,6 +648,17 @@ interface SyncResult { synced: number; total: number; classified?: number; warni
 export default function AnalyticsDashboard({ profileId, followersCount, igUsername, followerHistory = [], profileName, dashboardBio, focusThisWeek, willFollowerViewRatio }: Props) {
   const { startSync, updateProgress, finishSync } = useSyncProgress()
   const isMobile = useIsMobile()
+
+  // Parse weekly analysis — stored as JSON since the new format, plain text in legacy
+  const weeklyAnalysis = useMemo<WeeklyAnalysisData | null>(() => {
+    if (!focusThisWeek) return null
+    try {
+      const p = JSON.parse(focusThisWeek)
+      if (p.what_worked) return p as WeeklyAnalysisData
+    } catch {}
+    // Legacy plain text — treat as the "this_week" field only
+    return { what_worked: '', what_to_improve: '', this_week: focusThisWeek }
+  }, [focusThisWeek])
   const [reels, setReels] = useState<ClientReel[]>([])
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -849,36 +932,18 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
           <div style={{ display: 'flex', gap: 8, flexShrink: 0 }} />
         </div>
 
-        {/* Bio + weekly focus */}
-        {(dashboardBio || focusThisWeek) && (
-          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            {dashboardBio && (
-              <div style={{
-                flex: '1 1 300px', padding: '14px 18px', borderRadius: 10,
-                background: 'var(--card)', border: '1px solid var(--border)',
-              }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-                  About
-                </div>
-                <p style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6, margin: 0 }}>
-                  {dashboardBio}
-                </p>
-              </div>
-            )}
-            {focusThisWeek && (
-              <div style={{
-                flex: '0 1 280px', padding: '14px 18px', borderRadius: 10,
-                background: 'rgba(59, 130, 246, 0.08)',
-                border: '1px solid rgba(59, 130, 246, 0.2)',
-              }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6 }}>
-                  This Week's Focus
-                </div>
-                <p style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
-                  {focusThisWeek}
-                </p>
-              </div>
-            )}
+        {/* Bio */}
+        {dashboardBio && (
+          <div style={{
+            padding: '12px 16px', borderRadius: 10,
+            background: 'var(--card)', border: '1px solid var(--border)',
+          }}>
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 5 }}>
+              About
+            </div>
+            <p style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.6, margin: 0 }}>
+              {dashboardBio}
+            </p>
           </div>
         )}
       </div>
@@ -997,16 +1062,25 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       {/* ── Instagram account banner ─────────────────────────────────────────── */}
       {igUsername && (
         <div style={{
-          display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16,
+          display: 'flex', alignItems: 'center', gap: 8, marginBottom: weeklyAnalysis ? 12 : 16,
           padding: '8px 14px', borderRadius: 8, background: 'var(--muted)',
           fontSize: 12, color: 'var(--muted-foreground)',
         }}>
           <IgIcon size={13} color="var(--muted-foreground)" />
           @{igUsername}
-          {followersCount != null && (
-            <span style={{ marginLeft: 4 }}>· {fmtNum(followersCount)} followers</span>
+          {localFollowers != null && (
+            <span style={{ marginLeft: 4 }}>· {fmtNum(localFollowers)} followers</span>
           )}
         </div>
+      )}
+
+      {/* ── Weekly Analysis ──────────────────────────────────────────────────── */}
+      {weeklyAnalysis && (
+        <WeeklyAnalysisCard
+          analysis={weeklyAnalysis}
+          isMobile={isMobile}
+          updatedDaysAgo={null}
+        />
       )}
 
       {reels.length > 0 && (
@@ -1121,10 +1195,24 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                 {(() => {
                   const top = [...currentReels].sort((a, b) => (b.views ?? 0) - (a.views ?? 0))[0]
                   if (!top) return null
+                  const hookText = top.hook?.trim() || top.caption?.slice(0, 80)?.trim()
                   return (
-                    <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.5 }}>
-                      <span style={{ fontWeight: 700, color: '#3B82F6' }}>{fmtNum(top.views ?? 0)} views</span>
-                      {' · '}{top.hook?.slice(0, 60) || top.caption?.slice(0, 60) || '(no hook)'}
+                    <div>
+                      <div style={{ fontSize: 22, fontWeight: 800, color: '#3B82F6', letterSpacing: '-0.5px', lineHeight: 1, marginBottom: 5 }}>
+                        {fmtNum(top.views ?? 0)} <span style={{ fontSize: 12, fontWeight: 500, color: 'var(--muted-foreground)' }}>views</span>
+                      </div>
+                      {hookText ? (
+                        <p style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.55, margin: '0 0 4px', fontStyle: 'italic' }}>
+                          &ldquo;{hookText.slice(0, 80)}{hookText.length > 80 ? '…' : ''}&rdquo;
+                        </p>
+                      ) : (
+                        <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '0 0 4px', fontStyle: 'italic' }}>Hook not recorded for this reel</p>
+                      )}
+                      {top.format_type && (
+                        <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          {top.format_type.replace(/_/g, ' ')}
+                        </span>
+                      )}
                     </div>
                   )
                 })()}

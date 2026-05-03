@@ -52,42 +52,74 @@ Be concrete and specific. No fluff. Use present tense. Do not use quotation mark
   return res.content[0].type === 'text' ? res.content[0].text.trim() : ''
 }
 
-async function generateWeeklyFocus(
+async function generateWeeklyAnalysis(
   profile: Record<string, unknown>,
-  reelSummary: ReelSummary
+  last7: Array<{ views: number; likes: number | null; comments: number | null; saves: number | null; format_type: string | null; hook: string | null; caption: string | null }>,
+  prev7: Array<{ views: number }>,
+  recentChatTopics: string[],
 ): Promise<string> {
   const intro = (profile.intro_structured ?? {}) as Record<string, unknown>
-  const firstName = String(profile.name || 'this creator').split(' ')[0]
+  const firstName = String(profile.name || '').split(' ')[0] || 'this creator'
   const niche = String(intro.specific_niche || intro.what_you_coach || profile.niche || '')
   const challenge = String(intro.biggest_problem || profile.biggest_challenge || '')
   const goal90 = String(intro.goal_90_days || profile.ninety_day_goal || '')
+  const revGoal = String(intro.revenue_goal || intro.goal_revenue || profile.revenue_goal || '')
 
-  if (!niche && reelSummary.count === 0) {
-    return `I can't set a focus for you this week because you haven't told me what you're working on or what your goals are. Fill in your Onboarding Hub — specifically your biggest challenge and 90-day goal — and I'll give you something actually useful.`
+  const fmt = (n: number) => n >= 1_000_000 ? `${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n/1_000).toFixed(1)}K` : String(n)
+  const sorted = [...last7].sort((a, b) => b.views - a.views)
+  const avgViews = last7.length ? Math.round(last7.reduce((a, r) => a + r.views, 0) / last7.length) : 0
+  const prevAvg = prev7.length ? Math.round(prev7.reduce((a, r) => a + r.views, 0) / prev7.length) : 0
+  const trendPct = prevAvg > 0 ? Math.round(((avgViews - prevAvg) / prevAvg) * 100) : null
+
+  if (last7.length === 0 && !niche && !goal90) {
+    return JSON.stringify({
+      what_worked: "No reels posted this week — no content data to analyse yet.",
+      what_to_improve: "Fill in your Onboarding Hub with your niche, goals, and biggest challenge so future analyses are fully personalised.",
+      this_week: "Post your first reel and connect Instagram in Settings to start tracking.",
+    })
   }
 
-  const trendDesc = reelSummary.trend !== null
-    ? `${reelSummary.trend > 0 ? `up ${reelSummary.trend}%` : `down ${Math.abs(reelSummary.trend)}%`} vs prior 30 days`
-    : 'no prior comparison data'
+  const reelLines = sorted.slice(0, 10).map((r, i) => {
+    const hookText = (r.hook || r.caption || '').slice(0, 70) || '(no hook recorded)'
+    const eng = (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0)
+    return `${i + 1}. ${fmt(r.views)} views | ${r.format_type?.replace(/_/g, ' ') || 'unknown format'} | "${hookText}" | ${eng} engagements`
+  }).join('\n') || '(no reels this week)'
 
-  const prompt = `You are a performance coach for ${firstName}${niche ? `, a ${niche} creator` : ''}.
+  const chatContext = recentChatTopics.length
+    ? `\nWhat ${firstName} has been working on / asking about recently:\n${recentChatTopics.slice(0, 4).map(t => `- ${t}`).join('\n')}`
+    : ''
 
-Their Instagram performance this month (last 30 days):
-- Reels posted: ${reelSummary.count}
-- Average views per reel: ${reelSummary.avgViews.toLocaleString()}
-- Trend: ${trendDesc}
-${reelSummary.bestFormat ? `- Best performing format: ${reelSummary.bestFormat} (avg ${reelSummary.bestFormatAvgViews.toLocaleString()} views)` : ''}
-${challenge ? `Current struggle: ${challenge}` : ''}
-${goal90 ? `90-day goal: ${goal90}` : ''}
+  const prompt = `You are a sharp, direct content performance coach for ${firstName}${niche ? ` (${niche} creator)` : ''}.
 
-Give ${firstName} ONE specific, actionable weekly focus based on this data. Be direct — tell them exactly what to do or double down on this week. Max 30 words. No bullet points. No "This week:" prefix.`
+WEEK IN NUMBERS:
+${last7.length} reels posted | avg ${fmt(avgViews)} views per reel${trendPct !== null ? ` | ${trendPct > 0 ? `↑ ${trendPct}%` : `↓ ${Math.abs(trendPct)}%`} vs prior week` : ''}
+
+REELS THIS WEEK (ranked by views):
+${reelLines}
+${challenge ? `\nBiggest challenge: ${challenge}` : ''}
+${goal90 ? `90-day goal: ${goal90}${revGoal ? ` (${revGoal})` : ''}` : ''}${chatContext}
+
+Write a weekly analysis in this exact JSON format. Reference actual hooks, formats, and numbers from their data. No generic advice — everything tied to what they actually posted.
+
+{
+  "what_worked": "1-2 sentences. What specifically performed best and why. Name the hook text or format, give the number.",
+  "what_to_improve": "1-2 sentences. The single biggest weakness this week — specific to what they posted, not vague.",
+  "this_week": "One clear action to prioritise in the next 7 days — tied to their goal and the gap you identified."
+}
+
+Max 45 words per section. Return only valid JSON.`
 
   const res = await anthropic.messages.create({
     model: 'claude-haiku-4-5',
-    max_tokens: 80,
+    max_tokens: 450,
     messages: [{ role: 'user', content: prompt }],
   })
-  return res.content[0].type === 'text' ? res.content[0].text.trim() : ''
+  const text = res.content[0].type === 'text' ? res.content[0].text.trim() : ''
+  const match = text.match(/\{[\s\S]*\}/)
+  if (match) {
+    try { const p = JSON.parse(match[0]); if (p.what_worked) return match[0] } catch {}
+  }
+  return JSON.stringify({ what_worked: text, what_to_improve: '', this_week: '' })
 }
 
 // ─── page ─────────────────────────────────────────────────────────────────────
@@ -105,7 +137,10 @@ export default async function AnalyticsPage() {
 
   const sixtyDaysAgo = new Date(Date.now() - 60 * 86400000).toISOString().split('T')[0]
 
-  const [{ data: profile }, { data: snapshots }, { data: recentReels }] = await Promise.all([
+  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]
+  const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0]
+
+  const [{ data: profile }, { data: snapshots }, { data: recentReels }, { data: recentConversations }] = await Promise.all([
     adminClient.from('profiles').select('*').eq('id', profileId).single(),
     adminClient
       .from('follower_snapshots')
@@ -115,18 +150,30 @@ export default async function AnalyticsPage() {
       .limit(90),
     adminClient
       .from('client_reels')
-      .select('views, format_type, date')
+      .select('views, likes, comments, saves, format_type, date, hook, caption')
       .eq('profile_id', profileId)
       .gte('date', sixtyDaysAgo)
       .order('date', { ascending: false })
       .limit(120),
+    adminClient
+      .from('ai_conversations')
+      .select('messages, created_at')
+      .eq('profile_id', profileId)
+      .order('created_at', { ascending: false })
+      .limit(5),
   ])
 
   if (!profile) redirect('/login')
 
-  // Compute reel performance summary for weekly focus generation
+  // Compute reel windows for weekly analysis + legacy ReelSummary (still used for admin benchmarks)
   const now = Date.now()
+  const sevenDaysMs = 7 * 86400000
   const thirtyDaysMs = 30 * 86400000
+  const last7 = (recentReels ?? []).filter(r => now - new Date(r.date).getTime() <= sevenDaysMs)
+  const prev7 = (recentReels ?? []).filter(r => {
+    const age = now - new Date(r.date).getTime()
+    return age > sevenDaysMs && age <= 2 * sevenDaysMs
+  })
   const last30 = (recentReels ?? []).filter(r => now - new Date(r.date).getTime() <= thirtyDaysMs)
   const prev30 = (recentReels ?? []).filter(r => {
     const age = now - new Date(r.date).getTime()
@@ -156,6 +203,24 @@ export default async function AnalyticsPage() {
     bestFormatAvgViews: fmtRanked[0]?.avg ?? 0,
   }
 
+  // Extract recent user chat topics to personalise the weekly analysis
+  const recentChatTopics: string[] = []
+  if (recentConversations) {
+    for (const conv of recentConversations) {
+      const msgs = (conv.messages ?? []) as Array<{ role: string; content: string; timestamp?: string }>
+      for (const m of msgs) {
+        if (m.role === 'user' && m.content.length > 25) {
+          recentChatTopics.push(m.content.slice(0, 100))
+          if (recentChatTopics.length >= 5) break
+        }
+      }
+      if (recentChatTopics.length >= 5) break
+    }
+  }
+
+  // sevenDaysAgo / fourteenDaysAgo used above for filtering; reelSummary used in Will benchmark section
+
+
   const profileData = profile as Record<string, unknown>
   let dashboardBio = String(profile.dashboard_bio || '')
   let focusThisWeek = String(profile.focus_this_week || '')
@@ -170,16 +235,23 @@ export default async function AnalyticsPage() {
     : false
   const needsBio = onboarded && (!dashboardBio || bioHasMarkdown || bioHasDoubleName)
 
-  // Focus: regenerate if missing, or older than 6 days
+  // Weekly analysis: regenerate if missing, or older than 6 days
   const focusUpdatedAt = profile.focus_updated_at ? new Date(String(profile.focus_updated_at)) : null
   const focusAgeMs = focusUpdatedAt ? Date.now() - focusUpdatedAt.getTime() : Infinity
   const focusIsStale = focusAgeMs > 6 * 24 * 60 * 60 * 1000
-  const needsFocus = onboarded && (!focusThisWeek || focusIsStale)
+  // Also regenerate if stored value is plain text (not JSON) — that's the old format
+  const isLegacyFocus = focusThisWeek && !focusThisWeek.trim().startsWith('{')
+  const needsFocus = onboarded && (!focusThisWeek || focusIsStale || isLegacyFocus)
 
   if (needsBio || needsFocus) {
     const [bio, focus] = await Promise.all([
       needsBio ? generateDashboardBio(profileData) : Promise.resolve(dashboardBio),
-      needsFocus ? generateWeeklyFocus(profileData, reelSummary) : Promise.resolve(focusThisWeek),
+      needsFocus ? generateWeeklyAnalysis(
+        profileData,
+        last7 as Array<{ views: number; likes: number | null; comments: number | null; saves: number | null; format_type: string | null; hook: string | null; caption: string | null }>,
+        prev7 as Array<{ views: number }>,
+        recentChatTopics,
+      ) : Promise.resolve(focusThisWeek),
     ])
 
     dashboardBio = bio
@@ -187,7 +259,7 @@ export default async function AnalyticsPage() {
 
     const updates: Record<string, string> = {}
     if (needsBio && bio && !bio.startsWith('Honestly ')) updates.dashboard_bio = bio
-    if (needsFocus && focus && !focus.startsWith("I can't set a focus")) {
+    if (needsFocus && focus) {
       updates.focus_this_week = focus
       updates.focus_updated_at = new Date().toISOString()
     }
