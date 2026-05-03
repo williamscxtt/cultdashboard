@@ -68,29 +68,40 @@ async function getVideoUrlViaApify(igUrl: string): Promise<string | null> {
 }
 
 // ── Transcription ────────────────────────────────────────────────────────────
+// Prefers Groq (free, faster whisper-large-v3). Falls back to OpenAI whisper-1.
+
+function buildWhisperClient() {
+  const { default: OpenAI } = require('openai')
+  if (process.env.GROQ_API_KEY) {
+    return {
+      client: new OpenAI({ apiKey: process.env.GROQ_API_KEY, baseURL: 'https://api.groq.com/openai/v1' }),
+      model: 'whisper-large-v3',
+    }
+  }
+  if (process.env.OPENAI_API_KEY) {
+    return {
+      client: new OpenAI({ apiKey: process.env.OPENAI_API_KEY }),
+      model: 'whisper-1',
+    }
+  }
+  throw new Error('No transcription API key configured. Add GROQ_API_KEY or OPENAI_API_KEY.')
+}
 
 async function transcribeAudioFile(file: File): Promise<string> {
-  if (!process.env.OPENAI_API_KEY) {
-    throw new Error('OpenAI API key not configured.')
-  }
-  const { default: OpenAI } = await import('openai')
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  const result = await openai.audio.transcriptions.create({ file, model: 'whisper-1', language: 'en' })
+  const { client, model } = buildWhisperClient()
+  const result = await client.audio.transcriptions.create({ file, model, language: 'en' })
   return result.text
 }
 
 async function transcribeFromUrl(videoUrl: string): Promise<string> {
-  if (!process.env.OPENAI_API_KEY) throw new Error('OpenAI API key not configured.')
-
   const videoRes = await fetch(videoUrl)
   if (!videoRes.ok) throw new Error('Could not download reel video')
   const buffer = await videoRes.arrayBuffer()
   const blob = new Blob([buffer], { type: 'video/mp4' })
   const file = new File([blob], 'reel.mp4', { type: 'video/mp4' })
 
-  const { default: OpenAI } = await import('openai')
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  const result = await openai.audio.transcriptions.create({ file, model: 'whisper-1', language: 'en' })
+  const { client, model } = buildWhisperClient()
+  const result = await client.audio.transcriptions.create({ file, model, language: 'en' })
   return result.text
 }
 
@@ -308,7 +319,7 @@ export async function POST(req: NextRequest) {
       transcript = await transcribeFromUrl(videoUrl)
     } catch (err) {
       return NextResponse.json({
-        error: `Transcription failed: ${err instanceof Error ? err.message : 'unknown error'}. Paste the transcript manually instead.`,
+        error: `Could not transcribe this reel. Paste the transcript manually instead.`,
       }, { status: 422 })
     }
   }

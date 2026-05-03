@@ -180,9 +180,16 @@ async function transcribeReel(videoUrl: string): Promise<string> {
     form.append('model', 'whisper-1')
     form.append('language', 'en')
 
-    const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+    const groqKey = process.env.GROQ_API_KEY
+    const endpoint = groqKey
+      ? 'https://api.groq.com/openai/v1/audio/transcriptions'
+      : 'https://api.openai.com/v1/audio/transcriptions'
+    const authKey = groqKey ?? apiKey
+    if (groqKey) form.set('model', 'whisper-large-v3')
+
+    const whisperRes = await fetch(endpoint, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${apiKey}` },
+      headers: { Authorization: `Bearer ${authKey}` },
       body: form,
       signal: AbortSignal.timeout(60_000),
     })
