@@ -41,8 +41,10 @@ export default function ClientAccessPage() {
     if (signupError?.message?.toLowerCase().includes('already registered') ||
         signupError?.message?.toLowerCase().includes('already been registered') ||
         signupError?.message?.toLowerCase().includes('user already exists')) {
-      await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`,
+      await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       })
       setSuccess("You already have an account. We've sent a link to your email so you can set your password and log in.")
       setLoading(false)
@@ -79,11 +81,11 @@ export default function ClientAccessPage() {
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true); setError('')
-    const supabase = createClient()
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`,
+    await fetch('/api/auth/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
     })
-    if (error) { setError(error.message); setLoading(false); return }
     setSuccess('Password reset email sent — check your inbox.')
     setLoading(false)
   }
