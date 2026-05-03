@@ -70,8 +70,8 @@ async function getVideoUrlViaApify(igUrl: string): Promise<string | null> {
 // ── Transcription ────────────────────────────────────────────────────────────
 // Prefers Groq (free, faster whisper-large-v3). Falls back to OpenAI whisper-1.
 
-function buildWhisperClient() {
-  const { default: OpenAI } = require('openai')
+async function buildWhisperClient() {
+  const { default: OpenAI } = await import('openai')
   if (process.env.GROQ_API_KEY) {
     return {
       client: new OpenAI({ apiKey: process.env.GROQ_API_KEY, baseURL: 'https://api.groq.com/openai/v1' }),
@@ -84,23 +84,23 @@ function buildWhisperClient() {
       model: 'whisper-1',
     }
   }
-  throw new Error('No transcription API key configured. Add GROQ_API_KEY or OPENAI_API_KEY.')
+  throw new Error('No transcription API key configured.')
 }
 
 async function transcribeAudioFile(file: File): Promise<string> {
-  const { client, model } = buildWhisperClient()
+  const { client, model } = await buildWhisperClient()
   const result = await client.audio.transcriptions.create({ file, model, language: 'en' })
   return result.text
 }
 
 async function transcribeFromUrl(videoUrl: string): Promise<string> {
   const videoRes = await fetch(videoUrl)
-  if (!videoRes.ok) throw new Error('Could not download reel video')
+  if (!videoRes.ok) throw new Error(`Could not download reel video (${videoRes.status})`)
   const buffer = await videoRes.arrayBuffer()
   const blob = new Blob([buffer], { type: 'video/mp4' })
   const file = new File([blob], 'reel.mp4', { type: 'video/mp4' })
 
-  const { client, model } = buildWhisperClient()
+  const { client, model } = await buildWhisperClient()
   const result = await client.audio.transcriptions.create({ file, model, language: 'en' })
   return result.text
 }
@@ -318,8 +318,9 @@ export async function POST(req: NextRequest) {
     try {
       transcript = await transcribeFromUrl(videoUrl)
     } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err)
       return NextResponse.json({
-        error: `Could not transcribe this reel. Paste the transcript manually instead.`,
+        error: `Transcription failed: ${detail}`,
       }, { status: 422 })
     }
   }
