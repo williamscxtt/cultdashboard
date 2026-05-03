@@ -78,7 +78,7 @@ export default function DashboardShell({
             clientName={effectiveProfile.name || effectiveProfile.email || 'Client'}
           />
         )}
-        <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+        <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 28 }}>
           {children}
         </main>
       </div>
