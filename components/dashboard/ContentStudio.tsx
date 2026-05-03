@@ -116,7 +116,7 @@ export default function ContentStudio({ profileId }: Props) {
   }
 
   return (
-    <div style={{ maxWidth: 860, margin: '0 auto', padding: isMobile ? '12px 12px 60px' : '0 0 60px' }}>
+    <div style={{ maxWidth: 1400, margin: '0 auto', padding: isMobile ? '12px 12px 60px' : '0 0 60px' }}>
       <PageHeader
         title="Content Studio"
         description="Add your competitor accounts below, then generate this week's intel and scripts in one click."

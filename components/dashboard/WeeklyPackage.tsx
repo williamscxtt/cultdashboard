@@ -1,7 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { ChevronDown, ChevronUp, Copy, Check, Zap, TrendingUp, Users, RefreshCw, Clock } from 'lucide-react'
+import {
+  Copy, Check, Zap, TrendingUp, Users, RefreshCw,
+  Clock, Pencil, X, Save,
+} from 'lucide-react'
 import { Card, Button, PageHeader, GeneratingState } from '@/components/ui'
 import { TaskProgress } from '@/components/ui/task-progress'
 import { useIsMobile } from '@/lib/use-mobile'
@@ -43,40 +46,35 @@ interface ParsedPackage {
   reels: ParsedReel[]
 }
 
-// ── Markdown parser — mirrors ScriptCards.tsx but with full intel extraction ──
+// ── Markdown parser ───────────────────────────────────────────────────────────
 
 function parsePackage(md: string, weekStart: string): ParsedPackage {
   const weekLabel = new Date(weekStart + 'T00:00:00').toLocaleDateString('en-GB', {
     day: 'numeric', month: 'long', year: 'numeric',
   })
 
-  // Split off intel section and accounts-to-watch
   const firstReelIdx = md.search(/\n###\s*🎬\s*Reel\s*1/)
   const intelRaw = firstReelIdx > 0 ? md.slice(0, firstReelIdx) : ''
   const reelsRaw = firstReelIdx > 0 ? md.slice(firstReelIdx) : md
 
   const accountsMarker = reelsRaw.search(/\n###\s*Accounts to Watch/)
-  const accountsToWatch = accountsMarker > 0 ? reelsRaw.slice(accountsMarker).replace(/^###\s*Accounts to Watch[^\n]*\n/, '').trim() : ''
+  const accountsToWatch = accountsMarker > 0
+    ? reelsRaw.slice(accountsMarker).replace(/^###\s*Accounts to Watch[^\n]*\n/, '').trim()
+    : ''
 
-  // Extract "What's Popping" bullets with optional Source: attribution
   const poppingMatch = intelRaw.match(/###\s*What['']s Popping[^\n]*\n([\s\S]*?)(\n###|$)/)
   const whatsPopping: PoppingItem[] = []
   if (poppingMatch) {
-    // Group lines into bullet + optional Source: sub-line
     const lines = poppingMatch[1].split('\n')
     let current: PoppingItem | null = null
     for (const line of lines) {
       const trimmed = line.trim()
       if (!trimmed) continue
-      // Source attribution line
       const sourceMatch = trimmed.match(/^Source:\s*@([\w.]+)\s*[—–-]\s*"([^"]+)"\s*\(?([\d,k]+\s*views?)\)?/i)
       if (sourceMatch && current) {
-        current.account = sourceMatch[1]
-        current.hook = sourceMatch[2]
-        current.views = sourceMatch[3]
+        current.account = sourceMatch[1]; current.hook = sourceMatch[2]; current.views = sourceMatch[3]
         continue
       }
-      // New bullet line
       const bulletText = trimmed.replace(/^[-•*]\s*/, '').trim()
       if (bulletText.length > 5) {
         if (current) whatsPopping.push(current)
@@ -86,21 +84,17 @@ function parsePackage(md: string, weekStart: string): ParsedPackage {
     if (current) whatsPopping.push(current)
   }
 
-  // Extract "Performance Last Week"
   const perfMatch = intelRaw.match(/###\s*Performance Last Week[^\n]*\n([\s\S]*?)(\n###|---|\n\n\n|$)/)
   const performanceNote = perfMatch ? perfMatch[1].trim() : ''
 
-  // Parse individual reels
   const reelBlocks = reelsRaw.split(/\n###\s*🎬\s*Reel\s*\d+/).filter(Boolean)
   const reels: ParsedReel[] = []
 
   for (let i = 0; i < reelBlocks.length; i++) {
-    // Strip any trailing "Accounts to Watch" section from the last block
     const accountsIdx = reelBlocks[i].search(/\n###\s*Accounts to Watch/)
     const block = accountsIdx > 0 ? reelBlocks[i].slice(0, accountsIdx) : reelBlocks[i]
     if (!block.trim()) continue
 
-    // Parse header: "— Monday | FORMAT TYPE"
     const headerMatch = block.match(/^[^\n]*—\s*([A-Za-z]+)\s*[|·]\s*([^\n]+)/)
     const day = headerMatch?.[1]?.trim() || `Day ${i + 1}`
     const format = headerMatch?.[2]?.trim() || 'unknown'
@@ -129,18 +123,18 @@ function parsePackage(md: string, weekStart: string): ParsedPackage {
 
 function renderMd(text: string): string {
   return text
-    .replace(/^#{1,6}\s+(.+)$/gm, '$1')  // strip heading markers (### H3, ## H2, etc.)
+    .replace(/^#{1,6}\s+(.+)$/gm, '$1')
     .replace(/\*\*(.+?)\*\*/g, '<strong style="color:var(--foreground);font-weight:700;">$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
-    .replace(/^[-•] (.+)$/gm, '<li style="margin:3px 0;padding-left:4px;word-break:break-word;overflow-wrap:break-word;">$1</li>')
-    .replace(/(<li[^>]*>.*?<\/li>\n?)+/g, '<ul style="padding-left:16px;margin:6px 0;list-style:disc;max-width:100%;overflow:hidden;">$&</ul>')
-    .replace(/\n\n/g, '</p><p style="margin:6px 0;line-height:1.65;word-break:break-word;overflow-wrap:break-word;">')
+    .replace(/^[-•] (.+)$/gm, '<li style="margin:3px 0;padding-left:4px;">$1</li>')
+    .replace(/(<li[^>]*>.*?<\/li>\n?)+/g, '<ul style="padding-left:16px;margin:6px 0;list-style:disc;">$&</ul>')
+    .replace(/\n\n/g, '</p><p style="margin:6px 0;line-height:1.7;">')
     .replace(/\n/g, '<br/>')
 }
 
 // ── Copy button ───────────────────────────────────────────────────────────────
 
-function CopyButton({ text }: { text: string }) {
+function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false)
   async function copy() {
     await navigator.clipboard.writeText(text)
@@ -150,131 +144,302 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button onClick={copy} style={{
       display: 'flex', alignItems: 'center', gap: 5,
-      padding: '5px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600,
-      background: copied ? 'rgba(255,255,255,0.55)' : 'var(--muted)',
-      color: copied ? '#fff' : 'var(--foreground)',
-      border: '1px solid var(--border)', cursor: 'pointer', transition: 'all 0.15s',
+      padding: '6px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600,
+      background: copied ? 'rgba(74,222,128,0.12)' : 'var(--muted)',
+      color: copied ? '#4ade80' : 'var(--foreground)',
+      border: `1px solid ${copied ? 'rgba(74,222,128,0.3)' : 'var(--border)'}`,
+      cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit',
     }}>
-      {copied ? <Check size={11} /> : <Copy size={11} />}
-      {copied ? 'Copied' : 'Copy'}
+      {copied ? <Check size={12} /> : <Copy size={12} />}
+      {copied ? 'Copied!' : label}
     </button>
   )
 }
 
-// ── Reel script card ──────────────────────────────────────────────────────────
+// ── Script card ────────────────────────────────────────────────────────────────
 
 const DAY_COLORS = [
-  'hsl(220 90% 56%)', 'hsl(270 60% 55%)', 'rgba(255,255,255,0.55)',
-  'rgba(255,255,255,0.35)', 'hsl(0 65% 50%)', 'hsl(195 80% 45%)', 'hsl(310 60% 50%)',
+  '#3B82F6', '#8B5CF6', '#EC4899',
+  '#F59E0B', '#10B981', '#06B6D4', '#EF4444',
 ]
 
-function ReelCard({ reel, index }: { reel: ParsedReel; index: number }) {
-  const [open, setOpen] = useState(false)
-  const isMobile = useIsMobile()
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '8px 10px',
+  borderRadius: 7, border: '1px solid var(--border)',
+  background: 'var(--background)', color: 'var(--foreground)',
+  fontSize: 13, fontFamily: 'inherit', lineHeight: 1.5,
+  outline: 'none', boxSizing: 'border-box',
+}
+
+const textareaStyle: React.CSSProperties = {
+  ...inputStyle,
+  resize: 'vertical',
+  minHeight: 120,
+}
+
+function ScriptCard({
+  reel, index, packageId, profileId, onSaved,
+}: {
+  reel: ParsedReel
+  index: number
+  packageId: string
+  profileId: string
+  onSaved: (index: number, updates: Partial<ParsedReel>) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [editHook, setEditHook] = useState(reel.hook)
+  const [editScript, setEditScript] = useState(reel.script)
+  const [editCaption, setEditCaption] = useState(reel.caption)
+  const [saving, setSaving] = useState(false)
   const accent = DAY_COLORS[index % DAY_COLORS.length]
+
+  // Keep local state in sync if parent data refreshes
+  useEffect(() => {
+    if (!editing) {
+      setEditHook(reel.hook)
+      setEditScript(reel.script)
+      setEditCaption(reel.caption)
+    }
+  }, [reel.hook, reel.script, reel.caption, editing])
+
   const copyText = [
-    reel.hook,
-    '',
+    reel.hook, '',
     reel.script,
     reel.caption ? `\nCaption:\n${reel.caption}` : '',
-    reel.cta ? `\nCTA: ${reel.cta}` : '',
+    reel.cta ? `CTA: ${reel.cta}` : '',
   ].filter(Boolean).join('\n')
 
-  return (
-    <div style={{ borderRadius: 10, border: '1px solid var(--border)', overflow: 'hidden', marginBottom: 10 }}>
-      {/* Header */}
-      <button
-        onClick={() => setOpen(o => !o)}
-        style={{
-          width: '100%', display: 'flex', alignItems: 'center', gap: 12,
-          padding: '12px 16px', background: 'var(--card)',
-          border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
-        }}
-      >
-        <span style={{
-          width: 32, height: 32, borderRadius: 9, flexShrink: 0,
-          background: accent, color: '#fff',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 11, fontWeight: 800,
-        }}>
-          {reel.day.slice(0, 2).toUpperCase()}
-        </span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', marginBottom: 2 }}>
-            {reel.day} · <span style={{ textTransform: 'capitalize' }}>{reel.format}</span>
-          </div>
-          <div style={{
-            fontSize: 13, fontWeight: 600, color: 'var(--foreground)',
-            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.4,
-          }}>
-            &ldquo;{reel.hook}&rdquo;
-          </div>
-        </div>
-        {open
-          ? <ChevronUp size={14} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
-          : <ChevronDown size={14} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />
-        }
-      </button>
+  async function handleSave() {
+    setSaving(true)
+    try {
+      const res = await fetch('/api/weekly-package/edit-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          packageId, profileId, reelIndex: index,
+          hook: editHook, script: editScript, caption: editCaption,
+        }),
+      })
+      if (!res.ok) throw new Error('Save failed')
+      onSaved(index, { hook: editHook, script: editScript, caption: editCaption })
+      setEditing(false)
+      toast.success('Script saved')
+    } catch {
+      toast.error('Failed to save — try again')
+    } finally {
+      setSaving(false)
+    }
+  }
 
-      {/* Expanded */}
-      {open && (
-        <div style={{ borderTop: '1px solid var(--border)', background: 'var(--background)' }}>
-          {/* Hook */}
-          <div style={{ padding: isMobile ? '12px 12px 0' : '14px 16px 0' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, color: accent, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
-              Hook
-            </div>
+  function handleCancel() {
+    setEditHook(reel.hook)
+    setEditScript(reel.script)
+    setEditCaption(reel.caption)
+    setEditing(false)
+  }
+
+  return (
+    <div style={{
+      background: 'var(--card)', border: '1px solid var(--border)',
+      borderRadius: 14, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+    }}>
+      {/* Accent bar */}
+      <div style={{ height: 3, background: `linear-gradient(90deg, ${accent}, ${accent}66)`, flexShrink: 0 }} />
+
+      {/* Header */}
+      <div style={{
+        padding: '16px 20px 14px',
+        borderBottom: '1px solid var(--border)',
+        background: `${accent}06`,
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <div style={{
+            width: 34, height: 34, borderRadius: 10, flexShrink: 0,
+            background: `${accent}18`, border: `1px solid ${accent}30`,
+            color: accent, fontSize: 13, fontWeight: 800,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            {String(index + 1).padStart(2, '0')}
+          </div>
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1.2 }}>{reel.day}</div>
             <div style={{
-              fontSize: isMobile ? 13 : 15, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1.4,
-              paddingLeft: 12, borderLeft: `3px solid ${accent}`, marginBottom: 16,
+              fontSize: 10, color: accent, fontWeight: 700,
+              textTransform: 'uppercase', letterSpacing: '0.07em',
+            }}>
+              {reel.format}
+            </div>
+          </div>
+          {editing && (
+            <div style={{
+              marginLeft: 'auto', fontSize: 10, fontWeight: 700, padding: '2px 8px',
+              borderRadius: 20, background: 'rgba(59,130,246,0.12)',
+              color: '#60a5fa', border: '1px solid rgba(59,130,246,0.25)',
+              textTransform: 'uppercase', letterSpacing: '0.06em',
+            }}>
+              Editing
+            </div>
+          )}
+        </div>
+
+        {/* Hook */}
+        <div style={{ marginBottom: 2 }}>
+          <div style={{
+            fontSize: 9, fontWeight: 700, color: accent,
+            textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6,
+          }}>
+            Hook
+          </div>
+          {editing ? (
+            <input
+              value={editHook}
+              onChange={e => setEditHook(e.target.value)}
+              style={inputStyle}
+              placeholder="Hook text..."
+            />
+          ) : (
+            <div style={{
+              fontSize: 14, fontWeight: 700, color: 'var(--foreground)',
+              lineHeight: 1.45, fontStyle: 'italic',
+              paddingLeft: 12, borderLeft: `3px solid ${accent}`,
             }}>
               &ldquo;{reel.hook}&rdquo;
             </div>
-          </div>
+          )}
+        </div>
+      </div>
 
-          {/* Script */}
-          {reel.script && (
-            <div style={{ padding: isMobile ? '0 12px 12px' : '0 16px 14px' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
-                Full Script
-              </div>
+      {/* Body */}
+      <div style={{ padding: '16px 20px', flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+        {/* Script */}
+        {(reel.script || editing) && (
+          <div>
+            <div style={{
+              fontSize: 9, fontWeight: 700, color: 'var(--muted-foreground)',
+              textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 7,
+            }}>
+              Script
+            </div>
+            {editing ? (
+              <textarea
+                value={editScript}
+                onChange={e => setEditScript(e.target.value)}
+                style={{ ...textareaStyle, minHeight: 200 }}
+                placeholder="Full script..."
+              />
+            ) : (
               <div
-                style={{ fontSize: isMobile ? 12 : 13, color: 'var(--foreground)', lineHeight: 1.75, background: 'var(--muted)', borderRadius: 8, padding: isMobile ? '10px 12px' : '12px 14px', overflowWrap: 'break-word', wordBreak: 'break-word' }}
+                style={{
+                  fontSize: 13, color: 'var(--foreground)', lineHeight: 1.75,
+                  overflowWrap: 'break-word', wordBreak: 'break-word',
+                }}
                 dangerouslySetInnerHTML={{ __html: renderMd(reel.script) }}
               />
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
-          {/* Caption */}
-          {reel.caption && (
-            <div style={{ padding: isMobile ? '0 12px 12px' : '0 16px 14px' }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
-                Caption
-              </div>
+        {/* Caption */}
+        {(reel.caption || editing) && (
+          <div>
+            <div style={{
+              fontSize: 9, fontWeight: 700, color: 'var(--muted-foreground)',
+              textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 7,
+            }}>
+              Caption
+            </div>
+            {editing ? (
+              <textarea
+                value={editCaption}
+                onChange={e => setEditCaption(e.target.value)}
+                style={{ ...textareaStyle, minHeight: 80 }}
+                placeholder="Instagram caption..."
+              />
+            ) : (
               <div
-                style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.65, background: 'var(--muted)', borderRadius: 8, padding: isMobile ? '8px 12px' : '10px 14px', overflowWrap: 'break-word', wordBreak: 'break-word' }}
+                style={{
+                  fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.65,
+                  overflowWrap: 'break-word', wordBreak: 'break-word',
+                }}
                 dangerouslySetInnerHTML={{ __html: renderMd(reel.caption) }}
               />
-            </div>
-          )}
-
-          {/* CTA + copy */}
-          <div style={{ padding: isMobile ? '0 12px 12px' : '0 16px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-            {reel.cta && (
-              <div style={{
-                display: 'inline-flex', padding: '4px 10px', borderRadius: 20,
-                background: `${accent}18`, fontSize: 11, fontWeight: 600, color: accent,
-                flex: '1 1 auto',
-              }}>
-                CTA: {reel.cta}
-              </div>
             )}
-            <div style={{ flexShrink: 0 }}>
-              <CopyButton text={copyText} />
-            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* CTA */}
+        {reel.cta && !editing && (
+          <div style={{
+            alignSelf: 'flex-start', padding: '4px 12px', borderRadius: 20,
+            background: `${accent}12`, fontSize: 11, fontWeight: 600, color: accent,
+            border: `1px solid ${accent}25`,
+          }}>
+            CTA: {reel.cta}
+          </div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div style={{
+        padding: '12px 20px', borderTop: '1px solid var(--border)',
+        display: 'flex', gap: 8, alignItems: 'center',
+        background: 'rgba(255,255,255,0.01)',
+      }}>
+        {editing ? (
+          <>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 14px', borderRadius: 7, border: 'none',
+                background: '#3B82F6', color: '#fff', fontSize: 12, fontWeight: 700,
+                cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                opacity: saving ? 0.7 : 1, transition: 'opacity 0.15s',
+              }}
+            >
+              <Save size={12} />
+              {saving ? 'Saving…' : 'Save changes'}
+            </button>
+            <button
+              onClick={handleCancel}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 14px', borderRadius: 7,
+                border: '1px solid var(--border)', background: 'transparent',
+                color: 'var(--muted-foreground)', fontSize: 12, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              <X size={12} />
+              Cancel
+            </button>
+            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginLeft: 4 }}>
+              AI will learn from your edits
+            </div>
+          </>
+        ) : (
+          <>
+            <CopyButton text={copyText} />
+            <button
+              onClick={() => setEditing(true)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 14px', borderRadius: 7,
+                border: '1px solid var(--border)', background: 'transparent',
+                color: 'var(--muted-foreground)', fontSize: 12, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+              }}
+              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--foreground)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.2)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+            >
+              <Pencil size={12} />
+              Edit script
+            </button>
+          </>
+        )}
+      </div>
     </div>
   )
 }
@@ -287,6 +452,8 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
   const [generating, setGenerating] = useState(false)
   const [loading, setLoading] = useState(true)
   const [intelOpen, setIntelOpen] = useState(true)
+  // Local reel overrides so edits are reflected immediately without refetch
+  const [reelOverrides, setReelOverrides] = useState<Record<number, Partial<ParsedReel>>>({})
   const isMobile = useIsMobile()
 
   const loadPackages = useCallback(async () => {
@@ -297,6 +464,7 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
       if (data.packages) {
         setPackages(data.packages)
         setActiveIdx(0)
+        setReelOverrides({})
       }
     } catch {
       toast.error('Failed to load packages')
@@ -327,26 +495,38 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
     }
   }
 
-  const active = packages[activeIdx]
-  const parsed = active ? parsePackage(active.scripts_md, active.week_start) : null
+  function handleReelSaved(index: number, updates: Partial<ParsedReel>) {
+    setReelOverrides(prev => ({ ...prev, [index]: { ...(prev[index] ?? {}), ...updates } }))
+  }
 
-  // Current week start
+  const active = packages[activeIdx]
+  const parsedBase = active ? parsePackage(active.scripts_md, active.week_start) : null
+
+  // Merge in any local edits
+  const parsed: ParsedPackage | null = parsedBase
+    ? {
+        ...parsedBase,
+        reels: parsedBase.reels.map((r, i) =>
+          reelOverrides[i] ? { ...r, ...reelOverrides[i] } : r,
+        ),
+      }
+    : null
+
   const now = new Date()
   const diff = now.getDay() === 0 ? 6 : now.getDay() - 1
   const thisMonday = new Date(now)
   thisMonday.setDate(now.getDate() - diff)
   const thisWeekStart = thisMonday.toISOString().split('T')[0]
   const hasThisWeek = packages.some(p => p.week_start === thisWeekStart)
-  // The most recent package is stale if it's from a previous week
   const isStale = !!active && active.week_start < thisWeekStart
 
   return (
-    <div style={embedded ? {} : { padding: isMobile ? '12px' : '24px', maxWidth: 960, margin: '0 auto' }}>
+    <div style={embedded ? {} : { padding: isMobile ? '12px' : '24px' }}>
       {!embedded && (
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
           <PageHeader
             title="Weekly Content Package"
-            description="Your personalised weekly intel report + 7 reel scripts, generated from your reels, competitor data, and brand voice."
+            description="Your personalised weekly intel + 7 reel scripts, built from competitor data and your brand voice."
           />
           <Button
             onClick={handleGenerate}
@@ -364,253 +544,199 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
 
       {!embedded && (
         <>
-          <TaskProgress
-            active={generating}
-            estimatedMs={120000}
-            label="Generating your weekly package…"
-            sublabel="Syncing your account, then generating scripts"
-          />
+          <TaskProgress active={generating} estimatedMs={120000} label="Generating your weekly package…" sublabel="Syncing your account, then generating scripts" />
           {generating && (
             <Card style={{ marginBottom: 16, position: 'relative', overflow: 'hidden' }}>
-              <GeneratingState
-                label="Generating your weekly package…"
-                sub="Analysing your reels, competitor data, and brand voice. This takes 30–60 seconds."
-              />
+              <GeneratingState label="Generating your weekly package…" sub="Analysing your reels, competitor data, and brand voice. This takes 30–60 seconds." />
             </Card>
           )}
         </>
       )}
 
       {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {[1, 2, 3].map(i => (
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
+          {[1, 2, 3, 4].map(i => (
             <div key={i} style={{
-              height: 56, background: 'var(--muted)', borderRadius: 10,
+              height: 280, background: 'var(--muted)', borderRadius: 14,
               backgroundImage: 'linear-gradient(90deg, var(--muted) 25%, hsl(0 5% 16%) 50%, var(--muted) 75%)',
-              backgroundSize: '200% 100%',
-              animation: 'shimmer 1.5s infinite linear',
+              backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite linear',
             }} />
           ))}
         </div>
       ) : !generating && packages.length === 0 ? (
         <Card style={{ padding: embedded ? '32px 24px' : 56, textAlign: 'center' }}>
           <Zap size={28} style={{ color: 'var(--accent)', margin: '0 auto 16px', display: 'block' }} />
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', marginBottom: 8 }}>
-            No packages yet
+          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)', marginBottom: 8 }}>No packages yet</div>
+          <div style={{ fontSize: 13, color: 'var(--muted-foreground)', maxWidth: 380, margin: '0 auto', marginBottom: embedded ? 0 : 24 }}>
+            {embedded
+              ? 'Click "Generate This Week\'s Content" above to scrape your competitors and generate your 7 scripts in one go.'
+              : 'Click "Generate This Week\'s Package" to create your first personalised weekly content plan.'}
           </div>
-          {embedded ? (
-            <div style={{ fontSize: 13, color: 'var(--muted-foreground)', maxWidth: 380, margin: '0 auto' }}>
-              Click &ldquo;Generate This Week&rsquo;s Content&rdquo; above to scrape your competitors, transcribe their videos, and generate your 7 scripts in one go.
-            </div>
-          ) : (
-            <>
-              <div style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 24, maxWidth: 400, margin: '0 auto 24px' }}>
-                Click &ldquo;Generate This Week&rsquo;s Package&rdquo; to create your first personalised weekly content plan, using your reel data, competitor intelligence, and brand voice.
-              </div>
-              <Button onClick={handleGenerate} disabled={generating} variant="primary">
-                {generating ? 'Generating…' : 'Generate Now'}
-              </Button>
-            </>
+          {!embedded && (
+            <Button onClick={handleGenerate} disabled={generating} variant="primary" style={{ marginTop: 8 }}>
+              {generating ? 'Generating…' : 'Generate Now'}
+            </Button>
           )}
         </Card>
-      ) : !generating ? (
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '200px 1fr',
-          gap: isMobile ? 0 : 20,
-          alignItems: 'flex-start',
-        }}>
-
-          {/* History sidebar / horizontal strip on mobile */}
-          <div style={isMobile ? {
-            display: 'flex', flexDirection: 'row', overflowX: 'auto', gap: 6,
-            paddingBottom: 4, marginBottom: 12,
-            WebkitOverflowScrolling: 'touch' as any,
-            scrollbarWidth: 'none' as any,
-          } : { display: 'block' }}>
-            {!isMobile && (
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>
-                Past Packages
-              </div>
+      ) : !generating && parsed ? (
+        <div>
+          {/* History strip + week info */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20,
+            flexWrap: 'wrap',
+          }}>
+            <div style={{ display: 'flex', gap: 4, overflowX: 'auto', flexShrink: 0 }}>
+              {packages.map((pkg, i) => {
+                const label = new Date(pkg.week_start + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+                const isThisWeek = pkg.week_start === thisWeekStart
+                const isActive = i === activeIdx
+                return (
+                  <button
+                    key={pkg.id}
+                    onClick={() => { setActiveIdx(i); setReelOverrides({}) }}
+                    style={{
+                      padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600,
+                      border: isActive ? '1.5px solid rgba(59,130,246,0.5)' : '1px solid var(--border)',
+                      background: isActive ? 'rgba(59,130,246,0.08)' : 'var(--card)',
+                      color: isActive ? '#60a5fa' : 'var(--muted-foreground)',
+                      cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
+                      transition: 'all 0.15s',
+                    }}
+                  >
+                    {isThisWeek ? 'This week' : `w/c ${label}`}
+                    {isThisWeek && <span style={{ marginLeft: 5, width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', display: 'inline-block', verticalAlign: 'middle' }} />}
+                  </button>
+                )
+              })}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: 'var(--muted-foreground)', marginLeft: 4 }}>
+              <Clock size={11} />
+              {new Date(active.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            </div>
+            {isStale && (
+              <span style={{
+                fontSize: 10, fontWeight: 700, padding: '2px 8px', borderRadius: 20,
+                background: 'hsl(43 96% 56% / 0.12)', color: 'hsl(43 75% 45%)',
+                border: '1px solid hsl(43 96% 56% / 0.3)', textTransform: 'uppercase', letterSpacing: '0.06em',
+              }}>
+                Out of date
+              </span>
             )}
-            {packages.map((pkg, i) => {
-              const label = new Date(pkg.week_start + 'T00:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
-              const isThisWeek = pkg.week_start === thisWeekStart
-              const isActive = i === activeIdx
-              return (
-                <button
-                  key={pkg.id}
-                  onClick={() => setActiveIdx(i)}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    flexShrink: 0,
-                    width: isMobile ? 'auto' : '100%',
-                    padding: isMobile ? '7px 12px' : '9px 10px',
-                    borderRadius: 8,
-                    border: isActive ? '1px solid var(--border)' : '1px solid transparent',
-                    background: isActive ? 'var(--muted)' : 'transparent',
-                    cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit',
-                    marginBottom: isMobile ? 0 : 2,
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  <div style={{
-                    width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-                    background: isThisWeek ? 'var(--accent)' : 'var(--muted-foreground)',
-                  }} />
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)' }}>
-                      {isThisWeek ? 'This week' : `w/c ${label}`}
-                    </div>
-                    {!isMobile && (
-                      <div style={{ fontSize: 10, color: 'var(--muted-foreground)' }}>
-                        {pkg.script_count} scripts
-                      </div>
-                    )}
-                  </div>
-                </button>
-              )
-            })}
           </div>
 
-          {/* Main content */}
-          {parsed && (
-            <div style={{ minWidth: 0, overflow: 'hidden' }}>
-
-              {/* Week header */}
-              <div style={{ display: 'flex', alignItems: isMobile ? 'flex-start' : 'center', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 4 : 10, marginBottom: 16, flexWrap: 'wrap' }}>
-                <div style={{ fontSize: isMobile ? 14 : 15, fontWeight: 700, color: 'var(--foreground)' }}>
-                  Week of {parsed.weekLabel}
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--muted-foreground)' }}>
-                  <Clock size={11} />
-                  {new Date(active.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                </div>
-                {isStale && (
-                  <span style={{
-                    fontSize: 10, fontWeight: 700, padding: '2px 7px', borderRadius: 20,
-                    background: 'hsl(43 96% 56% / 0.15)', color: 'hsl(43 75% 38%)',
-                    border: '1px solid hsl(43 96% 56% / 0.3)',
-                    textTransform: 'uppercase', letterSpacing: '0.06em',
-                  }}>
-                    Out of date
+          {/* Intel section */}
+          {(parsed.whatsPopping.length > 0 || parsed.performanceNote || parsed.accountsToWatch) && (
+            <Card style={{ marginBottom: 24, overflow: 'hidden' }}>
+              <button
+                onClick={() => setIntelOpen(o => !o)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  padding: isMobile ? '12px 14px' : '14px 20px', background: 'none', border: 'none', cursor: 'pointer',
+                  fontFamily: 'inherit', gap: 8,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <TrendingUp size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>Weekly Intelligence Report</span>
+                  <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+                    {parsed.whatsPopping.length > 0 && `${parsed.whatsPopping.length} insights`}
                   </span>
-                )}
-              </div>
+                </div>
+                <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>{intelOpen ? '▲' : '▼'}</span>
+              </button>
 
-              {/* Intel section */}
-              <Card style={{ marginBottom: 16, overflow: 'hidden' }}>
-                <button
-                  onClick={() => setIntelOpen(o => !o)}
-                  style={{
-                    width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: isMobile ? '10px 12px' : '14px 18px', background: 'none', border: 'none', cursor: 'pointer',
-                    fontFamily: 'inherit', gap: 8,
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                    <TrendingUp size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>Weekly Intelligence Report</span>
-                  </div>
-                  {intelOpen ? <ChevronUp size={14} style={{ color: 'var(--muted-foreground)' }} /> : <ChevronDown size={14} style={{ color: 'var(--muted-foreground)' }} />}
-                </button>
-
-                {intelOpen && (
-                  <div style={{ borderTop: '1px solid var(--border)', padding: isMobile ? '12px' : '16px 18px', overflow: 'hidden' }}>
-                    {/* What's Popping */}
+              {intelOpen && (
+                <div style={{ borderTop: '1px solid var(--border)', padding: isMobile ? '14px' : '18px 20px' }}>
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: isMobile ? '1fr' : parsed.accountsToWatch ? '1fr 1fr 1fr' : '1fr 1fr',
+                    gap: 16,
+                  }}>
                     {parsed.whatsPopping.length > 0 && (
-                      <div style={{ marginBottom: 16 }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>
-                          What&rsquo;s Popping This Week
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                          What&rsquo;s Popping
                         </div>
                         {parsed.whatsPopping.map((p, i) => (
-                          <div key={i} style={{ marginBottom: 12 }}>
-                            <div style={{ display: 'flex', gap: 8, minWidth: 0 }}>
-                              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent)', flexShrink: 0, marginTop: 6 }} />
-                              <div
-                                style={{ fontSize: isMobile ? 12 : 13, color: 'var(--foreground)', lineHeight: 1.55, overflowWrap: 'break-word', wordBreak: 'break-word', minWidth: 0, maxWidth: '100%', overflow: 'hidden' }}
-                                dangerouslySetInnerHTML={{ __html: renderMd(p.insight) }}
-                              />
-                            </div>
+                          <div key={i} style={{ marginBottom: 12, paddingLeft: 12, borderLeft: '2px solid var(--accent)' }}>
+                            <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.55, marginBottom: p.account ? 4 : 0 }}
+                              dangerouslySetInnerHTML={{ __html: renderMd(p.insight) }} />
                             {p.account && (
-                              <div style={{
-                                marginTop: 6, marginLeft: 14,
-                                display: 'flex', flexDirection: 'column', gap: 4,
-                              }}>
-                                <div style={{
-                                  display: 'inline-flex', alignItems: 'center', gap: 5,
-                                  padding: '3px 8px', borderRadius: 20,
-                                  background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border)',
-                                  fontSize: 11, fontWeight: 600, color: 'var(--accent)',
-                                  alignSelf: 'flex-start',
-                                }}>
-                                  @{p.account}
-                                  {p.views && (
-                                    <span style={{ fontWeight: 400, color: 'var(--muted-foreground)' }}>
-                                      · {p.views}
-                                    </span>
-                                  )}
-                                </div>
-                                {p.hook && (
-                                  <span style={{ fontSize: 11, color: 'var(--muted-foreground)', lineHeight: 1.5, fontStyle: 'italic', overflowWrap: 'break-word', wordBreak: 'break-word' }}>
-                                    &ldquo;{p.hook}&rdquo;
-                                  </span>
-                                )}
+                              <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontStyle: 'italic' }}>
+                                @{p.account}{p.views && ` · ${p.views}`}{p.hook && ` — "${p.hook}"`}
                               </div>
                             )}
                           </div>
                         ))}
                       </div>
                     )}
-
-                    {/* Performance note */}
                     {parsed.performanceNote && (
-                      <div style={{ marginBottom: 16, padding: '12px 14px', borderRadius: 8, background: 'var(--muted)' }}>
-                        <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
-                          Performance Last Week
+                      <div>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
+                          Your Performance
                         </div>
-                        <div
-                          style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.65, overflowWrap: 'break-word', wordBreak: 'break-word' }}
-                          dangerouslySetInnerHTML={{ __html: renderMd(parsed.performanceNote) }}
-                        />
+                        <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.65 }}
+                          dangerouslySetInnerHTML={{ __html: renderMd(parsed.performanceNote) }} />
                       </div>
                     )}
-
-                    {/* Accounts to watch */}
                     {parsed.accountsToWatch && (
-                      <div style={{ padding: '12px 14px', borderRadius: 8, background: 'hsl(220 90% 56% / 0.07)', borderLeft: '3px solid var(--accent)' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10 }}>
                           <Users size={11} style={{ color: 'var(--accent)' }} />
-                          <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>
+                          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
                             Accounts to Watch
                           </span>
                         </div>
-                        <div
-                          style={{ fontSize: 13, color: 'var(--foreground)', lineHeight: 1.65, overflowWrap: 'break-word', wordBreak: 'break-word' }}
-                          dangerouslySetInnerHTML={{ __html: renderMd(parsed.accountsToWatch) }}
-                        />
+                        <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.65 }}
+                          dangerouslySetInnerHTML={{ __html: renderMd(parsed.accountsToWatch) }} />
                       </div>
                     )}
                   </div>
-                )}
-              </Card>
+                </div>
+              )}
+            </Card>
+          )}
 
-              {/* 7 Scripts */}
+          {/* Scripts grid */}
+          <div>
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              marginBottom: 16, flexWrap: 'wrap', gap: 8,
+            }}>
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--foreground)', marginBottom: 12, letterSpacing: '-0.2px' }}>
+                <div style={{ fontSize: 16, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-0.3px' }}>
                   Your {parsed.reels.length} Scripts This Week
                 </div>
-                <style>{`
-                  @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-                `}</style>
-                {parsed.reels.map((reel, i) => (
-                  <ReelCard key={i} reel={reel} index={i} />
-                ))}
+                <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>
+                  Click &ldquo;Edit script&rdquo; on any card to rewrite it — AI learns from your changes
+                </div>
               </div>
             </div>
-          )}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+              gap: 16,
+              alignItems: 'start',
+            }}>
+              {parsed.reels.map((reel, i) => (
+                <ScriptCard
+                  key={i}
+                  reel={reel}
+                  index={i}
+                  packageId={active.id}
+                  profileId={profileId}
+                  onSaved={handleReelSaved}
+                />
+              ))}
+            </div>
+          </div>
         </div>
       ) : null}
+
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+      `}</style>
     </div>
   )
 }
