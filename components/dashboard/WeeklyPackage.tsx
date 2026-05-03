@@ -37,12 +37,17 @@ interface PoppingItem {
   views?: string
 }
 
+interface AccountWatchItem {
+  handle: string
+  description: string
+}
+
 interface ParsedPackage {
   weekLabel: string
   intelSection: string
   whatsPopping: PoppingItem[]
   performanceNote: string
-  accountsToWatch: string
+  accountsToWatch: AccountWatchItem[]
   reels: ParsedReel[]
 }
 
@@ -58,9 +63,32 @@ function parsePackage(md: string, weekStart: string): ParsedPackage {
   const reelsRaw = firstReelIdx > 0 ? md.slice(firstReelIdx) : md
 
   const accountsMarker = reelsRaw.search(/\n###\s*Accounts to Watch/)
-  const accountsToWatch = accountsMarker > 0
+  const accountsRaw = accountsMarker > 0
     ? reelsRaw.slice(accountsMarker).replace(/^###\s*Accounts to Watch[^\n]*\n/, '').trim()
     : ''
+  const accountsToWatch: AccountWatchItem[] = []
+  if (accountsRaw) {
+    // Parse bullet points like: "• @handle — Description text..." or "- @handle — ..."
+    // Also handles "Accounts to Watch This Week" header line
+    const lines = accountsRaw.split('\n')
+    let current: AccountWatchItem | null = null
+    for (const line of lines) {
+      const trimmed = line.trim()
+      if (!trimmed || /^accounts to watch/i.test(trimmed)) continue
+      // New bullet starting with @handle
+      const bulletMatch = trimmed.match(/^[-•*]\s*@([\w.]+)\s*[—–-]\s*([\s\S]+)/)
+      if (bulletMatch) {
+        if (current) accountsToWatch.push(current)
+        current = { handle: bulletMatch[1], description: bulletMatch[2].trim() }
+        continue
+      }
+      // Continuation line (no bullet, no @)
+      if (current && trimmed && !trimmed.startsWith('-') && !trimmed.startsWith('•')) {
+        current.description += ' ' + trimmed
+      }
+    }
+    if (current) accountsToWatch.push(current)
+  }
 
   const poppingMatch = intelRaw.match(/###\s*What['']s Popping[^\n]*\n([\s\S]*?)(\n###|$)/)
   const whatsPopping: PoppingItem[] = []
@@ -653,52 +681,84 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
               </button>
 
               {intelOpen && (
-                <div style={{ borderTop: '1px solid var(--border)', padding: isMobile ? '14px' : '18px 20px' }}>
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : parsed.accountsToWatch ? '1fr 1fr 1fr' : '1fr 1fr',
-                    gap: 16,
-                  }}>
-                    {parsed.whatsPopping.length > 0 && (
-                      <div>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                          What&rsquo;s Popping
-                        </div>
+                <div style={{ borderTop: '1px solid var(--border)', padding: isMobile ? '14px' : '20px 24px' }}>
+
+                  {/* What's Popping — 2-col grid of insight items */}
+                  {parsed.whatsPopping.length > 0 && (
+                    <div style={{ marginBottom: parsed.performanceNote || parsed.accountsToWatch.length > 0 ? 24 : 0 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+                        What&rsquo;s Popping
+                      </div>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                        gap: 10,
+                      }}>
                         {parsed.whatsPopping.map((p, i) => (
-                          <div key={i} style={{ marginBottom: 12, paddingLeft: 12, borderLeft: '2px solid var(--accent)' }}>
-                            <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.55, marginBottom: p.account ? 4 : 0 }}
+                          <div key={i} style={{
+                            padding: '10px 14px', borderRadius: 8,
+                            background: 'var(--muted)', border: '1px solid var(--border)',
+                            borderLeft: '2px solid var(--accent)',
+                          }}>
+                            <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.6, marginBottom: p.account ? 6 : 0 }}
                               dangerouslySetInnerHTML={{ __html: renderMd(p.insight) }} />
                             {p.account && (
                               <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontStyle: 'italic' }}>
-                                @{p.account}{p.views && ` · ${p.views}`}{p.hook && ` — "${p.hook}"`}
+                                @{p.account}{p.views && ` · ${p.views}`}{p.hook && ` — "${p.hook.slice(0, 60)}${p.hook.length > 60 ? '…' : ''}"`}
                               </div>
                             )}
                           </div>
                         ))}
                       </div>
-                    )}
-                    {parsed.performanceNote && (
-                      <div>
-                        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 10 }}>
-                          Your Performance
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.65 }}
-                          dangerouslySetInnerHTML={{ __html: renderMd(parsed.performanceNote) }} />
+                    </div>
+                  )}
+
+                  {/* Your Performance — full width */}
+                  {parsed.performanceNote && (
+                    <div style={{ marginBottom: parsed.accountsToWatch.length > 0 ? 24 : 0 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+                        Your Performance
                       </div>
-                    )}
-                    {parsed.accountsToWatch && (
-                      <div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 10 }}>
-                          <Users size={11} style={{ color: 'var(--accent)' }} />
-                          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                            Accounts to Watch
-                          </span>
-                        </div>
-                        <div style={{ fontSize: 12, color: 'var(--foreground)', lineHeight: 1.65 }}
-                          dangerouslySetInnerHTML={{ __html: renderMd(parsed.accountsToWatch) }} />
+                      <div style={{
+                        padding: '12px 16px', borderRadius: 8,
+                        background: 'var(--muted)', border: '1px solid var(--border)',
+                        fontSize: 12, color: 'var(--foreground)', lineHeight: 1.7,
+                      }}
+                        dangerouslySetInnerHTML={{ __html: renderMd(parsed.performanceNote) }} />
+                    </div>
+                  )}
+
+                  {/* Accounts to Watch — 2-col grid of account items */}
+                  {parsed.accountsToWatch.length > 0 && (
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginBottom: 12 }}>
+                        <Users size={10} style={{ color: 'var(--accent)' }} />
+                        <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                          Accounts to Watch
+                        </span>
                       </div>
-                    )}
-                  </div>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)',
+                        gap: 10,
+                      }}>
+                        {parsed.accountsToWatch.map((a, i) => (
+                          <div key={i} style={{
+                            padding: '10px 14px', borderRadius: 8,
+                            background: 'var(--muted)', border: '1px solid var(--border)',
+                            borderLeft: '2px solid var(--accent)',
+                          }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
+                              @{a.handle}
+                            </div>
+                            <div style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.6 }}>
+                              {a.description}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </Card>
