@@ -78,26 +78,11 @@ function SubscribeContent() {
           background: 'linear-gradient(160deg, rgba(59,130,246,0.07) 0%, transparent 60%)',
         }}>
           {/* Free month hero */}
-          <div style={{
-            display: 'inline-flex', alignItems: 'center', gap: 7,
-            padding: '5px 12px', borderRadius: 20,
-            background: 'rgba(59,130,246,0.15)',
-            border: '1px solid rgba(59,130,246,0.35)',
-            fontSize: 11, fontWeight: 700, color: '#60a5fa',
-            textTransform: 'uppercase', letterSpacing: '0.07em',
-            marginBottom: 14,
-          }}>
-            <Zap size={10} fill="#60a5fa" />
-            Limited offer
+          <div style={{ fontSize: 34, fontWeight: 800, color: '#fff', letterSpacing: '-0.8px', lineHeight: 1.1, marginBottom: 10 }}>
+            30 days free
           </div>
-
-          <div style={{ fontSize: 32, fontWeight: 800, color: '#fff', letterSpacing: '-0.8px', lineHeight: 1.1, marginBottom: 6 }}>
-            First month free
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', fontWeight: 500 }}>then</span>
-            <span style={{ fontSize: 20, fontWeight: 800, color: 'rgba(255,255,255,0.7)', letterSpacing: '-0.5px' }}>£50</span>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', fontWeight: 500 }}>/month after that · cancel anytime</span>
+          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', fontWeight: 400, marginBottom: 16 }}>
+            then £50/month · cancel anytime
           </div>
 
           {/* Why it costs */}
@@ -111,20 +96,20 @@ function SubscribeContent() {
             lineHeight: 1.65,
           }}>
             <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Why £50/month?</span>
-            {' '}The dashboard runs real AI — weekly script packages, hook analysis, content intelligence, and the Ask Will AI are all powered by live AI credits. The £50 covers those running costs so the tools stay fast, accurate, and always on.
+            {' '}The dashboard runs real AI. Weekly scripts, competitor analysis, hook scoring, and Ask Will AI are all powered by live AI credits. The £50 covers those running costs so the tools stay fast, accurate, and always on.
           </div>
         </div>
 
         {/* Features */}
         <div style={{ padding: '20px 28px' }}>
           {[
-            'Full Instagram analytics & follower tracking — see exactly what\'s growing and why',
-            'AI competitor analysis — track your niche\'s top accounts and what\'s working for them',
-            'Weekly AI script writer — 7 ready-to-film reels built from real competitor data, every week',
-            'Story sequence generator — plug-and-play story scripts that convert followers to leads',
-            'Offer builder — turn your skills and story into a complete, priced coaching offer',
-            'Lead magnet generator — build free tools that capture emails and attract ideal clients',
-            'Ask Will AI — get coaching answers, feedback, and strategy at any time, day or night',
+            'Full Instagram analytics and follower tracking',
+            'AI competitor analysis on your niche',
+            'Weekly AI script writer based on competitor data',
+            'Story sequence generator',
+            'Offer builder',
+            'Lead magnet generator',
+            'Ask Will AI, available 24/7',
           ].map((feature) => (
             <div key={feature} style={{
               display: 'flex', alignItems: 'flex-start', gap: 10,
