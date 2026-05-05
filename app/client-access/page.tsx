@@ -27,20 +27,15 @@ export default function ClientAccessPage() {
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true); setError('')
-    const supabase = createClient()
 
-    const { data, error: signupError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name },
-        emailRedirectTo: `${window.location.origin}/auth/callback?next=/dashboard/onboarding`,
-      },
+    const res = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, password }),
     })
+    const data = await res.json()
 
-    if (signupError?.message?.toLowerCase().includes('already registered') ||
-        signupError?.message?.toLowerCase().includes('already been registered') ||
-        signupError?.message?.toLowerCase().includes('user already exists')) {
+    if (res.status === 409 || data.error === 'already_exists') {
       await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,22 +46,18 @@ export default function ClientAccessPage() {
       return
     }
 
-    if (signupError) { setError(signupError.message); setLoading(false); return }
+    if (!res.ok) { setError(data.error || 'Something went wrong — please try again'); setLoading(false); return }
 
-    if (data.user) {
-      await fetch('/api/auth/create-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: data.user.id, name, email }),
-      })
-    }
-
-    if (data.session) {
-      router.push('/dashboard/onboarding')
-    } else {
-      setSuccess("Account created — check your email to confirm, then sign in.")
+    // Email is auto-confirmed — sign in directly, no confirmation step needed
+    const supabase = createClient()
+    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
+    if (signInError) {
+      setSuccess("Account created — sign in with your email and password.")
       setLoading(false)
+      return
     }
+
+    router.push('/dashboard/onboarding')
   }
 
   async function handleLogin(e: React.FormEvent) {
