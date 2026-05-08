@@ -75,7 +75,7 @@ export default function ContentInsights({ profileId, locked }: { profileId: stri
         {[180, 140, 120].map((h, i) => (
           <div key={i} style={{
             height: h, borderRadius: 10, background: 'var(--muted)',
-            backgroundImage: 'linear-gradient(90deg, var(--muted) 25%, hsl(0 5% 16%) 50%, var(--muted) 75%)',
+            backgroundImage: 'linear-gradient(90deg, var(--muted) 25%, var(--shimmer-highlight) 50%, var(--muted) 75%)',
             backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite linear',
           }} />
         ))}

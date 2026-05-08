@@ -207,9 +207,9 @@ function StatCard({
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 4,
             fontSize: 11, fontWeight: 700,
-            background: up ? 'rgba(255,255,255,0.03)' : 'hsl(0 50% 10%)',
-            border: `1px solid ${up ? 'rgba(255,255,255,0.08)' : 'hsl(0 50% 20%)'}`,
-            color: up ? 'rgba(74, 222, 128, 0.8)' : 'hsl(0 72% 60%)',
+            background: up ? 'var(--change-positive-bg)' : 'var(--change-negative-bg)',
+            border: `1px solid ${up ? 'var(--change-positive-border)' : 'var(--change-negative-border)'}`,
+            color: up ? 'var(--change-positive-text)' : 'var(--change-negative-text)',
             padding: '3px 8px', borderRadius: 6,
           }}>
             {up ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
@@ -302,8 +302,8 @@ interface ReelAnalysis {
 
 const VERDICT_COLORS: Record<string, string> = {
   Exceptional: '#3B82F6',
-  Strong:      'rgba(255,255,255,0.55)',
-  Average:     'rgba(255,255,255,0.35)',
+  Strong:      'var(--foreground)',
+  Average:     'var(--muted-foreground)',
   Weak:        'hsl(0 65% 50%)',
   Poor:        'hsl(0 72% 40%)',
 }
@@ -335,9 +335,9 @@ function AnalysisPanel({ analysis }: { analysis: ReelAnalysis }) {
       {/* What worked */}
       {analysis.what_worked?.length > 0 && (
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>What worked</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>What worked</div>
           {analysis.what_worked.map((point, i) => (
-            <div key={i} style={{ fontSize: 11, color: 'var(--foreground)', lineHeight: 1.5, paddingLeft: 10, borderLeft: '2px solid rgba(255,255,255,0.55)', marginBottom: 4 }}>
+            <div key={i} style={{ fontSize: 11, color: 'var(--foreground)', lineHeight: 1.5, paddingLeft: 10, borderLeft: '2px solid var(--border)', marginBottom: 4 }}>
               {point}
             </div>
           ))}
@@ -347,9 +347,9 @@ function AnalysisPanel({ analysis }: { analysis: ReelAnalysis }) {
       {/* What to improve */}
       {analysis.what_to_improve?.length > 0 && (
         <div>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>Improve</div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>Improve</div>
           {analysis.what_to_improve.map((point, i) => (
-            <div key={i} style={{ fontSize: 11, color: 'var(--foreground)', lineHeight: 1.5, paddingLeft: 10, borderLeft: '2px solid rgba(255,255,255,0.35)', marginBottom: 4 }}>
+            <div key={i} style={{ fontSize: 11, color: 'var(--foreground)', lineHeight: 1.5, paddingLeft: 10, borderLeft: '2px solid var(--border)', marginBottom: 4 }}>
               {point}
             </div>
           ))}
@@ -875,10 +875,10 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
   // ── engagement breakdown ──────────────────────────────────────────────────
   const engBreakdown = useMemo(() => [
-    { label: 'Likes',    value: currentReels.reduce((a, r) => a + (r.likes ?? 0), 0),    color: 'rgba(255,255,255,0.85)' },
-    { label: 'Comments', value: currentReels.reduce((a, r) => a + (r.comments ?? 0), 0), color: 'rgba(255,255,255,0.6)' },
-    { label: 'Saves',    value: currentReels.reduce((a, r) => a + (r.saves ?? 0), 0),    color: 'rgba(255,255,255,0.4)' },
-    { label: 'Shares',   value: currentReels.reduce((a, r) => a + (r.shares ?? 0), 0),   color: 'rgba(255,255,255,0.25)' },
+    { label: 'Likes',    value: currentReels.reduce((a, r) => a + (r.likes ?? 0), 0),    color: '#3B82F6' },
+    { label: 'Comments', value: currentReels.reduce((a, r) => a + (r.comments ?? 0), 0), color: 'rgba(59,130,246,0.72)' },
+    { label: 'Saves',    value: currentReels.reduce((a, r) => a + (r.saves ?? 0), 0),    color: 'rgba(59,130,246,0.50)' },
+    { label: 'Shares',   value: currentReels.reduce((a, r) => a + (r.shares ?? 0), 0),   color: 'rgba(59,130,246,0.30)' },
   ], [currentReels])
 
   // ── follower-to-view ratio (fixed 30-day window for benchmark comparison) ──
@@ -1012,19 +1012,19 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       {syncResult && (
         <div style={{
           marginBottom: 16, padding: '10px 14px', borderRadius: 8,
-          background: 'rgba(255,255,255,0.04)', color: 'rgba(255,255,255,0.5)',
-          fontSize: 13, fontWeight: 500, border: '1px solid rgba(255,255,255,0.08)',
+          background: 'var(--muted)', color: 'var(--foreground)',
+          fontSize: 13, fontWeight: 500, border: '1px solid var(--border)',
         }}>
           Synced {syncResult.synced} new reel{syncResult.synced !== 1 ? 's' : ''} of {syncResult.total} found.
           {syncResult.classified ? <span style={{ marginLeft: 8 }}>Classified {syncResult.classified} reel{syncResult.classified !== 1 ? 's' : ''}.</span> : null}
-          {syncResult.warning && <span style={{ color: 'rgba(255,255,255,0.4)', marginLeft: 8 }}>{syncResult.warning}</span>}
+          {syncResult.warning && <span style={{ color: 'var(--muted-foreground)', marginLeft: 8 }}>{syncResult.warning}</span>}
         </div>
       )}
       {syncError && (
         <div style={{
           marginBottom: 16, padding: '10px 14px', borderRadius: 8,
-          background: 'hsl(0 50% 10%)', color: 'hsl(0 65% 60%)',
-          fontSize: 13, fontWeight: 500, border: '1px solid hsl(0 50% 20%)',
+          background: 'var(--change-negative-bg)', color: 'var(--change-negative-text)',
+          fontSize: 13, fontWeight: 500, border: '1px solid var(--change-negative-border)',
         }}>
           {syncError}
         </div>
@@ -1048,11 +1048,11 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       {/* ── Stat definition note ────────────────────────────────────────────── */}
       <div style={{
         marginBottom: 16, padding: '7px 12px', borderRadius: 7,
-        background: 'rgba(255,255,255,0.025)', border: '1px solid rgba(255,255,255,0.06)',
+        background: 'var(--muted)', border: '1px solid var(--border)',
         display: 'flex', alignItems: 'center', gap: 6,
       }}>
-        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.28)', fontWeight: 500, lineHeight: 1.5 }}>
-          <span style={{ color: 'rgba(255,255,255,0.45)', fontWeight: 700 }}>What these numbers mean: </span>
+        <span style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 500, lineHeight: 1.5 }}>
+          <span style={{ color: 'var(--foreground)', fontWeight: 700 }}>What these numbers mean: </span>
           Views and engagements cover reels <em>posted</em> in the selected window — not views received during that window on older content.
           Each reel&apos;s view count is its total accumulated plays at the time of the last sync.
           {' '}&ldquo;vs prev period&rdquo; compares against the equal-length window immediately before.

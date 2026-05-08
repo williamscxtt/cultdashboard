@@ -27,6 +27,24 @@
   --success:             hsl(142 71% 35%);
   --warning:             hsl(38 92% 40%);
 
+  /* Accent HSL components (for opacity-based usage) */
+  --accent-hsl:          217 91% 60%;
+
+  /* Theme-aware change badges */
+  --change-positive-bg:     hsl(142 50% 94%);
+  --change-positive-border: hsl(142 50% 82%);
+  --change-positive-text:   hsl(142 65% 30%);
+  --change-negative-bg:     hsl(0 50% 96%);
+  --change-negative-border: hsl(0 50% 85%);
+  --change-negative-text:   hsl(0 72% 45%);
+
+  /* Theme-aware shimmer highlight */
+  --shimmer-highlight:      hsl(0 0% 86%);
+
+  /* Theme-aware overlay tints */
+  --overlay-subtle:         rgba(0,0,0,0.04);
+  --overlay-border:         rgba(0,0,0,0.08);
+
   /* Typography */
   --font-display: 'Plus Jakarta Sans', sans-serif;
   --font-body: 'Inter', sans-serif;
@@ -73,6 +91,24 @@
   --shadow-lg: none;
   --shadow-xl: none;
   --shadow-glow: none;
+
+  /* Accent HSL components */
+  --accent-hsl:          217 91% 60%;
+
+  /* Theme-aware change badges — dark overrides */
+  --change-positive-bg:     rgba(255,255,255,0.03);
+  --change-positive-border: rgba(255,255,255,0.08);
+  --change-positive-text:   hsl(142 72% 60%);
+  --change-negative-bg:     hsl(0 50% 10%);
+  --change-negative-border: hsl(0 50% 20%);
+  --change-negative-text:   hsl(0 72% 60%);
+
+  /* Theme-aware shimmer highlight */
+  --shimmer-highlight:      hsl(0 5% 16%);
+
+  /* Theme-aware overlay tints */
+  --overlay-subtle:         rgba(255,255,255,0.04);
+  --overlay-border:         rgba(255,255,255,0.08);
 }
 
 /* ── Reset ────────────────────────────────────────────────────────────── */

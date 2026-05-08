@@ -35,9 +35,10 @@ export async function POST(req: NextRequest) {
     profileId?: string
     topic?: string
     emotion?: string
+    customExamples?: string
   }
 
-  const { profileId, topic, emotion } = body
+  const { profileId, topic, emotion, customExamples } = body
   if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
   if (!topic?.trim()) return NextResponse.json({ error: 'topic required' }, { status: 400 })
 
@@ -90,7 +91,48 @@ Biggest client challenge: ${iVal('biggest_problem', 'biggest_challenge') || safe
 
   const emotionLabel = emotion || 'curiosity'
 
-  const systemPrompt = `You are an expert short-form content hook writer specialising in Instagram Reels and TikTok.
+  // ── Knowledge base: pull real hooks + scripts as voice examples ──────────
+  const { data: kbDocs } = await admin
+    .from('knowledge_documents')
+    .select('title, body, category')
+    .in('category', ['Hook', 'Hooks', 'hook', 'Script'])
+    .order('created_at', { ascending: false })
+    .limit(12)
+
+  const exampleHooks: string[] = []
+  for (const doc of (kbDocs ?? [])) {
+    const cat = (doc.category ?? '').toLowerCase()
+    const body = (doc.body ?? '').trim()
+    if (cat === 'hook' || cat === 'hooks') {
+      // Hook docs: each line is an example hook
+      const lines = body
+        .split('\n')
+        .map((l: string) => l.replace(/^[-–•*\d.)\s]+/, '').trim())
+        .filter((l: string) => l.length > 8 && l.length < 120)
+      exampleHooks.push(...lines.slice(0, 8))
+    } else if (cat === 'script') {
+      // Script docs: first non-empty line is typically the hook
+      const firstLine = body
+        .split('\n')
+        .map((l: string) => l.trim())
+        .find((l: string) => l.length > 8 && l.length < 120)
+      if (firstLine) exampleHooks.push(firstLine)
+    }
+  }
+
+  // Merge in any custom examples pasted by the user
+  if (customExamples?.trim()) {
+    const customLines = customExamples.trim().split('\n')
+      .map((l: string) => l.replace(/^[-–•*\d.)\s]+/, '').trim())
+      .filter((l: string) => l.length > 8 && l.length < 120)
+    exampleHooks.push(...customLines)
+  }
+
+  const kbSection = exampleHooks.length > 0
+    ? `\n\nEXAMPLE HOOKS FROM THIS CREATOR'S OWN SCRIPTS (study these carefully — match the exact voice, energy, tone, and sentence structure):\n${exampleHooks.slice(0, 24).map((h, i) => `${i + 1}. ${h}`).join('\n')}\n\nThe 20 hooks you write MUST sound like these examples came from the same person.`
+    : ''
+
+  const systemPrompt = `You are an expert short-form content hook writer specialising in Instagram Reels and TikTok. You write in the creator's exact voice — direct, no fluff, no filler.
 
 You write hooks that stop the scroll in the first 3 seconds. You know that the hook is 80% of performance.
 
@@ -101,14 +143,14 @@ HOOK FORMATS:
 4. Stat Hook — A specific, surprising number or statistic
 5. Trend-jack — Connects the topic to a current trend, phrase, or cultural moment
 
-TARGET EMOTION: ${emotionLabel}
+TARGET EMOTION: ${emotionLabel}${kbSection}
 
 RULES:
 - Each hook must be under 12 words — tight and punchy
 - No filler words ("So", "Today I want to talk about", "In this video")
 - Start with the most interesting word possible
-- Be specific — vague hooks kill performance
-- Voice must match the creator's brand
+- Be specific — vague hooks die
+- Voice must match the creator's natural style from the examples above
 - Return ONLY a JSON array — no markdown, no extra text`
 
   const userPrompt = `Generate 20 hooks for the topic: "${topic}"
@@ -126,7 +168,7 @@ Return exactly 20 hooks as a JSON array in this format:
   // repeat pattern for 4 more rounds = 20 total
 ]
 
-Make each hook unique — no repetition of ideas. Tailor them to the creator's niche and audience.`
+Make each hook unique — no repetition of ideas. Tailor them tightly to the creator's niche and audience.${exampleHooks.length > 0 ? ' The hooks in your system prompt show this creator\'s exact style — match it faithfully.' : ''}`
 
   const message = await anthropic.messages.create({
     model: 'claude-sonnet-4-5',

@@ -593,7 +593,7 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
           {[1, 2, 3, 4].map(i => (
             <div key={i} style={{
               height: 280, background: 'var(--muted)', borderRadius: 14,
-              backgroundImage: 'linear-gradient(90deg, var(--muted) 25%, hsl(0 5% 16%) 50%, var(--muted) 75%)',
+              backgroundImage: 'linear-gradient(90deg, var(--muted) 25%, var(--shimmer-highlight) 50%, var(--muted) 75%)',
               backgroundSize: '200% 100%', animation: 'shimmer 1.5s infinite linear',
             }} />
           ))}

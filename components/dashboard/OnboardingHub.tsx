@@ -717,7 +717,7 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
         <div style={{
           border: '1px solid var(--accent)',
           borderRadius: 10, padding: 20, marginBottom: 20,
-          background: 'hsl(var(--accent-hsl, 25 100% 55%) / 0.07)',
+          background: 'var(--accent-subtle)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 14 }}>
             <CheckCircle size={14} color="var(--accent)" />

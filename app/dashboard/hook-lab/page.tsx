@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Zap, Copy, Check, RefreshCw } from 'lucide-react'
+import { Zap, Copy, Check, RefreshCw, BookOpen, ChevronDown, ChevronUp } from 'lucide-react'
 import { toast } from 'sonner'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -41,6 +41,8 @@ export default function HookLabPage() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null)
   const [isCreator, setIsCreator] = useState(false)
   const [nicheHint, setNicheHint] = useState('')
+  const [customExamples, setCustomExamples] = useState('')
+  const [showExamples, setShowExamples] = useState(false)
 
   useEffect(() => {
     fetch('/api/effective-profile')
@@ -74,7 +76,7 @@ export default function HookLabPage() {
       const res = await fetch('/api/hook-lab', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId, topic, emotion }),
+        body: JSON.stringify({ profileId, topic, emotion, customExamples: customExamples.trim() || undefined }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')
@@ -169,7 +171,7 @@ export default function HookLabPage() {
                 style={{
                   padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
                   border: `1.5px solid ${emotion === e ? 'var(--accent)' : 'var(--border)'}`,
-                  background: emotion === e ? 'hsl(var(--accent-hsl, 25 100% 55%) / 0.1)' : 'transparent',
+                  background: emotion === e ? 'var(--accent-subtle)' : 'transparent',
                   color: emotion === e ? 'var(--accent)' : 'var(--muted-foreground)',
                   cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit',
                 }}
@@ -178,6 +180,48 @@ export default function HookLabPage() {
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Custom examples (collapsed by default) */}
+        <div style={{ marginBottom: 20, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+          <button
+            type="button"
+            onClick={() => setShowExamples(v => !v)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 7,
+              background: 'none', border: 'none', padding: 0,
+              color: 'var(--muted-foreground)', fontSize: 13, fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            <BookOpen size={13} />
+            Add your own hook examples
+            {showExamples ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+          </button>
+          {showExamples && (
+            <div style={{ marginTop: 10 }}>
+              <p style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 8, lineHeight: 1.5 }}>
+                Paste hooks you&apos;ve found online or written before — one per line. The AI will match their style and energy.
+              </p>
+              <textarea
+                value={customExamples}
+                onChange={e => setCustomExamples(e.target.value)}
+                placeholder={'e.g.\nI almost quit Instagram three times before this happened.\nThe reason your reels aren\'t going viral has nothing to do with the algorithm.\nI made £10k from 3,000 followers.'}
+                rows={5}
+                style={{
+                  width: '100%', fontSize: 13, lineHeight: 1.6, resize: 'vertical',
+                  fontFamily: 'inherit', padding: '10px 12px',
+                  background: 'var(--input)', border: '1px solid var(--border)',
+                  borderRadius: 8, color: 'var(--foreground)',
+                }}
+              />
+              {customExamples.trim() && (
+                <p style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 5 }}>
+                  {customExamples.trim().split('\n').filter(l => l.trim()).length} examples added
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Generate button */}
@@ -284,7 +328,7 @@ export default function HookLabPage() {
                           borderRadius: 9,
                           transition: 'border-color 0.12s',
                         }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.15)' }}
+                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)' }}
                         onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
                       >
                         <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: 'var(--foreground)', lineHeight: 1.5 }}>
@@ -318,7 +362,7 @@ export default function HookLabPage() {
                             }}
                             onMouseEnter={e => {
                               const el = e.currentTarget as HTMLElement
-                              el.style.background = 'rgba(255,255,255,0.06)'
+                              el.style.background = 'var(--muted)'
                               el.style.color = 'var(--foreground)'
                             }}
                             onMouseLeave={e => {
