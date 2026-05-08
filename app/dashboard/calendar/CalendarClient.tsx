@@ -97,7 +97,7 @@ function getMonthDays(date: Date): WeekRow[] {
 
 const FORMAT_COLORS: Record<string, { bg: string; color: string }> = {
   'RAW STORY':      { bg: 'rgba(255,255,255,0.18)', color: '#fff' },
-  'LISTICLE':       { bg: 'hsl(var(--accent-hsl, 220 90% 56%))', color: '#fff' },
+  'LISTICLE':       { bg: 'var(--accent)', color: '#fff' },
   'COMPARISON':     { bg: 'hsl(270 70% 50%)', color: '#fff' },
   'TUTORIAL':       { bg: 'rgba(255,255,255,0.1)', color: '#fff' },
   'POV':            { bg: 'var(--foreground)', color: 'var(--background)' },

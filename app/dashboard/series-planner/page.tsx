@@ -211,14 +211,14 @@ export default function SeriesPlannerPage() {
                   style={{
                     padding: '7px 10px', borderRadius: 7, textAlign: 'left',
                     border: `1.5px solid ${goal === g.value ? 'var(--accent)' : 'var(--border)'}`,
-                    background: goal === g.value ? 'hsl(var(--accent-hsl, 25 100% 55%) / 0.1)' : 'transparent',
+                    background: goal === g.value ? 'var(--accent)' : 'transparent',
                     cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
                   }}
                 >
-                  <div style={{ fontSize: 12, fontWeight: 700, color: goal === g.value ? 'var(--accent)' : 'var(--foreground)' }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: goal === g.value ? '#ffffff' : 'var(--foreground)' }}>
                     {g.label}
                   </div>
-                  <div style={{ fontSize: 10, color: 'var(--muted-foreground)', marginTop: 1 }}>{g.desc}</div>
+                  <div style={{ fontSize: 10, color: goal === g.value ? 'rgba(255,255,255,0.75)' : 'var(--muted-foreground)', marginTop: 1 }}>{g.desc}</div>
                 </button>
               ))}
             </div>

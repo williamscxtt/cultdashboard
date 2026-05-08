@@ -631,9 +631,9 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
                     onClick={() => { setActiveIdx(i); setReelOverrides({}) }}
                     style={{
                       padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600,
-                      border: isActive ? '1.5px solid rgba(59,130,246,0.5)' : '1px solid var(--border)',
-                      background: isActive ? 'rgba(59,130,246,0.08)' : 'var(--card)',
-                      color: isActive ? '#60a5fa' : 'var(--muted-foreground)',
+                      border: isActive ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                      background: isActive ? 'var(--accent)' : 'var(--card)',
+                      color: isActive ? '#ffffff' : 'var(--muted-foreground)',
                       cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap',
                       transition: 'all 0.15s',
                     }}

@@ -316,8 +316,8 @@ export default function DmSalesPipeline({ initialLeads }: Props) {
           <button key={f} onClick={() => setFilter(f)} style={{
             padding: '5px 14px', borderRadius: 6, fontFamily: 'inherit', fontSize: 12, fontWeight: 600, cursor: 'pointer',
             border: `1px solid ${filter === f ? 'var(--accent)' : 'var(--border)'}`,
-            background: filter === f ? 'hsl(var(--accent-hsl, 220 90% 56%) / 0.1)' : 'var(--card)',
-            color: filter === f ? 'var(--accent)' : 'var(--muted-foreground)',
+            background: filter === f ? 'var(--accent)' : 'var(--card)',
+            color: filter === f ? '#ffffff' : 'var(--muted-foreground)',
           }}>
             {f === 'All' ? 'All' : f === 'Active' ? 'Active clients' : 'Past clients'}
           </button>

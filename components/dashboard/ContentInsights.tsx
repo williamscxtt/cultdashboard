@@ -166,7 +166,7 @@ export default function ContentInsights({ profileId, locked }: { profileId: stri
 
       {/* Phase focus / coaching */}
       {insights.phase_focus && (
-        <Card style={{ padding: p, marginBottom: gap, background: 'hsl(var(--accent-hsl, 220 90% 56%) / 0.06)', border: '1px solid var(--accent-subtle-border)' }}>
+        <Card style={{ padding: p, marginBottom: gap, background: 'var(--accent-subtle)', border: '1px solid var(--accent-subtle-border)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
             <Target size={13} style={{ color: 'var(--accent)', flexShrink: 0 }} />
             <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>

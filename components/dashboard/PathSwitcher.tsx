@@ -169,7 +169,7 @@ export default function PathSwitcher({
                     padding: '14px 16px',
                     borderRadius: 10,
                     border: `2px solid ${type === t ? 'var(--accent)' : 'var(--border)'}`,
-                    background: type === t ? 'hsl(var(--accent-hsl, 25 100% 55%) / 0.08)' : 'transparent',
+                    background: type === t ? 'var(--accent-subtle)' : 'transparent',
                     cursor: 'pointer',
                     fontFamily: 'inherit',
                     textAlign: 'left',

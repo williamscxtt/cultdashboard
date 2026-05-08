@@ -967,9 +967,9 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                 style={{
                   display: 'flex', alignItems: 'center', gap: 5,
                   padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                  border: isActive ? '1.5px solid rgba(59, 130, 246, 0.6)' : '1px solid var(--border)',
-                  background: isActive ? 'rgba(59, 130, 246, 0.1)' : 'var(--card)',
-                  color: enabled ? 'var(--foreground)' : 'var(--muted-foreground)',
+                  border: isActive ? '1.5px solid var(--accent)' : '1px solid var(--border)',
+                  background: isActive ? 'var(--accent)' : 'var(--card)',
+                  color: isActive ? '#ffffff' : (enabled ? 'var(--foreground)' : 'var(--muted-foreground)'),
                   cursor: enabled ? 'pointer' : 'default',
                   opacity: enabled ? 1 : 0.5,
                   fontFamily: 'inherit', position: 'relative' as const,

@@ -60,7 +60,12 @@ export default function HookLabPage() {
             const niche =
               intro.content_niche || intro.specific_niche ||
               profile.niche || ''
-            if (niche) setNicheHint(String(niche).slice(0, 60))
+            if (niche) {
+              // Cut at word boundary, max ~80 chars
+              const full = String(niche)
+              const trimmed = full.length > 80 ? full.slice(0, 80).replace(/\s\S+$/, '') + '…' : full
+              setNicheHint(trimmed)
+            }
           })
           .catch(() => {})
       })
@@ -171,8 +176,8 @@ export default function HookLabPage() {
                 style={{
                   padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
                   border: `1.5px solid ${emotion === e ? 'var(--accent)' : 'var(--border)'}`,
-                  background: emotion === e ? 'var(--accent-subtle)' : 'transparent',
-                  color: emotion === e ? 'var(--accent)' : 'var(--muted-foreground)',
+                  background: emotion === e ? 'var(--accent)' : 'transparent',
+                  color: emotion === e ? '#ffffff' : 'var(--muted-foreground)',
                   cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit',
                 }}
               >
