@@ -334,19 +334,29 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-// ─── DELETE — remove a single entry ──────────────────────────────────────────
+// ─── DELETE — remove a single entry OR bulk-clear AI entries ─────────────────
 
 export async function DELETE(req: NextRequest) {
   try {
-    const { profileId, month, entryId } = await req.json() as { profileId: string; month: string; entryId: string }
-    if (!profileId || !month || !entryId) return NextResponse.json({ error: 'profileId, month, entryId required' }, { status: 400 })
+    const body = await req.json() as { profileId: string; month: string; entryId?: string; clearAI?: boolean }
+    const { profileId, month, entryId, clearAI } = body
+    if (!profileId || !month) return NextResponse.json({ error: 'profileId and month required' }, { status: 400 })
 
     const db = adminClient()
     const { data: existing } = await db.from('content_calendars').select('id, entries').eq('profile_id', profileId).eq('month', month).single()
     if (!existing) return NextResponse.json({ error: 'Calendar not found' }, { status: 404 })
 
     const entries = (Array.isArray(existing.entries) ? existing.entries : []) as Record<string, unknown>[]
-    const updated = entries.filter(e => e.id !== entryId)
+
+    let updated: Record<string, unknown>[]
+    if (clearAI) {
+      // Keep only user-created entries
+      updated = entries.filter(e => e.source === 'user')
+    } else if (entryId) {
+      updated = entries.filter(e => e.id !== entryId)
+    } else {
+      return NextResponse.json({ error: 'Provide entryId or clearAI=true' }, { status: 400 })
+    }
 
     await db.from('content_calendars').update({ entries: updated }).eq('id', existing.id)
     return NextResponse.json({ ok: true, entries: updated })
