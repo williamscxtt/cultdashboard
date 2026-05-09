@@ -158,7 +158,7 @@ function AnimatedValue({ value }: { value: string }) {
 
 // ─── stat card ────────────────────────────────────────────────────────────────
 function StatCard({
-  label, value, change, sparkData, accentColor = 'var(--accent)', nullLabel = 'no prior data', delay = 0,
+  label, value, change, sparkData, accentColor = '#3B82F6', nullLabel = 'no prior data', delay = 0,
 }: {
   label: string; value: string; change: number | null; sparkData: number[]; accentColor?: string; nullLabel?: string; delay?: number
 }) {
@@ -169,26 +169,28 @@ function StatCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut', delay }}
       style={{
-        background: 'var(--card)', border: '1px solid var(--border)',
-        borderRadius: 14, overflow: 'hidden', position: 'relative',
-        boxShadow: 'var(--shadow-sm)',
+        background: `linear-gradient(135deg, ${accentColor}22 0%, ${accentColor}0E 45%, transparent 100%)`,
+        border: `1px solid ${accentColor}50`,
+        borderRadius: 16,
+        overflow: 'hidden',
+        position: 'relative',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        boxShadow: `0 0 40px ${accentColor}1A, 0 2px 12px rgba(0,0,0,0.18)`,
       }}
     >
-      {/* Accent top line */}
-      <div style={{ height: 3, background: `linear-gradient(90deg, ${accentColor}, transparent)` }} />
-
-      {/* Ambient glow */}
+      {/* Ambient glow top-right */}
       <div style={{
-        position: 'absolute', top: -30, left: -30, width: 120, height: 120,
-        background: accentColor, opacity: 0.06, borderRadius: '50%',
-        filter: 'blur(30px)', pointerEvents: 'none',
+        position: 'absolute', top: -30, right: -20, width: 130, height: 130,
+        background: accentColor, opacity: 0.15, borderRadius: '50%',
+        filter: 'blur(38px)', pointerEvents: 'none',
       }} />
 
-      <div style={{ padding: '18px 20px 16px', position: 'relative' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+      <div style={{ padding: '20px 20px 18px', position: 'relative' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
           <span style={{
-            fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)',
-            textTransform: 'uppercase', letterSpacing: '0.09em',
+            fontSize: 10, fontWeight: 700, color: accentColor,
+            textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.85,
           }}>
             {label}
           </span>
@@ -196,8 +198,8 @@ function StatCard({
         </div>
 
         <div style={{
-          fontSize: 32, fontWeight: 800, color: 'var(--foreground)',
-          letterSpacing: '-0.8px', lineHeight: 1, marginBottom: 10,
+          fontSize: 34, fontWeight: 800, color: 'var(--foreground)',
+          letterSpacing: '-1px', lineHeight: 1, marginBottom: 12,
           fontFamily: 'var(--font-display)',
         }}>
           <AnimatedValue value={value} />
@@ -278,9 +280,13 @@ function ChartCard({ children, delay = 0 }: { children: React.ReactNode; delay?:
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: 'easeOut', delay }}
       style={{
-        background: 'var(--card)', border: '1px solid var(--border)',
-        borderRadius: 14, padding: '22px 22px 16px',
-        boxShadow: 'var(--shadow-sm)',
+        background: 'var(--card)',
+        border: '1px solid var(--border)',
+        borderRadius: 16,
+        padding: '22px 22px 16px',
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        boxShadow: '0 4px 24px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06)',
       }}
     >
       {children}
@@ -471,11 +477,13 @@ function ReelCard({ reel, idx, profileId }: { reel: ClientReel; idx: number; pro
 
   return (
     <motion.div
-      whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' }}
+      whileHover={{ y: -2, boxShadow: '0 10px 30px rgba(0,0,0,0.25), 0 0 0 1px rgba(139,92,246,0.15)' }}
       transition={{ duration: 0.15 }}
       style={{
         background: 'var(--card)', border: '1px solid var(--border)',
-        borderRadius: 12, overflow: 'hidden', cursor: 'default',
+        borderRadius: 14, overflow: 'hidden', cursor: 'default',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
       }}
     >
       {/* Thumbnail — links to reel */}
@@ -580,14 +588,20 @@ function WeeklyAnalysisCard({ analysis, isMobile, updatedDaysAgo }: { analysis: 
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: 'easeOut', delay: 0.08 }}
       style={{
-        background: 'var(--card)', border: '1px solid var(--border)',
-        borderRadius: 12, overflow: 'hidden', marginBottom: 16,
+        background: 'var(--card)',
+        border: '1px solid rgba(59,130,246,0.2)',
+        borderRadius: 16,
+        overflow: 'hidden',
+        marginBottom: 16,
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        boxShadow: '0 0 30px rgba(59,130,246,0.08), 0 2px 8px rgba(0,0,0,0.1)',
       }}
     >
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '10px 16px', borderBottom: '1px solid var(--border)',
-        background: 'rgba(59,130,246,0.04)',
+        background: 'rgba(59,130,246,0.06)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
           <Zap size={12} color="#3B82F6" fill="#3B82F6" />
@@ -1032,14 +1046,14 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
       {/* ── Stat cards ──────────────────────────────────────────────────────── */}
       <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 12, marginBottom: 8 }}>
-        <StatCard label="Total Views" value={stats.views.value} change={stats.views.change} sparkData={stats.views.spark} accentColor="#3B82F6" delay={0} nullLabel="no prior period data" />
+        <StatCard label="Total Views" value={stats.views.value} change={stats.views.change} sparkData={stats.views.spark} accentColor="#8B5CF6" delay={0} nullLabel="no prior period data" />
         <StatCard label="Engagements" value={stats.eng.value} change={stats.eng.change} sparkData={stats.eng.spark} accentColor="#3B82F6" delay={0.05} nullLabel="no prior period data" />
         <StatCard
           label="Followers"
           value={stats.followers.value}
           change={stats.followers.change}
           sparkData={stats.followers.spark}
-          accentColor="#3B82F6"
+          accentColor="#10B981"
           nullLabel="synced on connect"
           delay={0.1}
         />
@@ -1308,8 +1322,13 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: 'easeOut', delay: 0.35 }}
             style={{
-              background: 'var(--card)', border: '1px solid var(--border)',
-              borderRadius: 14, overflow: 'hidden',
+              background: 'var(--card)',
+              border: '1px solid var(--border)',
+              borderRadius: 16,
+              overflow: 'hidden',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
             }}
           >
             <div style={{
@@ -1383,7 +1402,8 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       {reels.length === 0 && !loading && (
         <div style={{
           padding: '60px 24px', textAlign: 'center',
-          background: 'var(--card)', borderRadius: 12, border: '1px solid var(--border)',
+          background: 'var(--card)', borderRadius: 16, border: '1px solid var(--border)',
+          backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
         }}>
           <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)', marginBottom: 8 }}>No reels yet</div>
           <p style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '0 0 20px' }}>
