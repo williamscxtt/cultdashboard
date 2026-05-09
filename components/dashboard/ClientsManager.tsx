@@ -285,8 +285,8 @@ export default function ClientsManager({ initialClients }: Props) {
           {slipping > 0 && (
             <div style={{
               display: 'flex', alignItems: 'center', gap: 6,
-              background: 'rgba(255,255,255,0.35)', border: '1px solid rgba(255,255,255,0.35)',
-              borderRadius: 8, padding: '6px 12px', fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 600,
+              background: 'hsl(38 92% 50% / 0.12)', border: '1px solid hsl(38 92% 50% / 0.3)',
+              borderRadius: 8, padding: '6px 12px', fontSize: 12, color: 'hsl(38 80% 40%)', fontWeight: 600,
             }}>
               <AlertTriangle size={13} />
               {slipping} client{slipping > 1 ? 's' : ''} slipping — declining engagement
@@ -519,8 +519,8 @@ function ClientRow({ client, onToggleActive, onToggleBillingExempt, onSendInvite
             <span style={{
               display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
               fontSize: 10, fontWeight: 700, padding: '3px 7px', borderRadius: 999,
-              background: client.billing_exempt ? 'rgba(139,92,246,0.12)' : 'rgba(59,130,246,0.08)',
-              color: client.billing_exempt ? '#a78bfa' : 'rgba(59,130,246,0.5)',
+              background: client.billing_exempt ? 'rgba(139,92,246,0.12)' : 'var(--accent-subtle)',
+              color: client.billing_exempt ? '#a78bfa' : 'var(--accent)',
             }}>
               <CreditCard size={9} />
               {client.billing_exempt ? 'Free' : '£50/mo'}
@@ -623,7 +623,7 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvit
       overflow: 'hidden',
       transition: 'border-color 0.15s',
     }}
-    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(59,130,246,0.35)' }}
+    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent)' }}
     onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
     >
       {/* ── Card body ── */}
@@ -684,9 +684,9 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvit
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 5,
                 fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 999,
-                background: client.billing_exempt ? 'rgba(139,92,246,0.12)' : 'rgba(59,130,246,0.1)',
-                color: client.billing_exempt ? '#a78bfa' : '#60a5fa',
-                border: `1px solid ${client.billing_exempt ? 'rgba(139,92,246,0.25)' : 'rgba(59,130,246,0.25)'}`,
+                background: client.billing_exempt ? 'rgba(139,92,246,0.12)' : 'var(--accent-subtle)',
+                color: client.billing_exempt ? '#a78bfa' : 'var(--accent)',
+                border: `1px solid ${client.billing_exempt ? 'rgba(139,92,246,0.25)' : 'var(--accent-subtle-border)'}`,
               }}>
                 <CreditCard size={10} />
                 {client.billing_exempt ? 'Free' : '£50/mo'}
@@ -726,6 +726,7 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvit
           ].map(({ label, value, mono }) => (
             <div key={label} style={{
               background: 'var(--muted)', borderRadius: 7, padding: '8px 10px',
+              border: '1px solid var(--border)',
             }}>
               <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted-foreground)', marginBottom: 4 }}>
                 {label}
@@ -794,7 +795,7 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvit
         borderTop: '1px solid var(--border)',
         padding: '10px 14px',
         display: 'flex', flexDirection: 'column', gap: 7,
-        background: 'rgba(0,0,0,0.15)',
+        background: 'var(--muted)',
       }}>
         {/* Row 1: Invite + Set password */}
         <div style={{ display: 'flex', gap: 8 }}>
@@ -849,14 +850,14 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvit
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             height: 32, borderRadius: 6,
             fontSize: 12, fontWeight: 700,
-            background: 'rgba(59,130,246,0.1)',
-            color: '#60a5fa',
-            border: '1px solid rgba(59,130,246,0.2)',
-            textDecoration: 'none', transition: 'background 0.12s, color 0.12s',
+            background: 'var(--accent)',
+            color: '#ffffff',
+            border: '1px solid var(--accent)',
+            textDecoration: 'none', transition: 'opacity 0.12s',
             whiteSpace: 'nowrap',
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = '#3b82f6'; (e.currentTarget as HTMLElement).style.color = '#fff' }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(59,130,246,0.1)'; (e.currentTarget as HTMLElement).style.color = '#60a5fa' }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.85' }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
         >
           Open dashboard →
         </Link>
