@@ -112,17 +112,24 @@ export default function ClientsManager({ initialClients }: Props) {
         return
       }
       if (data.skipped) {
-        // Already active — offer to force-resend if they need a new password
-        toast(`${name || email} already has an active account. Use the password reset in their profile if they need access.`, {
-          duration: 5000,
-          icon: '✓',
+        // Already active — offer a one-click resend instead of a dead end
+        toast(`${name || email} already has an account.`, {
+          duration: 8000,
+          icon: '⚡',
+          action: {
+            label: 'Resend new credentials',
+            onClick: () => sendInvite(email, name, true),
+          },
         })
         return
       }
       if (data.emailSent) {
         toast.success(`Login details sent to ${name || email}`)
       } else {
-        toast.error(`Couldn't send email — temp password: ${data.tempPassword}`)
+        toast(`Temp password set — couldn't send email: ${data.tempPassword}`, {
+          duration: 10000,
+          icon: '🔑',
+        })
       }
     } catch {
       toast.error(`Network error sending invite`)
