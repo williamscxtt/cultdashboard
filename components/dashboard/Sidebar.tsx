@@ -84,8 +84,8 @@ function NavItem({
         fontWeight: active ? 700 : 500,
         marginBottom: 1,
         transition: 'background 0.12s, color 0.12s',
-        background: active ? 'rgba(255, 255, 255, 0.08)' : 'transparent',
-        color: active ? '#ededed' : 'var(--muted-foreground)',
+        background: active ? 'var(--muted)' : 'transparent',
+        color: active ? 'var(--foreground)' : 'var(--muted-foreground)',
         boxShadow: 'none',
         position: 'relative',
         overflow: 'hidden',
@@ -95,8 +95,8 @@ function NavItem({
       onMouseEnter={e => {
         if (!active) {
           const el = e.currentTarget as HTMLElement
-          el.style.background = 'rgba(255, 255, 255, 0.05)'
-          el.style.color = '#ededed'
+          el.style.background = 'var(--muted)'
+          el.style.color = 'var(--foreground)'
         }
       }}
       onMouseLeave={e => {
@@ -145,7 +145,7 @@ function LockedNavItem({
         fontWeight: 500,
         marginBottom: 1,
         color: 'var(--muted-foreground)',
-        opacity: 0.4,
+        opacity: 0.55,
         cursor: 'not-allowed',
         userSelect: 'none',
         position: 'relative',
@@ -265,7 +265,7 @@ function SidebarContent({
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div style={{
               width: 28, height: 28, borderRadius: 8,
-              background: 'rgba(255,255,255,0.1)',
+              background: 'var(--accent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               flexShrink: 0,
             }}>
@@ -369,13 +369,13 @@ function SidebarContent({
             margin: '8px 2px 4px',
             padding: '10px 12px',
             borderRadius: 8,
-            background: 'rgba(59,130,246,0.08)',
-            border: '1px solid rgba(59,130,246,0.2)',
+            background: 'var(--accent-subtle)',
+            border: '1px solid var(--accent-subtle-border)',
             fontSize: 11,
-            color: 'rgba(255,255,255,0.5)',
+            color: 'var(--muted-foreground)',
             lineHeight: 1.5,
           }}>
-            <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.7)' }}>Complete My Profile</span>
+            <span style={{ fontWeight: 700, color: 'var(--foreground)' }}>Complete My Profile</span>
             {' '}to unlock all features. Fill in 75% of the questions and save.
           </div>
         )}
@@ -461,7 +461,7 @@ function SidebarContent({
           }}
           onMouseEnter={e => {
             const el = e.currentTarget as HTMLElement
-            el.style.background = 'rgba(255,255,255,0.06)'
+            el.style.background = 'var(--muted)'
             el.style.color = 'var(--foreground)'
           }}
           onMouseLeave={e => {
@@ -491,7 +491,7 @@ function SidebarContent({
             }}
             onMouseEnter={e => {
               const el = e.currentTarget as HTMLElement
-              el.style.background = 'rgba(255,255,255,0.05)'
+              el.style.background = 'var(--muted)'
               el.style.color = 'var(--foreground)'
             }}
             onMouseLeave={e => {
