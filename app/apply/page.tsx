@@ -277,7 +277,7 @@ export default function ApplyPage() {
 
             {/* 6-month — NOTE: update this Stripe URL to a £2,000 product */}
             <a
-              href="https://buy.stripe.com/7sY5kC86Gc0ZaWqgEA9IQ1H"
+              href="https://buy.stripe.com/dRm3cuev48ON3tY8849IQ1I"
               style={{ display: 'block', padding: '20px 24px', borderRadius: 12, textDecoration: 'none', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', transition: 'background 0.15s, border-color 0.15s', position: 'relative' }}
               onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.22)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.12)' }}
