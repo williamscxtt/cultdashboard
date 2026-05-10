@@ -1,14 +1,26 @@
 'use client'
 
 import { useState } from 'react'
-import { Zap, ArrowRight, Check, Phone } from 'lucide-react'
+import { Zap, ArrowRight, ArrowLeft, Check, Phone } from 'lucide-react'
 
 // ── Options ──────────────────────────────────────────────────────────────────
 
 const CREATOR_TYPE_OPTIONS = [
-  { value: 'coach',   label: 'Coach / Consultant', desc: 'I sell services, programmes or 1:1 coaching' },
-  { value: 'creator', label: 'Content Creator',     desc: 'I build an audience and monetise through content' },
-  { value: 'both',    label: 'Both',                desc: 'I create content AND sell services' },
+  {
+    value: 'creator',
+    label: 'Pure Content Creator',
+    desc: 'Building a brand and audience — income comes from deals, sponsorships, platforms, or digital products',
+  },
+  {
+    value: 'coach',
+    label: 'Coaching / Service Business',
+    desc: 'Using content to attract clients and scale a coaching, consulting, or service business',
+  },
+  {
+    value: 'both',
+    label: 'Both',
+    desc: 'Building an audience AND running a coaching or service business',
+  },
 ]
 
 const PLATFORM_OPTIONS = ['Instagram', 'TikTok', 'YouTube', 'Not posting yet']
@@ -24,20 +36,17 @@ const STRATEGIES_TRIED_OPTIONS = [
   'None yet',
 ]
 
-const INVESTMENT_APPROACH_OPTIONS = [
-  { label: 'I can invest immediately',                   disqualify: false },
-  { label: 'I need to plan and allocate capital first',  disqualify: false },
-  { label: "I'm not in a position to invest right now",  disqualify: true  },
-]
-
 const MONTHLY_INCOME_STEPS = [
   'Under £1,200', '£1,200–£2,000', '£2,000–£3,500', '£3,500–£5,000',
   '£5,000–£7,000', '£7,000–£10,000', '£10,000–£15,000', '£15,000–£20,000', '£20,000+',
 ]
 
+// Investment amount — "Not right now" triggers hard disqualify
 const INVESTMENT_AMOUNT_STEPS = [
-  '£1,000–£2,000', '£2,000–£3,500', '£3,500–£5,000',
-  '£5,000–£7,000', '£7,000–£10,000', '£10,000+',
+  'Not right now',
+  '£250–£1,000',
+  '£1,000–£2,000',
+  '£2,000+',
 ]
 
 const INCOME_GOAL_STEPS = [
@@ -45,10 +54,24 @@ const INCOME_GOAL_STEPS = [
   '£7,500–£10,000/month', '£10,000–£20,000/month', '£20,000–£50,000/month', '£50,000+/month',
 ]
 
+const WANTS_OPTIONS = [
+  {
+    value: 'dashboard',
+    label: 'Dashboard access only',
+    desc: 'I want the AI tools, content system, analytics, and scripts — self-directed',
+  },
+  {
+    value: 'coaching',
+    label: 'Dashboard + coaching from Will',
+    desc: 'I want direct guidance, accountability, and Will working with me personally',
+  },
+]
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type FormData = {
   creator_type: string
+  wants: string
   first_name: string
   last_name: string
   email: string
@@ -57,11 +80,9 @@ type FormData = {
   platforms: string[]
   posting_frequency: string
   niche: string
-  if_nothing_changes: string
   biggest_obstacle: string
   strategies_tried: string[]
   monthly_income: string
-  investment_approach: string
   investment_amount: string
   income_goal: string
   business_mindset: string
@@ -70,11 +91,25 @@ type FormData = {
 type Outcome = 'qualified' | 'payment' | 'disqualified'
 
 function getOutcome(form: FormData): Outcome {
-  if (
-    form.monthly_income === 'Under £1,200' ||
-    form.investment_approach !== 'I can invest immediately' ||
-    form.business_mindset === 'No'
-  ) return 'payment'
+  const inv = form.investment_amount
+
+  // Hard disqualify — can't invest
+  if (inv === 'Not right now') return 'disqualified'
+
+  // Low investment → always self-serve payment
+  if (inv === '£250–£1,000') return 'payment'
+
+  // High investment (£2,000+) → Will always wants to call regardless of coaching preference
+  if (inv === '£2,000+') return 'qualified'
+
+  // Mid investment (£1,000–£2,000)
+  if (inv === '£1,000–£2,000') {
+    // Dashboard only or not ready to commit → self-serve
+    if (form.wants === 'dashboard' || form.business_mindset === 'No') return 'payment'
+    // Wants coaching and ready to commit → qualified
+    return 'qualified'
+  }
+
   return 'qualified'
 }
 
@@ -83,19 +118,18 @@ const TOTAL_STEPS = 5
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ApplyPage() {
-  const [step, setStep]           = useState(1)
-  const [loading, setLoading]     = useState(false)
+  const [step, setStep]             = useState(1)
+  const [loading, setLoading]       = useState(false)
   const [processing, setProcessing] = useState(false)
-  const [done, setDone]           = useState<Outcome | null>(null)
-  const [form, setForm]           = useState<FormData>({
-    creator_type: '',
+  const [done, setDone]             = useState<Outcome | null>(null)
+  const [form, setForm]             = useState<FormData>({
+    creator_type: '', wants: '',
     first_name: '', last_name: '', email: '', phone: '', instagram_handle: '',
     platforms: [], posting_frequency: '', niche: '',
-    if_nothing_changes: '', biggest_obstacle: '', strategies_tried: [],
-    monthly_income:    MONTHLY_INCOME_STEPS[0],
-    investment_approach: '',
-    investment_amount:  INVESTMENT_AMOUNT_STEPS[0],
-    income_goal:        INCOME_GOAL_STEPS[0],
+    biggest_obstacle: '', strategies_tried: [],
+    monthly_income:    MONTHLY_INCOME_STEPS[2],
+    investment_amount: INVESTMENT_AMOUNT_STEPS[1],
+    income_goal:       INCOME_GOAL_STEPS[2],
     business_mindset: '',
   })
 
@@ -113,8 +147,8 @@ export default function ApplyPage() {
   function canProceed() {
     if (step === 1) return !!(form.creator_type && form.platforms.length > 0 && form.niche.trim())
     if (step === 2) return !!(form.posting_frequency && form.monthly_income)
-    if (step === 3) return !!(form.if_nothing_changes.trim() && form.biggest_obstacle.trim() && form.strategies_tried.length > 0)
-    if (step === 4) return !!(form.investment_approach && form.investment_amount && form.income_goal && form.business_mindset)
+    if (step === 3) return !!(form.biggest_obstacle.trim() && form.strategies_tried.length > 0)
+    if (step === 4) return !!(form.wants && form.investment_amount && form.income_goal && form.business_mindset)
     if (step === 5) return !!(
       form.first_name.trim() && form.last_name.trim() &&
       form.email.trim() && form.phone.trim().startsWith('+') && form.phone.trim().length >= 10 &&
@@ -125,7 +159,6 @@ export default function ApplyPage() {
 
   async function handleNext() {
     if (step < TOTAL_STEPS) { setStep(s => s + 1); return }
-
     setLoading(true)
     setProcessing(true)
     const outcome = getOutcome(form)
@@ -136,12 +169,14 @@ export default function ApplyPage() {
         body: JSON.stringify({ ...form, outcome }),
       })
     } catch { /* non-blocking */ }
-
-    // Reviewing animation for 2.2s
     await new Promise(resolve => setTimeout(resolve, 2200))
     setLoading(false)
     setProcessing(false)
     setDone(outcome)
+  }
+
+  function handleBack() {
+    if (step > 1) setStep(s => s - 1)
   }
 
   const pct       = Math.round(((step - 1) / TOTAL_STEPS) * 100)
@@ -174,43 +209,53 @@ export default function ApplyPage() {
     )
   }
 
-  // ── Disqualification screen ────────────────────────────────────────────────
+  // ── Disqualified screen ────────────────────────────────────────────────────
   if (done === 'disqualified') {
     return (
       <PageShell>
         <div style={{ animation: 'fadeUp 0.4s ease both', textAlign: 'center' }}>
-          <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 16,
+            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px',
+          }}>
             <span style={{ fontSize: 24 }}>🤝</span>
           </div>
           <h1 style={{ fontSize: 24, fontWeight: 800, color: '#f0f0f0', marginBottom: 12, letterSpacing: '-0.5px' }}>
-            Not the right fit right now{firstName ? `, ${firstName}` : ''}.
+            Not the right time{firstName ? `, ${firstName}` : ''}.
           </h1>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 380, margin: '0 auto' }}>
-            Creator Cult requires an upfront investment to get started. When you&apos;re in a position to invest in your growth, come back and apply — the door is open.
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 380, margin: '0 auto 20px' }}>
+            Creator Cult requires an investment to get access. When you&apos;re in a position to move, come back and apply — the door is open.
           </p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 28 }}>
-            In the meantime, follow Will on Instagram for free content strategy tips.
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 8 }}>
+            Follow Will on Instagram in the meantime for free content strategy.
           </p>
         </div>
       </PageShell>
     )
   }
 
-  // ── Payment tier screen ────────────────────────────────────────────────────
+  // ── Payment screen ─────────────────────────────────────────────────────────
   if (done === 'payment') {
     return (
       <PageShell>
         <div style={{ animation: 'fadeUp 0.4s ease both', textAlign: 'center' }}>
-          <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 16,
+            background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px',
+          }}>
             <Check size={26} color="rgba(59,130,246,0.9)" strokeWidth={2.5} />
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f0f0f0', marginBottom: 10, letterSpacing: '-0.5px' }}>
             You&apos;re in{firstName ? `, ${firstName}` : ''}.
           </h1>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 400, margin: '0 auto 32px' }}>
-            Creator Cult has a self-serve entry point built for exactly where you are right now. No call needed — pick your plan below and get started today.
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 420, margin: '0 auto 32px' }}>
+            Pick a plan below and get immediate access to the Creator Cult dashboard — scripts, analytics, hook lab, content calendar, and everything else.
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 400, margin: '0 auto' }}>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 420, margin: '0 auto' }}>
+            {/* Monthly */}
             <a
               href="https://buy.stripe.com/14A9AS0Ee0ihe8Cagc9IQ1G"
               style={{ display: 'block', padding: '20px 24px', borderRadius: 12, textDecoration: 'none', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.35)', transition: 'background 0.15s, border-color 0.15s' }}
@@ -219,28 +264,47 @@ export default function ApplyPage() {
             >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>Monthly</div>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: '#93c5fd', letterSpacing: '-0.5px' }}>£495<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.35)' }}>/mo</span></div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>Monthly</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: '#93c5fd', letterSpacing: '-0.5px' }}>
+                    £495<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>/mo</span>
+                  </div>
                 </div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>Cancel anytime <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} /></div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>
+                  Cancel anytime <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                </div>
               </div>
             </a>
+
+            {/* 6-month — NOTE: update this Stripe URL to a £2,000 product */}
             <a
               href="https://buy.stripe.com/7sY5kC86Gc0ZaWqgEA9IQ1H"
-              style={{ display: 'block', padding: '20px 24px', borderRadius: 12, textDecoration: 'none', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)', transition: 'background 0.15s, border-color 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.2)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.1)' }}
+              style={{ display: 'block', padding: '20px 24px', borderRadius: 12, textDecoration: 'none', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', transition: 'background 0.15s, border-color 0.15s', position: 'relative' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.22)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.12)' }}
             >
+              <div style={{
+                position: 'absolute', top: -10, right: 16,
+                fontSize: 10, fontWeight: 800, color: '#000',
+                background: '#4ade80', padding: '3px 8px', borderRadius: 99, letterSpacing: '0.04em',
+                textTransform: 'uppercase',
+              }}>
+                Best value
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.6)', marginBottom: 4 }}>6 Months</div>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: '#f0f0f0', letterSpacing: '-0.5px' }}>£3,000<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.35)' }}> total</span></div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>6 Months</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: '#f0f0f0', letterSpacing: '-0.5px' }}>
+                    £2,000<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}> total</span>
+                  </div>
                 </div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>Best value <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} /></div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>
+                  Save £970 <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                </div>
               </div>
             </a>
           </div>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 28, lineHeight: 1.6 }}>
+
+          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.18)', marginTop: 28, lineHeight: 1.6 }}>
             Questions? DM Will on Instagram before you commit.
           </p>
         </div>
@@ -248,19 +312,24 @@ export default function ApplyPage() {
     )
   }
 
-  // ── Qualified confirmation screen ──────────────────────────────────────────
+  // ── Qualified screen ───────────────────────────────────────────────────────
   if (done === 'qualified') {
     return (
       <PageShell>
         <div style={{ animation: 'fadeUp 0.4s ease both', textAlign: 'center' }}>
-          <div style={{ width: 56, height: 56, borderRadius: 16, background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 16,
+            background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px',
+          }}>
             <Check size={26} color="rgba(74,222,128,0.9)" strokeWidth={2.5} />
           </div>
           <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f0f0f0', marginBottom: 10, letterSpacing: '-0.5px' }}>
             Application received{firstName ? `, ${firstName}` : ''}.
           </h1>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 380, margin: '0 auto 20px' }}>
-            Will reviews every application personally. If it&apos;s a fit, he&apos;ll call you on <strong style={{ color: 'rgba(255,255,255,0.65)' }}>{form.phone}</strong> — usually within 24 hours.
+            Will reviews every application personally. If it&apos;s a fit, he&apos;ll call you on{' '}
+            <strong style={{ color: 'rgba(255,255,255,0.65)' }}>{form.phone}</strong> — usually within 24 hours.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Phone size={13} color="rgba(255,255,255,0.3)" />
@@ -275,15 +344,13 @@ export default function ApplyPage() {
   return (
     <PageShell>
 
-      {/* Progress bar */}
+      {/* Progress */}
       <div style={{ marginBottom: 32 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
             {step < TOTAL_STEPS ? `${pct}% complete` : 'Almost there'}
           </span>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)' }}>
-            {step} / {TOTAL_STEPS}
-          </span>
+          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.18)' }}>{step} / {TOTAL_STEPS}</span>
         </div>
         <div style={{ height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
           <div style={{ height: '100%', width: `${pct}%`, background: '#3B82F6', borderRadius: 2, transition: 'width 0.4s ease' }} />
@@ -292,24 +359,24 @@ export default function ApplyPage() {
 
       <div key={step} style={{ animation: 'fadeUp 0.35s ease both' }}>
 
-        {/* ── Step 1: Who are you ─────────────────────────────────────────── */}
+        {/* ── Step 1: Who are you ────────────────────────────────────────── */}
         {step === 1 && (
           <>
             <h1 style={headingStyle}>Let&apos;s figure out where you&apos;re at</h1>
             <p style={subStyle}>Answer honestly — the better the match, the better the result.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <Field label="What best describes you?">
+              <Field label="What best describes what you're building?">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {CREATOR_TYPE_OPTIONS.map(({ value, label, desc }) => (
                     <button
                       key={value}
                       className={`pill-option${form.creator_type === value ? ' selected' : ''}`}
                       onClick={() => set('creator_type', value)}
-                      style={{ padding: '14px 16px', flexDirection: 'column', alignItems: 'flex-start', gap: 3 }}
+                      style={{ padding: '14px 16px', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}
                     >
-                      <span style={{ fontWeight: 700, fontSize: 13 }}>
-                        {form.creator_type === value && <Check size={11} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />}
+                      <span style={{ fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {form.creator_type === value && <Check size={11} style={{ flexShrink: 0 }} />}
                         {label}
                       </span>
                       <span style={{ fontSize: 12, opacity: 0.5, fontWeight: 400 }}>{desc}</span>
@@ -336,12 +403,12 @@ export default function ApplyPage() {
           </>
         )}
 
-        {/* ── Step 2: How active are you ──────────────────────────────────── */}
+        {/* ── Step 2: Current activity ───────────────────────────────────── */}
         {step === 2 && (
           <>
             <StepBadge text="You're further along than most people who apply here." />
             <h1 style={headingStyle}>How active are you right now?</h1>
-            <p style={subStyle}>Give us an honest snapshot of your current output and income.</p>
+            <p style={subStyle}>Give us an honest snapshot of your output and where you are financially.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               <Field label="In the last 30 days, how many posts have you published?">
@@ -355,27 +422,32 @@ export default function ApplyPage() {
                 </div>
               </Field>
 
-              <Field label="Current average monthly income">
+              <Field label="Total monthly income from all sources">
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '0 0 14px', lineHeight: 1.5 }}>
+                  Include everything — employment, business revenue, content income, side income. Combined total.
+                </p>
                 <MoneySlider steps={MONTHLY_INCOME_STEPS} value={form.monthly_income} onChange={v => set('monthly_income', v)} />
               </Field>
             </div>
           </>
         )}
 
-        {/* ── Step 3: What's actually going on ────────────────────────────── */}
+        {/* ── Step 3: What's in the way ──────────────────────────────────── */}
         {step === 3 && (
           <>
             <StepBadge text="Most people at your level are 1–2 moves away from a breakthrough." />
-            <h1 style={headingStyle}>What&apos;s actually going on?</h1>
-            <p style={subStyle}>Be direct — the more honest you are, the better we can tell if there&apos;s a clear path forward for you.</p>
+            <h1 style={headingStyle}>What&apos;s been in the way?</h1>
+            <p style={subStyle}>Be direct — the more specific you are, the clearer the path forward.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <Field label="If nothing changes in the next 6 months, what happens?">
-                <textarea className="apply-input apply-textarea" placeholder="Be honest — what actually happens if nothing changes?" value={form.if_nothing_changes} onChange={e => set('if_nothing_changes', e.target.value)} rows={3} />
-              </Field>
-
               <Field label="What's been the biggest thing stopping your growth?">
-                <textarea className="apply-input apply-textarea" placeholder="Be specific — what's the actual blocker?" value={form.biggest_obstacle} onChange={e => set('biggest_obstacle', e.target.value)} rows={3} />
+                <textarea
+                  className="apply-input apply-textarea"
+                  placeholder="Be specific — what's the actual blocker?"
+                  value={form.biggest_obstacle}
+                  onChange={e => set('biggest_obstacle', e.target.value)}
+                  rows={3}
+                />
               </Field>
 
               <Field label="What have you already tried? (select all that apply)">
@@ -392,29 +464,53 @@ export default function ApplyPage() {
           </>
         )}
 
-        {/* ── Step 4: Investment & commitment ─────────────────────────────── */}
+        {/* ── Step 4: Commitment & investment ───────────────────────────── */}
         {step === 4 && (
           <>
             <StepBadge text="Almost there. One final check before we match you." />
             <h1 style={headingStyle}>How serious are you about changing it?</h1>
-            <p style={subStyle}>Creator Cult is a serious programme. We need to know you&apos;re in the right position to make it work.</p>
+            <p style={subStyle}>We need to understand what you&apos;re looking for and what you&apos;re in a position to do.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-              <Field label="If a clear plan for your growth existed, how would you approach investing in it?">
+
+              <Field label="What do you want from Creator Cult?">
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {INVESTMENT_APPROACH_OPTIONS.map(({ label }) => (
-                    <button key={label} className={`pill-option${form.investment_approach === label ? ' selected' : ''}`} onClick={() => set('investment_approach', label)}>
-                      {form.investment_approach === label && <Check size={11} style={{ marginRight: 8, flexShrink: 0 }} />}
-                      {label}
+                  {WANTS_OPTIONS.map(({ value, label, desc }) => (
+                    <button
+                      key={value}
+                      className={`pill-option${form.wants === value ? ' selected' : ''}`}
+                      onClick={() => set('wants', value)}
+                      style={{ padding: '14px 16px', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}
+                    >
+                      <span style={{ fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
+                        {form.wants === value && <Check size={11} style={{ flexShrink: 0 }} />}
+                        {label}
+                      </span>
+                      <span style={{ fontSize: 12, opacity: 0.5, fontWeight: 400 }}>{desc}</span>
                     </button>
                   ))}
                 </div>
               </Field>
 
-              <Field label="How much are you prepared to invest in your growth?">
-                <MoneySlider steps={INVESTMENT_AMOUNT_STEPS} value={form.investment_amount} onChange={v => set('investment_amount', v)} />
+              <Field label="How much are you in a position to invest?">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {INVESTMENT_AMOUNT_STEPS.map(opt => {
+                    const isDisqualify = opt === 'Not right now'
+                    return (
+                      <button
+                        key={opt}
+                        className={`pill-option${form.investment_amount === opt ? ' selected' : ''}`}
+                        onClick={() => set('investment_amount', opt)}
+                        style={isDisqualify ? { opacity: 0.6 } : {}}
+                      >
+                        {form.investment_amount === opt && <Check size={11} style={{ marginRight: 8, flexShrink: 0 }} />}
+                        {opt}
+                      </button>
+                    )
+                  })}
+                </div>
                 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 12, lineHeight: 1.5 }}>
-                  Creator Cult requires a minimum upfront commitment of £1,000.
+                  Dashboard access starts from £250. Coaching programmes start from £1,000.
                 </p>
               </Field>
 
@@ -426,7 +522,7 @@ export default function ApplyPage() {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {[
                     { display: "Yes — I'm ready to commit", value: 'Yes' },
-                    { display: "No — I'm not ready yet",    value: 'No'  },
+                    { display: "No — I'm not there yet",    value: 'No'  },
                   ].map(({ display, value }) => (
                     <button key={value} className={`pill-option${form.business_mindset === value ? ' selected' : ''}`} onClick={() => set('business_mindset', value)}>
                       {form.business_mindset === value && <Check size={11} style={{ marginRight: 5, flexShrink: 0 }} />}
@@ -439,7 +535,7 @@ export default function ApplyPage() {
           </>
         )}
 
-        {/* ── Step 5: Contact info (last) ──────────────────────────────────── */}
+        {/* ── Step 5: Contact info ───────────────────────────────────────── */}
         {step === 5 && (
           <>
             <div style={{
@@ -483,8 +579,8 @@ export default function ApplyPage() {
 
       </div>
 
-      {/* CTA */}
-      <div style={{ marginTop: 32 }}>
+      {/* CTAs */}
+      <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 10 }}>
         <button className="apply-btn" onClick={handleNext} disabled={!canProceed() || loading}>
           {loading
             ? 'Submitting…'
@@ -493,6 +589,12 @@ export default function ApplyPage() {
               : <>Continue <ArrowRight size={16} /></>
           }
         </button>
+
+        {step > 1 && (
+          <button className="apply-back-btn" onClick={handleBack}>
+            <ArrowLeft size={14} /> Back
+          </button>
+        )}
       </div>
 
       {step === 1 && (
@@ -518,7 +620,7 @@ const subStyle: React.CSSProperties = {
 function StepBadge({ text }: { text: string }) {
   return (
     <div style={{
-      display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 12,
+      display: 'inline-flex', alignItems: 'center', marginBottom: 12,
       padding: '4px 12px', borderRadius: 99,
       background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)',
     }}>
@@ -552,6 +654,13 @@ function PageShell({ children }: { children: React.ReactNode }) {
         }
         .apply-btn:hover:not(:disabled) { background: #60A5FA; }
         .apply-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+        .apply-back-btn {
+          width: 100%; height: 40px; background: transparent; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.08);
+          border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
+          font-family: inherit; transition: color 0.15s, border-color 0.15s;
+          display: flex; align-items: center; justify-content: center; gap: 6px;
+        }
+        .apply-back-btn:hover { color: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.18); }
         .pill-option {
           padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
           cursor: pointer; border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5);
