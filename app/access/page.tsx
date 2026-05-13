@@ -216,17 +216,32 @@ export default function AccessPage() {
           background: 'rgba(255,255,255,0.02)',
           border: '1px solid rgba(255,255,255,0.06)',
         }}>
-          <div style={{ display: 'flex', gap: -4 }}>
-            {['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444'].map((c, i) => (
+          <div style={{ display: 'flex' }}>
+            {[
+              { initials: 'MN', bg: '#1d4ed8' },
+              { initials: 'KP', bg: '#7c3aed' },
+              { initials: 'FY', bg: '#065f46' },
+              { initials: 'EK', bg: '#92400e' },
+              { initials: 'JB', bg: '#9f1239' },
+            ].map(({ initials, bg }, i) => (
               <div key={i} style={{
-                width: 22, height: 22, borderRadius: '50%',
-                background: c, border: '2px solid #000',
-                marginLeft: i === 0 ? 0 : -6, flexShrink: 0,
-              }} />
+                width: 26, height: 26, borderRadius: '50%',
+                background: bg,
+                border: '2px solid #000',
+                marginLeft: i === 0 ? 0 : -7,
+                flexShrink: 0,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 8, fontWeight: 800, color: 'rgba(255,255,255,0.9)',
+                letterSpacing: '0.02em',
+                zIndex: 5 - i,
+                position: 'relative',
+              }}>
+                {initials}
+              </div>
             ))}
           </div>
           <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
-            Used by creators and coaches growing their audience on Instagram
+            Used by creators and coaches growing on Instagram
           </span>
         </div>
 
