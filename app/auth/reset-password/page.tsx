@@ -99,12 +99,15 @@ export default function ResetPasswordPage() {
 
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: '100dvh',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
       background: '#000',
-      padding: '24px',
+      paddingTop: 'max(24px, env(safe-area-inset-top))',
+      paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
+      paddingLeft: 'max(24px, env(safe-area-inset-left))',
+      paddingRight: 'max(24px, env(safe-area-inset-right))',
       boxSizing: 'border-box',
     }}>
       <div style={{ width: '100%', maxWidth: 400 }}>

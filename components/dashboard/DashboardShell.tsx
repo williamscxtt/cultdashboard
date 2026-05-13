@@ -50,7 +50,7 @@ export default function DashboardShell({
   const displayProfile = isImpersonating ? effectiveProfile : realProfile
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--background)' }}>
+    <div style={{ display: 'flex', height: '100dvh', overflow: 'hidden', background: 'var(--background)' }}>
       <Sidebar
         realProfile={realProfile}
         effectiveProfile={effectiveProfile}
@@ -78,7 +78,7 @@ export default function DashboardShell({
             clientName={effectiveProfile.name || effectiveProfile.email || 'Client'}
           />
         )}
-        <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 28 }}>
+        <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 28, paddingBottom: 'env(safe-area-inset-bottom)' }}>
           {children}
         </main>
       </div>

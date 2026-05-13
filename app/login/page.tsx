@@ -103,7 +103,7 @@ export default function LoginPage() {
   ]
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', background: '#000000' }}>
+    <div style={{ minHeight: '100dvh', display: 'flex', background: '#000000' }}>
       <style>{`
         @keyframes loginFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes glowPulse { 0%,100% { opacity: 0.15; } 50% { opacity: 0.25; } }
@@ -211,7 +211,11 @@ export default function LoginPage() {
       {/* ── Right form panel ──────────────────────────────────────────────────── */}
       <div style={{
         flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '0 32px', background: '#000000',
+        paddingTop: 'max(32px, env(safe-area-inset-top))',
+        paddingBottom: 'max(32px, env(safe-area-inset-bottom))',
+        paddingLeft: 'max(32px, env(safe-area-inset-left))',
+        paddingRight: 'max(32px, env(safe-area-inset-right))',
+        background: '#000000',
       }}>
         <div style={{ width: '100%', maxWidth: 380, animation: 'loginFadeIn 0.5s 0.1s ease both', opacity: 0 }}>
 

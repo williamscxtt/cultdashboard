@@ -62,13 +62,16 @@ export default function TopBar({ profile, isImpersonating, onMobileMenuOpen }: P
       `}</style>
 
       <header style={{
-        height: 'var(--topbar-height)',
+        height: 'calc(var(--topbar-height) + env(safe-area-inset-top))',
         flexShrink: 0,
         borderBottom: '1px solid var(--border)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        padding: '0 16px',
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 0,
+        paddingLeft: 'max(16px, calc(16px + env(safe-area-inset-left)))',
+        paddingRight: 'max(16px, calc(16px + env(safe-area-inset-right)))',
         background: 'var(--card)',
         position: 'sticky',
         top: 0,

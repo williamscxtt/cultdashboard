@@ -250,7 +250,10 @@ function SidebarContent({
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* ── Brand header ─────────────────────────────────────────────── */}
       <div style={{
-        padding: collapsed ? '14px 0' : '14px 12px 12px',
+        paddingTop: 'max(14px, env(safe-area-inset-top))',
+        paddingBottom: 12,
+        paddingLeft: collapsed ? 0 : 12,
+        paddingRight: collapsed ? 0 : 12,
         borderBottom: '1px solid var(--border)',
         display: 'flex',
         flexDirection: 'column',
@@ -416,7 +419,10 @@ function SidebarContent({
 
       {/* ── Footer ───────────────────────────────────────────────────── */}
       <div style={{
-        padding: collapsed ? '8px 6px' : '8px',
+        paddingTop: 8,
+        paddingBottom: 'max(8px, env(safe-area-inset-bottom))',
+        paddingLeft: collapsed ? 6 : 8,
+        paddingRight: collapsed ? 6 : 8,
         borderTop: '1px solid var(--border)',
         display: 'flex', flexDirection: 'column', gap: 2,
       }}>
@@ -555,7 +561,7 @@ export default function Sidebar({
         className="sidebar-desktop"
         style={{
           width: w,
-          minHeight: '100vh',
+          minHeight: '100dvh',
           background: 'var(--card)',
           borderRight: '1px solid var(--border)',
           display: 'flex',
@@ -563,7 +569,7 @@ export default function Sidebar({
           flexShrink: 0,
           position: 'sticky',
           top: 0,
-          height: '100vh',
+          height: '100dvh',
           transition: 'width 0.2s cubic-bezier(0.4,0,0.2,1)',
           overflow: 'hidden',
         }}

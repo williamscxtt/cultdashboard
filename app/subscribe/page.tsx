@@ -178,12 +178,15 @@ function SubscribeContent() {
 export default function SubscribePage() {
   return (
     <div style={{
-      minHeight: '100vh',
+      minHeight: '100dvh',
       background: '#0a0a0a',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '24px',
+      paddingTop: 'max(24px, env(safe-area-inset-top))',
+      paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
+      paddingLeft: 'max(24px, env(safe-area-inset-left))',
+      paddingRight: 'max(24px, env(safe-area-inset-right))',
       fontFamily: 'Inter, system-ui, sans-serif',
     }}>
       <Suspense fallback={<div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>Loading…</div>}>

@@ -86,11 +86,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!realProfile.is_active && !impersonatingAs) {
     return (
       <div style={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         background: 'var(--background)',
+        paddingTop: 'env(safe-area-inset-top)',
+        paddingBottom: 'env(safe-area-inset-bottom)',
       }}>
         <div style={{
           textAlign: 'center',

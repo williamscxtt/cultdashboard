@@ -10,92 +10,120 @@ async function sendSlackNotification(data: Record<string, unknown>, isQualified:
   const webhookUrl = process.env.SLACK_WEBHOOK_URL
   if (!webhookUrl) return
 
-  const name = `${data.first_name} ${data.last_name}`.trim()
-  const phone = String(data.phone || '')
-  const email = String(data.email || '')
-  const ig = String(data.instagram_handle || '')
-  const niche = String(data.niche || '')
-  const platforms = Array.isArray(data.platforms) ? data.platforms.join(', ') : String(data.platforms || '')
-  const frequency = String(data.posting_frequency || '')
-  const ifNothing = String(data.if_nothing_changes || '')
-  const obstacle = String(data.biggest_obstacle || '')
-  const strategies = Array.isArray(data.strategies_tried) ? data.strategies_tried.join(', ') : String(data.strategies_tried || '')
-  const income = String(data.monthly_income || '')
-  const investApproach = String(data.investment_approach || '')
+  const name        = `${data.first_name} ${data.last_name}`.trim()
+  const phone       = String(data.phone || '')
+  const email       = String(data.email || '')
+  const ig          = String(data.instagram_handle || '').replace(/^@/, '')
+  const niche       = String(data.niche || '')
+  const platforms   = Array.isArray(data.platforms) ? data.platforms.join(', ') : String(data.platforms || '')
+  const frequency   = String(data.posting_frequency || '')
+  const obstacle    = String(data.biggest_obstacle || '')
+  const strategies  = Array.isArray(data.strategies_tried) ? data.strategies_tried.join(', ') : String(data.strategies_tried || '')
+  const income      = String(data.monthly_income || '')
   const investAmount = String(data.investment_amount || '')
-  const incomeGoal = String(data.income_goal || '')
-  const dob = String(data.date_of_birth || '')
+  const incomeGoal  = String(data.income_goal || '')
+  const creatorType = String(data.creator_type || '')
+  const wants       = String(data.wants || '')
+  const mindset     = String(data.business_mindset || '')
+
+  const creatorTypeLabel = {
+    creator: 'Pure Content Creator',
+    coach: 'Coaching / Service Business',
+    both: 'Both (creator + coaching)',
+  }[creatorType] ?? creatorType
+
+  const wantsLabel = wants === 'coaching'
+    ? 'Dashboard + Coaching from Will 🎯'
+    : wants === 'dashboard'
+      ? 'Dashboard access only'
+      : wants
 
   const header = isQualified
     ? '🔔 New Creator Cult Application — Qualified'
-    : '🟡 Application — Auto-Disqualified (worth a look)'
+    : '🟡 New Application — Auto-Disqualified'
 
-  const contactLine = isQualified
-    ? `*📞 CALL NOW: ${phone}*\n*Name:* ${name}  |  *DOB:* ${dob}\n*Email:* ${email}\n*Instagram:* @${ig.replace(/^@/, '')}`
-    : `*Name:* ${name}  |  *DOB:* ${dob}\n*Email:* ${email}  |  *Instagram:* @${ig.replace(/^@/, '')}\n*Phone:* ${phone || '—'}\n_Auto-disqualified by the form — check their investment answer below_`
+  const blocks = [
+    {
+      type: 'header',
+      text: { type: 'plain_text', text: header, emoji: true },
+    },
 
-  const message = {
-    text: `${isQualified ? '🔔' : '🟡'} Creator Cult Application — ${name}`,
-    blocks: [
-      {
-        type: 'header',
-        text: { type: 'plain_text', text: header, emoji: true },
+    // Contact
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: isQualified
+          ? `*📞 CALL NOW: ${phone}*\n*Name:* ${name}\n*Email:* ${email}\n*Instagram:* @${ig}`
+          : `*Name:* ${name}\n*Email:* ${email}  |  *Instagram:* @${ig}\n*Phone:* ${phone || '—'}\n_Said they can't invest right now — not the right fit_`,
       },
-      {
-        type: 'section',
-        text: { type: 'mrkdwn', text: contactLine },
+    },
+
+    { type: 'divider' },
+
+    // Who they are
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*👤 Who They Are*\n• Creator type: ${creatorTypeLabel}\n• They want: ${wantsLabel}\n• Business mindset: ${mindset || '—'}`,
       },
-      { type: 'divider' },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*📊 Their Content Situation*\n• Niche: ${niche}\n• Platforms: ${platforms}\n• Posts last 30 days: ${frequency}`,
-        },
+    },
+
+    // Content situation
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*📊 Content Situation*\n• Niche: ${niche || '—'}\n• Platforms: ${platforms || '—'}\n• Posts last 30 days: ${frequency || '—'}`,
       },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*😬 If Nothing Changes*\n_${ifNothing}_`,
-        },
+    },
+
+    // Obstacle + strategies
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*🚧 Their Biggest Problem*\n${obstacle || '—'}\n\n*Already tried:* ${strategies || '—'}`,
       },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*🚧 Biggest Obstacle*\n${obstacle}\n\n*Already tried:* ${strategies}`,
-        },
+    },
+
+    { type: 'divider' },
+
+    // Money
+    {
+      type: 'section',
+      text: {
+        type: 'mrkdwn',
+        text: `*💰 Money*\n• Current income (all sources): ${income || '—'}\n• Can invest: ${investAmount || '—'}\n• Income goal: ${incomeGoal || '—'}`,
       },
-      { type: 'divider' },
-      {
-        type: 'section',
-        text: {
-          type: 'mrkdwn',
-          text: `*💰 Investment & Income*\n• Current income: ${income}\n• Will invest: ${investAmount}\n• Approach: ${investApproach}\n• Income goal: ${incomeGoal}`,
-        },
-      },
-      ...(isQualified ? [{
-        type: 'section',
-        text: { type: 'mrkdwn', text: `*📞 Ring them now:* \`${phone}\`` },
-      }] : []),
-    ],
-  }
+    },
+
+    // CTA for qualified
+    ...(isQualified ? [{
+      type: 'section',
+      text: { type: 'mrkdwn', text: `*📞 Ring them now:* \`${phone}\`` },
+    }] : []),
+  ]
 
   await fetch(webhookUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(message),
+    body: JSON.stringify({
+      text: `${isQualified ? '🔔' : '🟡'} Creator Cult Application — ${name}`,
+      blocks,
+    }),
   })
 }
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
   const {
-    first_name, last_name, date_of_birth, email, phone, instagram_handle,
+    first_name, last_name, email, phone, instagram_handle,
+    creator_type, wants,
     platforms, posting_frequency, niche,
-    if_nothing_changes, biggest_obstacle, strategies_tried,
-    monthly_income, investment_approach, investment_amount, income_goal, business_mindset,
+    biggest_obstacle, strategies_tried,
+    monthly_income, investment_amount, income_goal, business_mindset,
     outcome,
   } = body
 
@@ -115,10 +143,11 @@ export async function POST(req: Request) {
     instagram_handle,
     status,
     details: {
-      first_name, last_name, date_of_birth,
+      first_name, last_name,
+      creator_type, wants,
       platforms, posting_frequency, niche,
-      if_nothing_changes, biggest_obstacle, strategies_tried,
-      monthly_income, investment_approach, investment_amount,
+      biggest_obstacle, strategies_tried,
+      monthly_income, investment_amount,
       income_goal, business_mindset,
     },
   })
