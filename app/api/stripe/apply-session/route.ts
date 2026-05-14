@@ -71,7 +71,19 @@ export async function POST(req: NextRequest) {
       }
 
       if (!clientSecret) {
-        console.error('[apply-session] No client_secret on subscription', subscription.id)
+        // Dump full state so we can diagnose
+        const inv = subscription.latest_invoice as any
+        console.error('[apply-session] No client_secret — sub:', subscription.id,
+          '| sub.status:', subscription.status,
+          '| invoice type:', typeof inv,
+          '| invoice.status:', inv?.status,
+          '| invoice.pi type:', typeof inv?.payment_intent,
+          '| invoice.pi value:', typeof inv?.payment_intent === 'object' ? JSON.stringify(inv?.payment_intent).slice(0, 120) : inv?.payment_intent,
+          '| pending_seti type:', typeof subscription.pending_setup_intent,
+          '| pending_seti:', typeof subscription.pending_setup_intent === 'object'
+            ? JSON.stringify(subscription.pending_setup_intent).slice(0, 120)
+            : subscription.pending_setup_intent,
+        )
         return NextResponse.json({ error: 'Failed to create payment session' }, { status: 500 })
       }
 
