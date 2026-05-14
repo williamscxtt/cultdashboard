@@ -6,13 +6,51 @@ import { Zap, Check } from 'lucide-react'
 
 function SuccessContent() {
   const params = useSearchParams()
-  const sessionId = params.get('session_id')
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
 
   useEffect(() => {
-    if (!sessionId) { setStatus('error'); return }
-    setStatus('success')
-  }, [sessionId])
+    const setupIntentId    = params.get('setup_intent')
+    const redirectStatus   = params.get('redirect_status')
+    const paymentIntentId  = params.get('payment_intent')
+    const legacySessionId  = params.get('session_id')
+
+    // 6-month PaymentIntent or legacy session — success immediately
+    if (paymentIntentId || legacySessionId) {
+      setStatus('success')
+      return
+    }
+
+    // Monthly SetupIntent — activate the subscription
+    if (setupIntentId) {
+      if (redirectStatus !== 'succeeded') {
+        setStatus('error')
+        return
+      }
+
+      fetch('/api/stripe/activate-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ setupIntentId }),
+      })
+        .then(r => r.json())
+        .then(data => {
+          if (data.subscriptionId) {
+            setStatus('success')
+          } else {
+            console.error('[success] activate-subscription error:', data)
+            setStatus('error')
+          }
+        })
+        .catch(err => {
+          console.error('[success] activate-subscription fetch error:', err)
+          setStatus('error')
+        })
+      return
+    }
+
+    // No recognisable params
+    setStatus('error')
+  }, [params])
 
   return (
     <>
