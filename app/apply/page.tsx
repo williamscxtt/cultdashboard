@@ -10,7 +10,7 @@ const CREATOR_TYPE_OPTIONS = [
   {
     value: 'creator',
     label: 'Pure Content Creator',
-    desc: 'Building a brand and audience — income comes from deals, sponsorships, platforms, or digital products',
+    desc: 'Building a brand and audience, income comes from deals, sponsorships, platforms, or digital products',
   },
   {
     value: 'coach',
@@ -60,7 +60,7 @@ const WANTS_OPTIONS = [
   {
     value: 'dashboard',
     label: 'Dashboard access only',
-    desc: 'I want the AI tools, content system, analytics, and scripts — self-directed',
+    desc: 'I want the AI tools, content system, analytics, and scripts, self-directed',
   },
   {
     value: 'coaching',
@@ -220,7 +220,7 @@ export default function ApplyPage() {
             Not the right time{firstName ? `, ${firstName}` : ''}.
           </h1>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 380, margin: '0 auto 20px' }}>
-            Creator Cult requires an investment to get access. When you&apos;re in a position to move, come back and apply — the door is open.
+            Creator Cult requires an investment to get access. When you&apos;re in a position to move, come back and apply. The door is open.
           </p>
           <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 8 }}>
             Follow Will on Instagram in the meantime for free content strategy.
@@ -252,7 +252,7 @@ export default function ApplyPage() {
           </h1>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 380, margin: '0 auto 20px' }}>
             Will reviews every application personally. If it&apos;s a fit, he&apos;ll call you on{' '}
-            <strong style={{ color: 'rgba(255,255,255,0.65)' }}>{form.phone}</strong> — usually within 24 hours.
+            <strong style={{ color: 'rgba(255,255,255,0.65)' }}>{form.phone}</strong>, usually within 24 hours.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
             <Phone size={13} color="rgba(255,255,255,0.3)" />
@@ -286,7 +286,7 @@ export default function ApplyPage() {
         {step === 1 && (
           <>
             <h1 style={headingStyle}>Let&apos;s figure out where you&apos;re at</h1>
-            <p style={subStyle}>Answer honestly — the better the match, the better the result.</p>
+            <p style={subStyle}>Answer honestly, the better the match, the better the result.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <Field label="What best describes what you're building?">
@@ -347,7 +347,7 @@ export default function ApplyPage() {
 
               <Field label="Total monthly income from all sources">
                 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '0 0 14px', lineHeight: 1.5 }}>
-                  Include everything — employment, business revenue, content income, side income. Combined total.
+                  Include everything: employment, business revenue, content income, side income. Combined total.
                 </p>
                 <MoneySlider steps={MONTHLY_INCOME_STEPS} value={form.monthly_income} onChange={v => set('monthly_income', v)} />
               </Field>
@@ -360,13 +360,13 @@ export default function ApplyPage() {
           <>
             <StepBadge text="Most people at your level are 1–2 moves away from a breakthrough." />
             <h1 style={headingStyle}>What&apos;s been in the way?</h1>
-            <p style={subStyle}>Be direct — the more specific you are, the clearer the path forward.</p>
+            <p style={subStyle}>Be direct. The more specific you are, the clearer the path forward.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <Field label="What's been the biggest thing stopping your growth?">
                 <textarea
                   className="apply-input apply-textarea"
-                  placeholder="Be specific — what's the actual blocker?"
+                  placeholder="Be specific, what's the actual blocker?"
                   value={form.biggest_obstacle}
                   onChange={e => set('biggest_obstacle', e.target.value)}
                   rows={3}
@@ -444,8 +444,8 @@ export default function ApplyPage() {
               <Field label="This programme is a business investment, not a free coaching session. Are you prepared to engage with a business mindset and make decisions based on outcomes?">
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   {[
-                    { display: "Yes — I'm ready to commit", value: 'Yes' },
-                    { display: "No — I'm not there yet",    value: 'No'  },
+                    { display: "Yes, I'm ready to commit", value: 'Yes' },
+                    { display: "No, I'm not there yet",    value: 'No'  },
                   ].map(({ display, value }) => (
                     <button key={value} className={`pill-option${form.business_mindset === value ? ' selected' : ''}`} onClick={() => set('business_mindset', value)}>
                       {form.business_mindset === value && <Check size={11} style={{ marginRight: 5, flexShrink: 0 }} />}
@@ -486,10 +486,10 @@ export default function ApplyPage() {
               <Field label="Email address">
                 <input className="apply-input" type="email" placeholder="you@example.com" value={form.email} onChange={e => set('email', e.target.value)} />
               </Field>
-              <Field label="Phone (WhatsApp — include country code)">
+              <Field label="Phone (WhatsApp, include country code)">
                 <input className="apply-input" type="tel" placeholder="+44 7911 123456" value={form.phone} onChange={e => set('phone', e.target.value)} />
                 {form.phone.trim() && !form.phone.trim().startsWith('+') && (
-                  <p style={{ fontSize: 11, color: 'rgba(255,110,60,0.9)', marginTop: 5 }}>Start with your country code — e.g. +44 for UK, +1 for US</p>
+                  <p style={{ fontSize: 11, color: 'rgba(255,110,60,0.9)', marginTop: 5 }}>Start with your country code, e.g. +44 for UK, +1 for US</p>
                 )}
                 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', marginTop: 5 }}>Make sure it&apos;s the number you use on WhatsApp.</p>
               </Field>

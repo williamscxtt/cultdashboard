@@ -63,7 +63,7 @@ export default function DashboardShell({
       <div style={{
         flex: 1,
         minWidth: 0,
-        height: '100vh',
+        height: '100dvh',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',

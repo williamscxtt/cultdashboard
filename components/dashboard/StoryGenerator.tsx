@@ -638,7 +638,7 @@ export default function StoryGenerator({ profileId }: { profileId: string }) {
         <div>
           <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)' }}>Story Generator</div>
           <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>
-            Describe what you want — we&apos;ll write the whole sequence
+            Describe what you want and we&apos;ll write the whole sequence
           </div>
         </div>
         {sequences.length > 0 && (
@@ -741,7 +741,7 @@ export default function StoryGenerator({ profileId }: { profileId: string }) {
         {customType === 'story-launch' && launchWarning && (
           <div style={{ marginBottom: 14, display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)' }}>
             <span style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.6 }}>
-              Story Launches work best with 500+ story views. Keep building your audience first — this will hit harder when you&apos;re ready. You can still generate it now.
+              Story Launches work best with 500+ story views. Keep building your audience first, this will hit harder when you&apos;re ready. You can still generate it now.
             </span>
           </div>
         )}
@@ -772,7 +772,7 @@ export default function StoryGenerator({ profileId }: { profileId: string }) {
               <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>Start Here Highlight</span>
             </div>
             <div style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.6 }}>
-              Your 10-slide profile highlight — a silent sales pitch for every new visitor. Generate once and pin as your first Highlight.
+              Your 10-slide profile highlight: a silent sales pitch for every new visitor. Generate once and pin as your first Highlight.
             </div>
           </div>
           <Button
@@ -806,7 +806,7 @@ export default function StoryGenerator({ profileId }: { profileId: string }) {
           <div>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>Weekly Posting Schedule</div>
             <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginTop: 2 }}>
-              What to post each day — tap a day to generate that sequence
+              What to post each day, tap a day to generate that sequence
             </div>
           </div>
           {scheduleExpanded ? <ChevronUp size={15} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} /> : <ChevronDown size={15} style={{ color: 'var(--muted-foreground)', flexShrink: 0 }} />}

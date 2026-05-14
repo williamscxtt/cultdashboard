@@ -179,7 +179,7 @@ export default function RoadmapPanel({
                 type="text"
                 value={newLabel}
                 onChange={e => setNewLabel(e.target.value)}
-                placeholder="e.g. Onboarding Call — 21 Apr 2026"
+                placeholder="e.g. Onboarding Call, 21 Apr 2026"
                 style={inputStyle}
               />
             </div>

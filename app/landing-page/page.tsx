@@ -110,7 +110,7 @@ function useCountUp(target: number, on: boolean, dur = 1600) {
 
 const STORY_SLIDES_DATA = [
   { label: 'Hook', text: "I went from 412 followers to 1M in 18 months. No ads. No big budget. Here's the exact system.", color: '#3b82f6' },
-  { label: 'Problem', text: "You're posting every day. Nothing moves. Not because your content is bad — because the system is missing.", color: '#f59e0b' },
+  { label: 'Problem', text: "You're posting every day. Nothing moves. Not because your content is bad, because the system is missing.", color: '#f59e0b' },
   { label: 'Solution', text: "The fix isn't more posts. It's a sequence: positioning → story → offer → acquisition. In that exact order.", color: '#22c55e' },
   { label: 'CTA', text: "Comment \"SYSTEM\" below and I'll send you the full framework for free. 👇", color: '#a78bfa' },
 ]
@@ -118,7 +118,7 @@ const STORY_SLIDES_DATA = [
 const AUDIT_SCORES = [
   { label: 'Bio Clarity', score: 72, color: '#f59e0b', issue: 'No clear transformation promise in bio' },
   { label: 'CTA Strength', score: 41, color: '#ef4444', issue: 'Link in bio has no offer attached' },
-  { label: 'Content Clarity', score: 88, color: '#22c55e', issue: 'Strong niche signal — keep consistent' },
+  { label: 'Content Clarity', score: 88, color: '#22c55e', issue: 'Strong niche signal, keep it consistent' },
   { label: 'Offer Visibility', score: 34, color: '#ef4444', issue: 'Offer never mentioned in last 12 posts' },
 ]
 
@@ -126,7 +126,7 @@ const LM_OUTLINE = [
   'Hook: The 3-second frame that gets saves',
   'Section 1: Why your current hooks fail',
   'Section 2: The 5-word formula used by 1M+ creators',
-  'Section 3: 12 hook templates — copy exactly',
+  'Section 3: 12 hook templates, copy exactly',
   'CTA slide: Drives DMs via comment keyword',
 ]
 
@@ -135,7 +135,7 @@ const OFFER_FIELDS = [
   { label: 'Core Outcome', value: 'First paying client in 30 days or a full refund', delay: 350 },
   { label: 'Price Point', value: '£1,500 paid in full · £599/month', delay: 550 },
   { label: 'Delivery Format', value: '8 weeks · Weekly calls · Dashboard access', delay: 750 },
-  { label: 'Urgency Frame', value: '4 spots this cohort — closes Friday', delay: 950 },
+  { label: 'Urgency Frame', value: '4 spots this cohort, closes Friday', delay: 950 },
 ]
 
 // ── New mock components ────────────────────────────────────────────────────
@@ -166,7 +166,7 @@ function StoryMock({ on }: { on: boolean }) {
           ))}
         </div>
         <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '18px 16px', minHeight: 100, position: 'relative' }}>
-          <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: s.color, marginBottom: 8, transition: 'color 0.4s' }}>Slide {slide + 1} — {s.label}</div>
+          <div style={{ fontSize: 8, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: s.color, marginBottom: 8, transition: 'color 0.4s' }}>Slide {slide + 1}: {s.label}</div>
           {STORY_SLIDES_DATA.map((sd, i) => (
             <div key={i} style={{ position: i === 0 ? 'relative' : 'absolute', inset: i === 0 ? undefined : '48px 16px 16px', opacity: slide === i ? 1 : 0, transform: slide === i ? 'none' : 'translateY(6px)', transition: 'opacity 0.4s ease, transform 0.4s ease', fontSize: 12, color: '#e2e8f0', lineHeight: 1.65, fontWeight: 500 }}>
               {sd.text}
@@ -286,9 +286,9 @@ function OfferMock({ on }: { on: boolean }) {
 // ── New showcase panel data ────────────────────────────────────────────────
 
 const PANEL_BULLETS_4 = ['Hook → Problem → Solution → CTA in seconds', 'Four slide types built into every sequence', 'Written in your brand voice automatically', 'Comment keyword and CTA baked in']
-const PANEL_BULLETS_5 = ['Bio, CTA, offer visibility — all scored instantly', 'Specific fixes ranked by impact order', 'Knows what Instagram rewards right now', 'Feed the URL — results in under 60 seconds']
-const PANEL_BULLETS_6 = ['Title, concept, and full outline generated', 'Comment keyword CTA built-in automatically', 'Formatted to drive DMs — not just saves', 'Ready to post in under 5 minutes']
-const PANEL_BULLETS_7 = ['Outcome promise, pricing structure, and format', 'Built for high-ticket coaching positioning', 'Urgency and scarcity framing included', 'Ready to pitch — not a template to fill in']
+const PANEL_BULLETS_5 = ['Bio, CTA, offer visibility, all scored instantly', 'Specific fixes ranked by impact order', 'Knows what Instagram rewards right now', 'Feed the URL, results in under 60 seconds']
+const PANEL_BULLETS_6 = ['Title, concept, and full outline generated', 'Comment keyword CTA built-in automatically', 'Formatted to drive DMs, not just saves', 'Ready to post in under 5 minutes']
+const PANEL_BULLETS_7 = ['Outcome promise, pricing structure, and format', 'Built for high-ticket coaching positioning', 'Urgency and scarcity framing included', 'Ready to pitch, not a template to fill in']
 
 function ShowcasePanel4() {
   const { ref, on } = useReveal()
@@ -297,7 +297,7 @@ function ShowcasePanel4() {
       <div className="lp-showcase-text">
         <div className="lp-showcase-tag">AI Story Generator</div>
         <h3 className="lp-showcase-h3">Four-slide story.<br />In seconds.</h3>
-        <p className="lp-showcase-desc">Input your niche, offer, and audience. Get a complete Instagram story arc — hook, problem, solution, CTA — written in your voice, ready to screenshot and post.</p>
+        <p className="lp-showcase-desc">Input your niche, offer, and audience. Get a complete Instagram story arc, hook, problem, solution, CTA, written in your voice, ready to screenshot and post.</p>
         <div className="lp-showcase-bullets">
           {PANEL_BULLETS_4.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
         </div>
@@ -314,8 +314,8 @@ function ShowcasePanel5() {
       <ProfileAuditMock on={on} />
       <div className="lp-showcase-text">
         <div className="lp-showcase-tag">Profile Audit AI</div>
-        <h3 className="lp-showcase-h3">Know exactly what<br />to fix — and when.</h3>
-        <p className="lp-showcase-desc">Feed your Instagram URL. Get a scored audit: bio clarity, CTA strength, offer visibility, content gaps — ranked by what&apos;s actually costing you followers and clients right now.</p>
+        <h3 className="lp-showcase-h3">Know exactly what<br />to fix, and when.</h3>
+        <p className="lp-showcase-desc">Feed your Instagram URL. Get a scored audit: bio clarity, CTA strength, offer visibility, content gaps, ranked by what&apos;s actually costing you followers and clients right now.</p>
         <div className="lp-showcase-bullets">
           {PANEL_BULLETS_5.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
         </div>
@@ -331,7 +331,7 @@ function ShowcasePanel6() {
       <div className="lp-showcase-text">
         <div className="lp-showcase-tag">Lead Magnet Generator</div>
         <h3 className="lp-showcase-h3">Lead magnet built.<br />Ready to post.</h3>
-        <p className="lp-showcase-desc">Choose your angle. Get a complete lead magnet: a scroll-stopping title, full content outline, and a comment-keyword CTA that drives DMs on autopilot — every time you post it.</p>
+        <p className="lp-showcase-desc">Choose your angle. Get a complete lead magnet: a scroll-stopping title, full content outline, and a comment-keyword CTA that drives DMs on autopilot, every time you post it.</p>
         <div className="lp-showcase-bullets">
           {PANEL_BULLETS_6.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
         </div>
@@ -349,7 +349,7 @@ function ShowcasePanel7() {
       <div className="lp-showcase-text">
         <div className="lp-showcase-tag">Offer Builder</div>
         <h3 className="lp-showcase-h3">Your offer structured.<br />Ready to pitch.</h3>
-        <p className="lp-showcase-desc">Describe what you do and who you help. Get a complete high-ticket coaching offer: name, outcome promise, pricing structure, delivery format, and urgency framing — ready to sell immediately.</p>
+        <p className="lp-showcase-desc">Describe what you do and who you help. Get a complete high-ticket coaching offer: name, outcome promise, pricing structure, delivery format, and urgency framing, ready to sell immediately.</p>
         <div className="lp-showcase-bullets">
           {PANEL_BULLETS_7.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
         </div>
@@ -377,7 +377,7 @@ const INTEL_ROWS = [
 const INTEL_ANGLES = [
   '"The mistake everyone in [niche] is making"',
   '"Why your [pain point] isn\'t getting better"',
-  '"I tracked 3 months — here\'s what I found"',
+  '"I tracked 3 months. Here\'s what I found"',
 ]
 
 // ── Animated mock components ───────────────────────────────────────────────
@@ -407,7 +407,7 @@ function AnalyticsMock({ on }: { on: boolean }) {
           ))}
         </div>
         <div className="lp-mock-chart-wrap">
-          <div className="lp-mock-chart-lbl">Follower Growth — Last 30 Days</div>
+          <div className="lp-mock-chart-lbl">Follower Growth, Last 30 Days</div>
           <svg viewBox="0 0 400 72" preserveAspectRatio="none" style={{ width: '100%', height: 66, display: 'block' }}>
             <line x1="0" y1="18" x2="400" y2="18" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
             <line x1="0" y1="36" x2="400" y2="36" stroke="rgba(255,255,255,0.04)" strokeWidth="1"/>
@@ -492,7 +492,7 @@ function IntelMock({ on }: { on: boolean }) {
       </div>
       <div className="lp-mock-body">
         <div className="lp-mock-intel-head">
-          <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', letterSpacing: '.1em', textTransform: 'uppercase' }}>Viral — Your Niche — Last 7 Days</div>
+          <div style={{ fontSize: 9, fontWeight: 700, color: '#94a3b8', letterSpacing: '.1em', textTransform: 'uppercase' }}>Viral in Your Niche, Last 7 Days</div>
           <div style={{ fontSize: 9, color: '#3b82f6', fontWeight: 600 }}>Mon 06:00 ✓</div>
         </div>
         {INTEL_ROWS.map((r, i) => (
@@ -518,7 +518,7 @@ function IntelMock({ on }: { on: boolean }) {
           background: 'rgba(59,130,246,0.05)', border: '1px solid rgba(59,130,246,0.12)', borderRadius: 7,
           opacity: on ? 1 : 0, transition: 'opacity .5s 700ms',
         }}>
-          <div style={{ fontSize: 9, fontWeight: 700, color: '#3b82f6', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 7 }}>AI Script Angles — Ready to Use</div>
+          <div style={{ fontSize: 9, fontWeight: 700, color: '#3b82f6', letterSpacing: '.12em', textTransform: 'uppercase', marginBottom: 7 }}>AI Script Angles, Ready to Use</div>
           {INTEL_ANGLES.map((a, i) => (
             <div key={i} style={{ fontSize: 10.5, color: '#94a3b8', paddingLeft: 9, borderLeft: '2px solid rgba(59,130,246,0.2)', marginBottom: i < 2 ? 5 : 0, lineHeight: 1.5 }}>{a}</div>
           ))}
@@ -530,9 +530,9 @@ function IntelMock({ on }: { on: boolean }) {
 
 // ── Showcase feature panels ────────────────────────────────────────────────
 
-const PANEL_BULLETS_1 = ['Follower growth tracked daily', 'Per-reel view & engagement breakdown', 'Competitor performance at a glance', 'Goal pacing — know if you\'re on track']
-const PANEL_BULLETS_2 = ['12 proven hook styles to choose from', 'Built on 1,000+ viral reel frameworks', 'Rewrites itself in your brand voice', 'One-click copy — post-ready instantly']
-const PANEL_BULLETS_3 = ['Delivered every Monday at 6am', 'Viral hook patterns across your niche', '5 AI-written script angles per week', 'Zero research needed — ever again']
+const PANEL_BULLETS_1 = ['Follower growth tracked daily', 'Per-reel view & engagement breakdown', 'Competitor performance at a glance', 'Goal pacing: know if you\'re on track']
+const PANEL_BULLETS_2 = ['12 proven hook styles to choose from', 'Built on 1,000+ viral reel frameworks', 'Rewrites itself in your brand voice', 'One-click copy, post-ready instantly']
+const PANEL_BULLETS_3 = ['Delivered every Monday at 6am', 'Viral hook patterns across your niche', '5 AI-written script angles per week', 'Zero research needed, ever again']
 
 function ShowcasePanel1() {
   const { ref, on } = useReveal()
@@ -541,7 +541,7 @@ function ShowcasePanel1() {
       <div className="lp-showcase-text">
         <div className="lp-showcase-tag">Analytics</div>
         <h3 className="lp-showcase-h3">See every metric<br />that matters.</h3>
-        <p className="lp-showcase-desc">Live follower tracking, viral reel breakdowns, engagement rates — all in one clean view. Know what&apos;s working before your competitors do.</p>
+        <p className="lp-showcase-desc">Live follower tracking, viral reel breakdowns, engagement rates, all in one clean view. Know what&apos;s working before your competitors do.</p>
         <div className="lp-showcase-bullets">
           {PANEL_BULLETS_1.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
         </div>
@@ -559,7 +559,7 @@ function ShowcasePanel2() {
       <div className="lp-showcase-text">
         <div className="lp-showcase-tag">Script Generator</div>
         <h3 className="lp-showcase-h3">Full reel scripts.<br />In seconds.</h3>
-        <p className="lp-showcase-desc">Pick a hook style, describe your angle, and get a complete reel script — built on 1,000+ of Will&apos;s viral frameworks. One click to copy.</p>
+        <p className="lp-showcase-desc">Pick a hook style, describe your angle, and get a complete reel script, built on 1,000+ of Will&apos;s viral frameworks. One click to copy.</p>
         <div className="lp-showcase-bullets">
           {PANEL_BULLETS_2.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
         </div>
@@ -575,7 +575,7 @@ function ShowcasePanel3() {
       <div className="lp-showcase-text">
         <div className="lp-showcase-tag">Competitor Intel Engine</div>
         <h3 className="lp-showcase-h3">What&apos;s viral in your<br />niche. Every Monday.</h3>
-        <p className="lp-showcase-desc">Auto-generated every week: a full breakdown of what your competitors posted, what went viral, and 5 ready-to-use script angles — all based on what&apos;s already working.</p>
+        <p className="lp-showcase-desc">Auto-generated every week: a full breakdown of what your competitors posted, what went viral, and 5 ready-to-use script angles, all based on what&apos;s already working.</p>
         <div className="lp-showcase-bullets">
           {PANEL_BULLETS_3.map(b => <div key={b} className="lp-showcase-bullet"><div className="lp-showcase-bdot" />{b}</div>)}
         </div>
@@ -670,24 +670,24 @@ export default function LandingPage() {
   }, [selectedWin])
 
   const tickerItems = [
-    'Freddie — First clients at £1,000 each with 148 followers',
-    'Eddie — 4,600 followers in 10 days',
-    'Dino — 14M views 3 weeks after joining, then 24M the following week',
-    'Brett Capstick — First client in 3 weeks',
-    'Asfand — First paying client in 7 days',
-    'Michael Kersee — Multiple $10K days, £50K months',
-    'Tom Köster — Zero to 10K followers in one month',
-    'Zack Sinclair — Zero to 100K+ followers in 4 months',
-    'Roy — 1 million views, first viral reel',
-    'Mateus — 1M views on one reel, 2.3M reach in under 2 weeks',
-    'Jakub — Three viral reels back to back',
+    'Freddie: First clients at £1,000 each with 148 followers',
+    'Eddie: 4,600 followers in 10 days',
+    'Dino: 14M views 3 weeks after joining, then 24M the following week',
+    'Brett Capstick: First client in 3 weeks',
+    'Asfand: First paying client in 7 days',
+    'Michael Kersee: Multiple $10K days, £50K months',
+    'Tom Köster: Zero to 10K followers in one month',
+    'Zack Sinclair: Zero to 100K+ followers in 4 months',
+    'Roy: 1 million views, first viral reel',
+    'Mateus: 1M views on one reel, 2.3M reach in under 2 weeks',
+    'Jakub: Three viral reels back to back',
   ]
 
   const mqRow1 = [
     { img: '/testimonials/testimonial-michael-10k-day.jpeg',      name: 'Michael Kersee',  win: '$10K in one day' },
     { img: '/testimonials/testimonial-35k-month-sales.png',       name: '',                win: '£35K in 1 month' },
     { img: '/testimonials/testimonial-michael-5k-pif.jpeg',       name: 'Michael Kersee',  win: '$5K paid in full' },
-    { img: '/testimonials/testimonial-bile-first-2-clients.jpg',  name: 'Bile',            win: 'First 2 clients — €550/mo' },
+    { img: '/testimonials/testimonial-bile-first-2-clients.jpg',  name: 'Bile',            win: 'First 2 clients, €550/mo' },
     { img: '/testimonials/testimonial-brett-first-client-3weeks.jpeg', name: 'Brett',      win: 'First client in 3 weeks' },
     { img: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg', name: 'Tom Köster', win: '0 → 10K followers in 1 month' },
     { img: '/testimonials/testimonial-jakub-reels-views.jpg',     name: 'Jakub',           win: 'Three viral reels' },
@@ -700,76 +700,76 @@ export default function LandingPage() {
     { img: '/testimonials/testimonial-asfand-first-client.png',   name: 'Asfand',          win: 'First client in 7 days' },
     { img: '/testimonials/testimonial-toshiro-first-100k.jpg',    name: 'Toshiro',         win: 'First 100K video' },
     { img: '/testimonials/testimonial-gabrielle-1k-followers.jpg',name: 'Gabrielle',        win: '1K followers + 100K views' },
-    { img: '/testimonials/testimonial-bile-third-client.jpg',     name: 'Bile',             win: 'Third client — €600/mo' },
+    { img: '/testimonials/testimonial-bile-third-client.jpg',     name: 'Bile',             win: 'Third client, €600/mo' },
   ]
 
   const tools = [
-    { icon: <IconBrain />, title: 'AI Story Generator', desc: 'Input your niche, offer, and audience. Get a full Instagram story sequence — hooks, slides, CTA. Built for your positioning, not a template.', badge: 'Most Used' },
+    { icon: <IconBrain />, title: 'AI Story Generator', desc: 'Input your niche, offer, and audience. Get a full Instagram story sequence, hooks, slides, CTA. Built for your positioning, not a template.', badge: 'Most Used' },
     { icon: <IconTrend />, title: 'Competitor Intel Engine', desc: 'Every Monday: a full breakdown of what your top competitors posted, what went viral, and 5 ready-to-use script angles based on what\'s already working in your niche. Auto-generated.', badge: 'Auto-Weekly' },
-    { icon: <IconDoc />, title: 'Reel Script Generator', desc: 'Pick a proven hook style, describe your angle, and get a complete reel script in seconds — structured on 1,000+ of Will\'s viral frameworks. One click to copy.' },
+    { icon: <IconDoc />, title: 'Reel Script Generator', desc: 'Pick a proven hook style, describe your angle, and get a complete reel script in seconds, structured on 1,000+ of Will\'s viral frameworks. One click to copy.' },
     { icon: <IconSearch />, title: 'Profile Audit AI', desc: 'Feed your Instagram URL. Get a structured audit: bio clarity, CTA strength, offer visibility, content gaps. Know exactly what to fix and in what order.' },
-    { icon: <IconMsg />, title: 'DM Sales Playbook', desc: 'The exact DM sequences used to close high-ticket coaching clients from comments and follows. Scripts, objection handling, follow-ups — all in one place.' },
+    { icon: <IconMsg />, title: 'DM Sales Playbook', desc: 'The exact DM sequences used to close high-ticket coaching clients from comments and follows. Scripts, objection handling, follow-ups, all in one place.' },
     { icon: <IconZap />, title: 'Lead Magnet Generator', desc: 'Choose your angle. The AI builds a complete lead magnet: title, concept, outline, and caption CTA with comment keyword. Ready to post in 5 minutes.' },
-    { icon: <IconGrid />, title: 'Content Calendar Builder', desc: 'Input your niche and monthly goals. Get a 30-day posting plan with content themes, hook angles, and recommended post types — optimised for reach and conversion.' },
-    { icon: <IconLayers />, title: 'Viral Hook Analyser', desc: 'Paste any hook or opening line. The AI scores it on thumb-stop power, clarity, and emotional pull — then rewrites it three different ways. Know before you post.' },
+    { icon: <IconGrid />, title: 'Content Calendar Builder', desc: 'Input your niche and monthly goals. Get a 30-day posting plan with content themes, hook angles, and recommended post types, optimised for reach and conversion.' },
+    { icon: <IconLayers />, title: 'Viral Hook Analyser', desc: 'Paste any hook or opening line. The AI scores it on thumb-stop power, clarity, and emotional pull, then rewrites it three different ways. Know before you post.' },
     { icon: <IconPackage />, title: 'Bio Optimiser', desc: 'Feed your current Instagram bio. Get four fully rewritten versions with sharper positioning, stronger CTA, and cleaner keyword signals. Updated in under 60 seconds.' },
-    { icon: <IconDoc />, title: 'Caption Generator', desc: 'Describe your reel angle. Get three complete captions with hooks, body copy, and keyword CTA options — formatted to stop the scroll and drive saves and follows.', badge: 'New' },
+    { icon: <IconDoc />, title: 'Caption Generator', desc: 'Describe your reel angle. Get three complete captions with hooks, body copy, and keyword CTA options, formatted to stop the scroll and drive saves and follows.', badge: 'New' },
     { icon: <IconShield />, title: 'Offer Builder', desc: 'Describe what you do and who you help. The AI builds a full high-ticket coaching offer: name, outcome promise, pricing structure, and delivery format. Ready to pitch.' },
-    { icon: <IconTrend />, title: 'Outreach Script Library', desc: 'Pre-written cold outreach, comment reply scripts, follow-up sequences, and DM openers — all indexed by niche and scenario. Stop writing from scratch every time.' },
+    { icon: <IconTrend />, title: 'Outreach Script Library', desc: 'Pre-written cold outreach, comment reply scripts, follow-up sequences, and DM openers, all indexed by niche and scenario. Stop writing from scratch every time.' },
   ]
 
   const included = [
     { icon: <IconStar />, title: 'The 5-Phase Curriculum', desc: 'Foundations to Scale. Every lesson and framework in the order that works. Self-paced but guided.' },
     { icon: <IconUsers />, title: 'Weekly Group Coaching', desc: 'Live calls every week. Bring your questions, your content, your blockers. Will reviews your work live.' },
-    { icon: <IconGrid />, title: 'The Cult Dashboard', desc: 'Private access to 12 AI tools built for Creator Cult members — Story Generator, Competitor Intel Engine, Reel Scripts, Hook Analyser, Bio Optimiser, and more.' },
+    { icon: <IconGrid />, title: 'The Cult Dashboard', desc: 'Private access to 12 AI tools built for Creator Cult members: Story Generator, Competitor Intel Engine, Reel Scripts, Hook Analyser, Bio Optimiser, and more.' },
     { icon: <IconMsg />, title: 'Private Circle Community', desc: '140+ creators working the same system. Post wins, ask for feedback, get accountability. Active every single day.' },
     { icon: <IconShield />, title: '1:1 Support', desc: 'Direct access to Will between calls. Post your content for review, ask for offer feedback. Not a bot. Not a VA.' },
     { icon: <IconPackage />, title: 'Weekly Strategy Packages', desc: "Every week: what's working on Instagram now, content angles to test, and a plan for the next 7 days." },
   ]
 
   const phases = [
-    { n: '01', title: 'Foundations', desc: 'Before content, you need clarity. Most creators skip this. It costs them everything.', items: ['Niche and ICP precision', 'Positioning that makes you the obvious choice', 'Brand voice and content identity', 'Offer foundations — what you sell before you sell anything'] },
+    { n: '01', title: 'Foundations', desc: 'Before content, you need clarity. Most creators skip this. It costs them everything.', items: ['Niche and ICP precision', 'Positioning that makes you the obvious choice', 'Brand voice and content identity', 'Offer foundations: what you sell before you sell anything'] },
     { n: '02', title: 'Build the Brand', desc: 'Content that builds authority, attracts the right people, and makes them follow for a reason.', items: ['Hook writing and thumb-stopping psychology', 'Content frameworks that convert viewers into followers', 'Story-driven content that sells without selling', 'Reel strategy tied directly to your offer'] },
     { n: '03', title: 'Client Acquisition', desc: "Followers mean nothing if you can't convert them. This phase builds the machine.", items: ['DM strategy that turns comments into conversations', 'Discovery call frameworks and objection handling', 'Lead magnet creation and comment-keyword funnels', 'First client: get paid before you have a product'] },
     { n: '04', title: 'Monetisation', desc: 'Turn a trickle of clients into a consistent, scalable income stream.', items: ['High-ticket offer structuring and pricing', 'Upsell and retention systems for existing clients', 'Instagram sales psychology: urgency, scarcity, trust', 'Revenue goal planning with real numbers'] },
     { n: '05', title: 'Scale & Systems', desc: 'Build the infrastructure that lets the business run without burning out.', items: ['Content batching and weekly production workflow', 'Setter and team onboarding foundations', 'Automation for DMs, leads, and client delivery', 'From full-time employee to full-time creator'] },
-    { n: '—', title: 'Ongoing Support', desc: "You're not going through this alone. Every week, every question, every plateau.", items: ['Weekly group coaching calls', 'Private Circle community', '1:1 support and feedback', 'Content and offer reviews', 'The Cult Dashboard'] },
+    { n: '+', title: 'Ongoing Support', desc: "You're not going through this alone. Every week, every question, every plateau.", items: ['Weekly group coaching calls', 'Private Circle community', '1:1 support and feedback', 'Content and offer reviews', 'The Cult Dashboard'] },
   ]
 
   const wins: WinItem[] = [
     { img: '/testimonials/testimonial-michael-10k-day.jpeg',           name: 'MICHAEL KERSEE', stat: 'Multiple $10K days',         detail: 'Multiple $10K single days and consistent £50K months. From zero structure to one of the programme\'s highest earners using the full Creator Cult system.',
-      quote: "Multiple $10K days, £50K months. The DM system is the real deal — once your positioning clicks, people pay what you ask. This programme is the reason." },
-    { img: '/testimonials/testimonial-35k-month-sales.png',            name: '',               stat: '£35K in 1 month',         detail: 'Net volume from sales — £35,810.79 in a single month using the offer and conversion system from Phase 4.' },
+      quote: "Multiple $10K days, £50K months. The DM system is the real deal, once your positioning clicks, people pay what you ask. This programme is the reason." },
+    { img: '/testimonials/testimonial-35k-month-sales.png',            name: '',               stat: '£35K in 1 month',         detail: 'Net volume from sales, £35,810.79 in a single month using the offer and conversion system from Phase 4.' },
     { img: '/testimonials/testimonial-michael-1m-views-30days.png',    name: 'MICHAEL KERSEE', stat: '£50K months',              detail: 'Consistent £50K revenue months from Instagram coaching clients. Multiple $10K single days closing through DMs on a system built inside Creator Cult.',
-      quote: "£50K months are now normal. Multiple $10K days. I was posting randomly and getting nowhere before this. The system changed everything — positioning, content, DMs." },
+      quote: "£50K months are now normal. Multiple $10K days. I was posting randomly and getting nowhere before this. The system changed everything, positioning, content, DMs." },
     { img: '/testimonials/testimonial-brett-first-client-3weeks.jpeg', name: 'BRETT CAPSTICK', stat: 'First client in 3 weeks',  detail: '18 months with no clients. Rebuilt positioning from scratch. Signed first high-ticket client 3 weeks later.',
       quote: "I was stuck for 18 months. Three weeks after joining Creator Cult I had my first paying client. Just consistently posting, started convos, made the offer. That's literally it." },
-    { img: '/testimonials/testimonial-bile-first-2-clients.jpg',       name: 'BILE',           stat: '€550/month — 2 clients',  detail: 'Signed first two clients at €550/month total after joining the programme. First income from content.',
+    { img: '/testimonials/testimonial-bile-first-2-clients.jpg',       name: 'BILE',           stat: '€550/month, 2 clients',  detail: 'Signed first two clients at €550/month total after joining the programme. First income from content.',
       quote: "Signed my first two clients in the same week. Never thought it would happen this fast. The DM framework Will teaches is the real deal." },
-    { img: '/testimonials/testimonial-jakub-reels-views.jpg',          name: 'JAKUB RIEDEL',   stat: '114K views — viral reel', detail: 'Three viral reels back to back — 47K, 12.6K, and 114K views after applying the hooks framework from Phase 2.',
+    { img: '/testimonials/testimonial-jakub-reels-views.jpg',          name: 'JAKUB RIEDEL',   stat: '114K views, viral reel', detail: 'Three viral reels back to back, 47K, 12.6K, and 114K views after applying the hooks framework from Phase 2.',
       quote: "Three viral reels in a row after applying the hooks framework. The content system is genuinely different to anything else I've tried." },
     { img: '/testimonials/testimonial-gabrielle-first-100k-views.jpg', name: 'GABRIELLE',      stat: 'First 100K views',        detail: 'First Instagram reel to break 100,000 views after joining Creator Cult and applying the hook writing system.',
       quote: "First reel to ever hit 100K. I've been posting for a year with nothing. One framework change and this happened." },
-    { img: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg', name: 'TOM KÖSTER',     stat: '0 → 10K followers',      detail: 'Zero to 10,000 followers in one month. From 200 views per video to hundreds of thousands. First paying client at £2,000 — all within 30 days of joining.',
-      quote: "Zero to 10K followers in a month. 200 views to hundreds of thousands. And my first £2,000 client — all in one month. I didn't think this was possible this fast." },
-    { img: '/testimonials/testimonial-zack-instagram-growth.jpg',      name: 'ZACK SINCLAIR',  stat: '0 → 100K+ followers',    detail: 'Zero to over 100,000 followers in four months — and a brand sponsorship deal with Bucked Up. Built using the content and positioning system from Creator Cult.',
+    { img: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg', name: 'TOM KÖSTER',     stat: '0 → 10K followers',      detail: 'Zero to 10,000 followers in one month. From 200 views per video to hundreds of thousands. First paying client at £2,000, all within 30 days of joining.',
+      quote: "Zero to 10K followers in a month. 200 views to hundreds of thousands. And my first £2,000 client, all in one month. I didn't think this was possible this fast." },
+    { img: '/testimonials/testimonial-zack-instagram-growth.jpg',      name: 'ZACK SINCLAIR',  stat: '0 → 100K+ followers',    detail: 'Zero to over 100,000 followers in four months, and a brand sponsorship deal with Bucked Up. Built using the content and positioning system from Creator Cult.',
       quote: "Zero to 100K+ followers in four months. Sponsored by Bucked Up. I went from nobody online to a brand deal and a real audience. The positioning system made this happen." },
-    { img: '/testimonials/testimonial-matte-first-payout-500.jpeg',    name: 'MATTE FORTUNA',  stat: 'First €500 payout',      detail: 'First ever coaching payout — €500. First client landed through the DM system inside Creator Cult.',
+    { img: '/testimonials/testimonial-matte-first-payout-500.jpeg',    name: 'MATTE FORTUNA',  stat: 'First €500 payout',      detail: 'First ever coaching payout, €500. First client landed through the DM system inside Creator Cult.',
       quote: "First ever money from content. €500. Doesn't sound huge but it proved the whole thing works. I'll be at €5K/month within 3 months." },
-    { img: '/testimonials/testimonial-michael-5k-pif.jpeg',            name: 'MICHAEL KERSEE', stat: '$10K day',                detail: 'One of multiple $10K single days — revenue shown. Part of a consistent pattern of £50K+ months built on the Creator Cult DM and offer system.',
-      quote: "This is one $10K day. I've had several now. The offer positioning and DM close system makes this repeatable — not a fluke." },
-    { img: 'https://assets-v2.circle.so/ru1z4o2a28u49h1507tw13m9wy04', name: 'DINO FUNEZ',      stat: '14M views — 3 weeks in',  detail: 'Tweaked his bio, used trial reels, and changed the first 3 seconds of every video. In just 5 posts he gained 3K new followers and 10 million more views than the prior period — three weeks after joining Creator Cult.',
-      quote: "Did a couple tweaks — changing my bio, utilizing trial reels, analyzing the graphs and performance, changing 3 second intro hooks. In 5 posts I gained 3k followers and 10 million more views in comparison to last period. But so far so good!" },
-    { img: 'https://assets-v2.circle.so/7di4sesakx0atgazfw0wdz0ult0i', name: 'DINO FUNEZ',      stat: '24M views — +5K followers', detail: 'The week after hitting 14M: changed username, hit 5K more followers, and pushed from 14M to 24M total views. All in the same month of joining Creator Cult. Next goal: build a product and convert followers into coaching clients.',
+    { img: '/testimonials/testimonial-michael-5k-pif.jpeg',            name: 'MICHAEL KERSEE', stat: '$10K day',                detail: 'One of multiple $10K single days, revenue shown. Part of a consistent pattern of £50K+ months built on the Creator Cult DM and offer system.',
+      quote: "This is one $10K day. I've had several now. The offer positioning and DM close system makes this repeatable, not a fluke." },
+    { img: 'https://assets-v2.circle.so/ru1z4o2a28u49h1507tw13m9wy04', name: 'DINO FUNEZ',      stat: '14M views, 3 weeks in',  detail: 'Tweaked his bio, used trial reels, and changed the first 3 seconds of every video. In just 5 posts he gained 3K new followers and 10 million more views than the prior period, three weeks after joining Creator Cult.',
+      quote: "Did a couple tweaks, changing my bio, utilizing trial reels, analyzing the graphs and performance, changing 3 second intro hooks. In 5 posts I gained 3k followers and 10 million more views in comparison to last period. But so far so good!" },
+    { img: 'https://assets-v2.circle.so/7di4sesakx0atgazfw0wdz0ult0i', name: 'DINO FUNEZ',      stat: '24M views, +5K followers', detail: 'The week after hitting 14M: changed username, hit 5K more followers, and pushed from 14M to 24M total views. All in the same month of joining Creator Cult. Next goal: build a product and convert followers into coaching clients.',
       quote: "Changed my username to a more simple-to-understand one, hit 5K more followers and went from 14 million views to 24 million this week. Next goal is to start attracting real customers, turning these followers into clients. MAIN GOAL." },
-    { img: 'https://assets-v2.circle.so/u56hibgmkl1i5kdiywr1uovlzpe5', name: 'MATEUS CHAPMAN',  stat: '1M views — 2.3M reach',   detail: 'Fitness creator. Hit 1 million views on a single reel with TNF commenting on it. Total reach of 2.3 million in under 30 days of content — in reality less than 2 weeks of it actually taking off. Most videos now average 3,000+ views consistently.',
-      quote: "My total reach is at 2.3 million for the last 30 days — in reality it's been not even 2 weeks since things started blowing up. Most of my videos get 3K views consistently now. I didn't believe it could happen this fast." },
+    { img: 'https://assets-v2.circle.so/u56hibgmkl1i5kdiywr1uovlzpe5', name: 'MATEUS CHAPMAN',  stat: '1M views, 2.3M reach',   detail: 'Fitness creator. Hit 1 million views on a single reel with TNF commenting on it. Total reach of 2.3 million in under 30 days of content, in reality less than 2 weeks of it actually taking off. Most videos now average 3,000+ views consistently.',
+      quote: "My total reach is at 2.3 million for the last 30 days, in reality it's been not even 2 weeks since things started blowing up. Most of my videos get 3K views consistently now. I didn't believe it could happen this fast." },
   ]
 
   // Whop reviews removed — generic "good value" comments undermine the specific wins above
   const reviews = [
-    { name: 'Freddie Woodward', initials: 'FW', color: '#3b82f6', role: 'Fitness Creator',        metric: 'First clients at £1,000 each — 148 followers', source: 'Circle Community', quote: "148 followers. Brand new offer. First paying clients at £1,000 each within one month. No big audience, no track record — just the system. I can't believe I spent so long trying to figure this out alone." },
-    { name: 'Brett Capstick',   initials: 'BC', color: '#6366f1', role: 'Personal Trainer',       metric: 'First client in 3 weeks',                      source: 'Circle Community', quote: "18 months with zero paying clients. Three weeks in Creator Cult — signed my first. Just consistently posting, started conversations, made the offer. Simple as that." },
+    { name: 'Freddie Woodward', initials: 'FW', color: '#3b82f6', role: 'Fitness Creator',        metric: 'First clients at £1,000 each, 148 followers', source: 'Circle Community', quote: "148 followers. Brand new offer. First paying clients at £1,000 each within one month. No big audience, no track record, just the system. I can't believe I spent so long trying to figure this out alone." },
+    { name: 'Brett Capstick',   initials: 'BC', color: '#6366f1', role: 'Personal Trainer',       metric: 'First client in 3 weeks',                      source: 'Circle Community', quote: "18 months with zero paying clients. Three weeks in Creator Cult, signed my first. Just consistently posting, started conversations, made the offer. Simple as that." },
     { name: 'Eddie Harding',    initials: 'EH', color: '#8b5cf6', role: 'Fitness Creator',        metric: '258K views + 4,600 followers in one week',     source: 'Circle Community', quote: "Two posts gone viral. One reel gave me 4,600 new followers and 258K views in a week. The hooks framework is genuinely different to anything else out there." },
     { name: 'Rokas Žebrauskas', initials: 'RŽ', color: '#0ea5e9', role: 'Creator',               metric: 'Best investment ever made',                    source: 'Circle Community', quote: "This is my best investment so far, 100%. I've learned more in two weeks inside this programme than in six months of watching free content. The system just makes sense." },
     { name: 'Mateus Chapman',   initials: 'MC', color: '#10b981', role: 'Fitness Creator',        metric: '2.3M total reach in 30 days',                  source: 'Circle Community', quote: "1 million views in a month. My total reach is 2.3 million for the last 30 days. The content batching and posting system changed everything about how I work." },
@@ -863,7 +863,7 @@ export default function LandingPage() {
         .lp-client-login:hover { color: rgba(255,255,255,0.75); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); }
 
         /* ── Nav ── */
-        .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: 64px; display: flex; align-items: center; justify-content: space-between; padding: 0 48px; transition: background .3s, border-color .3s; }
+        .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: calc(64px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 48px 0; transition: background .3s, border-color .3s; }
         .lp-nav.scrolled { background: rgba(13,13,10,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(59,130,246,0.1); }
         .lp-nav-logo { font-family: 'Inter', sans-serif !important; font-size: 15px; font-weight: 800; letter-spacing: -.02em; text-decoration: none; display: flex; align-items: center; gap: 9px; color: #f1f5f9; }
 
@@ -871,9 +871,9 @@ export default function LandingPage() {
         .lp-hero { display: grid; grid-template-columns: 1fr 42%; min-height: 100vh; position: relative; }
         @media (max-width: 900px) { .lp-hero { grid-template-columns: 1fr; min-height: auto; } .lp-hero-photo-col { height: 70vw; max-height: 400px; min-height: 260px; order: -1; } }
         @media (max-width: 640px) { .lp-hero-photo-col { height: 80vw; max-height: 360px; } }
-        .lp-hero-left { display: flex; flex-direction: column; justify-content: center; padding: 120px 64px 80px 48px; border-right: 1px solid rgba(59,130,246,0.07); }
-        @media (max-width: 900px) { .lp-hero-left { padding: 96px 32px 48px; border-right: none; } }
-        @media (max-width: 640px) { .lp-hero-left { padding: 88px 20px 40px; } }
+        .lp-hero-left { display: flex; flex-direction: column; justify-content: center; padding: calc(120px + env(safe-area-inset-top)) 64px 80px 48px; border-right: 1px solid rgba(59,130,246,0.07); }
+        @media (max-width: 900px) { .lp-hero-left { padding: calc(96px + env(safe-area-inset-top)) 32px 48px; border-right: none; } }
+        @media (max-width: 640px) { .lp-hero-left { padding: calc(88px + env(safe-area-inset-top)) 20px 40px; } }
         .lp-hero-badge { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #60a5fa; background: rgba(59,130,246,0.08); border: 1px solid rgba(96,165,250,0.2); padding: 7px 16px; border-radius: 999px; margin-bottom: 36px; width: fit-content; }
         .lp-hero-photo-col { position: relative; overflow: hidden; }
         .lp-hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; display: block; filter: brightness(0.85) contrast(1.05) saturate(0.9); }
@@ -1050,7 +1050,7 @@ export default function LandingPage() {
         .lp-win-expand-hint { margin-top: 12px; font-size: 11px; color: #3b82f6; display: flex; align-items: center; gap: 6px; font-weight: 600; letter-spacing: .04em; }
 
         /* ── Win modal ── */
-        .lp-modal-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .lp-modal-overlay { position: fixed; inset: 0; z-index: 10000; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; padding: max(20px, calc(env(safe-area-inset-top) + 16px)) 20px max(20px, calc(env(safe-area-inset-bottom) + 16px)); }
         .lp-modal { background: #0f0f0c; border: 1px solid rgba(59,130,246,0.2); border-radius: 14px; max-width: 580px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative; }
         .lp-modal-close { position: absolute; top: 14px; right: 14px; background: rgba(255,255,255,0.07); border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; color: #94a3b8; display: flex; align-items: center; justify-content: center; z-index: 1; transition: background .2s; }
         .lp-modal-close:hover { background: rgba(255,255,255,0.12); }
@@ -1124,7 +1124,7 @@ export default function LandingPage() {
           .lp-sticky-cta {
             display: flex; align-items: center; justify-content: center;
             position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-            padding: 12px 20px 18px;
+            padding: 12px 20px max(18px, calc(env(safe-area-inset-bottom) + 8px));
             background: linear-gradient(to top, rgba(13,13,10,1) 0%, rgba(13,13,10,0.92) 100%);
             border-top: 1px solid rgba(59,130,246,0.15);
           }
@@ -1143,7 +1143,7 @@ export default function LandingPage() {
           .lp-container { padding: 0 20px; }
           .lp-container-sm { padding: 0 20px; }
           .lp-section { padding: 64px 0; }
-          .lp-nav { padding: 0 16px; }
+          .lp-nav { padding: env(safe-area-inset-top) 16px 0; }
           .lp-client-login { font-size: 10px; padding: 6px 10px; letter-spacing: .04em; }
           .lp-footer { padding: 32px 20px; }
           .lp-pill { font-size: 10px; }
@@ -1266,7 +1266,7 @@ export default function LandingPage() {
                     <p>&ldquo;{selectedWin.quote}&rdquo;</p>
                   </div>
                 )}
-                <div className="lp-modal-source">Creator Cult Member — Circle Community</div>
+                <div className="lp-modal-source">Creator Cult Member · Circle Community</div>
               </div>
             </div>
           </div>
@@ -1307,7 +1307,7 @@ export default function LandingPage() {
             </Fade>
             <Fade delay={160}>
               <p className="lp-body-lg" style={{ maxWidth: 500, marginTop: 28 }}>
-                Most creators know content. What they&apos;re missing is the system behind it — positioning, acquisition, offer. Creator Cult is that system.
+                Most creators know content. What they&apos;re missing is the system behind it: positioning, acquisition, offer. Creator Cult is that system.
               </p>
             </Fade>
             <Fade delay={240}>
@@ -1352,7 +1352,7 @@ export default function LandingPage() {
             </Fade>
           </div>
           <div className="lp-hero-photo-col" style={{ position: 'relative', zIndex: 1 }}>
-            <img src="/B5D8C241-1826-46EE-898C-A40008641860.jpg" alt="Will Scott — Creator Cult" className="lp-hero-photo" />
+            <img src="/B5D8C241-1826-46EE-898C-A40008641860.jpg" alt="Will Scott, Creator Cult" className="lp-hero-photo" />
             <div className="lp-hero-photo-overlay" />
           </div>
         </div>
@@ -1412,15 +1412,15 @@ export default function LandingPage() {
             <Fade delay={60}>
               <h2 className="lp-h2">A programme built<br /><span style={{ color: '#ffffff' }}>around one outcome.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 20, maxWidth: 560 }}>
-                Creator Cult is a structured coaching programme that takes you from stuck creator to full-time personal brand — in a specific order, with real support at every stage.
+                Creator Cult is a structured coaching programme that takes you from stuck creator to full-time personal brand, in a specific order, with real support at every stage.
               </p>
             </Fade>
             <Fade delay={120}>
               <div className="lp-bridge-grid" style={{ marginTop: 64, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 {[
-                  { n: '01', label: '5-Phase Curriculum', body: 'Foundations to Scale — every lesson in the sequence that actually compounds. Self-paced, but guided.' },
+                  { n: '01', label: '5-Phase Curriculum', body: 'Foundations to Scale, every lesson in the sequence that actually compounds. Self-paced, but guided.' },
                   { n: '02', label: 'Live Weekly Coaching', body: 'Group calls every week. Will reviews your content, offers, and blockers live. Not pre-recorded theory.' },
-                  { n: '03', label: '12 AI Tools', body: 'Private access to the Cult Dashboard — built on the Creator Cult methodology. Available to members only.' },
+                  { n: '03', label: '12 AI Tools', body: 'Private access to the Cult Dashboard, built on the Creator Cult methodology. Available to members only.' },
                 ].map(({ n, label, body }, i) => (
                   <div key={n} style={{
                     padding: '40px 36px 44px',
@@ -1465,7 +1465,7 @@ export default function LandingPage() {
                     <p>I stopped copying tactics and started building a system. A real one. Positioning, story, offer, acquisition. In the right order.</p>
                     <p>Within months, I had clients. Then a waiting list. Then a coaching programme with 140+ creators inside.</p>
                     <p><strong>I didn&apos;t get lucky. I got structured.</strong></p>
-                    <p>Creator Cult is the system I wish I&apos;d had in year one. Every phase, every tool, every coaching call — built to shortcut the years I wasted figuring it out alone.</p>
+                    <p>Creator Cult is the system I wish I&apos;d had in year one. Every phase, every tool, every coaching call, built to shortcut the years I wasted figuring it out alone.</p>
                   </div>
                 </Fade>
               </div>
@@ -1473,7 +1473,7 @@ export default function LandingPage() {
                 <div style={{ borderRadius: 12, overflow: 'hidden', marginBottom: 14, border: '1px solid rgba(255,255,255,0.08)', background: '#0a0a08' }}>
                   <img
                     src="/IMG_6327.JPG"
-                    alt="Will Scott — transformation"
+                    alt="Will Scott, transformation"
                     style={{ width: '100%', height: 'auto', display: 'block', filter: 'brightness(0.88) contrast(1.08) saturate(0.85)' }}
                     loading="lazy"
                   />
@@ -1485,7 +1485,7 @@ export default function LandingPage() {
                       '412 followers',
                       '£20,000 in debt',
                       'Delivering pizzas at night',
-                      'Posting daily — zero growth',
+                      'Posting daily, zero growth',
                       'No system. No direction.',
                     ].map(t => (
                       <div key={t} className="lp-ba-item">
@@ -1503,13 +1503,13 @@ export default function LandingPage() {
                       'Full-time. Fully free.',
                     ].map(t => (
                       <div key={t} className="lp-ba-item">
-                        <span className="lp-ba-mark">—</span>{t}
+                        <span className="lp-ba-mark">+</span>{t}
                       </div>
                     ))}
                   </div>
                 </div>
                 <div style={{ marginTop: 14, textAlign: 'center', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: '#475569', fontFamily: 'Inter, sans-serif' }}>
-                  Will Scott — Founder, Creator Cult
+                  Will Scott · Founder, Creator Cult
                 </div>
               </Fade>
             </div>
@@ -1554,17 +1554,17 @@ export default function LandingPage() {
             <div className="lp-phase-list">
               {phases.map(({ n, title, desc, items }, i) => (
                 <Fade key={n} delay={i * 50}>
-                  <div className={`lp-phase-row${n === '—' ? ' lp-support' : ''}`}>
-                    <div className="lp-phase-row-num">{n === '—' ? '∞' : n}</div>
+                  <div className={`lp-phase-row${n === '+' ? ' lp-support' : ''}`}>
+                    <div className="lp-phase-row-num">{n === '+' ? '∞' : n}</div>
                     <div>
-                      <div className="lp-phase-row-label">{n === '—' ? 'Throughout' : `Phase ${n}`}</div>
+                      <div className="lp-phase-row-label">{n === '+' ? 'Throughout' : `Phase ${n}`}</div>
                       <div className="lp-phase-row-title">{title}</div>
                       <div className="lp-phase-row-desc">{desc}</div>
                     </div>
                     <div className="lp-phase-row-bullets">
                       {items.map(item => (
                         <div key={item} className="lp-phase-row-bullet">
-                          <span className="lp-phase-row-bmark">—</span>{item}
+                          <span className="lp-phase-row-bmark">+</span>{item}
                         </div>
                       ))}
                     </div>
@@ -1594,7 +1594,7 @@ export default function LandingPage() {
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>The Cult Dashboard</div>
               <h2 className="lp-h2">12 AI tools. Yours<br /><span style={{ color: '#ffffff' }}>the moment you join.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 560 }}>
-                Every member gets private access to a dashboard built for Creator Cult — trained on the methodology, updated automatically each week.
+                Every member gets private access to a dashboard built for Creator Cult, trained on the methodology, updated automatically each week.
               </p>
             </Fade>
 
@@ -1716,7 +1716,7 @@ export default function LandingPage() {
                 <Fade key={win.stat + win.name} delay={(i % 3) * 60}>
                   <div className="lp-win-card" onClick={() => setSelectedWin(win)}>
                     <div className="lp-win-img-wrap">
-                      <img src={win.img} alt={`${win.name} — ${win.stat}`} className="lp-win-img" loading="lazy" />
+                      <img src={win.img} alt={`${win.name}, ${win.stat}`} className="lp-win-img" loading="lazy" />
                     </div>
                     <div className="lp-win-body">
                       <div className="lp-win-stat">{win.stat}</div>
@@ -1821,7 +1821,7 @@ export default function LandingPage() {
                     <div className="lp-for-col-head">Creator Cult is for you if</div>
                     <div className="lp-for-items">
                       {["You've been posting consistently but you're not seeing income", "You know content but you don't have a business system around it", "You want to be full-time as a creator within 12 months", "You're willing to put in the work and follow a proven process", "You want support, not just another course to watch alone", "You're ready to treat your content like a business, not a hobby"].map(s => (
-                        <div key={s} className="lp-for-item"><span className="lp-for-mark">—</span>{s}</div>
+                        <div key={s} className="lp-for-item"><span className="lp-for-mark">+</span>{s}</div>
                       ))}
                     </div>
                   </div>
@@ -1847,7 +1847,7 @@ export default function LandingPage() {
         <div className="lp-cta-block" style={{ padding: '140px 48px 100px' }}>
           <Fade>
             <h2 className="lp-h2" style={{ marginBottom: 20 }}>Ready to stop figuring<br /><span style={{ color: '#ffffff' }}>it out alone?</span></h2>
-            <p className="lp-body-lg" style={{ marginBottom: 36 }}>Applications take 3 minutes. Will reviews every one personally.<br />Cohort size is limited — not everyone who applies gets in.</p>
+            <p className="lp-body-lg" style={{ marginBottom: 36 }}>Applications take 3 minutes. Will reviews every one personally.<br />Cohort size is limited, not everyone who applies gets in.</p>
             <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
           </Fade>
         </div>
@@ -1860,7 +1860,7 @@ export default function LandingPage() {
             <Fade delay={60}><h2 className="lp-h2" style={{ marginBottom: 48 }}>Common questions.</h2></Fade>
             <Fade delay={100}>
               <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
-                <Faq q="How do I apply and what happens next?" a="Fill in the short application — it takes 3 minutes. Will reviews every application personally and reaches out directly if it&apos;s a good fit. There is no automated funnel, no sales team. Just a real conversation about whether Creator Cult is right for you." />
+                <Faq q="How do I apply and what happens next?" a="Fill in the short application, it takes 3 minutes. Will reviews every application personally and reaches out directly if it&apos;s a good fit. There is no automated funnel, no sales team. Just a real conversation about whether Creator Cult is right for you." />
                 <Faq q="What exactly do I get when I join Creator Cult?" a="You get access to the full 5-phase curriculum, weekly live group coaching calls with recordings, 1:1 access to Will between calls, content and offer reviews, the Cult Dashboard with all 12 AI tools, and the private Circle community. Ongoing support at every stage." />
                 <Faq q="How long does the programme run?" a="Creator Cult is an ongoing coaching programme. Most clients see their first real results within 30 to 60 days of starting. There is no set end date. You stay in as long as you are growing." />
                 <Faq q="Do I need a big following to join?" a="No. Several of our members signed their first clients with under 1,000 followers. Following size does not determine your results. Your system does. We build the system first." />
@@ -1899,7 +1899,7 @@ export default function LandingPage() {
                 <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
                 <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center', gap: 28, flexWrap: 'wrap' }}>
                   {['Takes 3 minutes', 'Reviewed personally by Will', 'No commitment to apply'].map(c => (
-                    <span key={c} style={{ fontSize: 12, letterSpacing: '.08em', color: 'rgba(255,255,255,0.32)', fontFamily: 'Inter, sans-serif' }}>— {c}</span>
+                    <span key={c} style={{ fontSize: 12, letterSpacing: '.08em', color: 'rgba(255,255,255,0.32)', fontFamily: 'Inter, sans-serif' }}>+ {c}</span>
                   ))}
                 </div>
               </div>

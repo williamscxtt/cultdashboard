@@ -6,6 +6,7 @@ import type { Profile } from '@/lib/types'
 import { Card, Badge, Button, PageHeader, EmptyState, StatCard } from '@/components/ui'
 import { Users, Grid3X3, Table2, AlertTriangle, LayoutGrid, Mail, RefreshCw, CreditCard } from 'lucide-react'
 import { toast } from 'sonner'
+import { useIsMobile } from '@/lib/use-mobile'
 
 interface ClientHealth {
   profileId: string
@@ -25,6 +26,7 @@ const healthColor = {
 }
 
 export default function ClientsManager({ initialClients }: Props) {
+  const isMobile = useIsMobile()
   const [clients, setClients] = useState(initialClients)
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
@@ -241,7 +243,7 @@ export default function ClientsManager({ initialClients }: Props) {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '16px' : '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Clients"
         description="Manage client accounts and access their dashboards."
@@ -267,7 +269,7 @@ export default function ClientsManager({ initialClients }: Props) {
       />
 
       {/* Stat tiles */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         <StatCard label="Total Clients" value={clients.length} />
         <StatCard label="Active" value={activeCount} />
         <StatCard label="IG Connected" value={igConnected} />
@@ -951,6 +953,7 @@ function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
       position: 'fixed', inset: 0,
       background: 'rgba(0,0,0,0.5)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 'max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom))',
       zIndex: 1000,
     }}>
       <Card style={{ padding: 28, width: '100%', maxWidth: 420, position: 'relative' }}>

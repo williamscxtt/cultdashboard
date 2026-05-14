@@ -28,15 +28,15 @@ const STRIPE_APPEARANCE = {
 
 const FEATURES = [
   { icon: BarChart2,      label: 'Instagram analytics & follower tracking' },
-  { icon: Lightbulb,     label: 'AI content studio — scripts written around your niche every week' },
-  { icon: TrendingUp,    label: 'Competitor intelligence reports — see exactly what\'s working in your niche' },
-  { icon: Zap,           label: 'Hook Lab — generate 20+ scroll-stopping hooks per topic instantly' },
-  { icon: List,          label: 'Series Planner — multi-part content series mapped out in seconds' },
-  { icon: Calendar,      label: 'Content calendar — plan and schedule your entire month' },
-  { icon: Search,        label: 'Profile audit tools — fix what\'s killing your reach' },
-  { icon: PhoneCall,     label: 'DM sales system — scripts and strategies to close clients in the DMs' },
-  { icon: Send,          label: 'Outreach tools — cold and warm outreach frameworks' },
-  { icon: MessageSquare, label: 'Ask Will AI — 24/7 coaching, available any time you need it' },
+  { icon: Lightbulb,     label: 'AI content studio: scripts written around your niche every week' },
+  { icon: TrendingUp,    label: 'Competitor intelligence: see exactly what\'s working in your niche' },
+  { icon: Zap,           label: 'Hook Lab: generate 20+ scroll-stopping hooks per topic instantly' },
+  { icon: List,          label: 'Series Planner: multi-part content series mapped out in seconds' },
+  { icon: Calendar,      label: 'Content calendar: plan and schedule your entire month' },
+  { icon: Search,        label: 'Profile audit tools: fix what\'s killing your reach' },
+  { icon: PhoneCall,     label: 'DM sales system: scripts and strategies to close clients in the DMs' },
+  { icon: Send,          label: 'Outreach tools: cold and warm outreach frameworks' },
+  { icon: MessageSquare, label: 'Ask Will AI: 24/7 coaching, available any time you need it' },
 ]
 
 function CheckoutForm({ plan, onBack }: { plan: 'monthly' | 'sixmonth'; onBack: () => void }) {
@@ -168,10 +168,10 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
           <div style={{ marginBottom: 40 }}>
             <h1 style={{ fontSize: 'clamp(28px, 6vw, 38px)', fontWeight: 800, letterSpacing: '-0.8px', lineHeight: 1.12, marginBottom: 14, color: '#fff' }}>
               Everything you need to grow<br />
-              <span style={{ color: '#60a5fa' }}>on Instagram</span> — in one place.
+              <span style={{ color: '#60a5fa' }}>on Instagram</span>, in one place.
             </h1>
             <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, maxWidth: 480 }}>
-              Scripts written to your niche every week. Competitor intelligence. Analytics. Hook Lab. Ask Will AI. All the tools Will uses — now yours.
+              Scripts written to your niche every week. Competitor intelligence. Analytics. Hook Lab. Ask Will AI. All the tools Will uses, now yours.
             </p>
           </div>
         )}
@@ -250,7 +250,7 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Check size={13} color="#4ade80" />
                   <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
-                    {selectedPlan === 'monthly' ? 'Monthly — £95/mo' : '6 Months — £395 total'}
+                    {selectedPlan === 'monthly' ? 'Monthly · £95/mo' : '6 Months · £395 total'}
                   </span>
                 </div>
                 <button
@@ -284,7 +284,7 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
         {!selectedPlan && (
           <div style={{ marginTop: 20, padding: '14px 18px', borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.65 }}>
             <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Both plans include everything.</span>
-            {' '}Full dashboard access, all AI tools, weekly scripts, and unlimited use of every feature. The 6-month plan is the same tools at a lower monthly rate — no features removed.
+            {' '}Full dashboard access, all AI tools, weekly scripts, and unlimited use of every feature. The 6-month plan is the same tools at a lower monthly rate, no features removed.
           </div>
         )}
 

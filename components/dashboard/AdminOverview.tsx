@@ -4,6 +4,7 @@ import Link from 'next/link'
 import type { Profile } from '@/lib/types'
 import { Card, Badge, Button, StatCard, PageHeader, EmptyState } from '@/components/ui'
 import { Users } from 'lucide-react'
+import { useIsMobile } from '@/lib/use-mobile'
 
 interface Props {
   clients: Profile[]
@@ -14,6 +15,7 @@ interface Props {
 export default function AdminOverview({ clients, totalClients, activeClients }: Props) {
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
+  const isMobile = useIsMobile()
 
   const filtered = clients.filter(c => {
     const q = search.toLowerCase()
@@ -29,7 +31,7 @@ export default function AdminOverview({ clients, totalClients, activeClients }: 
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '16px' : '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Clients"
         description="Manage and view your clients' dashboards"
@@ -42,7 +44,7 @@ export default function AdminOverview({ clients, totalClients, activeClients }: 
       />
 
       {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         <StatCard label="Total Clients" value={totalClients} />
         <StatCard label="Active" value={activeClients} />
         <StatCard label="Scripts Generated" value="—" />
@@ -354,6 +356,7 @@ function AddClientModal({ onClose, onSuccess }: AddClientModalProps) {
       position: 'fixed', inset: 0,
       background: 'rgba(0,0,0,0.5)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 'max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom))',
       zIndex: 1000,
     }}>
       <Card style={{ padding: 28, width: '100%', maxWidth: 440, position: 'relative' }}>

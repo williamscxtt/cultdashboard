@@ -49,7 +49,7 @@ const STEPS = [
   {
     key: 'niche',
     question: 'What do you do and what\'s your niche?',
-    hint: 'Be broad here — we\'ll sharpen it. What problem do you solve and in what space?',
+    hint: 'Be broad here, we\'ll sharpen it. What problem do you solve and in what space?',
     placeholder: 'e.g. Online fitness coaching, business mentoring for agency owners, dating coaching for introverted men...',
   },
   {
@@ -67,14 +67,14 @@ const STEPS = [
   {
     key: 'dream_outcome',
     question: 'What\'s the dream outcome they desperately want?',
-    hint: 'Not just the surface result — the feeling, the identity shift, the life change they\'re really buying.',
+    hint: 'Not just the surface result: the feeling, the identity shift, the life change they\'re really buying.',
     placeholder: 'e.g. To feel confident and energetic again, keep up with their kids, look good in photos, have their partner notice the difference, feel proud of what they see in the mirror...',
   },
   {
     key: 'unique_mechanism',
     question: 'What makes your approach different or unique?',
     hint: 'Your system, method, or unfair advantage. Why does yours work when everything else hasn\'t?',
-    placeholder: 'e.g. I focus only on habits that fit a busy lifestyle — no 2-hour gym sessions or restrictive diets. My 3-phase system works around your schedule and actually sticks long-term...',
+    placeholder: 'e.g. I focus only on habits that fit a busy lifestyle: no 2-hour gym sessions or restrictive diets. My 3-phase system works around your schedule and actually sticks long-term...',
   },
   {
     key: 'timeframe',
@@ -205,7 +205,7 @@ function OfferDisplay({ offer, p }: { offer: OfferOutput; p: string }) {
       {/* Value stack */}
       {offer.value_stack?.length > 0 && (
         <Card style={{ padding: p }}>
-          <OfferSection icon={<CheckCircle2 size={13} />} label="Value Stack — What They Get" color="hsl(142 71% 45%)">
+          <OfferSection icon={<CheckCircle2 size={13} />} label="Value Stack: What They Get" color="hsl(142 71% 45%)">
             <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
               {offer.value_stack.map((item, i) => (
                 <div key={i} style={{
@@ -413,7 +413,7 @@ export default function OfferBuilder({ profileId }: { profileId: string }) {
             Need Help Building Your Offer?
           </div>
           <div style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 24, maxWidth: 420, margin: '0 auto 24px', lineHeight: 1.65 }}>
-            Stop saying &ldquo;I help people lose weight.&rdquo; Build your Precision Offer Blueprint — specific, compelling, and impossible to ignore. Takes 5 minutes.
+            Stop saying &ldquo;I help people lose weight.&rdquo; Build your Precision Offer Blueprint: specific, compelling, and impossible to ignore. Takes 5 minutes.
           </div>
           <Button onClick={startWizard} variant="primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             <Sparkles size={13} /> Build My Offer
@@ -636,7 +636,7 @@ export default function OfferBuilder({ profileId }: { profileId: string }) {
           <textarea
             value={feedback}
             onChange={e => setFeedback(e.target.value)}
-            placeholder="e.g. The one-liner sounds too generic. Make the avatar more specific — I only work with gym owners not general business owners. The guarantee feels weak..."
+            placeholder="e.g. The one-liner sounds too generic. Make the avatar more specific, I only work with gym owners not general business owners. The guarantee feels weak..."
             style={{
               width: '100%', minHeight: 90, padding: '10px 12px',
               background: 'var(--input)', border: '1px solid var(--border)',

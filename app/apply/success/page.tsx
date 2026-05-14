@@ -46,7 +46,7 @@ function SuccessContent() {
             background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.2)',
             fontSize: 13, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6,
           }}>
-            Check your email for login details — usually within a few minutes.
+            Check your email for login details, usually within a few minutes.
           </div>
 
           <a

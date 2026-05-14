@@ -246,7 +246,7 @@ Write in a direct, no-fluff coaching voice. Each section 150-250 words. End with
         </button>
         {ideas && !loading && (
           <span style={{ marginLeft: 12, fontSize: 12, color: 'var(--muted-foreground)' }}>
-            {ideas.length} ideas generated — click Generate again to refresh
+            {ideas.length} ideas generated. Click Generate again to refresh.
           </span>
         )}
       </Card>

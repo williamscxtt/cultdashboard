@@ -140,7 +140,7 @@ export default function PathSwitcher({
             position: 'fixed', inset: 0, zIndex: 1000,
             background: 'rgba(0,0,0,0.55)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 16,
+            padding: 'max(16px, env(safe-area-inset-top)) 16px max(16px, env(safe-area-inset-bottom))',
           }}
           onClick={e => { if (e.target === e.currentTarget) setOpen(false) }}
         >

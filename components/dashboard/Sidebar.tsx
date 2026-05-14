@@ -132,7 +132,7 @@ function LockedNavItem({
 }) {
   return (
     <div
-      title={collapsed ? `${label} — complete your profile to unlock` : 'Complete 75% of My Profile to unlock'}
+      title={collapsed ? `${label}, complete your profile to unlock` : 'Complete 75% of My Profile to unlock'}
       style={{
         display: 'flex',
         alignItems: 'center',

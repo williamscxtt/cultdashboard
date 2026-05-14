@@ -260,7 +260,7 @@ function ScriptCard({
       setEditing(false)
       toast.success('Script saved')
     } catch {
-      toast.error('Failed to save — try again')
+      toast.error('Failed to save, try again')
     } finally {
       setSaving(false)
     }
@@ -512,7 +512,7 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
 
   async function handleGenerate() {
     setGenerating(true)
-    toast.info('Generating your weekly package — this takes about 30–60 seconds…')
+    toast.info('Generating your weekly package, this takes about 30–60 seconds…')
     try {
       const res = await fetch('/api/weekly-package/generate', {
         method: 'POST',
@@ -521,7 +521,7 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Generation failed')
-      toast.success(`Weekly package ready — ${data.script_count} scripts generated`)
+      toast.success(`Weekly package ready, ${data.script_count} scripts generated`)
       await loadPackages()
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Generation failed')
@@ -704,7 +704,7 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
                               dangerouslySetInnerHTML={{ __html: renderMd(p.insight) }} />
                             {p.account && (
                               <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontStyle: 'italic' }}>
-                                @{p.account}{p.views && ` · ${p.views}`}{p.hook && ` — "${p.hook.slice(0, 60)}${p.hook.length > 60 ? '…' : ''}"`}
+                                @{p.account}{p.views && ` · ${p.views}`}{p.hook && `: "${p.hook.slice(0, 60)}${p.hook.length > 60 ? '…' : ''}"`}
                               </div>
                             )}
                           </div>
@@ -775,7 +775,7 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
                   Your {parsed.reels.length} Scripts This Week
                 </div>
                 <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 2 }}>
-                  Click &ldquo;Edit script&rdquo; on any card to rewrite it — AI learns from your changes
+                  Click &ldquo;Edit script&rdquo; on any card to rewrite it, AI learns from your changes
                 </div>
               </div>
             </div>

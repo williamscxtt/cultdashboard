@@ -6,6 +6,7 @@ import { TrendingUp, Zap, ChevronDown, ChevronUp, ExternalLink, BarChart2, FileT
 import type { WeeklyReport, TrendingTopic, TopHook, ClientReel } from '@/lib/types'
 import { Card, Badge, SectionLabel } from '@/components/ui'
 import CompetitorManager from '@/components/dashboard/CompetitorManager'
+import { useIsMobile } from '@/lib/use-mobile'
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
@@ -324,6 +325,7 @@ function CommentAnalysisPanel({ analysis }: { analysis: CommentAnalysis }) {
 }
 
 export default function ContentDashboard({ report, reels, profileId, contentAnalysisUnlocksAt, commentAnalysisUnlocksAt, cachedCommentAnalysis }: Props) {
+  const isMobile = useIsMobile()
   const [reportExpanded, setReportExpanded] = useState(false)
   const [analysing, setAnalysing] = useState(false)
   const [contentAnalysis, setContentAnalysis] = useState<ContentAnalysis | null>(null)
@@ -478,7 +480,7 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
     : null
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '16px' : '24px', maxWidth: 1400, margin: '0 auto' }}>
 
       {/* ── Header ── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 28 }}>
@@ -505,7 +507,7 @@ export default function ContentDashboard({ report, reels, profileId, contentAnal
 
       {/* ── Intel section ── */}
       {!report ? <EmptyIntel /> : (
-        <div style={{ display: 'grid', gridTemplateColumns: trendingTopics.length || topHooks.length ? '1fr 380px' : '1fr', gap: 16, marginBottom: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: !isMobile && (trendingTopics.length || topHooks.length) ? '1fr 380px' : '1fr', gap: 16, marginBottom: 20 }}>
 
           {/* Left: What's Popping + Full Report */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

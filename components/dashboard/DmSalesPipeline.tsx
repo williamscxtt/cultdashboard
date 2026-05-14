@@ -170,7 +170,10 @@ function SalePanel({ sale, onClose, onDelete, onEdit }: {
       borderLeft: isMobile ? 'none' : '1px solid var(--border)',
       borderTop: isMobile ? '1px solid var(--border)' : 'none',
       overflowY: 'auto',
-      padding: isMobile ? '16px 16px 40px' : 24,
+      paddingTop: isMobile ? 'max(16px, env(safe-area-inset-top))' : 24,
+      paddingRight: isMobile ? 16 : 24,
+      paddingBottom: isMobile ? 'max(40px, calc(env(safe-area-inset-bottom) + 16px))' : 24,
+      paddingLeft: isMobile ? 16 : 24,
       boxShadow: isMobile ? '0 -8px 32px rgba(0,0,0,0.25)' : '-8px 0 32px rgba(0,0,0,0.15)',
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 24 }}>
@@ -374,7 +377,7 @@ export default function DmSalesPipeline({ initialLeads }: Props) {
                   fontSize: 13, fontWeight: 800, color: 'var(--foreground)',
                   flexShrink: 0,
                 }}>
-                  {sale.deal_value != null ? `£${sale.deal_value.toLocaleString()}` : '—'}
+                  {sale.deal_value != null ? `£${sale.deal_value.toLocaleString()}` : 'N/A'}
                 </div>
 
                 {/* Details */}
@@ -412,7 +415,7 @@ export default function DmSalesPipeline({ initialLeads }: Props) {
       {selected && (
         editing ? (
           <SaleForm
-            title={`Edit — ${selected.lead_name || 'Sale'}`}
+            title={`Edit: ${selected.lead_name || 'Sale'}`}
             initial={{ ...selected, date: selected.date || selected.created_at?.slice(0, 10) }}
             onSave={data => updateSale(selected.id, data)}
             onClose={() => setEditing(false)}

@@ -59,7 +59,7 @@ const SECTION_1_CREATOR: SectionDef = {
     { key: 'location', label: "Where you're based", placeholder: 'England, UK' },
     { key: 'occupation_before', label: 'What did you do before creating?', placeholder: 'e.g. Marketing exec, fitness coach, student', type: 'textarea' },
     { key: 'how_long_creating', label: 'How long have you been creating content?', placeholder: 'e.g. 2 years', type: 'text' },
-    { key: 'brand_partnerships_done', label: 'How many brand deals or partnerships have you done?', placeholder: 'e.g. 3 — all gifted so far', type: 'text' },
+    { key: 'brand_partnerships_done', label: 'How many brand deals or partnerships have you done?', placeholder: 'e.g. 3, all gifted so far', type: 'text' },
     { key: 'monthly_revenue_current', label: 'What is your current monthly income from content?', placeholder: 'e.g. £800/month from brand deals', type: 'text' },
     { key: 'monetization_model_hub', label: 'How do you currently monetise (or plan to)?', placeholder: 'e.g. Brand deals, digital products, platform revenue, UGC', type: 'textarea' },
     { key: 'content_description', label: 'Describe your content in one sentence.', placeholder: 'e.g. Short-form finance education for 20-somethings who want to stop living paycheck to paycheck', type: 'textarea' },
@@ -78,7 +78,7 @@ const SECTION_2_COACH: SectionDef = {
     { key: 'what_you_coach', label: 'What do you coach people on?', placeholder: 'e.g. I help online coaches grow their Instagram and close clients through DMs', type: 'textarea' },
     { key: 'ideal_client', label: 'Who is your ideal client?', placeholder: 'e.g. A fitness coach stuck between £3K–£7K a month with a working offer but weak content', type: 'textarea' },
     { key: 'client_transformation', label: "What's the #1 transformation your clients get?", placeholder: 'e.g. From £2K/month to £10K/month in 90 days', type: 'textarea' },
-    { key: 'unique_mechanism', label: 'What is your unique method or framework?', placeholder: "e.g. The CULT System — Content, Upsell, Lead, Trust", type: 'textarea' },
+    { key: 'unique_mechanism', label: 'What is your unique method or framework?', placeholder: "e.g. The CULT System: Content, Upsell, Lead, Trust", type: 'textarea' },
     { key: 'why_different', label: 'Why are you different from other coaches in your space?', placeholder: "e.g. I've done it myself with no big brand. I teach organic only.", type: 'textarea' },
     { key: 'main_platforms', label: 'Which platforms are you on?', placeholder: 'e.g. Instagram, TikTok, YouTube Shorts', type: 'text' },
     { key: 'revenue_goal_90', label: 'Revenue goal in 90 days?', placeholder: 'e.g. £10,000/month', type: 'text' },
@@ -95,8 +95,8 @@ const SECTION_2_CREATOR: SectionDef = {
     { key: 'specific_niche', label: 'What is your content niche?', placeholder: 'e.g. Personal finance education for people in their 20s and 30s', type: 'textarea' },
     { key: 'content_transformation', label: "What transformation does your content create for viewers?", placeholder: 'e.g. They go from confused and overwhelmed about money to confident and in control', type: 'textarea' },
     { key: 'ideal_client', label: 'Who is your target audience?', placeholder: 'e.g. 22–35 year olds who want to take control of their finances but find traditional advice dry', type: 'textarea' },
-    { key: 'creator_style_hub', label: 'How would you describe your content style?', placeholder: 'e.g. Educational but entertaining — like a smart friend giving advice, not a lecturer', type: 'textarea' },
-    { key: 'why_different', label: 'What makes your content different from others in your niche?', placeholder: "e.g. I make complex financial concepts feel simple and funny — not intimidating", type: 'textarea' },
+    { key: 'creator_style_hub', label: 'How would you describe your content style?', placeholder: 'e.g. Educational but entertaining, like a smart friend giving advice, not a lecturer', type: 'textarea' },
+    { key: 'why_different', label: 'What makes your content different from others in your niche?', placeholder: "e.g. I make complex financial concepts feel simple and funny, not intimidating", type: 'textarea' },
     { key: 'main_platforms', label: 'Which platforms are you on?', placeholder: 'e.g. Instagram, TikTok, YouTube Shorts', type: 'text' },
     { key: 'follower_goal_90', label: 'Follower goal in 90 days?', placeholder: 'e.g. 10,000', type: 'text' },
     { key: 'follower_goal_12m', label: 'Follower goal in 12 months?', placeholder: 'e.g. 100,000', type: 'text' },
@@ -110,9 +110,9 @@ const SECTION_4_COACH: SectionDef = {
   description: 'Be honest. The more detail here, the better I can help.',
   fields: [
     { key: 'biggest_problem', label: "What's your #1 problem right now?", placeholder: 'e.g. Views are stuck at 500–1K no matter what I post', type: 'textarea' },
-    { key: 'what_tried_before', label: "What have you tried that hasn't worked?", placeholder: 'e.g. Posting daily, trending audios, viral hooks — nothing moved the needle', type: 'textarea' },
+    { key: 'what_tried_before', label: "What have you tried that hasn't worked?", placeholder: 'e.g. Posting daily, trending audios, viral hooks. Nothing moved the needle.', type: 'textarea' },
     { key: 'what_held_back', label: "What do you think is holding you back?", placeholder: 'e.g. My hooks are weak and I don\'t know who I\'m talking to', type: 'textarea' },
-    { key: 'previous_coaches', label: 'Have you worked with any coaches or programmes before?', placeholder: 'e.g. Yes — bought two courses, hired a business coach for 3 months', type: 'textarea' },
+    { key: 'previous_coaches', label: 'Have you worked with any coaches or programmes before?', placeholder: 'e.g. Yes, bought two courses, hired a business coach for 3 months', type: 'textarea' },
     { key: 'content_consistency', label: 'How consistent have you been with content?', placeholder: 'e.g. Post 2–3x/week but then burn out and go quiet for 2 weeks', type: 'textarea' },
     { key: 'dm_sales_experience', label: 'How are your DM conversations going?', placeholder: 'e.g. Getting some leads but they ghost when I mention price', type: 'textarea' },
   ],
@@ -124,10 +124,10 @@ const SECTION_4_CREATOR: SectionDef = {
   description: 'Be honest. The more detail here, the better I can help.',
   fields: [
     { key: 'biggest_problem', label: "What's your #1 problem right now?", placeholder: 'e.g. Views are stuck at 2K per reel and I don\'t know how to break through', type: 'textarea' },
-    { key: 'what_tried_before', label: "What have you tried that hasn't worked?", placeholder: 'e.g. Trending audios, posting daily, better editing — nothing shifted the numbers', type: 'textarea' },
+    { key: 'what_tried_before', label: "What have you tried that hasn't worked?", placeholder: 'e.g. Trending audios, posting daily, better editing. Nothing shifted the numbers.', type: 'textarea' },
     { key: 'what_held_back', label: "What do you think is holding you back?", placeholder: 'e.g. My hooks aren\'t strong enough and I don\'t have a clear enough niche', type: 'textarea' },
-    { key: 'previous_coaches', label: 'Have you worked with any coaches or programmes before?', placeholder: 'e.g. Yes — bought a content course, tried a growth service', type: 'textarea' },
-    { key: 'content_consistency', label: 'How consistent have you been with posting?', placeholder: 'e.g. Post 2–3x/week but inconsistent — sometimes go quiet for 2 weeks', type: 'textarea' },
+    { key: 'previous_coaches', label: 'Have you worked with any coaches or programmes before?', placeholder: 'e.g. Yes, bought a content course, tried a growth service', type: 'textarea' },
+    { key: 'content_consistency', label: 'How consistent have you been with posting?', placeholder: 'e.g. Post 2–3x/week but inconsistent, sometimes go quiet for 2 weeks', type: 'textarea' },
     { key: 'brand_deal_experience', label: 'Any experience with brand deals or sponsorships?', placeholder: 'e.g. A few gifted deals but haven\'t been able to secure paid ones yet', type: 'textarea' },
     { key: 'monetization_clarity', label: 'How clear are you on your monetisation path?', placeholder: 'e.g. I know I want brand deals but have no idea how to approach brands', type: 'textarea' },
   ],
@@ -211,7 +211,7 @@ const SECTIONS_SHARED: SectionDef[] = [
         label: 'Your origin story in 3 sentences',
         type: 'textarea',
         placeholder: 'Before: what life looked like before you figured this out. Turning point: what changed or what you discovered. After: where you are now as a result.',
-        hint: 'This is the backbone of your story sequences. Be specific — real details beat vague claims every time. Include numbers if you have them.',
+        hint: 'This is the backbone of your story sequences. Be specific, real details beat vague claims every time. Include numbers if you have them.',
       },
       {
         key: 'story_mechanism_name',
@@ -236,14 +236,14 @@ const SECTIONS_SHARED: SectionDef[] = [
       },
       {
         key: 'story_primary_keyword',
-        label: 'Your hard CTA keyword — the one that triggers your main offer',
+        label: 'Your hard CTA keyword: the one that triggers your main offer',
         type: 'text',
         placeholder: 'e.g. CULT, APPLY, SCALE, COACH',
         hint: 'This is the word people DM to get your main offer information. Used on Monday conversion sequences.',
       },
       {
         key: 'story_secondary_keyword',
-        label: 'Your soft CTA keyword — the one that delivers your free resource',
+        label: 'Your soft CTA keyword: the one that delivers your free resource',
         type: 'text',
         placeholder: 'e.g. SYSTEM, FREE, GUIDE, BLUEPRINT',
         hint: 'This is the word people DM to get your lead magnet. Used on Thursday conversion sequences.',
@@ -446,7 +446,7 @@ function FieldInput({ field, value, onChange, readOnly = false }: {
         <textarea
           value={value}
           onChange={e => onChange(e.target.value)}
-          placeholder={readOnly && !value ? '—' : field.placeholder}
+          placeholder={readOnly && !value ? '' : field.placeholder}
           rows={3}
           readOnly={readOnly}
           style={{ ...inputStyle, resize: readOnly ? 'none' : 'vertical', lineHeight: 1.6 }}
@@ -458,7 +458,7 @@ function FieldInput({ field, value, onChange, readOnly = false }: {
           type={field.type === 'number' ? 'number' : 'text'}
           value={value}
           onChange={e => onChange(e.target.value)}
-          placeholder={readOnly && !value ? '—' : field.placeholder}
+          placeholder={readOnly && !value ? '' : field.placeholder}
           readOnly={readOnly}
           style={inputStyle}
           onFocus={readOnly ? undefined : e => { (e.target as HTMLElement).style.borderColor = 'var(--accent)' }}
@@ -653,7 +653,7 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
           <p style={{ fontSize: 14, color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.5 }}>
             {adminView
-              ? 'Client profile data — all onboarding fields.'
+              ? 'Client profile data, all onboarding fields.'
               : 'The more you put in, the better your AI gets. Come back and update whenever something changes.'
             }
           </p>
@@ -705,7 +705,7 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
           }}
         >
           {saving ? 'Saving…' : savedMsg ? (
-            <><CheckCircle size={16} /> Saved — AI Updated</>
+            <><CheckCircle size={16} /> Saved, AI Updated</>
           ) : (
             <><Save size={16} /> Save &amp; Update My AI</>
           )}

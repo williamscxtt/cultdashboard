@@ -356,7 +356,7 @@ function TypeSelector({
               Content Creator
             </div>
             <div style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
-              I&apos;m building a brand and audience. My income comes from deals, products, or platforms — not services.
+              I&apos;m building a brand and audience. My income comes from deals, products, or platforms, not services.
             </div>
           </div>
         </div>
@@ -611,11 +611,11 @@ function StepProfile({ form, set }: { form: FormData; set: (k: keyof FormData, v
           <input type="text" value={form.ig_username} onChange={e => set('ig_username', e.target.value.replace(/^@/, ''))} placeholder="yourhandle" style={{ paddingLeft: 28 }} />
         </div>
       </Field>
-      <Field label="Your coaching niche *" hint="Be specific — this powers all your AI advice.">
+      <Field label="Your coaching niche *" hint="Be specific, this powers all your AI advice.">
         <TextArea value={form.specific_niche} onChange={v => set('specific_niche', v)} placeholder="e.g. I help online fitness coaches grow their Instagram and sign clients through DMs" rows={2} />
       </Field>
       <Field label="What do you actually coach people on?">
-        <TextArea value={form.offer_description} onChange={v => set('offer_description', v)} placeholder="Describe your offer in one sentence — what they get, for how long, for how much" rows={2} />
+        <TextArea value={form.offer_description} onChange={v => set('offer_description', v)} placeholder="Describe your offer in one sentence, what they get, for how long, for how much" rows={2} />
       </Field>
     </>
   )
@@ -625,7 +625,7 @@ function StepAudience({ form, set }: { form: FormData; set: (k: keyof FormData, 
   return (
     <>
       <Field label="Who is your ideal client? *" hint="Be specific about where they are right now.">
-        <TextArea value={form.ideal_client} onChange={v => set('ideal_client', v)} placeholder="e.g. A fitness coach earning £2k–£5k/month with a working offer but weak content — stuck, not knowing why their reels aren't converting" rows={3} />
+        <TextArea value={form.ideal_client} onChange={v => set('ideal_client', v)} placeholder="e.g. A fitness coach earning £2k–£5k/month with a working offer but weak content, stuck, not knowing why their reels aren't converting" rows={3} />
       </Field>
       <Field label="What transformation do you deliver? *">
         <TextArea value={form.client_transformation} onChange={v => set('client_transformation', v)} placeholder="e.g. From £2k/month to £10k/month in 90 days through content and DM sales alone" rows={2} />
@@ -666,11 +666,11 @@ function CreatorStepProfile({ form, set }: { form: FormData; set: (k: keyof Form
           <input type="text" value={form.ig_username} onChange={e => set('ig_username', e.target.value.replace(/^@/, ''))} placeholder="yourhandle" style={{ paddingLeft: 28 }} />
         </div>
       </Field>
-      <Field label="What is your content niche? *" hint="Be specific — this powers all your AI tools.">
+      <Field label="What is your content niche? *" hint="Be specific, this powers all your AI tools.">
         <TextArea value={form.content_niche} onChange={v => set('content_niche', v)} placeholder="e.g. I create educational content about personal finance for people in their 20s and 30s" rows={2} />
       </Field>
       <Field label="How would you describe your content style?">
-        <TextArea value={form.content_style_description} onChange={v => set('content_style_description', v)} placeholder="e.g. Fast-paced, high-energy, with a sense of humour — edutainment rather than dry tutorials" rows={2} />
+        <TextArea value={form.content_style_description} onChange={v => set('content_style_description', v)} placeholder="e.g. Fast-paced, high-energy, with a sense of humour, edutainment rather than dry tutorials" rows={2} />
       </Field>
     </>
   )
@@ -679,7 +679,7 @@ function CreatorStepProfile({ form, set }: { form: FormData; set: (k: keyof Form
 function CreatorStepAudience({ form, set }: { form: FormData; set: (k: keyof FormData, v: string) => void }) {
   return (
     <>
-      <Field label="Who is your target audience? *" hint="Be specific — age, interests, situation.">
+      <Field label="Who is your target audience? *" hint="Be specific, age, interests, situation.">
         <TextArea value={form.target_audience} onChange={v => set('target_audience', v)} placeholder="e.g. 22–35 year olds who want to take control of their finances but find traditional advice boring and confusing" rows={3} />
       </Field>
       <Field label="What does your content give them? *" hint="What value do they take away?">
@@ -703,7 +703,7 @@ function CreatorStepMonetisation({ form, set, options, toggleMonetization }: {
       <Field label="How do you (or plan to) monetise? *" hint="Select all that apply.">
         <MultiPills options={options} values={form.monetization_model} onToggle={toggleMonetization} />
       </Field>
-      <Field label="What's your biggest challenge right now? *" hint="Be honest — the more detail, the better the AI can help.">
+      <Field label="What's your biggest challenge right now? *" hint="Be honest, the more detail, the better the AI can help.">
         <TextArea value={form.creator_biggest_challenge} onChange={v => set('creator_biggest_challenge', v)} placeholder="e.g. My views have plateaued at 2K per reel and I don't know how to break through to a bigger audience" rows={3} />
       </Field>
     </>
@@ -727,7 +727,7 @@ function StepContent({ form, set, frequencies, experiences, isCreator }: {
         <Pills options={experiences} value={form.content_experience} onChange={v => set('content_experience', v)} />
       </Field>
       <Field label="Your brand voice *" hint="How would you describe the way you write and talk?">
-        <TextArea value={form.brand_voice} onChange={v => set('brand_voice', v)} placeholder={isCreator ? 'e.g. Casual and relatable but always backed by research — like a smart friend giving advice, not a lecturer' : 'e.g. Direct, no BS, big brother energy — tough love but you always want the best for people'} rows={2} />
+        <TextArea value={form.brand_voice} onChange={v => set('brand_voice', v)} placeholder={isCreator ? 'e.g. Casual and relatable but always backed by research, like a smart friend giving advice, not a lecturer' : 'e.g. Direct, no BS, big brother energy, tough love but you always want the best for people'} rows={2} />
       </Field>
       <Field label="What hook styles work best for you?">
         <TextInput value={form.hook_style} onChange={v => set('hook_style', v)} placeholder={isCreator ? 'e.g. Surprising stat, controversial take, personal confession' : 'e.g. Bold statement, controversial take, personal confession'} />

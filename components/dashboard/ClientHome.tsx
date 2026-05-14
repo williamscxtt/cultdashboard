@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 import type { Profile, ClientReel } from '@/lib/types'
 import { Card, StatCard, Badge, Button, PageHeader, SectionLabel } from '@/components/ui'
+import { useIsMobile } from '@/lib/use-mobile'
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -273,9 +274,10 @@ function Syncing({ activeStep }: { activeStep: number }) {
 function RichDashboard({ profile, reels }: { profile: Profile; reels: ClientReel[] }) {
   const { totalReels, avgViews, bestHook, topFormat, viewsOverTime, formatData, maxAvgViews, topReels } = deriveStats(reels)
   const firstName = profile.name?.split(' ')[0] || 'there'
+  const isMobile = useIsMobile()
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ padding: isMobile ? '16px' : '24px', maxWidth: 1400, margin: '0 auto' }}>
 
       <PageHeader
         title={`Welcome back, ${firstName}`}
@@ -283,7 +285,7 @@ function RichDashboard({ profile, reels }: { profile: Profile; reels: ClientReel
       />
 
       {/* Row 1: stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         <StatCard label="Total Reels" value={totalReels.toString()} />
         <StatCard label="Avg Views" value={avgViews.toLocaleString()} sub="across all reels" />
         <StatCard label="Best Hook" value={bestHook} />
@@ -291,7 +293,7 @@ function RichDashboard({ profile, reels }: { profile: Profile; reels: ClientReel
       </div>
 
       {/* Row 2: charts */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1.6fr 1fr', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.6fr 1fr', gap: 12, marginBottom: 20 }}>
 
         {/* Views over time */}
         <Card style={{ padding: 20 }}>
@@ -376,7 +378,7 @@ function RichDashboard({ profile, reels }: { profile: Profile; reels: ClientReel
       {/* Row 3: quick actions */}
       <div style={{ marginBottom: 20 }}>
         <SectionLabel>Quick Actions</SectionLabel>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12 }}>
           {QUICK_ACTIONS.map(({ label, href, icon: Icon, description }) => (
             <Link key={label} href={href} style={{ textDecoration: 'none' }}>
               <div

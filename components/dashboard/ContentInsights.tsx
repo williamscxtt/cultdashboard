@@ -49,7 +49,7 @@ export default function ContentInsights({ profileId, locked }: { profileId: stri
 
   async function generate() {
     setGenerating(true)
-    toast.info('Analysing your content — this takes about 20 seconds…')
+    toast.info('Analysing your content, this takes about 20 seconds…')
     try {
       const res = await fetch('/api/content/insights', {
         method: 'POST',
@@ -91,7 +91,7 @@ export default function ContentInsights({ profileId, locked }: { profileId: stri
           AI Content Coach
         </div>
         <div style={{ fontSize: 13, color: 'var(--muted-foreground)', marginBottom: 24, maxWidth: 380, margin: '0 auto 24px' }}>
-          Analyse all your reels, audience comments, and goals to get specific, actionable growth strategies — personalised to you.
+          Analyse all your reels, audience comments, and goals to get specific, actionable growth strategies, personalised to you.
         </div>
         <Button onClick={generate} variant="primary" disabled={locked || generating} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
           <Sparkles size={13} /> {locked ? 'Refresh competitor data first' : 'Generate My Insights'}

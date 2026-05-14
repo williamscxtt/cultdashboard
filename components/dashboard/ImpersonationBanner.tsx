@@ -28,7 +28,7 @@ export default function ImpersonationBanner({ clientName }: { clientName: string
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
         <Eye size={14} />
-        Viewing as <strong>{clientName}</strong> — you can see and use their full dashboard
+        Viewing as <strong>{clientName}</strong>, you can see and use their full dashboard
       </div>
       <button
         onClick={exitImpersonation}
