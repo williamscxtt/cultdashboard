@@ -156,13 +156,12 @@ export async function POST(req: Request) {
     console.error('[applications] insert error:', error.message)
   }
 
-  // Ping Slack for all real submissions — qualified ones get the urgent message,
-  // disqualified ones get a low-priority heads-up. Skip if no real data (fake/test entries).
-  // Payment tier self-serves — no Slack needed. Qualified and disqualified both ping.
+  // Only ping Slack for qualified leads (investment ≥ £500 + wants coaching).
+  // Payment tier and disqualified self-serve — no Slack needed.
   const hasRealData = Boolean(first_name && (phone || niche || biggest_obstacle))
-  if (hasRealData && outcome !== 'payment') {
+  if (hasRealData && outcome === 'qualified') {
     try {
-      await sendSlackNotification(body, outcome === 'qualified')
+      await sendSlackNotification(body, true)
     } catch (err) {
       console.error('[applications] slack error:', err)
     }

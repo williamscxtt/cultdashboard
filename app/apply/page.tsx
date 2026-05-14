@@ -1,7 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { Zap, ArrowRight, ArrowLeft, Check, Phone } from 'lucide-react'
+import { loadStripe } from '@stripe/stripe-js'
+import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js'
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
 // ── Options ──────────────────────────────────────────────────────────────────
 
@@ -44,7 +48,8 @@ const MONTHLY_INCOME_STEPS = [
 // Investment amount — "Not right now" triggers hard disqualify
 const INVESTMENT_AMOUNT_STEPS = [
   'Not right now',
-  '£250–£1,000',
+  '£500 or below',
+  '£500–£1,000',
   '£1,000–£2,000',
   '£2,000+',
 ]
@@ -96,21 +101,14 @@ function getOutcome(form: FormData): Outcome {
   // Hard disqualify — can't invest
   if (inv === 'Not right now') return 'disqualified'
 
-  // Low investment → always self-serve payment
-  if (inv === '£250–£1,000') return 'payment'
+  // £500 or below → can only afford dashboard, self-serve
+  if (inv === '£500 or below') return 'payment'
 
-  // High investment (£2,000+) → Will always wants to call regardless of coaching preference
-  if (inv === '£2,000+') return 'qualified'
+  // £500+ budget: only qualified if they want coaching from Will
+  if (form.wants === 'coaching') return 'qualified'
 
-  // Mid investment (£1,000–£2,000)
-  if (inv === '£1,000–£2,000') {
-    // Dashboard only or not ready to commit → self-serve
-    if (form.wants === 'dashboard' || form.business_mindset === 'No') return 'payment'
-    // Wants coaching and ready to commit → qualified
-    return 'qualified'
-  }
-
-  return 'qualified'
+  // Wants dashboard only → self-serve payment
+  return 'payment'
 }
 
 const TOTAL_STEPS = 5
@@ -237,79 +235,7 @@ export default function ApplyPage() {
 
   // ── Payment screen ─────────────────────────────────────────────────────────
   if (done === 'payment') {
-    return (
-      <PageShell>
-        <div style={{ animation: 'fadeUp 0.4s ease both', textAlign: 'center' }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16,
-            background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px',
-          }}>
-            <Check size={26} color="rgba(59,130,246,0.9)" strokeWidth={2.5} />
-          </div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f0f0f0', marginBottom: 10, letterSpacing: '-0.5px' }}>
-            You&apos;re in{firstName ? `, ${firstName}` : ''}.
-          </h1>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 420, margin: '0 auto 32px' }}>
-            Pick a plan below and get immediate access to the Creator Cult dashboard — scripts, analytics, hook lab, content calendar, and everything else.
-          </p>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 420, margin: '0 auto' }}>
-            {/* Monthly */}
-            <a
-              href="https://buy.stripe.com/4gM3cufz86GF3tYdso9IQ1J"
-              style={{ display: 'block', padding: '20px 24px', borderRadius: 12, textDecoration: 'none', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.35)', transition: 'background 0.15s, border-color 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(59,130,246,0.18)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(59,130,246,0.6)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(59,130,246,0.1)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(59,130,246,0.35)' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>Monthly</div>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: '#93c5fd', letterSpacing: '-0.5px' }}>
-                    £75<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>/mo</span>
-                  </div>
-                </div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>
-                  Cancel anytime <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />
-                </div>
-              </div>
-            </a>
-
-            {/* 6-month */}
-            <a
-              href="https://buy.stripe.com/4gM9ASgDcc0ZaWqcok9IQ1K"
-              style={{ display: 'block', padding: '20px 24px', borderRadius: 12, textDecoration: 'none', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', transition: 'background 0.15s, border-color 0.15s', position: 'relative' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.22)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.12)' }}
-            >
-              <div style={{
-                position: 'absolute', top: -10, right: 16,
-                fontSize: 10, fontWeight: 800, color: '#000',
-                background: '#4ade80', padding: '3px 8px', borderRadius: 99, letterSpacing: '0.04em',
-                textTransform: 'uppercase',
-              }}>
-                Best value
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>6 Months</div>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: '#f0f0f0', letterSpacing: '-0.5px' }}>
-                    £300<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}> total</span>
-                  </div>
-                </div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>
-                  Save £150 <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />
-                </div>
-              </div>
-            </a>
-          </div>
-
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.18)', marginTop: 28, lineHeight: 1.6 }}>
-            Questions? DM Will on Instagram before you commit.
-          </p>
-        </div>
-      </PageShell>
-    )
+    return <PaymentScreen form={form} />
   }
 
   // ── Qualified screen ───────────────────────────────────────────────────────
@@ -510,7 +436,7 @@ export default function ApplyPage() {
                   })}
                 </div>
                 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 12, lineHeight: 1.5 }}>
-                  Dashboard access starts from £250. Coaching programmes start from £1,000.
+                  Dashboard access starts from £95/mo. Coaching with Will starts from £500.
                 </p>
               </Field>
 
@@ -603,6 +529,119 @@ export default function ApplyPage() {
           <a href="/login" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>Sign in →</a>
         </p>
       )}
+    </PageShell>
+  )
+}
+
+// ── Payment screen (embedded Stripe checkout) ─────────────────────────────────
+
+function PaymentScreen({ form }: { form: FormData }) {
+  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'sixmonth' | null>(null)
+  const firstName = form.first_name.trim()
+  const fullName  = `${form.first_name} ${form.last_name}`.trim()
+
+  const fetchClientSecret = useCallback(async () => {
+    const res = await fetch('/api/stripe/apply-session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ plan: selectedPlan, email: form.email, name: fullName }),
+    })
+    const data = await res.json()
+    return data.clientSecret as string
+  }, [selectedPlan, form.email, fullName])
+
+  return (
+    <PageShell>
+      <div style={{ animation: 'fadeUp 0.4s ease both', width: '100%' }}>
+
+        {/* Header */}
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <div style={{
+            width: 56, height: 56, borderRadius: 16,
+            background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px',
+          }}>
+            <Check size={26} color="rgba(59,130,246,0.9)" strokeWidth={2.5} />
+          </div>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f0f0f0', marginBottom: 8, letterSpacing: '-0.5px' }}>
+            You&apos;re in{firstName ? `, ${firstName}` : ''}.
+          </h1>
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 400, margin: '0 auto' }}>
+            {selectedPlan ? 'Complete your payment below to get instant access.' : 'Choose a plan to get immediate access to the Creator Cult dashboard.'}
+          </p>
+        </div>
+
+        {!selectedPlan ? (
+          /* ── Plan selection ── */
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            {/* Monthly */}
+            <button
+              onClick={() => setSelectedPlan('monthly')}
+              style={{ width: '100%', padding: '20px 24px', borderRadius: 12, textAlign: 'left', cursor: 'pointer', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.35)', transition: 'background 0.15s, border-color 0.15s' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(59,130,246,0.18)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.6)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(59,130,246,0.1)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.35)' }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>Monthly</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: '#93c5fd', letterSpacing: '-0.5px' }}>
+                    £95<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>/mo</span>
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>
+                  Cancel anytime <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                </div>
+              </div>
+            </button>
+
+            {/* 6-month */}
+            <button
+              onClick={() => setSelectedPlan('sixmonth')}
+              style={{ width: '100%', padding: '20px 24px', borderRadius: 12, textAlign: 'left', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', transition: 'background 0.15s, border-color 0.15s', position: 'relative' }}
+              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.22)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)' }}
+            >
+              <div style={{ position: 'absolute', top: -10, right: 16, fontSize: 10, fontWeight: 800, color: '#000', background: '#4ade80', padding: '3px 8px', borderRadius: 99, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                Best value
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>6 Months</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: '#f0f0f0', letterSpacing: '-0.5px' }}>
+                    £395<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}> total</span>
+                  </div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>~£66/mo · save £175</div>
+                </div>
+                <div style={{ fontSize: 12, color: 'rgba(74,222,128,0.8)', fontWeight: 700 }}>
+                  Save £175 <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                </div>
+              </div>
+            </button>
+
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.18)', marginTop: 12, textAlign: 'center', lineHeight: 1.6 }}>
+              Questions? <a href="https://instagram.com/williamscxtt" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none', fontWeight: 600 }}>DM Will on Instagram →</a>
+            </p>
+          </div>
+        ) : (
+          /* ── Embedded Stripe checkout ── */
+          <div>
+            <EmbeddedCheckoutProvider
+              key={selectedPlan}
+              stripe={stripePromise}
+              options={{ fetchClientSecret }}
+            >
+              <EmbeddedCheckout />
+            </EmbeddedCheckoutProvider>
+
+            <button
+              onClick={() => setSelectedPlan(null)}
+              style={{ marginTop: 16, background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, padding: '8px 0', width: '100%', justifyContent: 'center' }}
+            >
+              <ArrowLeft size={13} /> Change plan
+            </button>
+          </div>
+        )}
+      </div>
     </PageShell>
   )
 }
