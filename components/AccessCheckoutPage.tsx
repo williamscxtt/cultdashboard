@@ -10,7 +10,7 @@ const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
 const STRIPE_APPEARANCE = {
   theme: 'night' as const,
   variables: {
-    colorPrimary: '#3B82F6',
+    colorPrimary: '#ffffff',
     colorBackground: '#0d0d0d',
     colorText: '#f0f0f0',
     colorDanger: '#f87171',
@@ -21,7 +21,7 @@ const STRIPE_APPEARANCE = {
   },
   rules: {
     '.Input': { border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)' },
-    '.Input:focus': { border: '1px solid #3B82F6', boxShadow: '0 0 0 3px rgba(59,130,246,0.12)' },
+    '.Input:focus': { border: '1px solid rgba(255,255,255,0.5)', boxShadow: '0 0 0 3px rgba(255,255,255,0.06)' },
     '.Label': { color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: '600', letterSpacing: '0.01em' },
   },
 }
@@ -183,17 +183,15 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
         )}
 
         {/* Feature list */}
-        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '20px 22px', marginBottom: 32 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '18px 20px', marginBottom: 32 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 13 }}>
             What&apos;s inside
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-            {FEATURES.map(({ icon: Icon, label }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 22, height: 22, borderRadius: 6, flexShrink: 0, background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <Icon size={11} color="#60a5fa" strokeWidth={2} />
-                </div>
-                <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.78)', lineHeight: 1.4 }}>{label}</span>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px' }}>
+            {FEATURES.map(({ label }) => (
+              <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
+                <Check size={11} color="#4ade80" strokeWidth={3} style={{ flexShrink: 0, marginTop: 2 }} />
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.45 }}>{label}</span>
               </div>
             ))}
           </div>
