@@ -294,18 +294,16 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
 
         {/* Social proof */}
         {!selectedPlan && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 28, marginBottom: 8, padding: '12px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ display: 'flex' }}>
-              {[
-                { initials: 'MN', bg: '#1d4ed8' },
-                { initials: 'KP', bg: '#7c3aed' },
-                { initials: 'FY', bg: '#065f46' },
-                { initials: 'EK', bg: '#92400e' },
-                { initials: 'JB', bg: '#9f1239' },
-              ].map(({ initials, bg }, i) => (
-                <div key={i} style={{ width: 26, height: 26, borderRadius: '50%', background: bg, border: '2px solid #000', marginLeft: i === 0 ? 0 : -7, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 8, fontWeight: 800, color: 'rgba(255,255,255,0.9)', letterSpacing: '0.02em', zIndex: 5 - i, position: 'relative' }}>
-                  {initials}
-                </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 28, marginBottom: 8, padding: '12px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div style={{ display: 'flex', flexShrink: 0 }}>
+              {[47, 11, 32, 5, 68].map((img, i) => (
+                <img
+                  key={i}
+                  src={`https://i.pravatar.cc/150?img=${img}`}
+                  alt=""
+                  width={28} height={28}
+                  style={{ width: 28, height: 28, borderRadius: '50%', border: '2px solid #000', marginLeft: i === 0 ? 0 : -8, flexShrink: 0, objectFit: 'cover', position: 'relative', zIndex: 5 - i }}
+                />
               ))}
             </div>
             <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
