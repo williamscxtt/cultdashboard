@@ -39,7 +39,7 @@ const FEATURES = [
   { icon: MessageSquare, label: 'Ask Will AI: 24/7 coaching, available any time you need it' },
 ]
 
-function CheckoutForm({ plan, onBack }: { plan: 'monthly' | 'sixmonth'; onBack: () => void }) {
+function CheckoutForm({ plan, onBack, intentType }: { plan: 'monthly' | 'sixmonth'; onBack: () => void; intentType: 'payment_intent' | 'setup_intent' }) {
   const stripe   = useStripe()
   const elements = useElements()
   const [status,   setStatus]   = useState<'idle' | 'loading' | 'error'>('idle')
@@ -50,7 +50,8 @@ function CheckoutForm({ plan, onBack }: { plan: 'monthly' | 'sixmonth'; onBack: 
     if (!stripe || !elements) return
     setStatus('loading')
     setErrorMsg('')
-    const { error } = await stripe.confirmPayment({
+    const confirmFn = intentType === 'setup_intent' ? stripe.confirmSetup : stripe.confirmPayment
+    const { error } = await confirmFn({
       elements,
       confirmParams: { return_url: `${window.location.origin}/apply/success` },
     })
@@ -103,6 +104,7 @@ interface AccessCheckoutPageProps {
 export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutPageProps) {
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'sixmonth' | null>(null)
   const [clientSecret,  setClientSecret] = useState<string | null>(null)
+  const [intentType,    setIntentType]   = useState<'payment_intent' | 'setup_intent'>('payment_intent')
   const [fetchError,    setFetchError]   = useState<string | null>(null)
 
   const selectPlan = useCallback(async (plan: 'monthly' | 'sixmonth') => {
@@ -116,8 +118,12 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
         body: JSON.stringify({ plan, email }),
       })
       const data = await res.json()
-      if (data.clientSecret) setClientSecret(data.clientSecret)
-      else setFetchError(data.error ?? 'Failed to initialise checkout.')
+      if (data.clientSecret) {
+        setClientSecret(data.clientSecret)
+        setIntentType(data.intentType ?? 'payment_intent')
+      } else {
+        setFetchError(data.error ?? 'Failed to initialise checkout.')
+      }
     } catch (e: unknown) {
       setFetchError(e instanceof Error ? e.message : 'Network error.')
     }
@@ -273,7 +279,7 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
 
               {clientSecret && (
                 <Elements key={selectedPlan} stripe={stripePromise} options={{ clientSecret, appearance: STRIPE_APPEARANCE }}>
-                  <CheckoutForm plan={selectedPlan} onBack={() => { setSelectedPlan(null); setClientSecret(null) }} />
+                  <CheckoutForm plan={selectedPlan} intentType={intentType} onBack={() => { setSelectedPlan(null); setClientSecret(null) }} />
                 </Elements>
               )}
             </div>
