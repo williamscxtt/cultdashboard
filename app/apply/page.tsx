@@ -1,11 +1,8 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState } from 'react'
 import { Zap, ArrowRight, ArrowLeft, Check, Phone } from 'lucide-react'
-import { loadStripe } from '@stripe/stripe-js'
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
-
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+import AccessCheckoutPage from '@/components/AccessCheckoutPage'
 
 // ── Options ──────────────────────────────────────────────────────────────────
 
@@ -233,9 +230,9 @@ export default function ApplyPage() {
     )
   }
 
-  // ── Payment screen ─────────────────────────────────────────────────────────
+  // ── Payment screen — same layout as /access ────────────────────────────────
   if (done === 'payment') {
-    return <PaymentScreen form={form} />
+    return <AccessCheckoutPage firstName={form.first_name.trim() || undefined} email={form.email || undefined} />
   }
 
   // ── Qualified screen ───────────────────────────────────────────────────────
@@ -305,7 +302,7 @@ export default function ApplyPage() {
                         {form.creator_type === value && <Check size={11} style={{ flexShrink: 0 }} />}
                         {label}
                       </span>
-                      <span style={{ fontSize: 12, opacity: 0.5, fontWeight: 400 }}>{desc}</span>
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.52)', fontWeight: 400 }}>{desc}</span>
                     </button>
                   ))}
                 </div>
@@ -412,7 +409,7 @@ export default function ApplyPage() {
                         {form.wants === value && <Check size={11} style={{ flexShrink: 0 }} />}
                         {label}
                       </span>
-                      <span style={{ fontSize: 12, opacity: 0.5, fontWeight: 400 }}>{desc}</span>
+                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.52)', fontWeight: 400 }}>{desc}</span>
                     </button>
                   ))}
                 </div>
@@ -435,7 +432,7 @@ export default function ApplyPage() {
                     )
                   })}
                 </div>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 12, lineHeight: 1.5 }}>
+                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', marginTop: 12, lineHeight: 1.5 }}>
                   Dashboard access starts from £95/mo. Coaching with Will starts from £500.
                 </p>
               </Field>
@@ -469,7 +466,7 @@ export default function ApplyPage() {
               background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.22)',
             }}>
               <div style={{ fontSize: 12, fontWeight: 700, color: '#4ade80', marginBottom: 4 }}>Your result is ready</div>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', margin: 0, lineHeight: 1.55 }}>
+              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.62)', margin: 0, lineHeight: 1.55 }}>
                 Based on your answers, we&apos;ve got a clear picture. Enter your details below to see where you qualify.
               </p>
             </div>
@@ -524,236 +521,11 @@ export default function ApplyPage() {
       </div>
 
       {step === 1 && (
-        <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 20 }}>
+        <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 20 }}>
           Already a member?{' '}
           <a href="/login" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>Sign in →</a>
         </p>
       )}
-    </PageShell>
-  )
-}
-
-// ── Stripe PaymentElement checkout form (dark themed, inline — like williamscxtt) ──
-
-const STRIPE_APPEARANCE = {
-  theme: 'night' as const,
-  variables: {
-    colorPrimary: '#3B82F6',
-    colorBackground: '#0d0d0d',
-    colorText: '#f0f0f0',
-    colorDanger: '#f87171',
-    colorTextPlaceholder: '#555',
-    fontFamily: 'Inter, system-ui, sans-serif',
-    borderRadius: '8px',
-    spacingUnit: '4px',
-  },
-  rules: {
-    '.Input': { border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)' },
-    '.Input:focus': { border: '1px solid #3B82F6', boxShadow: '0 0 0 3px rgba(59,130,246,0.12)' },
-    '.Label': { color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: '600', letterSpacing: '0.01em' },
-  },
-}
-
-function CheckoutForm({ plan, onBack }: { plan: 'monthly' | 'sixmonth'; onBack: () => void }) {
-  const stripe    = useStripe()
-  const elements  = useElements()
-  const [status, setStatus]     = useState<'idle' | 'loading' | 'error'>('idle')
-  const [errorMsg, setErrorMsg] = useState('')
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!stripe || !elements) return
-    setStatus('loading')
-    setErrorMsg('')
-
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: { return_url: `${window.location.origin}/apply/success` },
-    })
-
-    if (error) {
-      setErrorMsg(error.message ?? 'Something went wrong.')
-      setStatus('error')
-    }
-  }
-
-  return (
-    <form onSubmit={handleSubmit} style={{ width: '100%' }}>
-      <PaymentElement options={{ layout: 'auto', wallets: { applePay: 'auto', googlePay: 'auto' } }} />
-
-      {errorMsg && (
-        <p style={{ marginTop: 14, fontSize: 13, color: '#f87171', textAlign: 'center', lineHeight: 1.5 }}>
-          {errorMsg}
-        </p>
-      )}
-
-      <button
-        type="submit"
-        disabled={!stripe || status === 'loading'}
-        className="apply-btn"
-        style={{ marginTop: 20 }}
-      >
-        {status === 'loading'
-          ? 'Processing…'
-          : plan === 'monthly' ? 'Pay £95 / month →' : 'Pay £395 →'}
-      </button>
-
-      <p style={{ marginTop: 12, fontSize: 11, textAlign: 'center', color: 'rgba(255,255,255,0.22)', lineHeight: 1.5 }}>
-        Secure payment · Powered by Stripe
-      </p>
-
-      <button
-        type="button"
-        onClick={onBack}
-        style={{ marginTop: 8, background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.28)', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, padding: '6px 0', width: '100%', justifyContent: 'center' }}
-      >
-        <ArrowLeft size={13} /> Change plan
-      </button>
-    </form>
-  )
-}
-
-// ── Payment screen ─────────────────────────────────────────────────────────────
-
-function PaymentScreen({ form }: { form: FormData }) {
-  const [selectedPlan, setSelectedPlan]     = useState<'monthly' | 'sixmonth' | null>(null)
-  const [clientSecret,  setClientSecret]    = useState<string | null>(null)
-  const [fetchError,    setFetchError]      = useState<string | null>(null)
-  const firstName = form.first_name.trim()
-  const fullName  = `${form.first_name} ${form.last_name}`.trim()
-
-  const selectPlan = useCallback(async (plan: 'monthly' | 'sixmonth') => {
-    setSelectedPlan(plan)
-    setClientSecret(null)
-    setFetchError(null)
-    try {
-      const res  = await fetch('/api/stripe/apply-session', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan, email: form.email, name: fullName }),
-      })
-      const data = await res.json()
-      if (data.clientSecret) {
-        setClientSecret(data.clientSecret)
-      } else {
-        setFetchError(data.error ?? 'Failed to initialise checkout.')
-      }
-    } catch (e: unknown) {
-      setFetchError(e instanceof Error ? e.message : 'Network error.')
-    }
-  }, [form.email, fullName])
-
-  return (
-    <PageShell>
-      <div style={{ animation: 'fadeUp 0.4s ease both', width: '100%' }}>
-
-        {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16,
-            background: 'rgba(59,130,246,0.12)', border: '1px solid rgba(59,130,246,0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px',
-          }}>
-            <Check size={26} color="rgba(59,130,246,0.9)" strokeWidth={2.5} />
-          </div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f0f0f0', marginBottom: 8, letterSpacing: '-0.5px' }}>
-            You&apos;re in{firstName ? `, ${firstName}` : ''}.
-          </h1>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 400, margin: '0 auto' }}>
-            {selectedPlan ? 'Complete your payment below to get instant access.' : 'Choose a plan to get immediate access to the dashboard.'}
-          </p>
-        </div>
-
-        {!selectedPlan ? (
-          /* ── Plan selection ── */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {/* Monthly */}
-            <button
-              onClick={() => selectPlan('monthly')}
-              style={{ width: '100%', padding: '20px 24px', borderRadius: 12, textAlign: 'left', cursor: 'pointer', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.35)', transition: 'background 0.15s, border-color 0.15s' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(59,130,246,0.18)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.6)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(59,130,246,0.1)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.35)' }}
-            >
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>Monthly</div>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: '#93c5fd', letterSpacing: '-0.5px' }}>
-                    £95<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>/mo</span>
-                  </div>
-                </div>
-                <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', fontWeight: 600 }}>
-                  Cancel anytime <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />
-                </div>
-              </div>
-            </button>
-
-            {/* 6-month */}
-            <button
-              onClick={() => selectPlan('sixmonth')}
-              style={{ width: '100%', padding: '20px 24px', borderRadius: 12, textAlign: 'left', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', transition: 'background 0.15s, border-color 0.15s', position: 'relative' }}
-              onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.22)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)' }}
-            >
-              <div style={{ position: 'absolute', top: -10, right: 16, fontSize: 10, fontWeight: 800, color: '#000', background: '#4ade80', padding: '3px 8px', borderRadius: 99, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                Best value
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>6 Months</div>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: '#f0f0f0', letterSpacing: '-0.5px' }}>
-                    £395<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}> total</span>
-                  </div>
-                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 3 }}>~£66/mo · save £175</div>
-                </div>
-                <div style={{ fontSize: 12, color: 'rgba(74,222,128,0.8)', fontWeight: 700 }}>
-                  Save £175 <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />
-                </div>
-              </div>
-            </button>
-
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.18)', marginTop: 12, textAlign: 'center', lineHeight: 1.6 }}>
-              Questions? <a href="https://instagram.com/williamscxtt" style={{ color: 'rgba(255,255,255,0.35)', textDecoration: 'none', fontWeight: 600 }}>DM Will on Instagram →</a>
-            </p>
-          </div>
-        ) : (
-          /* ── Card form ── */
-          <div>
-            {/* Selected plan badge */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 20 }}>
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
-                {selectedPlan === 'monthly' ? 'Monthly — £95/mo' : '6 Months — £395 total'}
-              </span>
-              <button
-                onClick={() => { setSelectedPlan(null); setClientSecret(null) }}
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: 12, cursor: 'pointer', fontWeight: 600, padding: 0 }}
-              >
-                Change
-              </button>
-            </div>
-
-            {fetchError && (
-              <p style={{ fontSize: 13, color: '#f87171', textAlign: 'center', marginBottom: 16 }}>{fetchError}</p>
-            )}
-
-            {!clientSecret && !fetchError && (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '32px 0' }}>
-                <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2.5px solid rgba(59,130,246,0.15)', borderTopColor: '#3B82F6', animation: 'spin 0.85s linear infinite' }} />
-                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-              </div>
-            )}
-
-            {clientSecret && (
-              <Elements
-                key={selectedPlan}
-                stripe={stripePromise}
-                options={{ clientSecret, appearance: STRIPE_APPEARANCE }}
-              >
-                <CheckoutForm plan={selectedPlan} onBack={() => { setSelectedPlan(null); setClientSecret(null) }} />
-              </Elements>
-            )}
-          </div>
-        )}
-      </div>
     </PageShell>
   )
 }
@@ -765,7 +537,7 @@ const headingStyle: React.CSSProperties = {
   marginBottom: 8, letterSpacing: '-0.5px', lineHeight: 1.2,
 }
 const subStyle: React.CSSProperties = {
-  fontSize: 14, color: 'rgba(255,255,255,0.4)', marginBottom: 32, lineHeight: 1.6,
+  fontSize: 14, color: 'rgba(255,255,255,0.62)', marginBottom: 32, lineHeight: 1.6,
 }
 
 function StepBadge({ text }: { text: string }) {
@@ -796,7 +568,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
         }
         .apply-textarea { height: auto !important; padding: 12px 14px !important; resize: vertical; min-height: 84px; line-height: 1.6; }
         .apply-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
-        .apply-input::placeholder { color: #555; }
+        .apply-input::placeholder { color: #666; }
         .apply-btn {
           width: 100%; height: 48px; background: #3B82F6; color: #fff; border: none;
           border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer;
@@ -814,12 +586,12 @@ function PageShell({ children }: { children: React.ReactNode }) {
         .apply-back-btn:hover { color: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.18); }
         .pill-option {
           padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
-          cursor: pointer; border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.5);
-          background: transparent; font-family: inherit; transition: all 0.12s; text-align: left;
+          cursor: pointer; border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.75);
+          background: rgba(255,255,255,0.02); font-family: inherit; transition: all 0.12s; text-align: left;
           display: flex; align-items: center;
         }
-        .pill-option:hover { border-color: rgba(59,130,246,0.5); color: #a0c4ff; }
-        .pill-option.selected { border-color: #3B82F6; background: rgba(59,130,246,0.12); color: #93c5fd; }
+        .pill-option:hover { border-color: rgba(59,130,246,0.55); color: #c0d8ff; background: rgba(59,130,246,0.06); }
+        .pill-option.selected { border-color: #3B82F6; background: rgba(59,130,246,0.14); color: #93c5fd; }
         .money-slider {
           -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
           border-radius: 2px; outline: none; cursor: pointer;
@@ -856,7 +628,7 @@ function PageShell({ children }: { children: React.ReactNode }) {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 8, letterSpacing: '0.01em', lineHeight: 1.5 }}>
+      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.72)', marginBottom: 8, letterSpacing: '0.01em', lineHeight: 1.5 }}>
         {label}
       </label>
       {children}
