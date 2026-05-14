@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react'
 import { Zap, ArrowRight, ArrowLeft, Check, Phone } from 'lucide-react'
 import { loadStripe } from '@stripe/stripe-js'
-import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js'
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
 
@@ -533,22 +533,115 @@ export default function ApplyPage() {
   )
 }
 
-// ── Payment screen (embedded Stripe checkout) ─────────────────────────────────
+// ── Stripe PaymentElement checkout form (dark themed, inline — like williamscxtt) ──
+
+const STRIPE_APPEARANCE = {
+  theme: 'night' as const,
+  variables: {
+    colorPrimary: '#3B82F6',
+    colorBackground: '#0d0d0d',
+    colorText: '#f0f0f0',
+    colorDanger: '#f87171',
+    colorTextPlaceholder: '#555',
+    fontFamily: 'Inter, system-ui, sans-serif',
+    borderRadius: '8px',
+    spacingUnit: '4px',
+  },
+  rules: {
+    '.Input': { border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)' },
+    '.Input:focus': { border: '1px solid #3B82F6', boxShadow: '0 0 0 3px rgba(59,130,246,0.12)' },
+    '.Label': { color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: '600', letterSpacing: '0.01em' },
+  },
+}
+
+function CheckoutForm({ plan, onBack }: { plan: 'monthly' | 'sixmonth'; onBack: () => void }) {
+  const stripe    = useStripe()
+  const elements  = useElements()
+  const [status, setStatus]     = useState<'idle' | 'loading' | 'error'>('idle')
+  const [errorMsg, setErrorMsg] = useState('')
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!stripe || !elements) return
+    setStatus('loading')
+    setErrorMsg('')
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: { return_url: `${window.location.origin}/apply/success` },
+    })
+
+    if (error) {
+      setErrorMsg(error.message ?? 'Something went wrong.')
+      setStatus('error')
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} style={{ width: '100%' }}>
+      <PaymentElement options={{ layout: 'auto', wallets: { applePay: 'auto', googlePay: 'auto' } }} />
+
+      {errorMsg && (
+        <p style={{ marginTop: 14, fontSize: 13, color: '#f87171', textAlign: 'center', lineHeight: 1.5 }}>
+          {errorMsg}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        disabled={!stripe || status === 'loading'}
+        className="apply-btn"
+        style={{ marginTop: 20 }}
+      >
+        {status === 'loading'
+          ? 'Processing…'
+          : plan === 'monthly' ? 'Pay £95 / month →' : 'Pay £395 →'}
+      </button>
+
+      <p style={{ marginTop: 12, fontSize: 11, textAlign: 'center', color: 'rgba(255,255,255,0.22)', lineHeight: 1.5 }}>
+        Secure payment · Powered by Stripe
+      </p>
+
+      <button
+        type="button"
+        onClick={onBack}
+        style={{ marginTop: 8, background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.28)', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, padding: '6px 0', width: '100%', justifyContent: 'center' }}
+      >
+        <ArrowLeft size={13} /> Change plan
+      </button>
+    </form>
+  )
+}
+
+// ── Payment screen ─────────────────────────────────────────────────────────────
 
 function PaymentScreen({ form }: { form: FormData }) {
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'sixmonth' | null>(null)
+  const [selectedPlan, setSelectedPlan]     = useState<'monthly' | 'sixmonth' | null>(null)
+  const [clientSecret,  setClientSecret]    = useState<string | null>(null)
+  const [fetchError,    setFetchError]      = useState<string | null>(null)
   const firstName = form.first_name.trim()
   const fullName  = `${form.first_name} ${form.last_name}`.trim()
 
-  const fetchClientSecret = useCallback(async () => {
-    const res = await fetch('/api/stripe/apply-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan: selectedPlan, email: form.email, name: fullName }),
-    })
-    const data = await res.json()
-    return data.clientSecret as string
-  }, [selectedPlan, form.email, fullName])
+  const selectPlan = useCallback(async (plan: 'monthly' | 'sixmonth') => {
+    setSelectedPlan(plan)
+    setClientSecret(null)
+    setFetchError(null)
+    try {
+      const res  = await fetch('/api/stripe/apply-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan, email: form.email, name: fullName }),
+      })
+      const data = await res.json()
+      if (data.clientSecret) {
+        setClientSecret(data.clientSecret)
+      } else {
+        setFetchError(data.error ?? 'Failed to initialise checkout.')
+      }
+    } catch (e: unknown) {
+      setFetchError(e instanceof Error ? e.message : 'Network error.')
+    }
+  }, [form.email, fullName])
 
   return (
     <PageShell>
@@ -567,7 +660,7 @@ function PaymentScreen({ form }: { form: FormData }) {
             You&apos;re in{firstName ? `, ${firstName}` : ''}.
           </h1>
           <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 400, margin: '0 auto' }}>
-            {selectedPlan ? 'Complete your payment below to get instant access.' : 'Choose a plan to get immediate access to the Creator Cult dashboard.'}
+            {selectedPlan ? 'Complete your payment below to get instant access.' : 'Choose a plan to get immediate access to the dashboard.'}
           </p>
         </div>
 
@@ -576,7 +669,7 @@ function PaymentScreen({ form }: { form: FormData }) {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             {/* Monthly */}
             <button
-              onClick={() => setSelectedPlan('monthly')}
+              onClick={() => selectPlan('monthly')}
               style={{ width: '100%', padding: '20px 24px', borderRadius: 12, textAlign: 'left', cursor: 'pointer', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.35)', transition: 'background 0.15s, border-color 0.15s' }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(59,130,246,0.18)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.6)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(59,130,246,0.1)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(59,130,246,0.35)' }}
@@ -596,7 +689,7 @@ function PaymentScreen({ form }: { form: FormData }) {
 
             {/* 6-month */}
             <button
-              onClick={() => setSelectedPlan('sixmonth')}
+              onClick={() => selectPlan('sixmonth')}
               style={{ width: '100%', padding: '20px 24px', borderRadius: 12, textAlign: 'left', cursor: 'pointer', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', transition: 'background 0.15s, border-color 0.15s', position: 'relative' }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.22)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.12)' }}
@@ -623,22 +716,41 @@ function PaymentScreen({ form }: { form: FormData }) {
             </p>
           </div>
         ) : (
-          /* ── Embedded Stripe checkout ── */
+          /* ── Card form ── */
           <div>
-            <EmbeddedCheckoutProvider
-              key={selectedPlan}
-              stripe={stripePromise}
-              options={{ fetchClientSecret }}
-            >
-              <EmbeddedCheckout />
-            </EmbeddedCheckoutProvider>
+            {/* Selected plan badge */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 20 }}>
+              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
+                {selectedPlan === 'monthly' ? 'Monthly — £95/mo' : '6 Months — £395 total'}
+              </span>
+              <button
+                onClick={() => { setSelectedPlan(null); setClientSecret(null) }}
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: 12, cursor: 'pointer', fontWeight: 600, padding: 0 }}
+              >
+                Change
+              </button>
+            </div>
 
-            <button
-              onClick={() => setSelectedPlan(null)}
-              style={{ marginTop: 16, background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.3)', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, padding: '8px 0', width: '100%', justifyContent: 'center' }}
-            >
-              <ArrowLeft size={13} /> Change plan
-            </button>
+            {fetchError && (
+              <p style={{ fontSize: 13, color: '#f87171', textAlign: 'center', marginBottom: 16 }}>{fetchError}</p>
+            )}
+
+            {!clientSecret && !fetchError && (
+              <div style={{ display: 'flex', justifyContent: 'center', padding: '32px 0' }}>
+                <div style={{ width: 28, height: 28, borderRadius: '50%', border: '2.5px solid rgba(59,130,246,0.15)', borderTopColor: '#3B82F6', animation: 'spin 0.85s linear infinite' }} />
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+              </div>
+            )}
+
+            {clientSecret && (
+              <Elements
+                key={selectedPlan}
+                stripe={stripePromise}
+                options={{ clientSecret, appearance: STRIPE_APPEARANCE }}
+              >
+                <CheckoutForm plan={selectedPlan} onBack={() => { setSelectedPlan(null); setClientSecret(null) }} />
+              </Elements>
+            )}
           </div>
         )}
       </div>

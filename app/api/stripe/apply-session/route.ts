@@ -1,38 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 
-const PRICE_IDS = {
-  monthly:  'price_1TX1EGB3pws0HrHkAzRYo0Hb', // £95/mo recurring
-  sixmonth: 'price_1TX1EMB3pws0HrHkbUU1CiPb', // £395 one-time
+const PRICES = {
+  monthly:  { id: 'price_1TX1EGB3pws0HrHkAzRYo0Hb', amount: 9500  }, // £95/mo recurring
+  sixmonth: { id: 'price_1TX1EMB3pws0HrHkbUU1CiPb', amount: 39500 }, // £395 one-time
 }
 
 export async function POST(req: NextRequest) {
-  const origin = new URL(req.url).origin
   try {
     const { plan, email, name } = await req.json()
 
-    if (!plan || !PRICE_IDS[plan as keyof typeof PRICE_IDS]) {
+    if (!plan || !PRICES[plan as keyof typeof PRICES]) {
       return NextResponse.json({ error: 'Invalid plan' }, { status: 400 })
     }
 
-    const priceId  = PRICE_IDS[plan as keyof typeof PRICE_IDS]
     const isMonthly = plan === 'monthly'
 
-    const session = await stripe.checkout.sessions.create({
-      ui_mode: 'embedded_page',
-      mode: isMonthly ? 'subscription' : 'payment',
-      line_items: [{ price: priceId, quantity: 1 }],
-      return_url: `${origin}/apply/success?session_id={CHECKOUT_SESSION_ID}`,
-      ...(email ? { customer_email: email } : {}),
-      ...(isMonthly ? { subscription_data: { metadata: { source: 'apply_form' } } } : {}),
-      billing_address_collection: 'auto',
-      allow_promotion_codes: true,
-      metadata: { source: 'apply_form', name: name ?? '', plan },
-    })
+    if (isMonthly) {
+      // ── Subscription: create customer → subscription → return payment intent client_secret
+      const customer = await stripe.customers.create({
+        ...(email ? { email } : {}),
+        ...(name  ? { name  } : {}),
+        metadata: { source: 'apply_form' },
+      })
 
-    return NextResponse.json({ clientSecret: session.client_secret })
+      const subscription = await stripe.subscriptions.create({
+        customer: customer.id,
+        items: [{ price: PRICES.monthly.id }],
+        payment_behavior: 'default_incomplete',
+        payment_settings: {
+          payment_method_types: ['card'],
+          save_default_payment_method: 'on_subscription',
+        },
+        expand: ['latest_invoice.payment_intent'],
+        metadata: { source: 'apply_form', plan: 'monthly' },
+      })
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const invoice       = subscription.latest_invoice as any
+      const clientSecret  = invoice?.payment_intent?.client_secret as string | null
+
+      return NextResponse.json({
+        clientSecret,
+        type: 'subscription',
+      })
+    } else {
+      // ── One-time: create PaymentIntent directly
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: PRICES.sixmonth.amount,
+        currency: 'gbp',
+        automatic_payment_methods: { enabled: true },
+        ...(email ? { receipt_email: email } : {}),
+        metadata: { source: 'apply_form', plan: 'sixmonth', name: name ?? '' },
+      })
+
+      return NextResponse.json({
+        clientSecret: paymentIntent.client_secret,
+        type: 'payment_intent',
+      })
+    }
   } catch (err) {
     console.error('[apply-session]', err)
-    return NextResponse.json({ error: 'Failed to create session' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to create payment session' }, { status: 500 })
   }
 }
