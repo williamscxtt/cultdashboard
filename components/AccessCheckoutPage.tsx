@@ -22,7 +22,7 @@ const STRIPE_APPEARANCE = {
   rules: {
     '.Input': { border: '1px solid rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)' },
     '.Input:focus': { border: '1px solid rgba(255,255,255,0.5)', boxShadow: '0 0 0 3px rgba(255,255,255,0.06)' },
-    '.Label': { color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontWeight: '600', letterSpacing: '0.01em' },
+    '.Label': { color: 'rgba(255,255,255,0.65)', fontSize: '12px', fontWeight: '600', letterSpacing: '0.01em' },
   },
 }
 
@@ -38,6 +38,10 @@ const FEATURES = [
   { icon: Send,          label: 'Outreach tools: cold and warm outreach frameworks' },
   { icon: MessageSquare, label: 'Ask Will AI: 24/7 coaching, available any time you need it' },
 ]
+
+// Text colour tokens — two tiers, both readable
+const T1 = '#f0f0f0'               // primary: headings, prices, main copy
+const T2 = 'rgba(255,255,255,0.7)' // secondary: labels, meta, captions
 
 function CheckoutForm({ plan, onBack, intentType }: { plan: 'monthly' | 'sixmonth'; onBack: () => void; intentType: 'payment_intent' | 'setup_intent' }) {
   const stripe   = useStripe()
@@ -81,12 +85,12 @@ function CheckoutForm({ plan, onBack, intentType }: { plan: 'monthly' | 'sixmont
       >
         {status === 'loading' ? 'Processing…' : plan === 'monthly' ? 'Pay £95 / month →' : 'Pay £395 →'}
       </button>
-      <p style={{ marginTop: 10, fontSize: 11, textAlign: 'center', color: 'rgba(255,255,255,0.22)', lineHeight: 1.5 }}>
+      <p style={{ marginTop: 10, fontSize: 11, textAlign: 'center', color: T2, lineHeight: 1.5 }}>
         Secure payment · Powered by Stripe
       </p>
       <button
         type="button" onClick={onBack}
-        style={{ marginTop: 6, background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.28)', fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, padding: '6px 0', width: '100%', justifyContent: 'center', fontFamily: 'inherit' }}
+        style={{ marginTop: 6, background: 'transparent', border: 'none', color: T2, fontSize: 13, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, padding: '6px 0', width: '100%', justifyContent: 'center', fontFamily: 'inherit' }}
       >
         <ArrowLeft size={13} /> Change plan
       </button>
@@ -95,9 +99,7 @@ function CheckoutForm({ plan, onBack, intentType }: { plan: 'monthly' | 'sixmont
 }
 
 interface AccessCheckoutPageProps {
-  /** Optional first name — shows personalised greeting when set */
   firstName?: string
-  /** Pre-fill email in Stripe */
   email?: string
 }
 
@@ -131,7 +133,7 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
 
   return (
     <div style={{
-      minHeight: '100dvh', background: '#000', color: '#fff',
+      minHeight: '100dvh', background: '#000', color: T1,
       fontFamily: 'Inter, system-ui, sans-serif',
       paddingTop: 'max(40px, env(safe-area-inset-top))',
       paddingBottom: 'max(60px, env(safe-area-inset-bottom))',
@@ -153,17 +155,17 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
           <div style={{ width: 36, height: 36, borderRadius: 10, background: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             <Zap size={17} color="#fff" fill="#fff" />
           </div>
-          <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.3px' }}>Creator Cult</span>
+          <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.3px', color: T1 }}>Creator Cult</span>
         </div>
 
-        {/* Personalised greeting (apply form context) */}
+        {/* Personalised greeting */}
         {firstName && (
           <div style={{ marginBottom: 32, padding: '14px 18px', borderRadius: 12, background: 'rgba(74,222,128,0.07)', border: '1px solid rgba(74,222,128,0.2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <Check size={14} color="#4ade80" />
               <span style={{ fontSize: 14, fontWeight: 700, color: '#4ade80' }}>You&apos;re in, {firstName}.</span>
             </div>
-            <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.5)', marginTop: 4, lineHeight: 1.55 }}>
+            <p style={{ fontSize: 13, color: T2, marginTop: 4, lineHeight: 1.55 }}>
               Pick a plan below and get instant access to everything.
             </p>
           </div>
@@ -172,11 +174,11 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
         {/* Hero */}
         {!firstName && (
           <div style={{ marginBottom: 40 }}>
-            <h1 style={{ fontSize: 'clamp(28px, 6vw, 38px)', fontWeight: 800, letterSpacing: '-0.8px', lineHeight: 1.12, marginBottom: 14, color: '#fff' }}>
+            <h1 style={{ fontSize: 'clamp(28px, 6vw, 38px)', fontWeight: 800, letterSpacing: '-0.8px', lineHeight: 1.12, marginBottom: 14, color: T1 }}>
               Everything you need to grow<br />
               <span style={{ color: '#60a5fa' }}>on Instagram</span>, in one place.
             </h1>
-            <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, maxWidth: 480 }}>
+            <p style={{ fontSize: 15, color: T2, lineHeight: 1.7, maxWidth: 480 }}>
               Scripts written to your niche every week. Competitor intelligence. Analytics. Hook Lab. Ask Will AI. All the tools Will uses, now yours.
             </p>
           </div>
@@ -184,14 +186,14 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
 
         {/* Feature list */}
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 14, padding: '18px 20px', marginBottom: 32 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.35)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 13 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: T2, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 13 }}>
             What&apos;s inside
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px' }}>
             {FEATURES.map(({ label }) => (
               <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
                 <Check size={11} color="#4ade80" strokeWidth={3} style={{ flexShrink: 0, marginTop: 2 }} />
-                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.45 }}>{label}</span>
+                <span style={{ fontSize: 12, color: T1, lineHeight: 1.45 }}>{label}</span>
               </div>
             ))}
           </div>
@@ -199,7 +201,7 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
 
         {/* Pricing */}
         <div style={{ marginBottom: 10 }}>
-          <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.4)', letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>
+          <div style={{ fontSize: 10, fontWeight: 700, color: T2, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 14 }}>
             Choose a plan
           </div>
 
@@ -213,12 +215,12 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 5, letterSpacing: '0.02em' }}>Monthly</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: T2, marginBottom: 5, letterSpacing: '0.02em' }}>Monthly</div>
                     <div style={{ fontSize: 30, fontWeight: 800, color: '#93c5fd', letterSpacing: '-0.6px', lineHeight: 1 }}>
-                      £95<span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.35)' }}>/mo</span>
+                      £95<span style={{ fontSize: 13, fontWeight: 500, color: T2 }}>/mo</span>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: T2, fontWeight: 600 }}>
                     Cancel anytime <ArrowRight size={12} />
                   </div>
                 </div>
@@ -235,13 +237,13 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.5)', marginBottom: 5, letterSpacing: '0.02em' }}>6 Months</div>
-                    <div style={{ fontSize: 30, fontWeight: 800, color: '#fff', letterSpacing: '-0.6px', lineHeight: 1 }}>
-                      £395<span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.35)' }}> total</span>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: T2, marginBottom: 5, letterSpacing: '0.02em' }}>6 Months</div>
+                    <div style={{ fontSize: 30, fontWeight: 800, color: T1, letterSpacing: '-0.6px', lineHeight: 1 }}>
+                      £395<span style={{ fontSize: 13, fontWeight: 500, color: T2 }}> total</span>
                     </div>
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', marginTop: 4 }}>~£66/mo · save £175</div>
+                    <div style={{ fontSize: 11, color: T2, marginTop: 4 }}>~£66/mo · save £175</div>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(74,222,128,0.8)', fontWeight: 700 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(74,222,128,0.9)', fontWeight: 700 }}>
                     Save £175 <ArrowRight size={12} />
                   </div>
                 </div>
@@ -253,13 +255,13 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', marginBottom: 20 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Check size={13} color="#4ade80" />
-                  <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                  <span style={{ fontSize: 13, color: T1, fontWeight: 600 }}>
                     {selectedPlan === 'monthly' ? 'Monthly · £95/mo' : '6 Months · £395 total'}
                   </span>
                 </div>
                 <button
                   onClick={() => { setSelectedPlan(null); setClientSecret(null) }}
-                  style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.35)', fontSize: 12, cursor: 'pointer', fontWeight: 600, padding: 0, fontFamily: 'inherit' }}
+                  style={{ background: 'none', border: 'none', color: T2, fontSize: 12, cursor: 'pointer', fontWeight: 600, padding: 0, fontFamily: 'inherit' }}
                 >
                   Change
                 </button>
@@ -286,8 +288,8 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
 
         {/* Explainer */}
         {!selectedPlan && (
-          <div style={{ marginTop: 20, padding: '14px 18px', borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.65 }}>
-            <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Both plans include everything.</span>
+          <div style={{ marginTop: 20, padding: '14px 18px', borderRadius: 10, background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', fontSize: 12, color: T2, lineHeight: 1.65 }}>
+            <span style={{ color: T1, fontWeight: 600 }}>Both plans include everything.</span>
             {' '}Full dashboard access, all AI tools, weekly scripts, and unlimited use of every feature. The 6-month plan is the same tools at a lower monthly rate, no features removed.
           </div>
         )}
@@ -306,16 +308,16 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
                 />
               ))}
             </div>
-            <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+            <span style={{ fontSize: 12, color: T2, lineHeight: 1.5 }}>
               Used by creators and coaches growing on Instagram
             </span>
           </div>
         )}
 
         {/* Footer */}
-        <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.22)', lineHeight: 1.6, marginTop: 24, textAlign: 'center' }}>
+        <p style={{ fontSize: 12, color: T2, lineHeight: 1.6, marginTop: 24, textAlign: 'center' }}>
           Questions before you commit?{' '}
-          <a href="https://instagram.com/williamscxtt" style={{ color: 'rgba(255,255,255,0.4)', textDecoration: 'none', fontWeight: 600 }}>
+          <a href="https://instagram.com/williamscxtt" style={{ color: T1, textDecoration: 'none', fontWeight: 600 }}>
             DM Will on Instagram →
           </a>
         </p>
