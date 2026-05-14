@@ -632,7 +632,7 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
   const hasAiData = insights || aiNiche || aiIdealClient || aiTransformation || aiContentAngle
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
+    <div className="dash-page" style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
 
       {/* Admin read-only notice */}
       {adminView && (
@@ -725,7 +725,7 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
               AI Personalised
             </span>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px' }}>
+          <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px 24px' }}>
             {aiNiche && (
               <div>
                 <div style={{ fontSize: 11, color: 'var(--muted-foreground)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 4 }}>Niche</div>

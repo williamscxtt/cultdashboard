@@ -71,7 +71,7 @@ function SuccessContent() {
             <Check size={30} color="#4ade80" strokeWidth={2.5} />
           </div>
 
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: '#f0f0f0', marginBottom: 12, letterSpacing: '-0.5px', lineHeight: 1.2 }}>
+          <h1 style={{ fontSize: 'clamp(22px, 6vw, 28px)', fontWeight: 800, color: '#f0f0f0', marginBottom: 12, letterSpacing: '-0.5px', lineHeight: 1.2 }}>
             You&apos;re in. Welcome to the Cult.
           </h1>
 

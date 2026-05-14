@@ -231,7 +231,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', background: 'var(--background)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: 'max(24px, env(safe-area-inset-top))', paddingBottom: 'max(24px, env(safe-area-inset-bottom))', paddingLeft: 24, paddingRight: 24 }}>
+    <div style={{ minHeight: '100dvh', background: 'var(--background)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: 'max(24px, env(safe-area-inset-top))', paddingBottom: 'max(24px, env(safe-area-inset-bottom))', paddingLeft: 'max(16px, env(safe-area-inset-left))', paddingRight: 'max(16px, env(safe-area-inset-right))' }}>
       {/* Logo */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 36 }}>
         <div style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--accent)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -310,7 +310,12 @@ function TypeSelector({
 
   return (
     <div style={{ width: '100%', maxWidth: 580 }}>
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 36, boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+      <div className="onb-step-card" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 36, boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+        <style>{`
+          @media (max-width: 640px) {
+            .onb-step-card { padding: 20px !important; border-radius: 12px !important; }
+          }
+        `}</style>
         <div style={{ marginBottom: 28 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
             Step 0 of {selected === 'creator' ? '6' : '5'}
@@ -323,7 +328,7 @@ function TypeSelector({
           </p>
         </div>
 
-        <div style={{ display: 'flex', gap: 14, marginBottom: 24 }}>
+        <div className="card-row" style={{ display: 'flex', gap: 14, marginBottom: 24 }}>
           {/* Coach card */}
           <div
             onClick={() => { setSelected('coach'); setCreatorStylePick(null) }}
@@ -440,7 +445,7 @@ function WizardShell({
         ))}
       </div>
 
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 36, boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
+      <div className="onb-step-card" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 14, padding: 36, boxShadow: '0 4px 24px rgba(0,0,0,0.06)' }}>
         <div style={{ marginBottom: 24 }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: 6 }}>
             Step {step + 1} of {steps.length}

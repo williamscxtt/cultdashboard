@@ -104,7 +104,16 @@ export default function AdminClientOverview({ profile, reels, weeklyLogs, dmSale
     <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
       {/* ── Top stat tiles ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10 }}>
+      <div className="admin-overview-tiles" style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 10 }}>
+        <style>{`
+          @media (max-width: 1024px) {
+            .admin-overview-tiles { grid-template-columns: repeat(3, 1fr) !important; }
+            .admin-overview-body { grid-template-columns: 1fr !important; }
+          }
+          @media (max-width: 600px) {
+            .admin-overview-tiles { grid-template-columns: repeat(2, 1fr) !important; }
+          }
+        `}</style>
         <StatTile
           label="Followers"
           value={fmt(profile.followers_count)}
@@ -123,7 +132,7 @@ export default function AdminClientOverview({ profile, reels, weeklyLogs, dmSale
       </div>
 
       {/* ── Two-column body ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16, alignItems: 'start' }}>
+      <div className="admin-overview-body" style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: 16, alignItems: 'start' }}>
 
         {/* Left */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -185,7 +194,8 @@ export default function AdminClientOverview({ profile, reels, weeklyLogs, dmSale
               <div style={{ padding: '12px 16px 8px', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--muted-foreground)' }}>
                 Recent reels
               </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <div className="table-wrap" style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', minWidth: 560, borderCollapse: 'collapse' }}>
                 <thead>
                   <tr>
                     {['Date', 'Hook', 'Format', 'Views', 'Eng.'].map(h => (
@@ -216,6 +226,7 @@ export default function AdminClientOverview({ profile, reels, weeklyLogs, dmSale
                   })}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </div>

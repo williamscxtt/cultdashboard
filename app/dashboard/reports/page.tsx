@@ -130,7 +130,7 @@ function ReportView({ report }: { report: ProgressReport }) {
       </Card>
 
       {/* Metrics row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
+      <div className="stats-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 8 }}>
         <MiniStat label="Posts" value={d.metrics.posts_count} />
         <MiniStat label="Avg Views" value={fmtNum(d.metrics.avg_views)} />
         <MiniStat label="Top Reel" value={fmtNum(d.metrics.top_reel_views)} />
@@ -142,7 +142,7 @@ function ReportView({ report }: { report: ProgressReport }) {
       </div>
 
       {/* What worked / Needs work */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         <Card style={{ padding: 18 }}>
           <div style={{ fontSize: 12, fontWeight: 600, color: 'hsl(142 71% 45%)', marginBottom: 12, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
             What Worked
@@ -341,7 +341,7 @@ export default function ReportsPage() {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
+    <div className="dash-page" style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title="Progress Reports"
         description="Weekly AI-generated coaching reports for every client. Use these in your check-ins."
@@ -377,7 +377,12 @@ export default function ReportsPage() {
       </Card>
 
       {selectedClientId && (
-        <div style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16, alignItems: 'flex-start' }}>
+        <div className="reports-grid" style={{ display: 'grid', gridTemplateColumns: '220px 1fr', gap: 16, alignItems: 'flex-start' }}>
+          <style>{`
+            @media (max-width: 768px) {
+              .reports-grid { grid-template-columns: 1fr !important; }
+            }
+          `}</style>
           {/* History sidebar */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>

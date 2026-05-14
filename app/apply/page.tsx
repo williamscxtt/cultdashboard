@@ -475,19 +475,19 @@ export default function ApplyPage() {
             <p style={subStyle}>Where do we send your result?</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="apply-name-grid">
                 <Field label="First name">
-                  <input className="apply-input" type="text" placeholder="First" value={form.first_name} onChange={e => set('first_name', e.target.value)} />
+                  <input className="apply-input" type="text" autoComplete="given-name" placeholder="First" value={form.first_name} onChange={e => set('first_name', e.target.value)} />
                 </Field>
                 <Field label="Last name">
-                  <input className="apply-input" type="text" placeholder="Last" value={form.last_name} onChange={e => set('last_name', e.target.value)} />
+                  <input className="apply-input" type="text" autoComplete="family-name" placeholder="Last" value={form.last_name} onChange={e => set('last_name', e.target.value)} />
                 </Field>
               </div>
               <Field label="Email address">
-                <input className="apply-input" type="email" placeholder="you@example.com" value={form.email} onChange={e => set('email', e.target.value)} />
+                <input className="apply-input" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={e => set('email', e.target.value)} />
               </Field>
               <Field label="Phone (WhatsApp, include country code)">
-                <input className="apply-input" type="tel" placeholder="+44 7911 123456" value={form.phone} onChange={e => set('phone', e.target.value)} />
+                <input className="apply-input" type="tel" inputMode="tel" autoComplete="tel" placeholder="+44 7911 123456" value={form.phone} onChange={e => set('phone', e.target.value)} />
                 {form.phone.trim() && !form.phone.trim().startsWith('+') && (
                   <p style={{ fontSize: 11, color: 'rgba(255,110,60,0.9)', marginTop: 5 }}>Start with your country code, e.g. +44 for UK, +1 for US</p>
                 )}
@@ -533,7 +533,7 @@ export default function ApplyPage() {
 // ── Shared styles ─────────────────────────────────────────────────────────────
 
 const headingStyle: React.CSSProperties = {
-  fontSize: 26, fontWeight: 800, color: '#f0f0f0',
+  fontSize: 'clamp(22px, 5.5vw, 26px)', fontWeight: 800, color: '#f0f0f0',
   marginBottom: 8, letterSpacing: '-0.5px', lineHeight: 1.2,
 }
 const subStyle: React.CSSProperties = {
@@ -578,14 +578,15 @@ function PageShell({ children }: { children: React.ReactNode }) {
         .apply-btn:hover:not(:disabled) { background: #60A5FA; }
         .apply-btn:disabled { opacity: 0.45; cursor: not-allowed; }
         .apply-back-btn {
-          width: 100%; height: 40px; background: transparent; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.08);
+          width: 100%; height: 44px; background: transparent; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.08);
           border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
           font-family: inherit; transition: color 0.15s, border-color 0.15s;
           display: flex; align-items: center; justify-content: center; gap: 6px;
         }
         .apply-back-btn:hover { color: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.18); }
         .pill-option {
-          padding: 10px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+          padding: 12px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
+          min-height: 44px;
           cursor: pointer; border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.75);
           background: rgba(255,255,255,0.02); font-family: inherit; transition: all 0.12s; text-align: left;
           display: flex; align-items: center;
@@ -608,6 +609,10 @@ function PageShell({ children }: { children: React.ReactNode }) {
         .money-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #3B82F6; cursor: pointer; border: 2.5px solid #000; box-shadow: 0 0 0 1.5px rgba(59,130,246,0.7); }
         .money-slider::-moz-range-track { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.12); }
         .money-slider::-moz-range-progress { height: 4px; border-radius: 2px; background: #3B82F6; }
+        .apply-name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 420px) {
+          .apply-name-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       <div style={{ position: 'fixed', top: -100, left: '50%', transform: 'translateX(-50%)', width: 500, height: 400, background: '#3B82F6', borderRadius: '50%', filter: 'blur(120px)', opacity: 0.07, animation: 'glowPulse 5s ease-in-out infinite', pointerEvents: 'none' }} />

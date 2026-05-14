@@ -202,6 +202,13 @@ select { padding-right: 32px; appearance: none; cursor: pointer; }
   div, section, article, aside, main, p, li { max-width: 100%; }
   img, video, canvas, svg, iframe { max-width: 100%; height: auto; }
 
+  /* Headings inside dashboard pages: scale down to prevent overflow */
+  .dash-page h1 { font-size: clamp(18px, 5.5vw, 24px) !important; line-height: 1.2; }
+  .dash-page h2 { font-size: clamp(15px, 4.5vw, 20px) !important; line-height: 1.25; }
+
+  /* Forms: inputs always full width on mobile */
+  input, textarea, select { width: 100%; max-width: 100%; }
+
   /* Layout */
   .dash-page { padding: 12px !important; }
 

@@ -432,12 +432,14 @@ export default function LeadMagnetsView({ initialSubmissions }: Props) {
       </div>
 
       {/* Table */}
-      <div style={{
+      <div className="table-wrap" style={{
         background: 'var(--card)',
         border: '1px solid var(--border)',
         borderRadius: 12,
         overflow: 'hidden',
+        overflowX: 'auto',
       }}>
+        <div style={{ minWidth: 720 }}>
         {/* Table header */}
         <div style={{
           display: 'grid',
@@ -540,6 +542,7 @@ export default function LeadMagnetsView({ initialSubmissions }: Props) {
             )
           })
         )}
+        </div>
       </div>
 
       {/* Footer count */}

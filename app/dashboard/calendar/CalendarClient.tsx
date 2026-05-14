@@ -150,7 +150,7 @@ function MonthStats({
   const remaining = Math.max(0, target - filled)
 
   return (
-    <div style={{
+    <div className="stats-grid-4" style={{
       display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
       gap: 12, marginBottom: 20,
     }}>
@@ -633,7 +633,8 @@ export default function CalendarClient({ profileId, reels }: Props) {
       {/* ── Grid view ─────────────────────────────────────────────────────── */}
       {viewMode === 'grid' && (
         <>
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+          <div className="table-wrap" style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', overflowX: 'auto' }}>
+          <div style={{ minWidth: 600 }}>
             {/* Day headers */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid var(--border)' }}>
               {DAY_HEADERS.map(h => (
@@ -793,6 +794,7 @@ export default function CalendarClient({ profileId, reels }: Props) {
                 })}
               </div>
             ))}
+          </div>
           </div>
 
           {/* Detail panel */}

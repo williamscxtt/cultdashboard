@@ -23,12 +23,14 @@ export default function ImpersonationBanner({ clientName }: { clientName: string
     <div style={{
       display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       background: 'hsl(220 90% 56%)', color: '#fff',
-      padding: '8px 20px', fontSize: 13, fontWeight: 600,
-      gap: 12,
+      padding: '8px 16px', fontSize: 13, fontWeight: 600,
+      gap: 10, flexWrap: 'wrap',
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <Eye size={14} />
-        Viewing as <strong>{clientName}</strong>, you can see and use their full dashboard
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <Eye size={14} style={{ flexShrink: 0 }} />
+        <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          Viewing as <strong>{clientName}</strong>
+        </span>
       </div>
       <button
         onClick={exitImpersonation}

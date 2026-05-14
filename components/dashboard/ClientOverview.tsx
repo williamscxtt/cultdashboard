@@ -48,14 +48,14 @@ export default function ClientOverview({ profile, reels, latestScript }: Props) 
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
+    <div className="dash-page" style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
       <PageHeader
         title={`${getGreeting()}, ${firstName}`}
         description={today}
       />
 
       {/* Stats row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
+      <div className="stats-grid-4" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 24 }}>
         <StatCard
           label="Followers"
           value={profile.ig_username ? '—' : 'Not connected'}
@@ -79,7 +79,7 @@ export default function ClientOverview({ profile, reels, latestScript }: Props) 
       </div>
 
       {/* Feature cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="grid-2col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
         {/* Scripts card */}
         <Card style={{ padding: 20 }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 12 }}>

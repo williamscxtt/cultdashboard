@@ -146,6 +146,11 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
         .plan-btn          { transition: border-color 0.15s, background 0.15s; }
         .plan-btn:hover    { border-color: rgba(59,130,246,0.6) !important; background: rgba(59,130,246,0.13) !important; }
         .plan-btn-best:hover { border-color: rgba(74,222,128,0.55) !important; background: rgba(74,222,128,0.06) !important; }
+        .access-features-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; }
+        @media (max-width: 480px) {
+          .access-features-grid { grid-template-columns: 1fr !important; }
+          .access-plan-row { flex-direction: column !important; align-items: flex-start !important; gap: 10px !important; }
+        }
       `}</style>
 
       <div style={{ maxWidth: 560, margin: '0 auto', animation: 'fadeUp 0.45s ease both' }}>
@@ -189,7 +194,7 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
           <div style={{ fontSize: 10, fontWeight: 700, color: T2, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 13 }}>
             What&apos;s inside
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 12px' }}>
+          <div className="access-features-grid">
             {FEATURES.map(({ label }) => (
               <div key={label} style={{ display: 'flex', alignItems: 'flex-start', gap: 7 }}>
                 <Check size={11} color="#4ade80" strokeWidth={3} style={{ flexShrink: 0, marginTop: 2 }} />
@@ -213,7 +218,7 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
                 className="plan-btn"
                 style={{ width: '100%', padding: '20px 22px', borderRadius: 12, textAlign: 'left', cursor: 'pointer', background: 'rgba(59,130,246,0.07)', border: '1px solid rgba(59,130,246,0.28)', fontFamily: 'inherit' }}
               >
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="access-plan-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: T2, marginBottom: 5, letterSpacing: '0.02em' }}>Monthly</div>
                     <div style={{ fontSize: 30, fontWeight: 800, color: '#93c5fd', letterSpacing: '-0.6px', lineHeight: 1 }}>
@@ -235,7 +240,7 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
                 <div style={{ position: 'absolute', top: -10, right: 16, fontSize: 10, fontWeight: 800, color: '#000', background: '#4ade80', padding: '3px 10px', borderRadius: 99, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
                   Best value
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="access-plan-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: T2, marginBottom: 5, letterSpacing: '0.02em' }}>6 Months</div>
                     <div style={{ fontSize: 30, fontWeight: 800, color: T1, letterSpacing: '-0.6px', lineHeight: 1 }}>

@@ -412,7 +412,8 @@ export default function ClientsManager({ initialClients }: Props) {
 
       {/* Table view */}
       {view === 'table' && <Card style={{ overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div className="table-wrap" style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', minWidth: 720, borderCollapse: 'collapse' }}>
           <thead>
             <tr>
               {['Name', 'Niche', 'Instagram', 'Followers', 'Joined', 'Status', 'Actions'].map(h => (
@@ -446,6 +447,7 @@ export default function ClientsManager({ initialClients }: Props) {
             )}
           </tbody>
         </table>
+        </div>
       </Card>}
 
       {showModal && (

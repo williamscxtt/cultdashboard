@@ -2,8 +2,8 @@ export const metadata = { title: 'Data Deletion — CULT Dashboard' }
 
 export default function DataDeletionPage() {
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: '64px 24px', fontFamily: 'system-ui, sans-serif', color: '#111', lineHeight: 1.7 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Data Deletion Request</h1>
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: 'clamp(32px, 8vw, 64px) clamp(16px, 5vw, 24px)', fontFamily: 'system-ui, sans-serif', color: '#111', lineHeight: 1.7 }}>
+      <h1 style={{ fontSize: 'clamp(22px, 6vw, 28px)', fontWeight: 700, marginBottom: 8 }}>Data Deletion Request</h1>
       <p style={{ color: '#666', fontSize: 14, marginBottom: 40 }}>How to remove your data from CULT Dashboard</p>
 
       <section style={{ marginBottom: 32 }}>

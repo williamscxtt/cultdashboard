@@ -232,7 +232,7 @@ export default function LoginPage() {
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                 <div>
                   <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Email address</label>
-                  <input className="login-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
+                  <input className="login-input" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
                 </div>
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
@@ -241,7 +241,7 @@ export default function LoginPage() {
                       Forgot password?
                     </button>
                   </div>
-                  <input className="login-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
+                  <input className="login-input" type="password" autoComplete="current-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
                 </div>
 
                 {error && <ErrorBox>{error}</ErrorBox>}
@@ -283,15 +283,15 @@ export default function LoginPage() {
                 <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Full name</label>
-                    <input className="login-input" type="text" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" required />
+                    <input className="login-input" type="text" autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" required />
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Email address</label>
-                    <input className="login-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
+                    <input className="login-input" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Password</label>
-                    <input className="login-input" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 8 characters" minLength={8} required />
+                    <input className="login-input" type="password" autoComplete="new-password" value={password} onChange={e => setPassword(e.target.value)} placeholder="At least 8 characters" minLength={8} required />
                   </div>
 
                   {error && <ErrorBox>{error}</ErrorBox>}
@@ -329,7 +329,7 @@ export default function LoginPage() {
                 <form onSubmit={handleForgot} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Email address</label>
-                    <input className="login-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
+                    <input className="login-input" type="email" inputMode="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="you@example.com" required />
                   </div>
 
                   {error && <ErrorBox>{error}</ErrorBox>}

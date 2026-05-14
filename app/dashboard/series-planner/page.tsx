@@ -116,7 +116,7 @@ export default function SeriesPlannerPage() {
   }
 
   return (
-    <div style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
+    <div className="dash-page" style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>

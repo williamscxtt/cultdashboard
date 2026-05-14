@@ -83,20 +83,22 @@ export default function TopBar({ profile, isImpersonating, onMobileMenuOpen }: P
           <button
             className="topbar-hamburger"
             onClick={onMobileMenuOpen}
+            aria-label="Open menu"
             style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: 32,
-              height: 32,
-              borderRadius: 7,
+              width: 44,
+              height: 44,
+              marginLeft: -10,
+              borderRadius: 8,
               background: 'none',
               border: 'none',
               cursor: 'pointer',
               color: 'var(--foreground)',
             }}
           >
-            <Menu size={18} />
+            <Menu size={20} />
           </button>
 
           {/* Breadcrumb */}
