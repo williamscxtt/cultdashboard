@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
         items: [{ price: PRICES.monthly.id }],
         payment_behavior: 'default_incomplete',
         payment_settings: {
-          payment_method_types: ['card'],
           save_default_payment_method: 'on_subscription',
         },
         expand: ['latest_invoice.payment_intent'],
@@ -38,8 +37,22 @@ export async function POST(req: NextRequest) {
       })
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const invoice       = subscription.latest_invoice as any
-      const clientSecret  = invoice?.payment_intent?.client_secret as string | null
+      const invoice = subscription.latest_invoice as any
+      let clientSecret: string | null = invoice?.payment_intent?.client_secret ?? null
+
+      // Fallback: expand may have returned the PI as a bare ID string
+      if (!clientSecret) {
+        const piId = typeof invoice?.payment_intent === 'string' ? invoice.payment_intent : null
+        if (piId) {
+          const pi = await stripe.paymentIntents.retrieve(piId)
+          clientSecret = pi.client_secret
+        }
+      }
+
+      if (!clientSecret) {
+        console.error('[apply-session] No client_secret on subscription invoice', subscription.id)
+        return NextResponse.json({ error: 'Failed to create payment session. Please try the 6-month plan or contact Will.' }, { status: 500 })
+      }
 
       return NextResponse.json({
         clientSecret,
