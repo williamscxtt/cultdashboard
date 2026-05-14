@@ -121,7 +121,7 @@ export default function AccessPage() {
 
             {/* Monthly */}
             <a
-              href="https://buy.stripe.com/14A9AS0Ee0ihe8Cagc9IQ1G"
+              href="https://buy.stripe.com/4gM3cufz86GF3tYdso9IQ1J"
               className="plan-card"
               style={{
                 display: 'block',
@@ -138,7 +138,7 @@ export default function AccessPage() {
                     Monthly
                   </div>
                   <div style={{ fontSize: 30, fontWeight: 800, color: '#93c5fd', letterSpacing: '-0.6px', lineHeight: 1 }}>
-                    £495
+                    £75
                     <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.3)' }}>/mo</span>
                   </div>
                 </div>
@@ -150,7 +150,7 @@ export default function AccessPage() {
 
             {/* 6-month */}
             <a
-              href="https://buy.stripe.com/dRm3cuev48ON3tY8849IQ1I"
+              href="https://buy.stripe.com/4gM9ASgDcc0ZaWqcok9IQ1K"
               className="plan-card plan-card-best"
               style={{
                 display: 'block',
@@ -178,15 +178,15 @@ export default function AccessPage() {
                     6 Months
                   </div>
                   <div style={{ fontSize: 30, fontWeight: 800, color: '#fff', letterSpacing: '-0.6px', lineHeight: 1 }}>
-                    £2,000
+                    £300
                     <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.3)' }}> total</span>
                   </div>
                   <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 4 }}>
-                    ~£333/mo · save £970
+                    ~£50/mo · save £150
                   </div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(74,222,128,0.8)', fontWeight: 700 }}>
-                  Save £970 <ArrowRight size={12} />
+                  Save £150 <ArrowRight size={12} />
                 </div>
               </div>
             </a>

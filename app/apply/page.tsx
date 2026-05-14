@@ -257,7 +257,7 @@ export default function ApplyPage() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 420, margin: '0 auto' }}>
             {/* Monthly */}
             <a
-              href="https://buy.stripe.com/14A9AS0Ee0ihe8Cagc9IQ1G"
+              href="https://buy.stripe.com/4gM3cufz86GF3tYdso9IQ1J"
               style={{ display: 'block', padding: '20px 24px', borderRadius: 12, textDecoration: 'none', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.35)', transition: 'background 0.15s, border-color 0.15s' }}
               onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(59,130,246,0.18)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(59,130,246,0.6)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(59,130,246,0.1)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(59,130,246,0.35)' }}
@@ -266,7 +266,7 @@ export default function ApplyPage() {
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>Monthly</div>
                   <div style={{ fontSize: 28, fontWeight: 800, color: '#93c5fd', letterSpacing: '-0.5px' }}>
-                    £495<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>/mo</span>
+                    £75<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}>/mo</span>
                   </div>
                 </div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>
@@ -275,9 +275,9 @@ export default function ApplyPage() {
               </div>
             </a>
 
-            {/* 6-month — NOTE: update this Stripe URL to a £2,000 product */}
+            {/* 6-month */}
             <a
-              href="https://buy.stripe.com/dRm3cuev48ON3tY8849IQ1I"
+              href="https://buy.stripe.com/4gM9ASgDcc0ZaWqcok9IQ1K"
               style={{ display: 'block', padding: '20px 24px', borderRadius: 12, textDecoration: 'none', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)', transition: 'background 0.15s, border-color 0.15s', position: 'relative' }}
               onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.22)' }}
               onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.12)' }}
@@ -294,11 +294,11 @@ export default function ApplyPage() {
                 <div style={{ textAlign: 'left' }}>
                   <div style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.55)', marginBottom: 4 }}>6 Months</div>
                   <div style={{ fontSize: 28, fontWeight: 800, color: '#f0f0f0', letterSpacing: '-0.5px' }}>
-                    £2,000<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}> total</span>
+                    £300<span style={{ fontSize: 14, fontWeight: 600, color: 'rgba(255,255,255,0.3)' }}> total</span>
                   </div>
                 </div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', fontWeight: 600 }}>
-                  Save £970 <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />
+                  Save £150 <ArrowRight size={13} style={{ display: 'inline', verticalAlign: 'middle' }} />
                 </div>
               </div>
             </a>
