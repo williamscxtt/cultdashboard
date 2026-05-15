@@ -50,7 +50,16 @@ export default function DashboardShell({
   const displayProfile = isImpersonating ? effectiveProfile : realProfile
 
   return (
-    <div style={{ display: 'flex', height: '100dvh', overflow: 'hidden', background: 'var(--background)' }}>
+    // position:fixed pins the shell to the viewport — iOS Safari can't scroll the
+    // page body when the URL bar appears/disappears, so the TopBar never moves.
+    // Only <main> scrolls internally.
+    <div style={{
+      position: 'fixed',
+      inset: 0,
+      display: 'flex',
+      overflow: 'hidden',
+      background: 'var(--background)',
+    }}>
       <Sidebar
         realProfile={realProfile}
         effectiveProfile={effectiveProfile}
@@ -63,7 +72,6 @@ export default function DashboardShell({
       <div style={{
         flex: 1,
         minWidth: 0,
-        height: '100dvh',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -78,7 +86,14 @@ export default function DashboardShell({
             clientName={effectiveProfile.name || effectiveProfile.email || 'Client'}
           />
         )}
-        <main style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden', paddingTop: 28, paddingBottom: 'env(safe-area-inset-bottom)' }}>
+        <main style={{
+          flex: 1,
+          overflowY: 'auto',
+          overflowX: 'hidden',
+          paddingTop: 28,
+          paddingBottom: 'env(safe-area-inset-bottom)',
+          WebkitOverflowScrolling: 'touch',
+        }}>
           {children}
         </main>
       </div>

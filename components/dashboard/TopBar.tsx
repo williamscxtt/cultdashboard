@@ -74,8 +74,6 @@ export default function TopBar({ profile, isImpersonating, onMobileMenuOpen }: P
         paddingLeft: 'max(16px, calc(16px + env(safe-area-inset-left)))',
         paddingRight: 'max(16px, calc(16px + env(safe-area-inset-right)))',
         background: 'var(--card)',
-        position: 'sticky',
-        top: 0,
         zIndex: 40,
       }}>
         {/* Left: hamburger (mobile) + breadcrumb */}
