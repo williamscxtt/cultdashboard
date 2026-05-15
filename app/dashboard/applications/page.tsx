@@ -325,11 +325,11 @@ export default function ApplicationsPage() {
         </div>
       </div>
 
-      {/* Recent applications */}
+      {/* All applications */}
       <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
         <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
           <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            Recent applications (last 20)
+            All applications ({data.recent.length})
           </div>
         </div>
         <div className="table-wrap" style={{ overflowX: 'auto' }}>

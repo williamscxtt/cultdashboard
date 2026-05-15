@@ -95,8 +95,8 @@ type Outcome = 'qualified' | 'payment' | 'disqualified'
 function getOutcome(form: FormData): Outcome {
   const inv = form.investment_amount
 
-  // Hard disqualify — can't invest
-  if (inv === 'Not right now') return 'disqualified'
+  // Everyone sees the payment page — no hard disqualification
+  if (inv === 'Not right now') return 'payment'
 
   // £500 or below → can only afford dashboard, self-serve
   if (inv === '£500 or below') return 'payment'

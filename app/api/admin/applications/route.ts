@@ -135,8 +135,8 @@ export async function GET() {
     // Table may not exist yet — ignore
   }
 
-  // ── Recent applications (last 20) ───────────────────────────────────────────
-  const recent = rows.slice(0, 20).map(r => ({
+  // ── All applications ────────────────────────────────────────────────────────
+  const recent = rows.map(r => ({
     id: r.id,
     created_at: r.created_at,
     name: r.name,
