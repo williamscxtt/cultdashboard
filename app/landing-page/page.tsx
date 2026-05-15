@@ -508,7 +508,7 @@ function IntelMock({ on }: { on: boolean }) {
               <div style={{ fontSize: 10, color: '#64748b', marginTop: 1, fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.hook}</div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#f1f5f9', fontFamily: 'Inter, sans-serif' }}>{r.views}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#f1f5f9', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{r.views}</div>
               <div style={{ fontSize: 10, color: '#22c55e', fontWeight: 600 }}>{r.delta}</div>
             </div>
           </div>
@@ -608,13 +608,13 @@ function Faq({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
   return (
     <div style={{ borderBottom: '1px solid rgba(255,255,255,0.07)' }}>
-      <button onClick={() => setOpen(!open)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'Inter, -apple-system, sans-serif', fontSize: '15px', fontWeight: 600, color: '#E2E8F0', lineHeight: 1.5, gap: 24 }}>
+      <button onClick={() => setOpen(!open)} style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', background: 'transparent', border: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif", fontSize: '15px', fontWeight: 600, color: '#E2E8F0', lineHeight: 1.5, gap: 24 }}>
         <span>{q}</span>
         <span style={{ flexShrink: 0, color: 'rgba(255,255,255,0.4)', display: 'inline-flex', transition: 'transform .25s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}>
           <IconChevronDown />
         </span>
       </button>
-      {open && <div style={{ padding: '0 24px 22px', fontSize: 15, color: '#94a3b8', lineHeight: 1.8, maxWidth: 680, fontFamily: 'Inter, -apple-system, sans-serif' }}>{a}</div>}
+      {open && <div style={{ padding: '0 24px 22px', fontSize: 15, color: '#94a3b8', lineHeight: 1.8, maxWidth: 680, fontFamily: "'Plus Jakarta Sans', -apple-system, sans-serif" }}>{a}</div>}
     </div>
   )
 }
@@ -787,15 +787,16 @@ export default function LandingPage() {
 
   return (
     <>
-      <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="" />
-      <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,900&display=swap" rel="stylesheet" />
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <style>{`
         /* iOS overscroll: paint html + body dark so rubber-band reveals no white gap */
         html, body { background-color: #0d0d0a !important; margin: 0 !important; padding: 0 !important; }
         .lp-root { all: initial; display: block; }
         .lp-root *, .lp-root *::before, .lp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .lp-root {
-          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+          font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
           font-size: 16px; font-weight: 400; line-height: 1.65;
           color: #cbd5e1; background-color: #0d0d0a;
           min-height: 100vh; min-height: 100dvh; overflow-x: hidden;
@@ -821,9 +822,9 @@ export default function LandingPage() {
         }
 
         /* ── Typography ── */
-        .lp-h1 { font-family: 'Cabinet Grotesk', 'Inter', -apple-system, sans-serif; font-size: clamp(38px, 7vw, 88px); font-weight: 900; line-height: 1.02; letter-spacing: -0.03em; color: #f1f5f9; }
-        .lp-h2 { font-family: 'Cabinet Grotesk', 'Inter', -apple-system, sans-serif; font-size: clamp(30px, 5vw, 62px); font-weight: 900; line-height: 1.08; letter-spacing: -0.025em; color: #f1f5f9; }
-        .lp-h3 { font-family: 'Inter', -apple-system, sans-serif !important; font-size: clamp(20px, 2.5vw, 28px); font-weight: 700; line-height: 1.2; color: #f1f5f9; }
+        .lp-h1 { font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; font-size: clamp(38px, 7vw, 88px); font-weight: 800; line-height: 1.04; letter-spacing: -0.03em; color: #f1f5f9; }
+        .lp-h2 { font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; font-size: clamp(30px, 5vw, 62px); font-weight: 800; line-height: 1.1; letter-spacing: -0.025em; color: #f1f5f9; }
+        .lp-h3 { font-family: 'Plus Jakarta Sans', -apple-system, sans-serif !important; font-size: clamp(20px, 2.5vw, 28px); font-weight: 700; line-height: 1.2; color: #f1f5f9; }
         .lp-body { font-size: 16px; color: rgba(255,255,255,0.72); line-height: 1.75; }
         .lp-body-lg { font-size: clamp(16px, 1.5vw, 19px); color: rgba(255,255,255,0.72); line-height: 1.75; }
         .lp-blue { color: #3b82f6; }
@@ -835,9 +836,8 @@ export default function LandingPage() {
         .lp-section { padding: 80px 0; }
         .lp-hr { height: 1px; background: rgba(59,130,246,0.12); }
 
-        /* ── Cursor blink ── */
+        /* ── Cursor blink (used in product mockup only) ── */
         @keyframes lp-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-        .lp-cursor { display: inline-block; color: #3b82f6; animation: lp-blink .65s step-end infinite; margin-left: 2px; font-weight: 300; }
         /* ── Badge dot pulse ── */
         @keyframes lp-pulse-dot { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.7); } }
         .lp-pill-dot { animation: lp-pulse-dot 2s ease-in-out infinite; }
@@ -845,29 +845,29 @@ export default function LandingPage() {
         /* ── Feature strip ── */
         .lp-feat-strip { padding: 18px 0; border-top: 1px solid rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05); overflow: hidden; }
         .lp-feat-inner { display: flex; align-items: center; justify-content: center; gap: 0; flex-wrap: wrap; }
-        .lp-feat-item { font-family: 'Inter', sans-serif !important; font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #64748b; padding: 4px 20px; white-space: nowrap; }
+        .lp-feat-item { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #64748b; padding: 4px 20px; white-space: nowrap; }
         .lp-feat-sep { color: #3b82f6; font-size: 8px; flex-shrink: 0; }
 
         /* ── Pill ── */
-        .lp-pill { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); background: rgba(59,130,246,0.06); padding: 7px 16px; border-radius: 999px; margin-bottom: 28px; }
+        .lp-pill { display: inline-flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #60a5fa; border: 1px solid rgba(96,165,250,0.2); background: rgba(59,130,246,0.06); padding: 7px 16px; border-radius: 999px; margin-bottom: 28px; }
         .lp-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; flex-shrink: 0; }
 
         /* ── CTAs ── */
-        .lp-cta-primary { display: inline-flex; align-items: center; gap: 10px; font-family: 'Inter', sans-serif !important; font-size: 14px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 14px 32px; border-radius: 8px; box-shadow: 0 0 24px rgba(59,130,246,0.35); transition: background .15s, box-shadow .25s, transform .2s; cursor: pointer; border: none; }
+        .lp-cta-primary { display: inline-flex; align-items: center; gap: 10px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 14px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 14px 32px; border-radius: 8px; box-shadow: 0 0 24px rgba(59,130,246,0.35); transition: background .15s, box-shadow .25s, transform .2s; cursor: pointer; border: none; }
         .lp-cta-primary:hover { background: #2563eb; box-shadow: 0 0 48px rgba(59,130,246,0.5); transform: translateY(-1px); }
-        .lp-cta-ghost { display: inline-flex; align-items: center; gap: 10px; font-family: 'Inter', sans-serif !important; font-size: 14px; font-weight: 700; letter-spacing: -.01em; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.3); padding: 14px 32px; border-radius: 8px; transition: background .2s, border-color .2s; cursor: pointer; background: transparent; }
+        .lp-cta-ghost { display: inline-flex; align-items: center; gap: 10px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 14px; font-weight: 700; letter-spacing: -.01em; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.3); padding: 14px 32px; border-radius: 8px; transition: background .2s, border-color .2s; cursor: pointer; background: transparent; }
         .lp-cta-ghost:hover { background: rgba(59,130,246,0.08); border-color: rgba(96,165,250,0.5); }
-        .lp-cta-ghost-sm { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 13px; font-weight: 700; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.25); padding: 10px 20px; border-radius: 8px; transition: background .2s; cursor: pointer; background: transparent; }
+        .lp-cta-ghost-sm { display: inline-flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 13px; font-weight: 700; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.25); padding: 10px 20px; border-radius: 8px; transition: background .2s; cursor: pointer; background: transparent; }
         .lp-cta-ghost-sm:hover { background: rgba(59,130,246,0.08); }
-        .lp-nav-cta { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 13px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 10px 22px; border-radius: 8px; transition: background .2s, transform .15s, box-shadow .2s; cursor: pointer; border: none; box-shadow: 0 0 24px rgba(59,130,246,0.35); }
+        .lp-nav-cta { display: inline-flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 13px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 10px 22px; border-radius: 8px; transition: background .2s, transform .15s, box-shadow .2s; cursor: pointer; border: none; box-shadow: 0 0 24px rgba(59,130,246,0.35); }
         .lp-nav-cta:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 0 36px rgba(59,130,246,0.55); }
-        .lp-client-login { font-family: 'Inter', sans-serif !important; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,0.45); text-decoration: none; padding: 7px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); transition: color .2s, border-color .2s, background .2s; white-space: nowrap; }
+        .lp-client-login { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,0.45); text-decoration: none; padding: 7px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); transition: color .2s, border-color .2s, background .2s; white-space: nowrap; }
         .lp-client-login:hover { color: rgba(255,255,255,0.75); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); }
 
         /* ── Nav ── */
         .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: calc(64px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 48px 0; transition: background .3s, border-color .3s; }
         .lp-nav.scrolled { background: rgba(13,13,10,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(59,130,246,0.1); }
-        .lp-nav-logo { font-family: 'Inter', sans-serif !important; font-size: 15px; font-weight: 800; letter-spacing: -.02em; text-decoration: none; display: flex; align-items: center; gap: 9px; color: #f1f5f9; }
+        .lp-nav-logo { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 15px; font-weight: 800; letter-spacing: -.02em; text-decoration: none; display: flex; align-items: center; gap: 9px; color: #f1f5f9; }
 
         /* ── Hero ── */
         .lp-hero { display: grid; grid-template-columns: 1fr 42%; min-height: 100vh; min-height: 100dvh; position: relative; }
@@ -876,21 +876,21 @@ export default function LandingPage() {
         .lp-hero-left { display: flex; flex-direction: column; justify-content: center; padding: calc(120px + env(safe-area-inset-top)) 64px 80px 48px; border-right: 1px solid rgba(59,130,246,0.07); }
         @media (max-width: 900px) { .lp-hero-left { padding: calc(96px + env(safe-area-inset-top)) 32px 48px; border-right: none; } }
         @media (max-width: 640px) { .lp-hero-left { padding: calc(88px + env(safe-area-inset-top)) 20px 40px; } }
-        .lp-hero-badge { display: inline-flex; align-items: center; gap: 8px; font-family: 'Inter', sans-serif !important; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #60a5fa; background: rgba(59,130,246,0.08); border: 1px solid rgba(96,165,250,0.2); padding: 7px 16px; border-radius: 999px; margin-bottom: 36px; width: fit-content; }
+        .lp-hero-badge { display: inline-flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #60a5fa; background: rgba(59,130,246,0.08); border: 1px solid rgba(96,165,250,0.2); padding: 7px 16px; border-radius: 999px; margin-bottom: 36px; width: fit-content; }
         .lp-hero-photo-col { position: relative; overflow: hidden; }
         .lp-hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; display: block; filter: brightness(0.85) contrast(1.05) saturate(0.9); }
         .lp-hero-photo-overlay { position: absolute; inset: 0; background: linear-gradient(to right, #0d0d0a 0%, transparent 20%), linear-gradient(to top, #0d0d0a 0%, transparent 30%), linear-gradient(to bottom, rgba(13,13,10,0.3) 0%, transparent 20%); }
         @media (max-width: 900px) { .lp-hero-photo { object-position: center 30%; } .lp-hero-photo-overlay { background: linear-gradient(to top, #0d0d0a 0%, transparent 40%), linear-gradient(to bottom, rgba(13,13,10,0.6) 0%, transparent 30%); } }
         .lp-hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 56px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 40px; }
         @media (max-width: 640px) { .lp-hero-stats { grid-template-columns: repeat(2, 1fr); gap: 28px 0; } }
-        .lp-stat-n { font-family: 'Inter', sans-serif !important; font-size: clamp(26px, 3.5vw, 40px); font-weight: 900; color: #f1f5f9; letter-spacing: -.03em; line-height: 1; }
+        .lp-stat-n { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: clamp(26px, 3.5vw, 40px); font-weight: 800; color: #f1f5f9; letter-spacing: -.03em; line-height: 1; }
         .lp-stat-l { font-size: 11px; color: #94a3b8; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; margin-top: 8px; }
 
         /* ── Avatar social strip ── */
         .lp-avatar-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
         .lp-avatar-stack { display: flex; align-items: center; }
         .lp-avatar { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #0d0d0a; display: flex; align-items: center; justify-content: center; font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 700; color: #fff; flex-shrink: 0; position: relative; }
-        .lp-avatar-text { font-family: 'Inter', sans-serif !important; font-size: 13px; color: #94a3b8; line-height: 1.4; }
+        .lp-avatar-text { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 13px; color: #94a3b8; line-height: 1.4; }
         .lp-avatar-text strong { color: #ffffff; font-weight: 600; }
 
         /* ── Ticker ── */
@@ -899,7 +899,7 @@ export default function LandingPage() {
         .lp-ticker-track:hover { animation-play-state: paused; }
         @keyframes lp-tick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         @media (max-width: 640px) { .lp-ticker-track { animation-duration: 28s; } }
-        .lp-tick-item { display: inline-flex; align-items: center; font-family: 'Inter', sans-serif !important; font-size: 11px; font-weight: 700; color: #ffffff; white-space: nowrap; padding: 0 28px; letter-spacing: .08em; text-transform: uppercase; }
+        .lp-tick-item { display: inline-flex; align-items: center; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 11px; font-weight: 700; color: #ffffff; white-space: nowrap; padding: 0 28px; letter-spacing: .08em; text-transform: uppercase; }
         .lp-tick-dot { color: rgba(255,255,255,0.4); font-size: 8px; }
 
         /* ── Social strip (member names) ── */
@@ -913,8 +913,8 @@ export default function LandingPage() {
         .lp-pain-item { padding: 32px 36px; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; display: grid; grid-template-columns: 64px 1fr; gap: 32px; align-items: start; margin-bottom: 14px; transition: background .25s, border-color .25s; }
         .lp-pain-item:hover { background: rgba(59,130,246,0.045); border-color: rgba(59,130,246,0.22); }
         @media (max-width: 640px) { .lp-pain-item { grid-template-columns: 1fr; gap: 10px; padding: 24px 20px; } }
-        .lp-pain-num { font-family: 'Inter', sans-serif !important; font-size: 48px; font-weight: 900; color: rgba(255,255,255,0.22); line-height: 1; margin-top: -6px; letter-spacing: -.04em; }
-        .lp-pain-title { font-family: 'Inter', sans-serif !important; font-size: clamp(17px, 2vw, 22px); font-weight: 700; color: #f1f5f9; margin-bottom: 10px; line-height: 1.3; letter-spacing: -.02em; }
+        .lp-pain-num { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 48px; font-weight: 900; color: rgba(255,255,255,0.22); line-height: 1; margin-top: -6px; letter-spacing: -.04em; }
+        .lp-pain-title { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: clamp(17px, 2vw, 22px); font-weight: 700; color: #f1f5f9; margin-bottom: 10px; line-height: 1.3; letter-spacing: -.02em; }
         .lp-pain-body { font-size: 15px; color: #b0bec5; line-height: 1.8; }
 
         /* ── Story ── */
@@ -947,9 +947,9 @@ export default function LandingPage() {
         .lp-phase-row:hover { background: rgba(59,130,246,0.04); border-color: rgba(59,130,246,0.2); }
         @media (max-width: 960px) { .lp-phase-row { grid-template-columns: 70px 1fr; gap: 32px; } .lp-phase-row-bullets { display: none; } }
         @media (max-width: 580px) { .lp-phase-row { grid-template-columns: 1fr; gap: 16px; padding: 40px 0; } }
-        .lp-phase-row-num { font-family: 'Inter', sans-serif !important; font-size: 80px; font-weight: 900; color: #3b82f6; letter-spacing: -.06em; line-height: 0.85; opacity: 0.9; }
+        .lp-phase-row-num { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 80px; font-weight: 900; color: #3b82f6; letter-spacing: -.06em; line-height: 0.85; opacity: 0.9; }
         .lp-phase-row-label { font-size: 10px; font-weight: 700; letter-spacing: .22em; text-transform: uppercase; color: #3b82f6; margin-bottom: 14px; }
-        .lp-phase-row-title { font-family: 'Inter', sans-serif !important; font-size: clamp(20px, 2.2vw, 28px); font-weight: 800; color: #ffffff; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 14px; }
+        .lp-phase-row-title { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: clamp(20px, 2.2vw, 28px); font-weight: 800; color: #ffffff; letter-spacing: -.03em; line-height: 1.15; margin-bottom: 14px; }
         .lp-phase-row-desc { font-size: 15px; color: #b0bec5; line-height: 1.75; }
         .lp-phase-row-bullets { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 16px; align-content: start; padding-top: 2px; }
         .lp-phase-row-bullet { display: flex; align-items: flex-start; gap: 10px; font-size: 13px; color: #b0bec5; line-height: 1.5; }
@@ -970,19 +970,19 @@ export default function LandingPage() {
         .lp-dash-body { display: grid; grid-template-columns: 192px 1fr; min-height: 380px; }
         @media (max-width: 700px) { .lp-dash-body { grid-template-columns: 1fr; } .lp-dash-sidebar { display: none; } }
         .lp-dash-sidebar { background: #080808; border-right: 1px solid rgba(255,255,255,0.05); padding: 20px 12px; display: flex; flex-direction: column; }
-        .lp-dash-logo { font-family: 'Inter', sans-serif !important; font-size: 12px; font-weight: 900; letter-spacing: -.02em; color: #fff; padding: 8px 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
+        .lp-dash-logo { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 12px; font-weight: 900; letter-spacing: -.02em; color: #fff; padding: 8px 12px 20px; border-bottom: 1px solid rgba(255,255,255,0.05); margin-bottom: 12px; display: flex; align-items: center; gap: 7px; }
         .lp-dash-logo span { color: #60a5fa; }
         .lp-dash-nav { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; color: rgba(255,255,255,0.35); cursor: pointer; transition: background .15s; margin-bottom: 2px; }
         .lp-dash-nav.active { background: rgba(59,130,246,0.12); color: #60a5fa; font-weight: 600; }
         .lp-dash-nav:hover:not(.active) { background: rgba(255,255,255,0.04); }
         .lp-dash-main { padding: 24px; background: #0f0f0c; display: flex; flex-direction: column; gap: 18px; }
         .lp-dash-topbar { display: flex; justify-content: space-between; align-items: center; }
-        .lp-dash-greeting { font-family: 'Inter', sans-serif !important; font-size: 14px; font-weight: 700; color: #f1f5f9; letter-spacing: -.01em; }
+        .lp-dash-greeting { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 14px; font-weight: 700; color: #f1f5f9; letter-spacing: -.01em; }
         .lp-dash-subtext { font-size: 11px; color: #64748b; margin-top: 2px; }
         .lp-dash-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
         @media (max-width: 700px) { .lp-dash-metrics { grid-template-columns: repeat(2, 1fr); } }
         .lp-dash-metric { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); border-radius: 8px; padding: 14px 16px; }
-        .lp-dash-metric-val { font-family: 'Inter', sans-serif !important; font-size: 18px; font-weight: 900; color: #f1f5f9; letter-spacing: -.03em; }
+        .lp-dash-metric-val { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 18px; font-weight: 900; color: #f1f5f9; letter-spacing: -.03em; }
         .lp-dash-metric-val.blue { color: #3b82f6; }
         .lp-dash-metric-lbl { font-size: 10px; color: #64748b; margin-top: 4px; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; }
         .lp-dash-lower { display: grid; grid-template-columns: 3fr 2fr; gap: 10px; }
@@ -1046,7 +1046,7 @@ export default function LandingPage() {
         .lp-win-img-wrap { background: #0a0a08; border-bottom: 1px solid rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); overflow: hidden; aspect-ratio: 16/10; }
         .lp-win-img { width: 100%; height: 100%; display: block; object-fit: cover; object-position: top; border-radius: 0; }
         .lp-win-body { padding: 20px 22px 24px; flex: 1; display: flex; flex-direction: column; }
-        .lp-win-stat { font-family: 'Inter', sans-serif !important; font-size: 18px; font-weight: 800; color: #f1f5f9; letter-spacing: -.02em; margin-bottom: 7px; line-height: 1.2; }
+        .lp-win-stat { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 18px; font-weight: 800; color: #f1f5f9; letter-spacing: -.02em; margin-bottom: 7px; line-height: 1.2; }
         .lp-win-detail { font-size: 12px; color: #b0bec5; line-height: 1.65; margin-bottom: 10px; flex: 1; }
         .lp-win-name { font-size: 9px; font-weight: 700; letter-spacing: .18em; text-transform: uppercase; color: #3b82f6; }
         .lp-win-expand-hint { margin-top: 12px; font-size: 11px; color: #3b82f6; display: flex; align-items: center; gap: 6px; font-weight: 600; letter-spacing: .04em; }
@@ -1059,7 +1059,7 @@ export default function LandingPage() {
         .lp-modal-img { width: 100%; max-height: 320px; object-fit: contain; display: block; background: #080808; }
         .lp-modal-body { padding: 28px 32px 36px; }
         .lp-modal-tag { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #3b82f6; margin-bottom: 10px; }
-        .lp-modal-stat { font-family: 'Inter', sans-serif !important; font-size: clamp(22px, 4vw, 30px); font-weight: 800; color: #f1f5f9; letter-spacing: -.03em; line-height: 1.1; margin-bottom: 16px; }
+        .lp-modal-stat { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: clamp(22px, 4vw, 30px); font-weight: 800; color: #f1f5f9; letter-spacing: -.03em; line-height: 1.1; margin-bottom: 16px; }
         .lp-modal-detail { font-size: 15px; color: #b0bec5; line-height: 1.75; margin-bottom: 24px; }
         .lp-modal-quote { border-left: 2px solid rgba(59,130,246,0.35); padding-left: 20px; margin-bottom: 24px; }
         .lp-modal-quote p { font-size: 14px; color: #60a5fa; font-style: italic; line-height: 1.7; }
@@ -1185,7 +1185,7 @@ export default function LandingPage() {
           .lp-mock { order: 2; }
         }
         .lp-showcase-tag { font-size: 10px; font-weight: 700; letter-spacing: .2em; text-transform: uppercase; color: #3b82f6; margin-bottom: 18px; }
-        .lp-showcase-h3 { font-family: 'Cabinet Grotesk', 'Inter', -apple-system, sans-serif; font-size: clamp(22px, 2.8vw, 34px); font-weight: 900; color: #f1f5f9; letter-spacing: -.025em; line-height: 1.1; margin-bottom: 18px; }
+        .lp-showcase-h3 { font-family: 'Plus Jakarta Sans', -apple-system, sans-serif; font-size: clamp(22px, 2.8vw, 34px); font-weight: 800; color: #f1f5f9; letter-spacing: -.025em; line-height: 1.1; margin-bottom: 18px; }
         .lp-showcase-desc { font-size: 14px; color: rgba(255,255,255,0.56); line-height: 1.82; margin-bottom: 26px; }
         .lp-showcase-bullets { display: flex; flex-direction: column; gap: 10px; }
         .lp-showcase-bullet { display: flex; align-items: center; gap: 12px; font-size: 13px; color: rgba(255,255,255,0.48); }
@@ -1304,7 +1304,7 @@ export default function LandingPage() {
               <h1 className="lp-h1">
                 You&apos;ve been<br />
                 <span style={{ color: '#ffffff' }}>posting for months.</span><br />
-                <span className="lp-blue" style={{ display: 'block', minHeight: '1.05em', whiteSpace: 'nowrap', overflow: 'hidden' }}>{typedText}<span className="lp-cursor">|</span></span>
+                <span className="lp-blue" style={{ display: 'block', minHeight: '1.05em', whiteSpace: 'nowrap', overflow: 'hidden' }}>{typedText}</span>
               </h1>
             </Fade>
             <Fade delay={160}>
@@ -1321,7 +1321,7 @@ export default function LandingPage() {
                   Already a client? Log in
                 </Link>
               </div>
-              <p style={{ marginTop: 14, fontSize: 12, color: '#64748b', fontFamily: 'Inter, sans-serif' }}>Applications reviewed personally.</p>
+              <p style={{ marginTop: 14, fontSize: 12, color: '#64748b', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Applications reviewed personally.</p>
             </Fade>
             <Fade delay={320}>
               {/* Avatar social proof strip */}
@@ -1348,7 +1348,7 @@ export default function LandingPage() {
                 <div><div className="lp-stat-n">1M+</div><div className="lp-stat-l">Combined followers</div></div>
                 <div><div className="lp-stat-n">£50K+</div><div className="lp-stat-l">Monthly revenue</div></div>
               </div>
-              <p style={{ marginTop: 16, fontSize: 11, color: '#475569', letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: 'Inter, sans-serif', fontWeight: 500 }}>
+              <p style={{ marginTop: 16, fontSize: 11, color: '#475569', letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: "'Plus Jakarta Sans', sans-serif", fontWeight: 500 }}>
                 Combined across all Creator Cult members
               </p>
             </Fade>
@@ -1434,14 +1434,14 @@ export default function LandingPage() {
                     <div style={{
                       position: 'absolute', top: -16, right: 16,
                       fontSize: 120, fontWeight: 900, lineHeight: 1,
-                      fontFamily: "'Cabinet Grotesk', Inter, sans-serif",
+                      fontFamily: "'Plus Jakarta Sans', sans-serif",
                       color: '#3b82f6', opacity: 0.06,
                       letterSpacing: '-0.06em', userSelect: 'none', pointerEvents: 'none',
                     }}>{n}</div>
                     <div style={{ position: 'relative' }}>
                       <div style={{ width: 32, height: 2, background: '#3b82f6', borderRadius: 2, marginBottom: 28 }} />
-                      <div style={{ fontSize: 20, fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.025em', marginBottom: 14, lineHeight: 1.2, fontFamily: "'Cabinet Grotesk', Inter, sans-serif" }}>{label}</div>
-                      <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, fontFamily: 'Inter, sans-serif' }}>{body}</div>
+                      <div style={{ fontSize: 20, fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.025em', marginBottom: 14, lineHeight: 1.2, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{label}</div>
+                      <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.8, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>{body}</div>
                     </div>
                   </div>
                 ))}
@@ -1510,7 +1510,7 @@ export default function LandingPage() {
                     ))}
                   </div>
                 </div>
-                <div style={{ marginTop: 14, textAlign: 'center', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: '#475569', fontFamily: 'Inter, sans-serif' }}>
+                <div style={{ marginTop: 14, textAlign: 'center', fontSize: 11, letterSpacing: '.12em', textTransform: 'uppercase', color: '#475569', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Will Scott · Founder, Creator Cult
                 </div>
               </Fade>
@@ -1530,11 +1530,11 @@ export default function LandingPage() {
           />
           <div style={{ position: 'absolute', inset: 0, background: 'radial-gradient(ellipse at center, rgba(13,13,10,0.25) 0%, rgba(13,13,10,0.65) 80%)' }} />
           <div style={{ position: 'relative', zIndex: 1, height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 20px' }}>
-            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 16, fontFamily: 'Inter, sans-serif' }}>The community</div>
-            <div style={{ fontSize: 'clamp(26px, 4vw, 52px)', fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1.08, fontFamily: 'Inter, sans-serif', maxWidth: 700 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.22em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The community</div>
+            <div style={{ fontSize: 'clamp(26px, 4vw, 52px)', fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1.08, fontFamily: "'Plus Jakarta Sans', sans-serif", maxWidth: 700 }}>
               140+ creators.<br />One system. One community.
             </div>
-            <div style={{ fontSize: 14, color: '#cbd5e1', marginTop: 16, fontFamily: 'Inter, sans-serif' }}>
+            <div style={{ fontSize: 14, color: '#cbd5e1', marginTop: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
               Members in 15+ countries. Active every single day.
             </div>
           </div>
@@ -1578,7 +1578,7 @@ export default function LandingPage() {
             {/* CTA after phases */}
             <Fade delay={80}>
               <div style={{ textAlign: 'center', paddingTop: 64 }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#94a3b8', marginBottom: 24 }}>
+                <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#94a3b8', marginBottom: 24 }}>
                   Ready to start Phase 01?
                 </p>
                 <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
@@ -1647,7 +1647,7 @@ export default function LandingPage() {
 
             <Fade delay={60}>
               <div style={{ textAlign: 'center', paddingTop: 56 }}>
-                <p style={{ fontFamily: 'Inter, sans-serif', fontSize: 14, color: '#94a3b8', marginBottom: 20 }}>
+                <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#94a3b8', marginBottom: 20 }}>
                   Access unlocks when you join Creator Cult.
                 </p>
                 <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
@@ -1709,7 +1709,7 @@ export default function LandingPage() {
           {/* Win grid — clickable */}
           <div className="lp-container">
             <Fade delay={20}>
-              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 48, marginBottom: 8, letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 600, fontFamily: 'Inter, sans-serif' }}>
+              <p style={{ fontSize: 12, color: '#94a3b8', marginTop: 48, marginBottom: 8, letterSpacing: '.08em', textTransform: 'uppercase', fontWeight: 600, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 Click any result to read the full story
               </p>
             </Fade>
@@ -1731,7 +1731,7 @@ export default function LandingPage() {
               ))}
             </div>
             <Fade delay={80}>
-              <p style={{ textAlign: 'center', fontSize: 12, color: '#64748b', marginTop: 28, letterSpacing: '.06em', fontFamily: 'Inter, sans-serif' }}>
+              <p style={{ textAlign: 'center', fontSize: 12, color: '#64748b', marginTop: 28, letterSpacing: '.06em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                 Real results from real Creator Cult members. Individual results vary.
               </p>
             </Fade>
@@ -1794,7 +1794,7 @@ export default function LandingPage() {
               {included.map(({ title, desc }, i) => (
                 <Fade key={title} delay={(i % 2) * 70}>
                   <div className="lp-incl-card">
-                    <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 900, color: '#3b82f6', letterSpacing: '-.04em', lineHeight: 1, flexShrink: 0, minWidth: 36, opacity: 0.8 }}>
+                    <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 900, color: '#3b82f6', letterSpacing: '-.04em', lineHeight: 1, flexShrink: 0, minWidth: 36, opacity: 0.8 }}>
                       {String(i + 1).padStart(2, '0')}
                     </div>
                     <div>
@@ -1890,7 +1890,7 @@ export default function LandingPage() {
           <div className="lp-cta-block" style={{ padding: '140px 48px 120px', position: 'relative', zIndex: 1 }}>
             <Fade>
               {/* Big ambient number behind the text */}
-              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: 'clamp(180px, 28vw, 340px)', fontWeight: 900, fontFamily: "'Cabinet Grotesk', Inter, sans-serif", color: 'rgba(255,255,255,0.018)', lineHeight: 1, letterSpacing: '-.06em', userSelect: 'none', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
+              <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: 'clamp(180px, 28vw, 340px)', fontWeight: 900, fontFamily: "'Plus Jakarta Sans', sans-serif", color: 'rgba(255,255,255,0.018)', lineHeight: 1, letterSpacing: '-.06em', userSelect: 'none', pointerEvents: 'none', whiteSpace: 'nowrap' }}>
                 NOW
               </div>
               <div style={{ position: 'relative' }}>
@@ -1901,7 +1901,7 @@ export default function LandingPage() {
                 <Link href="/apply" className="lp-cta-primary">Apply for a Spot <IconArrow /></Link>
                 <div style={{ marginTop: 32, display: 'flex', justifyContent: 'center', gap: 28, flexWrap: 'wrap' }}>
                   {['Takes 3 minutes', 'Reviewed personally by Will', 'No commitment to apply'].map(c => (
-                    <span key={c} style={{ fontSize: 12, letterSpacing: '.08em', color: 'rgba(255,255,255,0.32)', fontFamily: 'Inter, sans-serif' }}>+ {c}</span>
+                    <span key={c} style={{ fontSize: 12, letterSpacing: '.08em', color: 'rgba(255,255,255,0.32)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>+ {c}</span>
                   ))}
                 </div>
               </div>
@@ -1919,7 +1919,7 @@ export default function LandingPage() {
               { n: '15+', l: 'Countries represented' },
             ].map(({ n, l }) => (
               <div key={l} style={{ textAlign: 'center', minWidth: 100 }}>
-                <div style={{ fontFamily: 'Inter, sans-serif', fontSize: 28, fontWeight: 700, color: 'rgba(255,255,255,0.9)', letterSpacing: '-.03em', lineHeight: 1 }}>{n}</div>
+                <div style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 28, fontWeight: 700, color: 'rgba(255,255,255,0.9)', letterSpacing: '-.03em', lineHeight: 1 }}>{n}</div>
                 <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)', fontWeight: 500, letterSpacing: '.12em', textTransform: 'uppercase', marginTop: 6 }}>{l}</div>
               </div>
             ))}
