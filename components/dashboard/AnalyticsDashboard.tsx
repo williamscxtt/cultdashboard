@@ -279,12 +279,6 @@ function ChartCard({ children, delay = 0 }: { children: React.ReactNode; delay?:
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: 'easeOut', delay }}
-      onAnimationComplete={() => {
-        // Force Recharts ResponsiveContainer to re-measure on iOS Safari
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new Event('resize'))
-        }
-      }}
       style={{
         background: 'var(--card)',
         border: '1px solid var(--border)',
@@ -299,6 +293,46 @@ function ChartCard({ children, delay = 0 }: { children: React.ReactNode; delay?:
     >
       {children}
     </motion.div>
+  )
+}
+
+/**
+ * Bypasses Recharts ResponsiveContainer, which has a known bug on iOS Safari
+ * where ResizeObserver fires with width=0. Instead we measure the container
+ * directly with getBoundingClientRect and only render the chart once we have
+ * a real width.
+ */
+function MeasuredChart({ height, children }: { height: number; children: (width: number) => React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [width, setWidth] = useState(0)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+
+    const measure = () => {
+      const w = el.getBoundingClientRect().width
+      if (w > 0) setWidth(w)
+    }
+
+    measure()
+
+    // Re-measure on resize (orientation change, window resize)
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+
+    // Also listen for window resize as a fallback for iOS
+    window.addEventListener('resize', measure)
+    return () => {
+      ro.disconnect()
+      window.removeEventListener('resize', measure)
+    }
+  }, [])
+
+  return (
+    <div ref={ref} style={{ width: '100%', height }}>
+      {width > 0 && children(width)}
+    </div>
   )
 }
 
@@ -1117,23 +1151,23 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                 sub={fmtNum(totalViews)}
                 toggle={<Toggle options={['Daily', 'Cumulative']} value={viewsMode} onChange={setViewsMode} />}
               />
-              <div style={{ width: '100%', minHeight: 170, position: 'relative' }}>
-              <ResponsiveContainer width="100%" height={170}>
-                <AreaChart data={viewsChart} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="vGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="date" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} interval="preserveStartEnd" />
-                  <YAxis stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v: number) => fmtNum(v)} width={40} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [typeof v === 'number' ? v.toLocaleString() : String(v), viewsMode + ' Views']} />
-                  <Area type="monotone" dataKey={viewsMode} stroke="#3B82F6" strokeWidth={2} fill="url(#vGrad)" dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-              </div>
+              <MeasuredChart height={170}>
+                {(w) => (
+                  <AreaChart width={w} height={170} data={viewsChart} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="vGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="date" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} interval="preserveStartEnd" />
+                    <YAxis stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v: number) => fmtNum(v)} width={40} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [typeof v === 'number' ? v.toLocaleString() : String(v), viewsMode + ' Views']} />
+                    <Area type="monotone" dataKey={viewsMode} stroke="#3B82F6" strokeWidth={2} fill="url(#vGrad)" dot={false} />
+                  </AreaChart>
+                )}
+              </MeasuredChart>
             </ChartCard>
 
             {/* Engagements Over Time */}
@@ -1143,23 +1177,23 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                 sub={fmtNum(totalEng)}
                 toggle={<Toggle options={['Daily', 'Cumulative']} value={engMode} onChange={setEngMode} />}
               />
-              <div style={{ width: '100%', minHeight: 170, position: 'relative' }}>
-              <ResponsiveContainer width="100%" height={170}>
-                <AreaChart data={engChart} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                  <defs>
-                    <linearGradient id="eGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
-                      <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                  <XAxis dataKey="date" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} interval="preserveStartEnd" />
-                  <YAxis stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v: number) => fmtNum(v)} width={40} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [typeof v === 'number' ? v.toLocaleString() : String(v), engMode + ' Engagements']} />
-                  <Area type="monotone" dataKey={engMode} stroke="#3B82F6" strokeWidth={2} fill="url(#eGrad)" dot={false} />
-                </AreaChart>
-              </ResponsiveContainer>
-              </div>
+              <MeasuredChart height={170}>
+                {(w) => (
+                  <AreaChart width={w} height={170} data={engChart} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="eGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.3} />
+                        <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                    <XAxis dataKey="date" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} interval="preserveStartEnd" />
+                    <YAxis stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v: number) => fmtNum(v)} width={40} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [typeof v === 'number' ? v.toLocaleString() : String(v), engMode + ' Engagements']} />
+                    <Area type="monotone" dataKey={engMode} stroke="#3B82F6" strokeWidth={2} fill="url(#eGrad)" dot={false} />
+                  </AreaChart>
+                )}
+              </MeasuredChart>
             </ChartCard>
 
             {/* Engagement Breakdown */}
@@ -1301,24 +1335,26 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                 sub={formatData[0] ? formatData[0].format : '—'}
               />
               {formatData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={170}>
-                  <BarChart data={formatData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-                    <XAxis type="number" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v: number) => fmtNum(v)} />
-                    <YAxis type="category" dataKey="format" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 9 }} width={80} />
-                    <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [typeof v === 'number' ? v.toLocaleString() : String(v), 'Avg Views']} />
-                    <Bar dataKey="avgViews" radius={[0, 5, 5, 0]}>
-                      {formatData.map((entry, idx) => (
-                        <Cell
-                          key={idx}
-                          fill={entry.avgViews === maxFmtV
-                            ? '#3B82F6'
-                            : `rgba(146, 129, 247, ${Math.max(0.2, 0.65 - idx * 0.1)})`}
-                        />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <MeasuredChart height={170}>
+                  {(w) => (
+                    <BarChart width={w} height={170} data={formatData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
+                      <XAxis type="number" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 10 }} tickFormatter={(v: number) => fmtNum(v)} />
+                      <YAxis type="category" dataKey="format" stroke="none" tick={{ fill: 'var(--muted-foreground)', fontSize: 9 }} width={80} />
+                      <Tooltip contentStyle={tooltipStyle} formatter={(v: unknown) => [typeof v === 'number' ? v.toLocaleString() : String(v), 'Avg Views']} />
+                      <Bar dataKey="avgViews" radius={[0, 5, 5, 0]}>
+                        {formatData.map((entry, idx) => (
+                          <Cell
+                            key={idx}
+                            fill={entry.avgViews === maxFmtV
+                              ? '#3B82F6'
+                              : `rgba(146, 129, 247, ${Math.max(0.2, 0.65 - idx * 0.1)})`}
+                          />
+                        ))}
+                      </Bar>
+                    </BarChart>
+                  )}
+                </MeasuredChart>
               ) : (
                 <div style={{ height: 170, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   <span style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>No format data yet — sync to classify reels</span>
