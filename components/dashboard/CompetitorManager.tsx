@@ -124,7 +124,7 @@ export default function CompetitorManager() {
     }
   }
 
-  const cols = isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)'
+  const cols = isMobile ? '1fr' : 'repeat(3, 1fr)'
 
   return (
     <Card style={{ padding: 20, marginBottom: 0 }}>
@@ -200,51 +200,71 @@ export default function CompetitorManager() {
                 background: 'var(--muted)',
                 border: '1px solid var(--border)',
                 borderRadius: 10,
-                padding: '12px 14px',
+                padding: isMobile ? '10px 12px' : '12px 14px',
                 minWidth: 0,
+                display: 'flex',
+                flexDirection: isMobile ? 'row' : 'column',
+                alignItems: isMobile ? 'center' : 'stretch',
+                gap: isMobile ? 8 : 0,
               }}
             >
-              {/* Handle + remove */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <span style={{
-                  fontSize: 13, fontWeight: 700, color: 'var(--foreground)',
-                  letterSpacing: '-0.2px', overflow: 'hidden',
-                  textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  minWidth: 0, flex: 1,
-                }}>
-                  @{c.ig_username}
-                </span>
-                <button
-                  onClick={() => handleRemove(c.id, c.ig_username)}
-                  disabled={removingId === c.id}
-                  style={{
-                    background: 'transparent', border: 'none', cursor: 'pointer',
-                    color: 'var(--muted-foreground)', padding: 0, flexShrink: 0,
-                    marginLeft: 6, display: 'flex', alignItems: 'center',
-                    transition: 'color 0.15s',
-                  }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'hsl(0 72% 51%)' }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)' }}
-                  title={`Remove @${c.ig_username}`}
-                >
-                  <X size={12} />
-                </button>
-              </div>
+              {/* Handle */}
+              <span style={{
+                fontSize: 13, fontWeight: 700, color: 'var(--foreground)',
+                letterSpacing: '-0.2px', overflow: 'hidden',
+                textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                flex: 1, minWidth: 0,
+                marginBottom: isMobile ? 0 : 10,
+              }}>
+                @{c.ig_username}
+              </span>
 
+              {/* Stats */}
               {c.reel_count > 0 ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                  <StatRow label="Reels" value={String(c.reel_count)} />
-                  <StatRow label="Avg Views" value={fmtViews(c.avg_views)} />
-                  <StatRow
-                    label="Last Scraped"
-                    value={c.last_scraped ? formatScrapedWeek(c.last_scraped) : '—'}
-                  />
+                <div style={{
+                  display: 'flex',
+                  flexDirection: isMobile ? 'row' : 'column',
+                  gap: isMobile ? 10 : 5,
+                  flexShrink: 0,
+                }}>
+                  {isMobile ? (
+                    <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+                      {c.reel_count} reels · {fmtViews(c.avg_views)} avg
+                    </span>
+                  ) : (
+                    <>
+                      <StatRow label="Reels" value={String(c.reel_count)} />
+                      <StatRow label="Avg Views" value={fmtViews(c.avg_views)} />
+                      <StatRow
+                        label="Last Scraped"
+                        value={c.last_scraped ? formatScrapedWeek(c.last_scraped) : '—'}
+                      />
+                    </>
+                  )}
                 </div>
               ) : (
-                <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.5 }}>
+                <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.5, flexShrink: 0 }}>
                   Not scraped yet
                 </p>
               )}
+
+              {/* Remove button */}
+              <button
+                onClick={() => handleRemove(c.id, c.ig_username)}
+                disabled={removingId === c.id}
+                style={{
+                  background: 'transparent', border: 'none', cursor: 'pointer',
+                  color: 'var(--muted-foreground)', padding: 0, flexShrink: 0,
+                  marginLeft: isMobile ? 0 : 'auto',
+                  display: 'flex', alignItems: 'center',
+                  transition: 'color 0.15s',
+                }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'hsl(0 72% 51%)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)' }}
+                title={`Remove @${c.ig_username}`}
+              >
+                <X size={12} />
+              </button>
             </div>
           ))}
         </div>

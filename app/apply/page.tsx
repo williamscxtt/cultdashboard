@@ -112,6 +112,28 @@ const TOTAL_STEPS = 5
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
+// ── Stable session ID for funnel tracking ─────────────────────────────────────
+function getSessionId(): string {
+  if (typeof window === 'undefined') return ''
+  const key = 'apply_session_id'
+  let id = sessionStorage.getItem(key)
+  if (!id) {
+    id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+    sessionStorage.setItem(key, id)
+  }
+  return id
+}
+
+function trackStep(step: number) {
+  const session_id = getSessionId()
+  if (!session_id) return
+  fetch('/api/applications/track', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ session_id, step }),
+  }).catch(() => {})
+}
+
 export default function ApplyPage() {
   const [step, setStep]             = useState(1)
   const [loading, setLoading]       = useState(false)
@@ -127,6 +149,9 @@ export default function ApplyPage() {
     income_goal:       INCOME_GOAL_STEPS[2],
     business_mindset: '',
   })
+
+  // Track step 1 on first mount (session started)
+  useState(() => { trackStep(1) })
 
   function set(field: keyof FormData, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -153,7 +178,12 @@ export default function ApplyPage() {
   }
 
   async function handleNext() {
-    if (step < TOTAL_STEPS) { setStep(s => s + 1); return }
+    if (step < TOTAL_STEPS) {
+      const nextStep = step + 1
+      setStep(nextStep)
+      trackStep(nextStep) // fire-and-forget, non-blocking
+      return
+    }
     setLoading(true)
     setProcessing(true)
     const outcome = getOutcome(form)

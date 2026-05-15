@@ -25,6 +25,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/hook-lab':       'Hook Lab',
   '/dashboard/series-planner': 'Series Planner',
   '/dashboard/lead-magnets':   'Lead Magnets',
+  '/dashboard/applications':   'Applications',
 }
 
 interface Props {

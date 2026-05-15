@@ -276,9 +276,15 @@ function ChartHeader({
 function ChartCard({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.4, ease: 'easeOut', delay }}
+      onAnimationComplete={() => {
+        // Force Recharts ResponsiveContainer to re-measure on iOS Safari
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new Event('resize'))
+        }
+      }}
       style={{
         background: 'var(--card)',
         border: '1px solid var(--border)',
@@ -287,6 +293,8 @@ function ChartCard({ children, delay = 0 }: { children: React.ReactNode; delay?:
         backdropFilter: 'blur(8px)',
         WebkitBackdropFilter: 'blur(8px)',
         boxShadow: '0 4px 24px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.06)',
+        minWidth: 0,
+        overflow: 'hidden',
       }}
     >
       {children}
@@ -1109,6 +1117,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                 sub={fmtNum(totalViews)}
                 toggle={<Toggle options={['Daily', 'Cumulative']} value={viewsMode} onChange={setViewsMode} />}
               />
+              <div style={{ width: '100%', minHeight: 170, position: 'relative' }}>
               <ResponsiveContainer width="100%" height={170}>
                 <AreaChart data={viewsChart} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                   <defs>
@@ -1124,6 +1133,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                   <Area type="monotone" dataKey={viewsMode} stroke="#3B82F6" strokeWidth={2} fill="url(#vGrad)" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
+              </div>
             </ChartCard>
 
             {/* Engagements Over Time */}
@@ -1133,6 +1143,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                 sub={fmtNum(totalEng)}
                 toggle={<Toggle options={['Daily', 'Cumulative']} value={engMode} onChange={setEngMode} />}
               />
+              <div style={{ width: '100%', minHeight: 170, position: 'relative' }}>
               <ResponsiveContainer width="100%" height={170}>
                 <AreaChart data={engChart} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                   <defs>
@@ -1148,6 +1159,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                   <Area type="monotone" dataKey={engMode} stroke="#3B82F6" strokeWidth={2} fill="url(#eGrad)" dot={false} />
                 </AreaChart>
               </ResponsiveContainer>
+              </div>
             </ChartCard>
 
             {/* Engagement Breakdown */}

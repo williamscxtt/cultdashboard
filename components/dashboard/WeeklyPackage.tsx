@@ -227,6 +227,8 @@ function ScriptCard({
   const [editCaption, setEditCaption] = useState(reel.caption)
   const [saving, setSaving] = useState(false)
   const accent = DAY_COLORS[index % DAY_COLORS.length]
+  const isMobileCard = useIsMobile()
+  const [collapsed, setCollapsed] = useState(true)
 
   // Keep local state in sync if parent data refreshes
   useEffect(() => {
@@ -281,13 +283,17 @@ function ScriptCard({
       {/* Accent bar */}
       <div style={{ height: 3, background: `linear-gradient(90deg, ${accent}, ${accent}66)`, flexShrink: 0 }} />
 
-      {/* Header */}
-      <div style={{
-        padding: '16px 20px 14px',
-        borderBottom: '1px solid var(--border)',
-        background: `${accent}06`,
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+      {/* Header — always visible */}
+      <div
+        style={{
+          padding: '16px 20px 14px',
+          borderBottom: (!isMobileCard || !collapsed) ? '1px solid var(--border)' : 'none',
+          background: `${accent}06`,
+          cursor: isMobileCard ? 'pointer' : 'default',
+        }}
+        onClick={isMobileCard ? () => setCollapsed(c => !c) : undefined}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: collapsed && isMobileCard ? 0 : 12 }}>
           <div style={{
             width: 34, height: 34, borderRadius: 10, flexShrink: 0,
             background: `${accent}18`, border: `1px solid ${accent}30`,
@@ -296,7 +302,7 @@ function ScriptCard({
           }}>
             {String(index + 1).padStart(2, '0')}
           </div>
-          <div>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', lineHeight: 1.2 }}>{reel.day}</div>
             <div style={{
               fontSize: 10, color: accent, fontWeight: 700,
@@ -305,7 +311,16 @@ function ScriptCard({
               {reel.format}
             </div>
           </div>
-          {editing && (
+          {isMobileCard && (
+            <div style={{
+              fontSize: 11, color: 'var(--muted-foreground)', flexShrink: 0,
+              transition: 'transform 0.2s',
+              transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)',
+            }}>
+              ▾
+            </div>
+          )}
+          {editing && !isMobileCard && (
             <div style={{
               marginLeft: 'auto', fontSize: 10, fontWeight: 700, padding: '2px 8px',
               borderRadius: 20, background: 'rgba(59,130,246,0.12)',
@@ -317,164 +332,170 @@ function ScriptCard({
           )}
         </div>
 
-        {/* Hook */}
-        <div style={{ marginBottom: 2 }}>
-          <div style={{
-            fontSize: 9, fontWeight: 700, color: accent,
-            textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6,
-          }}>
-            Hook
-          </div>
-          {editing ? (
-            <input
-              value={editHook}
-              onChange={e => setEditHook(e.target.value)}
-              style={inputStyle}
-              placeholder="Hook text..."
-            />
-          ) : (
+        {/* Hook — always show on desktop, hide when collapsed on mobile */}
+        {(!isMobileCard || !collapsed) && (
+          <div style={{ marginBottom: 2 }}>
             <div style={{
-              fontSize: 14, fontWeight: 700, color: 'var(--foreground)',
-              lineHeight: 1.45, fontStyle: 'italic',
-              paddingLeft: 12, borderLeft: `3px solid ${accent}`,
+              fontSize: 9, fontWeight: 700, color: accent,
+              textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 6,
             }}>
-              &ldquo;{reel.hook}&rdquo;
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Body */}
-      <div style={{ padding: '16px 20px', flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
-
-        {/* Script */}
-        {(reel.script || editing) && (
-          <div>
-            <div style={{
-              fontSize: 9, fontWeight: 700, color: 'var(--muted-foreground)',
-              textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 7,
-            }}>
-              Script
+              Hook
             </div>
             {editing ? (
-              <textarea
-                value={editScript}
-                onChange={e => setEditScript(e.target.value)}
-                style={{ ...textareaStyle, minHeight: 200 }}
-                placeholder="Full script..."
+              <input
+                value={editHook}
+                onChange={e => setEditHook(e.target.value)}
+                style={inputStyle}
+                placeholder="Hook text..."
               />
             ) : (
-              <div
-                style={{
-                  fontSize: 13, color: 'var(--foreground)', lineHeight: 1.75,
-                  overflowWrap: 'break-word', wordBreak: 'break-word',
-                }}
-                dangerouslySetInnerHTML={{ __html: renderMd(reel.script) }}
-              />
+              <div style={{
+                fontSize: 14, fontWeight: 700, color: 'var(--foreground)',
+                lineHeight: 1.45, fontStyle: 'italic',
+                paddingLeft: 12, borderLeft: `3px solid ${accent}`,
+              }}>
+                &ldquo;{reel.hook}&rdquo;
+              </div>
             )}
           </div>
         )}
+      </div>
 
-        {/* Caption */}
-        {(reel.caption || editing) && (
-          <div>
-            <div style={{
-              fontSize: 9, fontWeight: 700, color: 'var(--muted-foreground)',
-              textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 7,
-            }}>
-              Caption
-            </div>
-            {editing ? (
-              <textarea
-                value={editCaption}
-                onChange={e => setEditCaption(e.target.value)}
-                style={{ ...textareaStyle, minHeight: 80 }}
-                placeholder="Instagram caption..."
-              />
-            ) : (
-              <div
-                style={{
-                  fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.65,
-                  overflowWrap: 'break-word', wordBreak: 'break-word',
-                }}
-                dangerouslySetInnerHTML={{ __html: renderMd(reel.caption) }}
-              />
+      {/* Body — hidden when collapsed on mobile */}
+      {(!isMobileCard || !collapsed) && (
+        <>
+          {/* Body */}
+          <div style={{ padding: '16px 20px', flex: 1, display: 'flex', flexDirection: 'column', gap: 14 }}>
+            {/* Script */}
+            {(reel.script || editing) && (
+              <div>
+                <div style={{
+                  fontSize: 9, fontWeight: 700, color: 'var(--muted-foreground)',
+                  textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 7,
+                }}>
+                  Script
+                </div>
+                {editing ? (
+                  <textarea
+                    value={editScript}
+                    onChange={e => setEditScript(e.target.value)}
+                    style={{ ...textareaStyle, minHeight: 200 }}
+                    placeholder="Full script..."
+                  />
+                ) : (
+                  <div
+                    style={{
+                      fontSize: 13, color: 'var(--foreground)', lineHeight: 1.75,
+                      overflowWrap: 'break-word', wordBreak: 'break-word',
+                    }}
+                    dangerouslySetInnerHTML={{ __html: renderMd(reel.script) }}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* Caption */}
+            {(reel.caption || editing) && (
+              <div>
+                <div style={{
+                  fontSize: 9, fontWeight: 700, color: 'var(--muted-foreground)',
+                  textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 7,
+                }}>
+                  Caption
+                </div>
+                {editing ? (
+                  <textarea
+                    value={editCaption}
+                    onChange={e => setEditCaption(e.target.value)}
+                    style={{ ...textareaStyle, minHeight: 80 }}
+                    placeholder="Instagram caption..."
+                  />
+                ) : (
+                  <div
+                    style={{
+                      fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.65,
+                      overflowWrap: 'break-word', wordBreak: 'break-word',
+                    }}
+                    dangerouslySetInnerHTML={{ __html: renderMd(reel.caption) }}
+                  />
+                )}
+              </div>
+            )}
+
+            {/* CTA */}
+            {reel.cta && !editing && (
+              <div style={{
+                alignSelf: 'flex-start', padding: '4px 12px', borderRadius: 20,
+                background: `${accent}12`, fontSize: 11, fontWeight: 600, color: accent,
+                border: `1px solid ${accent}25`,
+              }}>
+                CTA: {reel.cta}
+              </div>
             )}
           </div>
-        )}
 
-        {/* CTA */}
-        {reel.cta && !editing && (
+          {/* Footer */}
           <div style={{
-            alignSelf: 'flex-start', padding: '4px 12px', borderRadius: 20,
-            background: `${accent}12`, fontSize: 11, fontWeight: 600, color: accent,
-            border: `1px solid ${accent}25`,
+            padding: '12px 20px', borderTop: '1px solid var(--border)',
+            display: 'flex', gap: 8, alignItems: 'center',
+            background: 'rgba(255,255,255,0.01)',
           }}>
-            CTA: {reel.cta}
+            {editing ? (
+              <>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '6px 14px', borderRadius: 7, border: 'none',
+                    background: '#3B82F6', color: '#fff', fontSize: 12, fontWeight: 700,
+                    cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+                    opacity: saving ? 0.7 : 1, transition: 'opacity 0.15s',
+                  }}
+                >
+                  <Save size={12} />
+                  {saving ? 'Saving…' : 'Save changes'}
+                </button>
+                <button
+                  onClick={handleCancel}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '6px 14px', borderRadius: 7,
+                    border: '1px solid var(--border)', background: 'transparent',
+                    color: 'var(--muted-foreground)', fontSize: 12, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit',
+                  }}
+                >
+                  <X size={12} />
+                  Cancel
+                </button>
+                <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginLeft: 4 }}>
+                  AI will learn from your edits
+                </div>
+              </>
+            ) : (
+              <>
+                <CopyButton text={copyText} />
+                <button
+                  onClick={() => setEditing(true)}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '6px 14px', borderRadius: 7,
+                    border: '1px solid var(--border)', background: 'transparent',
+                    color: 'var(--muted-foreground)', fontSize: 12, fontWeight: 600,
+                    cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--foreground)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.2)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+                >
+                  <Pencil size={12} />
+                  Edit script
+                </button>
+              </>
+            )}
           </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div style={{
-        padding: '12px 20px', borderTop: '1px solid var(--border)',
-        display: 'flex', gap: 8, alignItems: 'center',
-        background: 'rgba(255,255,255,0.01)',
-      }}>
-        {editing ? (
-          <>
-            <button
-              onClick={handleSave}
-              disabled={saving}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 14px', borderRadius: 7, border: 'none',
-                background: '#3B82F6', color: '#fff', fontSize: 12, fontWeight: 700,
-                cursor: saving ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
-                opacity: saving ? 0.7 : 1, transition: 'opacity 0.15s',
-              }}
-            >
-              <Save size={12} />
-              {saving ? 'Saving…' : 'Save changes'}
-            </button>
-            <button
-              onClick={handleCancel}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 14px', borderRadius: 7,
-                border: '1px solid var(--border)', background: 'transparent',
-                color: 'var(--muted-foreground)', fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'inherit',
-              }}
-            >
-              <X size={12} />
-              Cancel
-            </button>
-            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginLeft: 4 }}>
-              AI will learn from your edits
-            </div>
-          </>
-        ) : (
-          <>
-            <CopyButton text={copyText} />
-            <button
-              onClick={() => setEditing(true)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 14px', borderRadius: 7,
-                border: '1px solid var(--border)', background: 'transparent',
-                color: 'var(--muted-foreground)', fontSize: 12, fontWeight: 600,
-                cursor: 'pointer', fontFamily: 'inherit', transition: 'all 0.15s',
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'var(--foreground)'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.2)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
-            >
-              <Pencil size={12} />
-              Edit script
-            </button>
-          </>
-        )}
-      </div>
+        </>
+      )}
     </div>
   )
 }

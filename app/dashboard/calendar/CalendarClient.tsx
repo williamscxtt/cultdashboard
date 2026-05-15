@@ -368,6 +368,11 @@ export default function CalendarClient({ profileId, reels }: Props) {
   const [confirmClear, setConfirmClear] = useState(false)
   const [selected, setSelected] = useState<Selected | null>(null)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>(isMobile ? 'list' : 'grid')
+
+  useEffect(() => {
+    if (isMobile) setViewMode('list')
+  }, [isMobile])
+
   const [postsPerWeek, setPostsPerWeek] = useState(5)
   const [error, setError] = useState('')
   const [editModal, setEditModal] = useState<{ entry: PlannedEntry | null; date: string; dayName: string } | null>(null)

@@ -790,13 +790,15 @@ export default function LandingPage() {
       <link rel="preconnect" href="https://api.fontshare.com" crossOrigin="" />
       <link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,900&display=swap" rel="stylesheet" />
       <style>{`
+        /* iOS overscroll: paint html + body dark so rubber-band reveals no white gap */
+        html, body { background-color: #0d0d0a !important; margin: 0 !important; padding: 0 !important; }
         .lp-root { all: initial; display: block; }
         .lp-root *, .lp-root *::before, .lp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .lp-root {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
           font-size: 16px; font-weight: 400; line-height: 1.65;
           color: #cbd5e1; background-color: #0d0d0a;
-          min-height: 100vh; overflow-x: hidden;
+          min-height: 100vh; min-height: 100dvh; overflow-x: hidden;
           -webkit-font-smoothing: antialiased;
           background-image:
             linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
@@ -868,7 +870,7 @@ export default function LandingPage() {
         .lp-nav-logo { font-family: 'Inter', sans-serif !important; font-size: 15px; font-weight: 800; letter-spacing: -.02em; text-decoration: none; display: flex; align-items: center; gap: 9px; color: #f1f5f9; }
 
         /* ── Hero ── */
-        .lp-hero { display: grid; grid-template-columns: 1fr 42%; min-height: 100vh; position: relative; }
+        .lp-hero { display: grid; grid-template-columns: 1fr 42%; min-height: 100vh; min-height: 100dvh; position: relative; }
         @media (max-width: 900px) { .lp-hero { grid-template-columns: 1fr; min-height: auto; } .lp-hero-photo-col { height: 70vw; max-height: 400px; min-height: 260px; order: -1; } }
         @media (max-width: 640px) { .lp-hero-photo-col { height: 80vw; max-height: 360px; } }
         .lp-hero-left { display: flex; flex-direction: column; justify-content: center; padding: calc(120px + env(safe-area-inset-top)) 64px 80px 48px; border-right: 1px solid rgba(59,130,246,0.07); }
@@ -1110,7 +1112,7 @@ export default function LandingPage() {
         @media (max-width: 640px) { .lp-cta-block { padding: 64px 20px; } }
 
         /* ── Footer ── */
-        .lp-footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 36px 48px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; max-width: 1200px; margin: 0 auto; }
+        .lp-footer { border-top: 1px solid rgba(255,255,255,0.05); padding: 36px 48px; padding-bottom: max(36px, calc(env(safe-area-inset-bottom) + 24px)); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px; max-width: 1200px; margin: 0 auto; }
         .lp-footer-logo { font-size: 12px; font-weight: 900; letter-spacing: -.02em; color: #94a3b8; display: flex; align-items: center; gap: 7px; }
         .lp-footer-logo span { color: #3b82f6; }
         .lp-footer-links { display: flex; gap: 24px; }
@@ -1145,7 +1147,7 @@ export default function LandingPage() {
           .lp-section { padding: 64px 0; }
           .lp-nav { padding: env(safe-area-inset-top) 16px 0; }
           .lp-client-login { font-size: 10px; padding: 6px 10px; letter-spacing: .04em; }
-          .lp-footer { padding: 32px 20px; }
+          .lp-footer { padding: 32px 20px; padding-bottom: max(32px, calc(env(safe-area-inset-bottom) + 24px)); }
           .lp-pill { font-size: 10px; }
           .lp-h2 { font-size: clamp(26px, 8vw, 38px); }
           /* Community break — desktop/tablet only */

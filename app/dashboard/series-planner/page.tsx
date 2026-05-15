@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { List, Copy, Download, RefreshCw, Check } from 'lucide-react'
 import { toast } from 'sonner'
+import { useIsMobile } from '@/lib/use-mobile'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface Episode {
@@ -38,6 +39,7 @@ const LENGTH_COLOR: Record<string, string> = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function SeriesPlannerPage() {
+  const isMobile = useIsMobile()
   const [profileId, setProfileId] = useState('')
   const [topic, setTopic] = useState('')
   const [episodes, setEpisodes] = useState(5)
@@ -116,7 +118,7 @@ export default function SeriesPlannerPage() {
   }
 
   return (
-    <div className="dash-page" style={{ padding: '24px', maxWidth: 1400, margin: '0 auto' }}>
+    <div className="dash-page" style={{ padding: '24px 16px 60px', maxWidth: 1400, margin: '0 auto' }}>
 
       {/* Header */}
       <div style={{ marginBottom: 28 }}>
@@ -159,7 +161,7 @@ export default function SeriesPlannerPage() {
         </div>
 
         {/* Episodes + Goal */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16, marginBottom: 24 }}>
           {/* Episode count */}
           <div>
             <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginBottom: 8 }}>
@@ -193,7 +195,7 @@ export default function SeriesPlannerPage() {
               >
                 +
               </button>
-              <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>episodes (3–30)</span>
+              {!isMobile && <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>episodes (3–30)</span>}
             </div>
           </div>
 
@@ -267,7 +269,7 @@ export default function SeriesPlannerPage() {
             background: 'var(--card)', border: '1px solid var(--border)',
             borderRadius: 12, padding: 20, marginBottom: 20,
           }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(168,85,247,0.8)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
                   Series
@@ -279,7 +281,7 @@ export default function SeriesPlannerPage() {
                   {series.series_hook}
                 </p>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
                 <button
                   onClick={copyAll}
                   style={{
@@ -374,7 +376,7 @@ export default function SeriesPlannerPage() {
                   </div>
 
                   {/* Episode content */}
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                       <span style={{ fontSize: 15, fontWeight: 700, color: 'var(--foreground)' }}>
                         {ep.title}
