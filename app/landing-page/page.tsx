@@ -784,8 +784,8 @@ export default function LandingPage() {
       <style>{`
         /* iOS safe-area: lock page colour so notch + home-indicator zones match */
         html, body { background-color: #0d0d0a !important; }
-        html { height: -webkit-fill-available; overflow-x: hidden !important; }
-        body { min-height: 100vh; min-height: -webkit-fill-available; overscroll-behavior: none !important; }
+        html { overflow-x: hidden !important; }
+        body { min-height: 100vh; min-height: 100dvh; overscroll-behavior: none !important; }
         .lp-root { all: initial; display: block; }
         .lp-root *, .lp-root *::before, .lp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .lp-root {
