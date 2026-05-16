@@ -1135,7 +1135,7 @@ export default function LandingPage() {
             display: flex; align-items: center; justify-content: center;
             position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
             padding: 12px 20px max(18px, calc(env(safe-area-inset-bottom) + 8px));
-            background: linear-gradient(to top, rgba(13,13,10,1) 0%, rgba(13,13,10,0.92) 100%);
+            background: #0d0d0a;
             border-top: 1px solid rgba(59,130,246,0.15);
           }
           .lp-sticky-cta a, .lp-sticky-cta button {
@@ -1237,7 +1237,7 @@ export default function LandingPage() {
 
         /* ── Nav — always frosted on mobile ── */
         @media (max-width: 768px) {
-          .lp-nav { background: rgba(13,13,10,0.82); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+          .lp-nav { background: #0d0d0a; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); }
         }
 
         /* ── Hero photo — mobile: bigger, later fade, text overlaps the fade zone ── */
@@ -1336,7 +1336,7 @@ export default function LandingPage() {
           <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
             <div style={{ position: 'absolute', top: '-30%', left: '0', width: '55%', height: '110%', background: 'radial-gradient(ellipse at 40% 50%, rgba(59,130,246,0.08) 0%, transparent 65%)' }} />
           </div>
-          <div className="lp-hero-left" style={{ position: 'relative', zIndex: 1 }}>
+          <div className="lp-hero-left" style={{ position: 'relative', zIndex: 2 }}>
             <Fade>
               <div className="lp-hero-badge">
                 <span className="lp-pill-dot" />
