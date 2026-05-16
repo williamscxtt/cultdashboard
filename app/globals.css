@@ -115,9 +115,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html {
-  /* clip instead of hidden: prevents horizontal scroll without creating a
-     scroll container, which on iOS Safari traps position:fixed children */
-  overflow-x: clip;
+  overflow-x: hidden;
   /* Fill notch + home-indicator zones on iPhone (viewport-fit:cover) */
   background-color: #0d0d0a;
   /* Prevent rubber-band overscroll revealing the gap */
