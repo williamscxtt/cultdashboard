@@ -280,13 +280,16 @@ export default function ApplyPage() {
           <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f0f0f0', marginBottom: 10, letterSpacing: '-0.5px' }}>
             Application received{firstName ? `, ${firstName}` : ''}.
           </h1>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 380, margin: '0 auto 20px' }}>
-            Will reviews every application personally. If it&apos;s a fit, he&apos;ll call you on{' '}
-            <strong style={{ color: 'rgba(255,255,255,0.65)' }}>{form.phone}</strong>, usually within 24 hours.
+          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, maxWidth: 380, margin: '0 auto 16px' }}>
+            Will reviews every application personally and will be in touch within 48 hours. If it&apos;s a fit, you&apos;ll get a link to book a call.
+          </p>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.65, maxWidth: 380, margin: '0 auto 20px' }}>
+            In the meantime, you can explore the Cult Dashboard at{' '}
+            <a href="/" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>cultdashboard.com</a>.
           </p>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <Phone size={13} color="rgba(255,255,255,0.3)" />
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.25)', margin: 0 }}>Keep your phone nearby.</p>
+            <Phone size={13} color="rgba(255,255,255,0.25)" />
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.22)', margin: 0 }}>Keep your phone nearby.</p>
           </div>
         </div>
       </PageShell>
@@ -315,8 +318,8 @@ export default function ApplyPage() {
         {/* ── Step 1: Who are you ────────────────────────────────────────── */}
         {step === 1 && (
           <>
-            <h1 style={headingStyle}>Let&apos;s figure out where you&apos;re at</h1>
-            <p style={subStyle}>Answer honestly, the better the match, the better the result.</p>
+            <h1 style={headingStyle}>Apply for Creator Cult</h1>
+            <p style={subStyle}>Will reviews every application personally. This is an application for the full Creator Cult programme &mdash; live coaching, the course, and lifetime dashboard access. If you&apos;re looking for just the Cult Dashboard, you can get <a href="/" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>instant access on the main page</a>.</p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
               <Field label="What best describes what you're building?">
@@ -538,7 +541,7 @@ export default function ApplyPage() {
           {loading
             ? 'Submitting…'
             : step === TOTAL_STEPS
-              ? <>See my result <ArrowRight size={16} /></>
+              ? <>Submit Application <ArrowRight size={16} /></>
               : <>Continue <ArrowRight size={16} /></>
           }
         </button>
