@@ -807,6 +807,19 @@ export default function LandingPage() {
             linear-gradient(rgba(255,255,255,0.028) 1px, transparent 1px),
             linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px);
           background-size: 48px 48px;
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+        /* Safe-area covers — solid #0d0d0a fills that sit above the notch and
+           below the home indicator so no page content bleeds into those zones */
+        .lp-safe-top {
+          position: fixed; top: 0; left: 0; right: 0;
+          height: env(safe-area-inset-top);
+          background: #0d0d0a; z-index: 200; pointer-events: none;
+        }
+        .lp-safe-bottom {
+          position: fixed; bottom: 0; left: 0; right: 0;
+          height: env(safe-area-inset-bottom);
+          background: #0d0d0a; z-index: 200; pointer-events: none;
         }
         /* ── Page frame ── */
         .lp-page-frame {
@@ -1254,6 +1267,11 @@ export default function LandingPage() {
       `}</style>
 
       <div className="lp-root">
+
+        {/* Safe-area covers — zero-height on non-notch devices, paint #0d0d0a
+            inside the notch zone (top) and home-indicator zone (bottom) */}
+        <div className="lp-safe-top" aria-hidden="true" />
+        <div className="lp-safe-bottom" aria-hidden="true" />
 
         {/* ── Win modal ── */}
         {selectedWin && (
