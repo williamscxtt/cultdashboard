@@ -871,10 +871,10 @@ export default function LandingPage() {
         .lp-client-login:hover { color: rgba(255,255,255,0.75); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); }
 
         /* ── Nav ── */
-        .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: calc(64px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 48px 0; transition: background .3s, border-color .3s; }
+        .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: calc(64px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 48px 0; background: #0d0d0a; transition: border-color .3s; }
         /* Always paint the notch zone solid — visible even when nav is transparent */
         .lp-nav::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: #0d0d0a; z-index: -1; }
-        .lp-nav.scrolled { background: rgba(13,13,10,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(59,130,246,0.1); }
+        .lp-nav.scrolled { border-bottom: 1px solid rgba(59,130,246,0.1); }
         .lp-nav-logo { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 15px; font-weight: 800; letter-spacing: -.02em; text-decoration: none; display: flex; align-items: center; gap: 9px; color: #f1f5f9; }
 
         /* ── Hero ── */
@@ -1134,9 +1134,9 @@ export default function LandingPage() {
           .lp-sticky-cta {
             display: flex; align-items: center; justify-content: center;
             position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-            padding: 12px 20px max(18px, calc(env(safe-area-inset-bottom) + 8px));
+            padding: 16px 20px max(20px, calc(env(safe-area-inset-bottom) + 12px));
             background: #0d0d0a;
-            border-top: 1px solid rgba(59,130,246,0.15);
+            border-top: 1px solid rgba(59,130,246,0.12);
           }
           .lp-sticky-cta a, .lp-sticky-cta button {
             display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -1235,9 +1235,9 @@ export default function LandingPage() {
           .lp-bridge-grid > div:last-child { border-bottom: none; }
         }
 
-        /* ── Nav — always frosted on mobile ── */
+        /* ── Nav — always solid on mobile ── */
         @media (max-width: 768px) {
-          .lp-nav { background: #0d0d0a; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid rgba(255,255,255,0.06); }
+          .lp-nav { border-bottom: 1px solid rgba(255,255,255,0.06); }
         }
 
         /* ── Hero photo — mobile: bigger, later fade, text overlaps the fade zone ── */
@@ -1270,6 +1270,20 @@ export default function LandingPage() {
           Zero-height on non-notch devices; paint #0d0d0a inside notch / home-indicator zones. */}
       <div className="lp-safe-top" aria-hidden="true" />
       <div className="lp-safe-bottom" aria-hidden="true" />
+
+      {/* Nav lives OUTSIDE lp-root so overflow-x:hidden on lp-root can't
+          trap it as a scroll-relative element in Safari (WebKit bug). */}
+      <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
+        <a href="/" className="lp-nav-logo">
+          <LogoMark size={28} />
+          Creator Cult
+        </a>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <a href="#choose-track" className="lp-nav-cta lp-nav-desktop-only">Get the Dashboard</a>
+          <Link href="/apply" className="lp-client-login lp-nav-desktop-only">Apply for Coaching</Link>
+          <Link href="/login" className="lp-client-login">Client Login</Link>
+        </div>
+      </nav>
 
       <div className="lp-root">
 
@@ -1316,19 +1330,6 @@ export default function LandingPage() {
             </div>
           </div>
         )}
-
-        {/* ── Nav ── */}
-        <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
-          <a href="/" className="lp-nav-logo">
-            <LogoMark size={28} />
-            Creator Cult
-          </a>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <a href="#choose-track" className="lp-nav-cta lp-nav-desktop-only">Get the Dashboard</a>
-            <Link href="/apply" className="lp-client-login lp-nav-desktop-only">Apply for Coaching</Link>
-            <Link href="/login" className="lp-client-login">Client Login</Link>
-          </div>
-        </nav>
 
         {/* ── Hero ── */}
         <div className="lp-hero">
