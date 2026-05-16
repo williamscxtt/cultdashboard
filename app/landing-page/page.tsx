@@ -1260,6 +1260,9 @@ export default function LandingPage() {
           .lp-nav-desktop-only { display: none !important; }
           /* Hero headline: hide "The new era of" prefix on mobile */
           .lp-hero-h1-prefix, .lp-hero-h1-br { display: none !important; }
+          /* CTA pairs: stack vertically, same width, centred on mobile */
+          .lp-cta-pair { flex-direction: column !important; align-items: center !important; width: 100% !important; }
+          .lp-cta-pair .lp-cta-primary, .lp-cta-pair .lp-cta-ghost { width: 100% !important; max-width: 360px !important; justify-content: center !important; display: flex !important; }
         }
       `}</style>
 
@@ -1321,7 +1324,7 @@ export default function LandingPage() {
             Creator Cult
           </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <a href="#choose-track" className="lp-client-login lp-nav-desktop-only" style={{ fontWeight: 600, color: '#C41E3A', borderColor: 'rgba(196,30,58,0.3)' }}>Get the Dashboard</a>
+            <a href="#choose-track" className="lp-nav-cta lp-nav-desktop-only">Get the Dashboard</a>
             <Link href="/apply" className="lp-client-login lp-nav-desktop-only">Apply for Coaching</Link>
             <Link href="/login" className="lp-client-login">Client Login</Link>
           </div>
@@ -1436,7 +1439,7 @@ export default function LandingPage() {
             </div>
             <Fade delay={100}>
               <div className="lp-cta-row" style={{ marginTop: 56, display: 'flex', justifyContent: 'flex-start' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get the Dashboard &mdash; £75/mo</button>
                   <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
@@ -1771,7 +1774,7 @@ export default function LandingPage() {
                 <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#94a3b8', marginBottom: 24 }}>
                   The Dashboard unlocks Phase 01 tools the moment you join.
                 </p>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access &mdash; £75/mo</button>
                   <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
@@ -1899,7 +1902,7 @@ export default function LandingPage() {
             </div>
             <Fade delay={80}>
               <div style={{ textAlign: 'center', paddingTop: 56 }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
+                <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access &mdash; £75/mo</button>
                   <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
@@ -2033,7 +2036,7 @@ export default function LandingPage() {
           <Fade>
             <h2 className="lp-h2" style={{ marginBottom: 20 }}>Ready to stop figuring<br /><span style={{ color: '#ffffff' }}>it out alone?</span></h2>
             <p className="lp-body-lg" style={{ marginBottom: 36 }}>Applications take 3 minutes. Will reviews every one personally.<br />Cohort size is limited, not everyone who applies gets in.</p>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
+            <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
               <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access &mdash; £75/mo</button>
               <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
             </div>
