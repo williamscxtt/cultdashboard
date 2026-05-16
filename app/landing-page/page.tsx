@@ -782,10 +782,10 @@ export default function LandingPage() {
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
       <style>{`
-        /* iOS overscroll: lock colour + kill rubber-band bounce so no gap shows above or below */
-        html, body { background-color: #0d0d0a !important; margin: 0 !important; padding: 0 !important; overscroll-behavior: none; }
-        html { height: -webkit-fill-available; }
-        body { min-height: 100vh; min-height: -webkit-fill-available; }
+        /* iOS safe-area: lock page colour so notch + home-indicator zones match */
+        html, body { background-color: #0d0d0a !important; }
+        html { height: -webkit-fill-available; overflow-x: clip !important; }
+        body { min-height: 100vh; min-height: -webkit-fill-available; overscroll-behavior: none !important; }
         .lp-root { all: initial; display: block; }
         .lp-root *, .lp-root *::before, .lp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
         .lp-root {

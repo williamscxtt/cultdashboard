@@ -115,7 +115,13 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html {
-  overflow-x: hidden;
+  /* clip instead of hidden: prevents horizontal scroll without creating a
+     scroll container, which on iOS Safari traps position:fixed children */
+  overflow-x: clip;
+  /* Fill notch + home-indicator zones on iPhone (viewport-fit:cover) */
+  background-color: #0d0d0a;
+  /* Prevent rubber-band overscroll revealing the gap */
+  overscroll-behavior-y: none;
 }
 
 html.dark { color-scheme: dark; }
@@ -131,6 +137,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   overflow-x: hidden;
+  overscroll-behavior-y: none;
   /* Prevent any long unbroken text (AI-generated content, URLs, etc.) from
      blowing out the layout on mobile */
   overflow-wrap: break-word;

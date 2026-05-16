@@ -15,6 +15,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   viewportFit: 'cover',
+  themeColor: '#0d0d0a',
 };
 
 export const metadata: Metadata = {
@@ -58,7 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           } catch(e) { document.documentElement.classList.add('dark'); }
         ` }} />
       </head>
-      <body className={inter.className} style={{ minHeight: '100vh' }}>
+      <body className={inter.className} style={{ minHeight: '100vh', backgroundColor: '#0d0d0a' }}>
         {children}
         <SpeedInsights />
         <Analytics />
