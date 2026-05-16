@@ -116,10 +116,7 @@
 
 html {
   overflow-x: hidden;
-  /* Fill notch + home-indicator zones on iPhone (viewport-fit:cover) */
   background-color: #0d0d0a;
-  /* Prevent rubber-band overscroll revealing the gap */
-  overscroll-behavior-y: none;
 }
 
 html.dark { color-scheme: dark; }
@@ -135,7 +132,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.5;
   overflow-x: hidden;
-  overscroll-behavior-y: none;
   /* Prevent any long unbroken text (AI-generated content, URLs, etc.) from
      blowing out the layout on mobile */
   overflow-wrap: break-word;
