@@ -1348,12 +1348,12 @@ export default function LandingPage() {
             </Fade>
             <Fade delay={160}>
               <p className="lp-body-lg" style={{ maxWidth: 500, marginTop: 28 }}>
-                The Cult Dashboard is a suite of 12 AI tools &mdash; scripts, competitor intel, profile audits, offer builders &mdash; built on Will Scott&apos;s viral framework and updated every week. It&apos;s the operating system for your personal brand on Instagram.
+                The Cult Dashboard is a suite of 12 AI tools: scripts, competitor intel, profile audits and offer builders. Built on Will Scott&apos;s viral framework and updated every week. The operating system for your personal brand on Instagram.
               </p>
             </Fade>
             <Fade delay={240}>
               <div className="lp-hero-ctas" style={{ marginTop: 40, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get the Dashboard &mdash; £75/mo</button>
+                <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get the Dashboard</button>
                 <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
               </div>
               <p style={{ marginTop: 12, fontSize: 12, color: '#64748b', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Instant dashboard access on payment. Coaching applications reviewed personally by Will.</p>
@@ -1424,7 +1424,7 @@ export default function LandingPage() {
               {[
                 { n: '01', title: "You've been figuring it out manually.", body: "Researching hooks by hand. Reverse-engineering competitors one reel at a time. Rewriting your bio six times and still not knowing if it’s right. Guessing what to post next week." },
                 { n: '02', title: 'Every piece of advice is a tactic. Nothing is a system.', body: "You’ve applied the hooks. You’ve tried the formats. You know the theory. But without the right tools running the right methodology, nothing compounds." },
-                { n: '03', title: "The creators winning right now aren't working harder.", body: "They have better infrastructure. Built on real data. Updated every week. Trained on what actually works on Instagram in 2025 — not a course from three years ago." },
+                { n: '03', title: "The creators winning right now aren't working harder.", body: "They have better infrastructure. Built on real data. Updated every week. Trained on what actually works on Instagram in 2025, not a course from three years ago." },
               ].map(({ n, title, body }, i) => (
                 <Fade key={n} delay={i * 80}>
                   <div className="lp-pain-item">
@@ -1440,7 +1440,7 @@ export default function LandingPage() {
             <Fade delay={100}>
               <div className="lp-cta-row" style={{ marginTop: 56, display: 'flex', justifyContent: 'flex-start' }}>
                 <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get the Dashboard &mdash; £75/mo</button>
+                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get the Dashboard</button>
                   <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
               </div>
@@ -1467,11 +1467,11 @@ export default function LandingPage() {
                   <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 12 }}>Track 01</div>
                   <div style={{ fontSize: 28, fontWeight: 800, color: '#f1f5f9', marginBottom: 12, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The Cult Dashboard</div>
                   <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.75, marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                    12 AI tools built on the Creator Cult methodology &mdash; scripts, competitor intel, profile audits, offer builders &mdash; updated automatically every week. Instant access. No application. No call. Live in minutes.
+                    12 AI tools built on the Creator Cult methodology: scripts, competitor intel, profile audits and offer builders. Updated automatically every week. Instant access. No application. No call. Live in minutes.
                   </p>
                   <div style={{ marginBottom: 28 }}>
                     <div style={{ fontSize: 32, fontWeight: 900, color: '#f1f5f9', letterSpacing: '-.04em', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1 }}>£75 <span style={{ fontSize: 16, fontWeight: 500, color: '#94a3b8' }}>/ month</span></div>
-                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>or £300 for 6 months &mdash; save £150</div>
+                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>or £300 for 6 months, save £150</div>
                   </div>
                   {[
                     'All 12 AI tools, updated every week',
@@ -1535,7 +1535,7 @@ export default function LandingPage() {
               <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 24 }}>THE CULT DASHBOARD</div>
               <h2 className="lp-h2">12 AI tools. Yours<br /><span style={{ color: '#ffffff' }}>the moment you join.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 560 }}>
-                This is the level up. Every Creator Cult member gets private access to the Cult Dashboard &mdash; a suite of 12 AI tools trained on 350M+ views of real creator data and built around one methodology. It&apos;s not a content library. It&apos;s not a template pack. It&apos;s the operating system for your personal brand, running 24/7, updated automatically every week.
+                This is the level up. Every Creator Cult member gets private access to the Cult Dashboard: a suite of 12 AI tools trained on 350M+ views of real creator data and built around one methodology. It&apos;s not a content library. It&apos;s not a template pack. It&apos;s the operating system for your personal brand, running 24/7, updated automatically every week.
               </p>
             </Fade>
 
@@ -1587,10 +1587,10 @@ export default function LandingPage() {
             <Fade delay={60}>
               <div style={{ textAlign: 'center', paddingTop: 56 }}>
                 <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#94a3b8', marginBottom: 20 }}>
-                  The Dashboard is your unfair advantage. Get instant access for £75/month &mdash; or apply for full coaching and get everything.
+                  The Dashboard is your unfair advantage. Get instant access for £75/month, or apply for full coaching and get everything.
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access &mdash; £75/mo</button>
+                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access</button>
                   <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
               </div>
@@ -1607,14 +1607,14 @@ export default function LandingPage() {
             <Fade delay={60}>
               <h2 className="lp-h2">The Dashboard runs<br /><span style={{ color: '#ffffff' }}>on a proven system.</span></h2>
               <p className="lp-body-lg" style={{ marginTop: 20, maxWidth: 560 }}>
-                The tools aren&apos;t random. Every one is built on the Creator Cult methodology &mdash; a five-phase framework that takes you from stuck creator to full-time personal brand, in a specific order, with logic behind every step.
+                The tools aren&apos;t random. Every one is built on the Creator Cult methodology: a five-phase framework that takes you from stuck creator to full-time personal brand, in a specific order, with logic behind every step.
               </p>
             </Fade>
             <Fade delay={120}>
               <div className="lp-bridge-grid" style={{ marginTop: 64, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
                 {[
-                  { n: '01', label: '5-Phase Curriculum', body: 'Foundations to Scale — every lesson in the sequence that actually compounds. Self-paced, but structured so you always know what to do next.' },
-                  { n: '02', label: 'Live Weekly Coaching', body: 'Group calls every week. Will reviews your content, offers, and blockers live. The Dashboard gives you the tools — the coaching makes them work for your specific situation.' },
+                  { n: '01', label: '5-Phase Curriculum', body: 'Foundations to Scale. Every lesson in the sequence that actually compounds. Self-paced, but structured so you always know what to do next.' },
+                  { n: '02', label: 'Live Weekly Coaching', body: 'Group calls every week. Will reviews your content, offers, and blockers live. The Dashboard gives you the tools. The coaching makes them work for your specific situation.' },
                   { n: '03', label: '12 AI Tools', body: 'Private access to the Cult Dashboard, built on the Creator Cult methodology. Available to members only.' },
                 ].map(({ n, label, body }, i) => (
                   <div key={n} style={{
@@ -1658,9 +1658,9 @@ export default function LandingPage() {
                   <div className="lp-story-text" style={{ marginTop: 36 }}>
                     <p>That was me. Not long ago.</p>
                     <p>I was posting every day and getting nowhere. I knew content. I knew marketing theory. I still couldn&apos;t pay my rent with it.</p>
-                    <p>I stopped copying tactics and started building a system. Positioning, story, offer, acquisition &mdash; in the right order. Within months, I had clients. Then a waiting list. Then a coaching programme with 140+ creators inside.</p>
+                    <p>I stopped copying tactics and started building a system. Positioning, story, offer, acquisition. In the right order. Within months, I had clients. Then a waiting list. Then a coaching programme with 140+ creators inside.</p>
                     <p><strong>I didn&apos;t get lucky. I got structured.</strong></p>
-                    <p>The Cult Dashboard is what I built so you don&apos;t have to spend years figuring it out alone. Every tool, every framework, every script &mdash; engineered from what actually worked. Not theory. Not tactics. A system, wrapped in software, updated every single week.</p>
+                    <p>The Cult Dashboard is what I built so you don&apos;t have to spend years figuring it out alone. Every tool, every framework, every script. Engineered from what actually worked. Not theory. Not tactics. A system, wrapped in software, updated every single week.</p>
                   </div>
                 </Fade>
               </div>
@@ -1775,7 +1775,7 @@ export default function LandingPage() {
                   The Dashboard unlocks Phase 01 tools the moment you join.
                 </p>
                 <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access &mdash; £75/mo</button>
+                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access</button>
                   <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
               </div>
@@ -1903,7 +1903,7 @@ export default function LandingPage() {
             <Fade delay={80}>
               <div style={{ textAlign: 'center', paddingTop: 56 }}>
                 <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access &mdash; £75/mo</button>
+                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access</button>
                   <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
               </div>
@@ -1928,7 +1928,7 @@ export default function LandingPage() {
               <div className="lp-incl-grid">
                 {[
                   { title: '12 AI Tools, Updated Every Week', desc: 'Reel Script Generator, Competitor Intel Engine, AI Story Generator, Profile Audit AI, Lead Magnet Generator, Offer Builder, Hook Analyser, Bio Optimiser, Caption Generator, DM Sales Playbook, Content Calendar Builder, Outreach Script Library.' },
-                  { title: 'Built on 350M+ Views of Real Data', desc: 'Every tool is trained on the Creator Cult methodology — not generic AI prompts. Scripts, hooks, and frameworks built from what actually works on Instagram.' },
+                  { title: 'Built on 350M+ Views of Real Data', desc: 'Every tool is trained on the Creator Cult methodology, not generic AI prompts. Scripts, hooks, and frameworks built from what actually works on Instagram.' },
                   { title: 'Automatic Weekly Updates', desc: 'The Competitor Intel Engine runs every Monday. New tools are added automatically. Your dashboard gets better every week without you doing anything.' },
                 ].map(({ title, desc }, i) => (
                   <Fade key={title} delay={(i % 2) * 70}>
@@ -1946,7 +1946,7 @@ export default function LandingPage() {
               </div>
               <Fade delay={80}>
                 <div style={{ marginTop: 40, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access &mdash; £75/mo</button>
+                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access</button>
                   <span style={{ fontSize: 12, color: '#64748b', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>No application needed. Access unlocks immediately on payment. Cancel anytime.</span>
                 </div>
               </Fade>
@@ -1958,9 +1958,9 @@ export default function LandingPage() {
               <Fade delay={60}><div style={{ fontSize: 26, fontWeight: 800, color: '#f1f5f9', marginBottom: 36, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Full Creator Cult</div></Fade>
               <div className="lp-incl-grid">
                 {[
-                  { title: 'Lifetime Dashboard Access', desc: 'All 12 AI tools — not a subscription. Lifetime access as part of Creator Cult membership.' },
+                  { title: 'Lifetime Dashboard Access', desc: 'All 12 AI tools, included for life. Not a subscription. Access as part of Creator Cult membership.' },
                   { title: 'The Full 5-Phase Curriculum', desc: 'Foundations to Scale. Every lesson, framework, and resource in the sequence that compounds. Self-paced, guided, and updated alongside the programme.' },
-                  { title: 'Live Weekly Group Coaching', desc: 'Group calls every week with Will. Bring your content, your offers, your blockers. Reviewed live — not a pre-recorded replay library.' },
+                  { title: 'Live Weekly Group Coaching', desc: 'Group calls every week with Will. Bring your content, your offers, your blockers. Reviewed live, not a pre-recorded replay library.' },
                   { title: '1:1 Support Between Calls', desc: 'Direct access to Will outside of coaching calls. Content reviews, offer feedback, and strategy questions answered. Not a bot. Not a VA.' },
                   { title: 'Private Circle Community', desc: '140+ creators running the same system. Active every single day across 15+ countries.' },
                 ].map(({ title, desc }, i) => (
@@ -2001,7 +2001,7 @@ export default function LandingPage() {
                   <div className="lp-for-col yes">
                     <div className="lp-for-col-head">The Dashboard is for you if</div>
                     <div className="lp-for-items">
-                      {["You want the tools and the system without the commitment of full coaching", "You've been posting but don't have a structured framework behind your content", "You want instant access — no calls, no applications, start today", "You're ready to treat your content like a business, even if you're early", "You want to see if Creator Cult is the right fit before going all in"].map(s => (
+                      {["You want the tools and the system without the commitment of full coaching", "You've been posting but don't have a structured framework behind your content", "You want instant access. No calls, no applications, start today", "You're ready to treat your content like a business, even if you're early", "You want to see if Creator Cult is the right fit before going all in"].map(s => (
                         <div key={s} className="lp-for-item"><span className="lp-for-mark">+</span>{s}</div>
                       ))}
                     </div>
@@ -2037,7 +2037,7 @@ export default function LandingPage() {
             <h2 className="lp-h2" style={{ marginBottom: 20 }}>Ready to stop figuring<br /><span style={{ color: '#ffffff' }}>it out alone?</span></h2>
             <p className="lp-body-lg" style={{ marginBottom: 36 }}>Applications take 3 minutes. Will reviews every one personally.<br />Cohort size is limited, not everyone who applies gets in.</p>
             <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-              <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access &mdash; £75/mo</button>
+              <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access</button>
               <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
             </div>
           </Fade>
@@ -2051,9 +2051,9 @@ export default function LandingPage() {
             <Fade delay={60}><h2 className="lp-h2" style={{ marginBottom: 48 }}>Common questions.</h2></Fade>
             <Fade delay={100}>
               <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
-                <Faq q="What&apos;s the difference between the Dashboard and Full Creator Cult?" a="The Cult Dashboard is the tool suite — 12 AI tools built on the Creator Cult methodology, updated every week, available on a monthly or 6-month subscription. That&apos;s the whole product. Full Creator Cult is the complete programme: lifetime dashboard access, the full 5-phase course curriculum, live weekly group coaching with Will, 1:1 support between calls, and the private Circle community. If you want the tools now and the flexibility to upgrade later, start with the Dashboard. If you want everything — the course, the coaching, Will in your corner — apply for Creator Cult." />
-                <Faq q="Can I start with the Dashboard and upgrade to full Creator Cult later?" a="Yes. The Dashboard is a genuine starting point. A number of Creator Cult members started with the tools first and upgraded when they were ready to go all in. When you join Creator Cult, your subscription ends and you get lifetime dashboard access as part of the programme — so you&apos;re not paying twice." />
-                <Faq q="How do I apply and what happens next?" a="There are two ways to join. If you want the Cult Dashboard, get instant access right now — £75/month or £300 for 6 months, no application needed, no call. If you want the full Creator Cult programme, click Apply for Creator Cult, fill in the 3-minute form, and Will reviews it personally. If it&apos;s a fit, you&apos;ll get a link to book a call where the investment is discussed. Cohort size is limited." />
+                <Faq q="What&apos;s the difference between the Dashboard and Full Creator Cult?" a="The Cult Dashboard is the tool suite: 12 AI tools built on the Creator Cult methodology, updated every week, available on a monthly or 6-month subscription. That&apos;s the whole product. Full Creator Cult is the complete programme: lifetime dashboard access, the full 5-phase course curriculum, live weekly group coaching with Will, 1:1 support between calls, and the private Circle community. If you want the tools now and the flexibility to upgrade later, start with the Dashboard. If you want everything (the course, the coaching, Will in your corner) apply for Creator Cult." />
+                <Faq q="Can I start with the Dashboard and upgrade to full Creator Cult later?" a="Yes. The Dashboard is a genuine starting point. A number of Creator Cult members started with the tools first and upgraded when they were ready to go all in. When you join Creator Cult, your subscription ends and you get lifetime dashboard access as part of the programme, so you&apos;re not paying twice." />
+                <Faq q="How do I apply and what happens next?" a="There are two ways to join. If you want the Cult Dashboard, get instant access right now: £75/month or £300 for 6 months, no application needed, no call. If you want the full Creator Cult programme, click Apply for Creator Cult, fill in the 3-minute form, and Will reviews it personally. If it&apos;s a fit, you&apos;ll get a link to book a call where the investment is discussed. Cohort size is limited." />
                 <Faq q="What exactly do I get when I join Creator Cult?" a="You get access to the full 5-phase curriculum, weekly live group coaching calls with recordings, 1:1 access to Will between calls, content and offer reviews, the Cult Dashboard with all 12 AI tools, and the private Circle community. Ongoing support at every stage." />
                 <Faq q="How long does the programme run?" a="Creator Cult is an ongoing coaching programme. Most clients see their first real results within 30 to 60 days of starting. There is no set end date. You stay in as long as you are growing." />
                 <Faq q="Do I need a big following to join?" a="No. Several of our members signed their first clients with under 1,000 followers. Following size does not determine your results. Your system does. We build the system first." />
@@ -2095,7 +2095,7 @@ export default function LandingPage() {
                     <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 8, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The Cult Dashboard</div>
                     <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Instant access. No application.</div>
                     <div style={{ fontSize: 26, fontWeight: 900, color: '#f1f5f9', letterSpacing: '-.04em', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 4 }}>£75 <span style={{ fontSize: 14, fontWeight: 500, color: '#64748b' }}>/ month</span></div>
-                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>or £300 for 6 months — save £150</div>
+                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>or £300 for 6 months, save £150</div>
                     <button onClick={() => setShowCheckout(true)} className="lp-cta-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 20 }}>Get Instant Access</button>
                     {['All 12 AI tools, updated every week', 'Reel scripts, hooks, competitor intel + more', 'Built on 350M+ views of real creator data', 'New tools added automatically'].map(t => (
                       <div key={t} style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', display: 'flex', gap: 8, marginBottom: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
