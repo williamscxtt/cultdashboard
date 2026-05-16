@@ -784,7 +784,6 @@ export default function LandingPage() {
       <style>{`
         /* iOS safe-area: lock page colour so notch + home-indicator zones match */
         html, body { background-color: #0d0d0a !important; }
-        html { overflow-x: hidden !important; }
         body { min-height: 100vh; min-height: 100dvh; }
         .lp-root { all: initial; display: block; }
         .lp-root *, .lp-root *::before, .lp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -805,12 +804,14 @@ export default function LandingPage() {
         .lp-safe-top {
           position: fixed; top: 0; left: 0; right: 0;
           height: env(safe-area-inset-top);
-          background: #0d0d0a; z-index: 200; pointer-events: none;
+          background: #0d0d0a; z-index: 9998; pointer-events: none;
+          -webkit-transform: translateZ(0); transform: translateZ(0);
         }
         .lp-safe-bottom {
           position: fixed; bottom: 0; left: 0; right: 0;
           height: env(safe-area-inset-bottom);
-          background: #0d0d0a; z-index: 200; pointer-events: none;
+          background: #0d0d0a; z-index: 9998; pointer-events: none;
+          -webkit-transform: translateZ(0); transform: translateZ(0);
         }
         /* ── Page frame ── */
         .lp-page-frame {
@@ -871,7 +872,7 @@ export default function LandingPage() {
         .lp-client-login:hover { color: rgba(255,255,255,0.75); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); }
 
         /* ── Nav ── */
-        .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: calc(64px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 48px 0; background: #0d0d0a; transition: border-color .3s; }
+        .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 9000; height: calc(64px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 48px 0; background: #0d0d0a; transition: border-color .3s; -webkit-transform: translateZ(0); transform: translateZ(0); }
         /* Always paint the notch zone solid — visible even when nav is transparent */
         .lp-nav::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: #0d0d0a; z-index: -1; }
         .lp-nav.scrolled { border-bottom: 1px solid rgba(59,130,246,0.1); }
@@ -1133,10 +1134,11 @@ export default function LandingPage() {
         @media (max-width: 768px) {
           .lp-sticky-cta {
             display: flex; align-items: center; justify-content: center;
-            position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-            padding: 16px 20px max(20px, calc(env(safe-area-inset-bottom) + 12px));
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 9000;
+            padding: 12px 20px max(12px, calc(env(safe-area-inset-bottom) + 8px));
             background: #0d0d0a;
-            border-top: 1px solid rgba(59,130,246,0.12);
+            border-top: 1px solid rgba(255,255,255,0.06);
+            -webkit-transform: translateZ(0); transform: translateZ(0);
           }
           .lp-sticky-cta a, .lp-sticky-cta button {
             display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -1273,7 +1275,7 @@ export default function LandingPage() {
 
       {/* Nav lives OUTSIDE lp-root so overflow-x:hidden on lp-root can't
           trap it as a scroll-relative element in Safari (WebKit bug). */}
-      <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
+      <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`} style={{ backgroundColor: '#0d0d0a', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)' }}>
         <a href="/" className="lp-nav-logo">
           <LogoMark size={28} />
           Creator Cult
@@ -2156,14 +2158,14 @@ export default function LandingPage() {
           <div className="lp-footer-copy">© {new Date().getFullYear()} Creator Cult</div>
         </div>
 
+      </div>{/* /lp-root */}
+
+      {/* ── Sticky mobile CTA — OUTSIDE lp-root so overflow-x:hidden on lp-root
+          doesn't trap position:fixed in iOS Safari (WebKit bug) ── */}
+      <div className="lp-sticky-cta">
+        <button onClick={() => setShowCheckout(true)}>Get Instant Access <IconArrow /></button>
       </div>
 
-        {/* ── Sticky mobile CTA ── */}
-        <div className="lp-sticky-cta">
-          <button onClick={() => setShowCheckout(true)}>Get Instant Access <IconArrow /></button>
-        </div>
-
-      </div>
     </>
   )
 }
