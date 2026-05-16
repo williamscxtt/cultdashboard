@@ -881,6 +881,8 @@ export default function LandingPage() {
 
         /* ── Nav ── */
         .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: calc(64px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 48px 0; transition: background .3s, border-color .3s; }
+        /* Always paint the notch zone solid — visible even when nav is transparent */
+        .lp-nav::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: #0d0d0a; z-index: -1; }
         .lp-nav.scrolled { background: rgba(13,13,10,0.88); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-bottom: 1px solid rgba(59,130,246,0.1); }
         .lp-nav-logo { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 15px; font-weight: 800; letter-spacing: -.02em; text-decoration: none; display: flex; align-items: center; gap: 9px; color: #f1f5f9; }
 
@@ -1266,12 +1268,12 @@ export default function LandingPage() {
         }
       `}</style>
 
-      <div className="lp-root">
+      {/* Safe-area covers live OUTSIDE lp-root so overflow-x:hidden never traps them.
+          Zero-height on non-notch devices; paint #0d0d0a inside notch / home-indicator zones. */}
+      <div className="lp-safe-top" aria-hidden="true" />
+      <div className="lp-safe-bottom" aria-hidden="true" />
 
-        {/* Safe-area covers — zero-height on non-notch devices, paint #0d0d0a
-            inside the notch zone (top) and home-indicator zone (bottom) */}
-        <div className="lp-safe-top" aria-hidden="true" />
-        <div className="lp-safe-bottom" aria-hidden="true" />
+      <div className="lp-root">
 
         {/* ── Win modal ── */}
         {selectedWin && (
