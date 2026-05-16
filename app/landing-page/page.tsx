@@ -1138,13 +1138,13 @@ export default function LandingPage() {
             background: linear-gradient(to top, rgba(13,13,10,1) 0%, rgba(13,13,10,0.92) 100%);
             border-top: 1px solid rgba(59,130,246,0.15);
           }
-          .lp-sticky-cta a {
+          .lp-sticky-cta a, .lp-sticky-cta button {
             display: flex; align-items: center; justify-content: center; gap: 8px;
             width: 100%; max-width: 400px; height: 52px; border-radius: 8px;
-            background: #3b82f6;
+            background: #3b82f6; border: none;
             color: #fff; font-size: 15px; font-weight: 700; text-decoration: none;
-            font-family: 'Inter', sans-serif; letter-spacing: -.01em;
-            box-shadow: 0 0 32px rgba(59,130,246,0.4);
+            font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -.01em;
+            box-shadow: 0 0 32px rgba(59,130,246,0.4); cursor: pointer;
           }
         }
 
@@ -1256,6 +1256,10 @@ export default function LandingPage() {
           .lp-hero-ctas { display: none !important; }
           .lp-cta-row { justify-content: center !important; }
           .lp-cta-primary { width: 100%; max-width: 320px; justify-content: center; }
+          /* Nav: hide all except Client Login on mobile */
+          .lp-nav-desktop-only { display: none !important; }
+          /* Hero headline: hide "The new era of" prefix on mobile */
+          .lp-hero-h1-prefix, .lp-hero-h1-br { display: none !important; }
         }
       `}</style>
 
@@ -1317,8 +1321,8 @@ export default function LandingPage() {
             Creator Cult
           </a>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <a href="#choose-track" className="lp-client-login" style={{ fontWeight: 600, color: '#C41E3A', borderColor: 'rgba(196,30,58,0.3)' }}>Get the Dashboard</a>
-            <Link href="/apply" className="lp-client-login">Apply for Coaching</Link>
+            <a href="#choose-track" className="lp-client-login lp-nav-desktop-only" style={{ fontWeight: 600, color: '#C41E3A', borderColor: 'rgba(196,30,58,0.3)' }}>Get the Dashboard</a>
+            <Link href="/apply" className="lp-client-login lp-nav-desktop-only">Apply for Coaching</Link>
             <Link href="/login" className="lp-client-login">Client Login</Link>
           </div>
         </nav>
@@ -1337,7 +1341,7 @@ export default function LandingPage() {
               </div>
             </Fade>
             <Fade delay={80}>
-              <h1 className="lp-h1">The new era of<br /><span style={{ color: '#ffffff' }}>personal brand growth.</span></h1>
+              <h1 className="lp-h1"><span className="lp-hero-h1-prefix">The new era of</span><br className="lp-hero-h1-br" /><span style={{ color: '#ffffff' }}>personal brand growth.</span></h1>
             </Fade>
             <Fade delay={160}>
               <p className="lp-body-lg" style={{ maxWidth: 500, marginTop: 28 }}>
@@ -2152,7 +2156,7 @@ export default function LandingPage() {
 
         {/* ── Sticky mobile CTA ── */}
         <div className="lp-sticky-cta">
-          <button onClick={() => setShowCheckout(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'inherit', font: 'inherit', display: 'flex', alignItems: 'center', gap: 6, fontWeight: 700 }}>Get Instant Access <IconArrow /></button>
+          <button onClick={() => setShowCheckout(true)}>Get Instant Access <IconArrow /></button>
         </div>
 
       </div>
