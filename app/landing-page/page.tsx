@@ -1394,8 +1394,8 @@ export default function LandingPage() {
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Old Way Is Over</span></Fade>
             <Fade delay={60}>
-              <h2 className="lp-h2">The effort is there.<br /><span style={{ color: '#ffffff' }}>The results aren&apos;t.</span><br /><span style={{ color: '#3b82f6' }}>That&apos;s an infrastructure problem.</span></h2>
-              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 500 }}>And infrastructure problems have solutions. Here&apos;s what&apos;s actually going on.</p>
+              <h2 className="lp-h2">Posting without a system<br /><span style={{ color: '#ffffff' }}>gets you effort without results.</span><br /><span style={{ color: '#3b82f6' }}>Here&apos;s what changes that.</span></h2>
+              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 500 }}>Most creators work harder than they need to and grow slower than they should. The missing piece is always the same.</p>
             </Fade>
             <div style={{ marginTop: 56 }}>
               {[
