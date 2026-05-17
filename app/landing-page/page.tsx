@@ -621,11 +621,24 @@ interface WinItem {
   quote?: string
 }
 
+function trackCheckout(event_type: string) {
+  fetch('/api/track-checkout', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ event_type }),
+  }).catch(() => {})
+}
+
 export default function LandingPage() {
   const [scrolled, setScrolled] = useState(false)
   const [selectedWin, setSelectedWin] = useState<WinItem | null>(null)
   const [showAllTools, setShowAllTools] = useState(false)
   const [showCheckout, setShowCheckout] = useState(false)
+
+  function openCheckout() {
+    openCheckout()
+    trackCheckout('modal_open')
+  }
 
   useEffect(() => {
     const h = () => setScrolled(window.scrollY > 20)
@@ -1280,11 +1293,11 @@ export default function LandingPage() {
               <h3 style={{ fontSize: 24, fontWeight: 800, color: '#f1f5f9', marginBottom: 8, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Get Instant Access</h3>
               <p style={{ fontSize: 14, color: '#94a3b8', marginBottom: 28, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>12 AI tools, updated every week. Access unlocks immediately on payment.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-                <a href="https://buy.stripe.com/28E00i2Mm5CBc0udso9IQ1N" style={{ display: 'block', border: '1px solid rgba(59,130,246,0.4)', borderRadius: 10, padding: '18px 20px', textDecoration: 'none', background: 'rgba(59,130,246,0.05)', cursor: 'pointer' }}>
+                <a href="https://buy.stripe.com/28E00i2Mm5CBc0udso9IQ1N" onClick={() => trackCheckout('stripe_monthly')} style={{ display: 'block', border: '1px solid rgba(59,130,246,0.4)', borderRadius: 10, padding: '18px 20px', textDecoration: 'none', background: 'rgba(59,130,246,0.05)', cursor: 'pointer' }}>
                   <div style={{ fontWeight: 700, color: '#f1f5f9', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 2 }}>£75 / month</div>
                   <div style={{ fontSize: 12, color: '#94a3b8', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Monthly subscription. Cancel anytime.</div>
                 </a>
-                <a href="https://buy.stripe.com/14A8wObiSaWV3tY3RO9IQ1O" style={{ display: 'block', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '18px 20px', textDecoration: 'none', background: 'rgba(255,255,255,0.02)', cursor: 'pointer' }}>
+                <a href="https://buy.stripe.com/14A8wObiSaWV3tY3RO9IQ1O" onClick={() => trackCheckout('stripe_biannual')} style={{ display: 'block', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '18px 20px', textDecoration: 'none', background: 'rgba(255,255,255,0.02)', cursor: 'pointer' }}>
                   <div style={{ fontWeight: 700, color: '#f1f5f9', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 2 }}>£300 for 6 months <span style={{ fontSize: 11, background: '#3b82f6', color: 'white', padding: '2px 6px', borderRadius: 4, marginLeft: 6 }}>SAVE £150</span></div>
                   <div style={{ fontSize: 12, color: '#94a3b8', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>6-month access. Best value.</div>
                 </a>
@@ -1317,7 +1330,7 @@ export default function LandingPage() {
             </Fade>
             <Fade delay={240}>
               <div className="lp-hero-ctas" style={{ marginTop: 40, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get the Dashboard</button>
+                <button onClick={() => openCheckout()} className="lp-cta-primary">Get the Dashboard</button>
                 <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
               </div>
               <p style={{ marginTop: 12, fontSize: 12, color: '#64748b', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Instant dashboard access on payment. Coaching applications reviewed personally by Will.</p>
@@ -1404,7 +1417,7 @@ export default function LandingPage() {
             <Fade delay={100}>
               <div className="lp-cta-row" style={{ marginTop: 56, display: 'flex', justifyContent: 'flex-start' }}>
                 <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get the Dashboard</button>
+                  <button onClick={() => openCheckout()} className="lp-cta-primary">Get the Dashboard</button>
                   <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
               </div>
@@ -1448,7 +1461,7 @@ export default function LandingPage() {
                       <span style={{ color: '#3b82f6', flexShrink: 0, fontWeight: 700 }}>+</span>{item}
                     </div>
                   ))}
-                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary" style={{ marginTop: 32, width: '100%', justifyContent: 'center' }}>
+                  <button onClick={() => openCheckout()} className="lp-cta-primary" style={{ marginTop: 32, width: '100%', justifyContent: 'center' }}>
                     Get Instant Access
                   </button>
                   <p style={{ marginTop: 12, fontSize: 11, color: '#64748b', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>No application needed. Access unlocks immediately on payment.</p>
@@ -1548,7 +1561,7 @@ export default function LandingPage() {
                   The Dashboard is your unfair advantage. Get instant access for £75/month, or apply for full coaching and get everything.
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access</button>
+                  <button onClick={() => openCheckout()} className="lp-cta-primary">Get Instant Access</button>
                   <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
               </div>
@@ -1733,7 +1746,7 @@ export default function LandingPage() {
                   The Dashboard unlocks Phase 01 tools the moment you join.
                 </p>
                 <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access</button>
+                  <button onClick={() => openCheckout()} className="lp-cta-primary">Get Instant Access</button>
                   <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
               </div>
@@ -1861,7 +1874,7 @@ export default function LandingPage() {
             <Fade delay={80}>
               <div style={{ textAlign: 'center', paddingTop: 56 }}>
                 <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access</button>
+                  <button onClick={() => openCheckout()} className="lp-cta-primary">Get Instant Access</button>
                   <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
               </div>
@@ -1904,7 +1917,7 @@ export default function LandingPage() {
               </div>
               <Fade delay={80}>
                 <div style={{ marginTop: 40, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
-                  <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access</button>
+                  <button onClick={() => openCheckout()} className="lp-cta-primary">Get Instant Access</button>
                   <span style={{ fontSize: 12, color: '#64748b', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>No application needed. Access unlocks immediately on payment. Cancel anytime.</span>
                 </div>
               </Fade>
@@ -1995,7 +2008,7 @@ export default function LandingPage() {
             <h2 className="lp-h2" style={{ marginBottom: 20 }}>Ready to stop figuring<br /><span style={{ color: '#ffffff' }}>it out alone?</span></h2>
             <p className="lp-body-lg" style={{ marginBottom: 36 }}>Applications take 3 minutes. Will reviews every one personally.<br />Cohort size is limited, not everyone who applies gets in.</p>
             <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-              <button onClick={() => setShowCheckout(true)} className="lp-cta-primary">Get Instant Access</button>
+              <button onClick={() => openCheckout()} className="lp-cta-primary">Get Instant Access</button>
               <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
             </div>
           </Fade>
@@ -2054,7 +2067,7 @@ export default function LandingPage() {
                     <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Instant access. No application.</div>
                     <div style={{ fontSize: 26, fontWeight: 900, color: '#f1f5f9', letterSpacing: '-.04em', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 4 }}>£75 <span style={{ fontSize: 14, fontWeight: 500, color: '#64748b' }}>/ month</span></div>
                     <div style={{ fontSize: 12, color: '#64748b', marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>or £300 for 6 months, save £150</div>
-                    <button onClick={() => setShowCheckout(true)} className="lp-cta-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 20 }}>Get Instant Access</button>
+                    <button onClick={() => openCheckout()} className="lp-cta-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 20 }}>Get Instant Access</button>
                     {['All 12 AI tools, updated every week', 'Reel scripts, hooks, competitor intel + more', 'Built on 350M+ views of real creator data', 'New tools added automatically'].map(t => (
                       <div key={t} style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', display: 'flex', gap: 8, marginBottom: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                         <span style={{ color: '#3b82f6', fontWeight: 700 }}>+</span>{t}

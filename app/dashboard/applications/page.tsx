@@ -38,6 +38,12 @@ interface FunnelStep {
   sessions: number
 }
 
+interface CheckoutStats {
+  modal_open: number
+  stripe_monthly: number
+  stripe_biannual: number
+}
+
 interface Analytics {
   total: number
   qualified: number
@@ -59,7 +65,9 @@ function pct(n: number, total: number) {
 }
 
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' })
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' }) +
+    ' · ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
 }
 
 function fmtWeek(iso: string) {
@@ -116,6 +124,7 @@ function HBar({ label, count, max, color = '#3B82F6' }: { label: string; count: 
 export default function ApplicationsPage() {
   const router = useRouter()
   const [data, setData] = useState<Analytics | null>(null)
+  const [checkoutStats, setCheckoutStats] = useState<CheckoutStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -125,18 +134,35 @@ export default function ApplicationsPage() {
       if (!user) { router.push('/login'); return }
       supabase.from('profiles').select('role').eq('id', user.id).single().then(({ data: p }) => {
         if (p?.role !== 'admin') { router.push('/dashboard'); return }
-        fetch('/api/admin/applications')
-          .then(r => r.json())
-          .then(d => { setData(d); setLoading(false) })
-          .catch(() => { setError('Failed to load analytics'); setLoading(false) })
+
+        // Fetch applications analytics + checkout events in parallel
+        Promise.all([
+          fetch('/api/admin/applications').then(r => r.json()),
+          supabase.from('checkout_events').select('event_type'),
+        ]).then(([appData, { data: evts }]) => {
+          setData(appData)
+          if (evts) {
+            const stats: CheckoutStats = { modal_open: 0, stripe_monthly: 0, stripe_biannual: 0 }
+            evts.forEach(e => {
+              if (e.event_type === 'modal_open') stats.modal_open++
+              else if (e.event_type === 'stripe_monthly') stats.stripe_monthly++
+              else if (e.event_type === 'stripe_biannual') stats.stripe_biannual++
+            })
+            setCheckoutStats(stats)
+          }
+          setLoading(false)
+        }).catch(() => { setError('Failed to load analytics'); setLoading(false) })
       })
     })
   }, [router])
 
   if (loading) return (
     <div style={{ padding: 24 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 12 }}>
         {[1,2,3,4].map(i => <div key={i} style={{ height: 96, borderRadius: 12, background: 'var(--muted)', animation: 'pulse 1.5s ease-in-out infinite' }} />)}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+        {[1,2,3,4].map(i => <div key={i} style={{ height: 96, borderRadius: 12, background: 'var(--muted)', animation: 'pulse 1.5s ease-in-out infinite', animationDelay: `${i * 0.1}s` }} />)}
       </div>
       <style>{`@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}`}</style>
     </div>
@@ -178,6 +204,25 @@ export default function ApplicationsPage() {
         <StatTile label="Payment tier" value={data.paymentTier} sub={pct(data.paymentTier, data.total) + ' of total'} color="#3B82F6" />
         <StatTile label="Disqualified" value={data.disqualified} sub={pct(data.disqualified, data.total) + ' of total'} color="rgba(255,255,255,0.35)" />
       </div>
+
+      {/* Checkout funnel */}
+      {checkoutStats && (() => {
+        const totalStripe = checkoutStats.stripe_monthly + checkoutStats.stripe_biannual
+        const convRate = checkoutStats.modal_open > 0 ? Math.round((totalStripe / checkoutStats.modal_open) * 100) : 0
+        return (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 12 }}>
+              Checkout funnel
+            </div>
+            <div className="apps-stat-tiles" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+              <StatTile label="Checkout opens" value={checkoutStats.modal_open} sub="Clicked 'Get Access'" />
+              <StatTile label="Stripe clicks" value={totalStripe} sub={`${checkoutStats.stripe_monthly} monthly · ${checkoutStats.stripe_biannual} biannual`} color="#3B82F6" />
+              <StatTile label="Monthly clicks" value={checkoutStats.stripe_monthly} sub={pct(checkoutStats.stripe_monthly, checkoutStats.modal_open) + ' of opens'} color="#60a5fa" />
+              <StatTile label="Conversion rate" value={convRate + '%'} sub="Stripe clicks ÷ modal opens" color={convRate >= 30 ? '#22c55e' : convRate >= 10 ? '#f59e0b' : '#ef4444'} />
+            </div>
+          </div>
+        )
+      })()}
 
       {/* Two-col layout */}
       <div className="apps-two-col" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
