@@ -866,10 +866,10 @@ export default function LandingPage() {
         .lp-cta-ghost:hover { background: rgba(59,130,246,0.08); border-color: rgba(96,165,250,0.5); }
         .lp-cta-ghost-sm { display: inline-flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 13px; font-weight: 700; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.25); padding: 10px 20px; border-radius: 8px; transition: background .2s; cursor: pointer; background: transparent; }
         .lp-cta-ghost-sm:hover { background: rgba(59,130,246,0.08); }
-        .lp-nav-cta { display: inline-flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 13px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 10px 22px; border-radius: 8px; transition: background .2s, transform .15s, box-shadow .2s; cursor: pointer; border: none; box-shadow: 0 0 24px rgba(59,130,246,0.35); }
-        .lp-nav-cta:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 0 36px rgba(59,130,246,0.55); }
-        .lp-client-login { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: rgba(255,255,255,0.45); text-decoration: none; padding: 7px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); background: rgba(255,255,255,0.04); transition: color .2s, border-color .2s, background .2s; white-space: nowrap; }
-        .lp-client-login:hover { color: rgba(255,255,255,0.75); border-color: rgba(255,255,255,0.2); background: rgba(255,255,255,0.07); }
+        .lp-nav-cta { display: inline-flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 13px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 9px 20px; border-radius: 8px; transition: background .2s, transform .15s, box-shadow .2s; cursor: pointer; border: none; box-shadow: 0 0 20px rgba(59,130,246,0.3); white-space: nowrap; }
+        .lp-nav-cta:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 0 32px rgba(59,130,246,0.5); }
+        .lp-client-login { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: rgba(255,255,255,0.5); text-decoration: none; padding: 9px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); transition: color .2s, border-color .2s, background .2s; white-space: nowrap; }
+        .lp-client-login:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.07); }
 
         /* ── Nav ── */
         .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 9000; height: calc(64px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 48px 0; background: #0d0d0a; transition: border-color .3s; -webkit-transform: translateZ(0); transform: translateZ(0); }
@@ -907,7 +907,7 @@ export default function LandingPage() {
         .lp-ticker-track { display: flex; width: max-content; animation: lp-tick 58s linear infinite; }
         .lp-ticker-track:hover { animation-play-state: paused; }
         @keyframes lp-tick { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
-        @media (max-width: 640px) { .lp-ticker-track { animation-duration: 28s; } }
+        @media (max-width: 640px) { .lp-ticker-track { animation-duration: 16s; } }
         .lp-tick-item { display: inline-flex; align-items: center; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 11px; font-weight: 700; color: #ffffff; white-space: nowrap; padding: 0 28px; letter-spacing: .08em; text-transform: uppercase; }
         .lp-tick-dot { color: rgba(255,255,255,0.4); font-size: 8px; }
 
@@ -1156,7 +1156,7 @@ export default function LandingPage() {
           .lp-container-sm { padding: 0 20px; }
           .lp-section { padding: 64px 0; }
           .lp-nav { padding: env(safe-area-inset-top) 16px 0; }
-          .lp-client-login { font-size: 10px; padding: 6px 10px; letter-spacing: .04em; }
+          .lp-client-login { font-size: 12px; padding: 8px 12px; }
           .lp-footer { padding: 32px 20px; padding-bottom: max(32px, calc(env(safe-area-inset-bottom) + 24px)); }
           .lp-pill { font-size: 10px; }
           .lp-h2 { font-size: clamp(26px, 8vw, 38px); }
