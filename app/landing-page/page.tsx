@@ -1240,8 +1240,8 @@ export default function LandingPage() {
           .lp-cta-primary { width: 100%; max-width: 320px; justify-content: center; }
           /* Nav: hide all except Client Login on mobile */
           .lp-nav-desktop-only { display: none !important; }
-          /* Hero headline: hide "The new era of" prefix on mobile */
-          .lp-hero-h1-prefix, .lp-hero-h1-br { display: none !important; }
+          /* Hero headline: show full headline on mobile at a smaller size */
+          .lp-h1 { font-size: clamp(28px, 7.5vw, 38px); }
           /* CTA pairs: stack vertically, same width, centred on mobile */
           .lp-cta-pair { flex-direction: column !important; align-items: center !important; width: 100% !important; }
           .lp-cta-pair .lp-cta-primary, .lp-cta-pair .lp-cta-ghost { width: 100% !important; max-width: 360px !important; justify-content: center !important; display: flex !important; }
