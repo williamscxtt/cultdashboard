@@ -782,17 +782,13 @@ export default function LandingPage() {
           background-size: 48px 48px;
           padding-bottom: env(safe-area-inset-bottom);
         }
-        /* Safe-area covers — solid #0d0d0a fills that sit above the notch and
-           below the home indicator so no page content bleeds into those zones */
-        .lp-safe-top {
+        /* Notch cover — body::before is the most reliable approach.
+           It sits outside any page stacking context so nothing can paint over it. */
+        body::before {
+          content: '';
           position: fixed; top: 0; left: 0; right: 0;
           height: env(safe-area-inset-top);
-          background: #0d0d0a; z-index: 200; pointer-events: none;
-        }
-        .lp-safe-bottom {
-          position: fixed; bottom: 0; left: 0; right: 0;
-          height: env(safe-area-inset-bottom);
-          background: #0d0d0a; z-index: 200; pointer-events: none;
+          background: #0d0d0a; z-index: 99999; pointer-events: none;
         }
         /* ── Page frame ── */
         .lp-page-frame {
@@ -853,7 +849,7 @@ export default function LandingPage() {
         .lp-client-login:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.04); }
 
         /* ── Nav ── */
-        .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: calc(64px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 48px 0; background: #0d0d0a; transition: border-color .3s; }
+        .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 9000; height: calc(64px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 48px 0; background: #0d0d0a; transition: border-color .3s; }
         /* Always paint the notch zone solid — visible even when nav is transparent */
         .lp-nav::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: #0d0d0a; z-index: -1; }
         .lp-nav.scrolled { border-bottom: 1px solid rgba(59,130,246,0.1); }
@@ -1237,11 +1233,6 @@ export default function LandingPage() {
           .lp-cta-pair .lp-cta-primary, .lp-cta-pair .lp-cta-ghost { width: 100% !important; max-width: 360px !important; justify-content: center !important; display: flex !important; }
         }
       `}</style>
-
-      {/* Safe-area covers live OUTSIDE lp-root so overflow-x:hidden never traps them.
-          Zero-height on non-notch devices; paint #0d0d0a inside notch / home-indicator zones. */}
-      <div className="lp-safe-top" aria-hidden="true" />
-      <div className="lp-safe-bottom" aria-hidden="true" />
 
       {/* Nav lives OUTSIDE lp-root so overflow-x:hidden on lp-root can't
           trap it as a scroll-relative element in Safari (WebKit bug). */}
