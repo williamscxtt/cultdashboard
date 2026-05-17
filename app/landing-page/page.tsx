@@ -1110,24 +1110,14 @@ export default function LandingPage() {
         .lp-footer-links a:hover { color: #cbd5e1; }
         .lp-footer-copy { font-size: 12px; color: #64748b; }
 
-        /* ── Sticky mobile CTA ── */
-        .lp-sticky-cta { display: none; }
-        @media (max-width: 768px) {
-          .lp-sticky-cta {
-            display: flex; align-items: center; justify-content: center;
-            position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-            padding: 16px 20px max(20px, calc(env(safe-area-inset-bottom) + 12px));
-            background: #0d0d0a;
-            border-top: 1px solid rgba(59,130,246,0.12);
-          }
-          .lp-sticky-cta a, .lp-sticky-cta button {
-            display: flex; align-items: center; justify-content: center; gap: 8px;
-            width: 100%; max-width: 400px; height: 52px; border-radius: 8px;
-            background: #3b82f6; border: none;
-            color: #fff; font-size: 15px; font-weight: 700; text-decoration: none;
-            font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: -.01em;
-            box-shadow: 0 0 32px rgba(59,130,246,0.4); cursor: pointer;
-          }
+        /* ── CTA pairs — equal width buttons ── */
+        .lp-cta-pair .lp-cta-primary,
+        .lp-cta-pair .lp-cta-ghost,
+        .lp-hero-ctas .lp-cta-primary,
+        .lp-hero-ctas .lp-cta-ghost {
+          flex: 1;
+          max-width: 280px;
+          justify-content: center;
         }
 
         /* ── Global mobile ── */
@@ -2133,11 +2123,6 @@ export default function LandingPage() {
         </div>
 
       </div>
-
-        {/* ── Sticky mobile CTA ── */}
-        <div className="lp-sticky-cta">
-          <button onClick={() => setShowCheckout(true)}>Get Instant Access <IconArrow /></button>
-        </div>
 
       </div>
     </>
