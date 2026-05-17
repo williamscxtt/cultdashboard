@@ -585,24 +585,6 @@ function ShowcasePanel3() {
   )
 }
 
-function ShowcaseConnector() {
-  const { ref, on } = useReveal()
-  return (
-    <div ref={ref} style={{ display: 'flex', justifyContent: 'center', padding: '2px 0' }}>
-      <svg width="52" height="52" viewBox="0 0 52 52" fill="none">
-        <path
-          d="M26 2 C40 10 12 20 26 28 C40 36 12 44 26 50"
-          stroke="rgba(59,130,246,0.22)"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeDasharray="7 5"
-          style={{ strokeDashoffset: on ? 0 : 180, transition: 'stroke-dashoffset 1.2s cubic-bezier(.16,1,.3,1) .1s' }}
-        />
-        <circle cx="26" cy="50" r="2.5" fill="#3b82f6" style={{ opacity: on ? 0.45 : 0, transition: 'opacity .3s .85s' }} />
-      </svg>
-    </div>
-  )
-}
 
 function Faq({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false)
@@ -784,6 +766,7 @@ export default function LandingPage() {
       <style>{`
         /* iOS safe-area: lock page colour so notch + home-indicator zones match */
         html, body { background-color: #0d0d0a !important; }
+        html { overflow-x: hidden !important; }
         body { min-height: 100vh; min-height: 100dvh; }
         .lp-root { all: initial; display: block; }
         .lp-root *, .lp-root *::before, .lp-root *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -804,14 +787,12 @@ export default function LandingPage() {
         .lp-safe-top {
           position: fixed; top: 0; left: 0; right: 0;
           height: env(safe-area-inset-top);
-          background: #0d0d0a; z-index: 9998; pointer-events: none;
-          -webkit-transform: translateZ(0); transform: translateZ(0);
+          background: #0d0d0a; z-index: 200; pointer-events: none;
         }
         .lp-safe-bottom {
           position: fixed; bottom: 0; left: 0; right: 0;
           height: env(safe-area-inset-bottom);
-          background: #0d0d0a; z-index: 9998; pointer-events: none;
-          -webkit-transform: translateZ(0); transform: translateZ(0);
+          background: #0d0d0a; z-index: 200; pointer-events: none;
         }
         /* ── Page frame ── */
         .lp-page-frame {
@@ -841,7 +822,7 @@ export default function LandingPage() {
         .lp-container { max-width: 1200px; margin: 0 auto; padding: 0 48px; }
         .lp-container-sm { max-width: 840px; margin: 0 auto; padding: 0 48px; }
         .lp-section { padding: 80px 0; }
-        .lp-hr { height: 1px; background: rgba(59,130,246,0.12); }
+        .lp-hr { height: 1px; background: linear-gradient(90deg, transparent 0%, rgba(59,130,246,0.2) 30%, rgba(59,130,246,0.2) 70%, transparent 100%); }
 
         /* ── Cursor blink (used in product mockup only) ── */
         @keyframes lp-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
@@ -868,11 +849,11 @@ export default function LandingPage() {
         .lp-cta-ghost-sm:hover { background: rgba(59,130,246,0.08); }
         .lp-nav-cta { display: inline-flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 13px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 9px 20px; border-radius: 8px; transition: background .2s, transform .15s, box-shadow .2s; cursor: pointer; border: none; box-shadow: 0 0 20px rgba(59,130,246,0.3); white-space: nowrap; }
         .lp-nav-cta:hover { background: #2563eb; transform: translateY(-1px); box-shadow: 0 0 32px rgba(59,130,246,0.5); }
-        .lp-client-login { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: rgba(255,255,255,0.5); text-decoration: none; padding: 9px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: rgba(255,255,255,0.04); transition: color .2s, border-color .2s, background .2s; white-space: nowrap; }
-        .lp-client-login:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.07); }
+        .lp-client-login { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 13px; font-weight: 600; letter-spacing: -.01em; color: rgba(255,255,255,0.5); text-decoration: none; padding: 9px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12); background: transparent; transition: color .2s, border-color .2s, background .2s; white-space: nowrap; }
+        .lp-client-login:hover { color: rgba(255,255,255,0.8); border-color: rgba(255,255,255,0.22); background: rgba(255,255,255,0.04); }
 
         /* ── Nav ── */
-        .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 9000; height: calc(64px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 48px 0; background: #0d0d0a; transition: border-color .3s; -webkit-transform: translateZ(0); transform: translateZ(0); }
+        .lp-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; height: calc(64px + env(safe-area-inset-top)); display: flex; align-items: center; justify-content: space-between; padding: env(safe-area-inset-top) 48px 0; background: #0d0d0a; transition: border-color .3s; }
         /* Always paint the notch zone solid — visible even when nav is transparent */
         .lp-nav::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: env(safe-area-inset-top); background: #0d0d0a; z-index: -1; }
         .lp-nav.scrolled { border-bottom: 1px solid rgba(59,130,246,0.1); }
@@ -892,8 +873,8 @@ export default function LandingPage() {
         @media (max-width: 900px) { .lp-hero-photo { object-position: center 30%; } .lp-hero-photo-overlay { background: linear-gradient(to top, #0d0d0a 0%, transparent 40%), linear-gradient(to bottom, rgba(13,13,10,0.6) 0%, transparent 30%); } }
         .lp-hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 56px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 40px; }
         @media (max-width: 640px) { .lp-hero-stats { grid-template-columns: repeat(2, 1fr); gap: 28px 0; } }
-        .lp-stat-n { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: clamp(26px, 3.5vw, 40px); font-weight: 800; color: #f1f5f9; letter-spacing: -.03em; line-height: 1; }
-        .lp-stat-l { font-size: 11px; color: #94a3b8; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; margin-top: 8px; }
+        .lp-stat-n { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: clamp(28px, 3.5vw, 42px); font-weight: 800; color: #ffffff; letter-spacing: -.04em; line-height: 1; }
+        .lp-stat-l { font-size: 11px; color: #64748b; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; margin-top: 8px; }
 
         /* ── Avatar social strip ── */
         .lp-avatar-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
@@ -919,10 +900,10 @@ export default function LandingPage() {
         .lp-social-name:last-child { border-right: none; }
 
         /* ── Pain ── */
-        .lp-pain-item { padding: 32px 36px; background: rgba(255,255,255,0.025); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; display: grid; grid-template-columns: 64px 1fr; gap: 32px; align-items: start; margin-bottom: 14px; transition: background .25s, border-color .25s; }
-        .lp-pain-item:hover { background: rgba(59,130,246,0.045); border-color: rgba(59,130,246,0.22); }
+        .lp-pain-item { padding: 32px 36px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.07); border-left: 3px solid rgba(59,130,246,0.18); border-radius: 12px; display: grid; grid-template-columns: 64px 1fr; gap: 32px; align-items: start; margin-bottom: 14px; transition: background .25s, border-color .25s, border-left-color .25s; }
+        .lp-pain-item:hover { background: rgba(59,130,246,0.05); border-color: rgba(59,130,246,0.2); border-left-color: rgba(59,130,246,0.55); }
         @media (max-width: 640px) { .lp-pain-item { grid-template-columns: 1fr; gap: 10px; padding: 24px 20px; } }
-        .lp-pain-num { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 48px; font-weight: 900; color: rgba(255,255,255,0.22); line-height: 1; margin-top: -6px; letter-spacing: -.04em; }
+        .lp-pain-num { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 48px; font-weight: 900; color: rgba(59,130,246,0.4); line-height: 1; margin-top: -6px; letter-spacing: -.04em; }
         .lp-pain-title { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: clamp(17px, 2vw, 22px); font-weight: 700; color: #f1f5f9; margin-bottom: 10px; line-height: 1.3; letter-spacing: -.02em; }
         .lp-pain-body { font-size: 15px; color: #b0bec5; line-height: 1.8; }
 
@@ -1018,11 +999,11 @@ export default function LandingPage() {
         .lp-seemore-btn { width: 100%; padding: 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-top: none; border-radius: 0 0 8px 8px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 700; color: #3b82f6; letter-spacing: .04em; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background .2s; }
         .lp-seemore-btn:hover { background: rgba(59,130,246,0.06); }
         @media (max-width: 640px) { .lp-seemore-wrap { display: block; } }
-        .lp-tool-card { padding: 28px; border-right: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); transition: background .2s; }
-        .lp-tool-card:hover { background: rgba(59,130,246,0.03); }
+        .lp-tool-card { padding: 28px; border-right: 1px solid rgba(255,255,255,0.06); border-bottom: 1px solid rgba(255,255,255,0.06); transition: background .25s, border-color .25s; }
+        .lp-tool-card:hover { background: rgba(59,130,246,0.06); border-right-color: rgba(59,130,246,0.18); }
         .lp-tool-card:nth-child(3n) { border-right: none; }
         @media (max-width: 960px) { .lp-tool-card:nth-child(3n) { border-right: 1px solid rgba(255,255,255,0.06); } .lp-tool-card:nth-child(2n) { border-right: none; } }
-        .lp-tool-icon-wrap { width: 36px; height: 36px; border: 1px solid rgba(59,130,246,0.2); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #3b82f6; margin-bottom: 16px; }
+        .lp-tool-icon-wrap { width: 36px; height: 36px; border: 1px solid rgba(59,130,246,0.25); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #3b82f6; margin-bottom: 16px; background: rgba(59,130,246,0.06); }
         .lp-tool-badge { font-size: 9px; font-weight: 700; letter-spacing: .14em; color: #3b82f6; text-transform: uppercase; background: rgba(59,130,246,0.1); padding: 2px 8px; border-radius: 4px; margin-left: 10px; }
         .lp-tool-title { font-size: 14px; font-weight: 700; color: #e2e8f0; margin-bottom: 8px; display: flex; align-items: center; letter-spacing: -.01em; }
         .lp-tool-desc { font-size: 13px; color: #b0bec5; line-height: 1.7; }
@@ -1134,11 +1115,10 @@ export default function LandingPage() {
         @media (max-width: 768px) {
           .lp-sticky-cta {
             display: flex; align-items: center; justify-content: center;
-            position: fixed; bottom: 0; left: 0; right: 0; z-index: 9000;
-            padding: 12px 20px max(12px, calc(env(safe-area-inset-bottom) + 8px));
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+            padding: 16px 20px max(20px, calc(env(safe-area-inset-bottom) + 12px));
             background: #0d0d0a;
-            border-top: 1px solid rgba(255,255,255,0.06);
-            -webkit-transform: translateZ(0); transform: translateZ(0);
+            border-top: 1px solid rgba(59,130,246,0.12);
           }
           .lp-sticky-cta a, .lp-sticky-cta button {
             display: flex; align-items: center; justify-content: center; gap: 8px;
@@ -1184,8 +1164,8 @@ export default function LandingPage() {
           grid-template-columns: 1fr 1fr;
           gap: 72px;
           align-items: center;
-          padding: 72px 0;
-          border-top: 1px solid rgba(255,255,255,0.05);
+          padding: 80px 0;
+          border-top: 1px solid rgba(255,255,255,0.07);
         }
         .lp-showcase-pair:first-child { border-top: none; padding-top: 0; }
         @media (max-width: 900px) {
@@ -1202,7 +1182,7 @@ export default function LandingPage() {
         .lp-showcase-bdot { width: 5px; height: 5px; border-radius: 50%; background: #3b82f6; flex-shrink: 0; opacity: 0.6; }
 
         /* ── Mock window ── */
-        .lp-mock { background: #090907; border: 1px solid rgba(255,255,255,0.07); border-radius: 10px; overflow: hidden; box-shadow: 0 24px 72px rgba(0,0,0,0.58), 0 0 0 1px rgba(59,130,246,0.06); }
+        .lp-mock { background: #090907; border: 1px solid rgba(255,255,255,0.09); border-radius: 10px; overflow: hidden; box-shadow: 0 24px 72px rgba(0,0,0,0.58), 0 0 0 1px rgba(59,130,246,0.1); }
         .lp-mock-chrome { display: flex; align-items: center; gap: 7px; padding: 10px 14px; background: #050504; border-bottom: 1px solid rgba(255,255,255,0.04); }
         .lp-mock-dots { display: flex; gap: 5px; }
         .lp-mock-dots span { display: block; width: 9px; height: 9px; border-radius: 50%; }
@@ -1275,7 +1255,7 @@ export default function LandingPage() {
 
       {/* Nav lives OUTSIDE lp-root so overflow-x:hidden on lp-root can't
           trap it as a scroll-relative element in Safari (WebKit bug). */}
-      <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`} style={{ backgroundColor: '#0d0d0a', WebkitTransform: 'translateZ(0)', transform: 'translateZ(0)' }}>
+      <nav className={`lp-nav${scrolled ? ' scrolled' : ''}`}>
         <a href="/" className="lp-nav-logo">
           <LogoMark size={28} />
           Creator Cult
@@ -1416,12 +1396,12 @@ export default function LandingPage() {
         <div className="lp-hr" />
 
         {/* ── Pain ── */}
-        <div className="lp-section" style={{ paddingTop: 120, paddingBottom: 80 }}>
+        <div className="lp-section" style={{ paddingTop: 120, paddingBottom: 80, background: 'linear-gradient(180deg, rgba(59,130,246,0.03) 0%, transparent 60%)' }}>
           <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Old Way Is Over</span></Fade>
             <Fade delay={60}>
-              <h2 className="lp-h2">You don&apos;t have<br /><span style={{ color: '#ffffff' }}>a content problem.</span><br /><span style={{ color: '#3b82f6' }}>You have a tools problem.</span></h2>
-              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 500 }}>There&apos;s a difference. And it matters.</p>
+              <h2 className="lp-h2">The effort is there.<br /><span style={{ color: '#ffffff' }}>The results aren&apos;t.</span><br /><span style={{ color: '#3b82f6' }}>That&apos;s an infrastructure problem.</span></h2>
+              <p className="lp-body-lg" style={{ marginTop: 16, maxWidth: 500 }}>And infrastructure problems have solutions. Here&apos;s what&apos;s actually going on.</p>
             </Fade>
             <div style={{ marginTop: 56 }}>
               {[
@@ -1545,17 +1525,11 @@ export default function LandingPage() {
             {/* ── Feature Showcase ── */}
             <div style={{ marginTop: 80 }}>
               <ShowcasePanel1 />
-              <ShowcaseConnector />
               <ShowcasePanel2 />
-              <ShowcaseConnector />
               <ShowcasePanel3 />
-              <ShowcaseConnector />
               <ShowcasePanel4 />
-              <ShowcaseConnector />
               <ShowcasePanel5 />
-              <ShowcaseConnector />
               <ShowcasePanel6 />
-              <ShowcaseConnector />
               <ShowcasePanel7 />
             </div>
 
@@ -2158,14 +2132,14 @@ export default function LandingPage() {
           <div className="lp-footer-copy">© {new Date().getFullYear()} Creator Cult</div>
         </div>
 
-      </div>{/* /lp-root */}
-
-      {/* ── Sticky mobile CTA — OUTSIDE lp-root so overflow-x:hidden on lp-root
-          doesn't trap position:fixed in iOS Safari (WebKit bug) ── */}
-      <div className="lp-sticky-cta">
-        <button onClick={() => setShowCheckout(true)}>Get Instant Access <IconArrow /></button>
       </div>
 
+        {/* ── Sticky mobile CTA ── */}
+        <div className="lp-sticky-cta">
+          <button onClick={() => setShowCheckout(true)}>Get Instant Access <IconArrow /></button>
+        </div>
+
+      </div>
     </>
   )
 }
