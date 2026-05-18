@@ -636,7 +636,7 @@ export default function LandingPage() {
   const [showCheckout, setShowCheckout] = useState(false)
 
   function openCheckout() {
-    openCheckout()
+    setShowCheckout(true)
     trackCheckout('modal_open')
   }
 
@@ -1293,14 +1293,14 @@ export default function LandingPage() {
               <h3 style={{ fontSize: 24, fontWeight: 800, color: '#f1f5f9', marginBottom: 8, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Get Instant Access</h3>
               <p style={{ fontSize: 14, color: '#94a3b8', marginBottom: 28, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>12 AI tools, updated every week. Access unlocks immediately on payment.</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-                <a href="https://buy.stripe.com/28E00i2Mm5CBc0udso9IQ1N" onClick={() => trackCheckout('stripe_monthly')} style={{ display: 'block', border: '1px solid rgba(59,130,246,0.4)', borderRadius: 10, padding: '18px 20px', textDecoration: 'none', background: 'rgba(59,130,246,0.05)', cursor: 'pointer' }}>
+                <button onClick={() => { trackCheckout('stripe_monthly'); window.location.href = 'https://buy.stripe.com/28E00i2Mm5CBc0udso9IQ1N' }} style={{ display: 'block', width: '100%', textAlign: 'left', border: '1px solid rgba(59,130,246,0.4)', borderRadius: 10, padding: '18px 20px', textDecoration: 'none', background: 'rgba(59,130,246,0.05)', cursor: 'pointer' }}>
                   <div style={{ fontWeight: 700, color: '#f1f5f9', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 2 }}>£75 / month</div>
                   <div style={{ fontSize: 12, color: '#94a3b8', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Monthly subscription. Cancel anytime.</div>
-                </a>
-                <a href="https://buy.stripe.com/14A8wObiSaWV3tY3RO9IQ1O" onClick={() => trackCheckout('stripe_biannual')} style={{ display: 'block', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '18px 20px', textDecoration: 'none', background: 'rgba(255,255,255,0.02)', cursor: 'pointer' }}>
+                </button>
+                <button onClick={() => { trackCheckout('stripe_biannual'); window.location.href = 'https://buy.stripe.com/14A8wObiSaWV3tY3RO9IQ1O' }} style={{ display: 'block', width: '100%', textAlign: 'left', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '18px 20px', textDecoration: 'none', background: 'rgba(255,255,255,0.02)', cursor: 'pointer' }}>
                   <div style={{ fontWeight: 700, color: '#f1f5f9', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 2 }}>£300 for 6 months <span style={{ fontSize: 11, background: '#3b82f6', color: 'white', padding: '2px 6px', borderRadius: 4, marginLeft: 6 }}>SAVE £150</span></div>
                   <div style={{ fontSize: 12, color: '#94a3b8', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>6-month access. Best value.</div>
-                </a>
+                </button>
               </div>
               <p style={{ fontSize: 11, color: '#475569', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Secure payment. Access unlocks immediately.</p>
             </div>
