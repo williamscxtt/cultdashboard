@@ -54,6 +54,47 @@ export async function POST(req: NextRequest) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session
+
+      // ── Auto-provision account for new customers ──────────────────────────
+      const email = session.customer_details?.email ?? session.customer_email
+      const stripeCustomerId = typeof session.customer === 'string' ? session.customer : session.customer?.id
+
+      if (email) {
+        // Check if a profile already exists for this email
+        const { data: existingProfile } = await adminClient
+          .from('profiles')
+          .select('id')
+          .eq('email', email)
+          .maybeSingle()
+
+        if (!existingProfile) {
+          // New customer — create auth account + send invite email to onboarding
+          const { data: invite, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(email, {
+            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cultdashboard.com'}/onboarding`,
+          })
+
+          if (inviteErr) {
+            console.error('[webhook] invite error:', inviteErr)
+          } else if (invite?.user) {
+            await adminClient.from('profiles').upsert({
+              id: invite.user.id,
+              email,
+              role: 'client',
+              is_active: true,
+              stripe_customer_id: stripeCustomerId ?? null,
+              date_joined: new Date().toISOString().split('T')[0],
+            }, { onConflict: 'id' })
+          }
+        } else {
+          // Returning customer — ensure active + update stripe customer id
+          await adminClient.from('profiles').update({
+            is_active: true,
+            ...(stripeCustomerId ? { stripe_customer_id: stripeCustomerId } : {}),
+          }).eq('id', existingProfile.id)
+        }
+      }
+
+      // ── Subscription upsert (existing logic) ─────────────────────────────
       if (session.mode === 'subscription' && session.subscription) {
         const sub = await stripe.subscriptions.retrieve(
           typeof session.subscription === 'string' ? session.subscription : session.subscription.id
