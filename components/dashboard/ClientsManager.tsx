@@ -598,7 +598,7 @@ function ClientRow({ client, onToggleActive, onToggleBillingExempt, onSendInvite
               color: client.billing_exempt ? '#a78bfa' : 'var(--accent)',
             }}>
               <CreditCard size={9} />
-              {client.billing_exempt ? 'Free' : '£50/mo'}
+              {client.billing_exempt ? 'Free' : '£75/mo'}
             </span>
           </button>
         </div>
@@ -875,8 +875,28 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onToggleTie
         display: 'flex', flexDirection: 'column', gap: 7,
         background: 'var(--muted)',
       }}>
-        {/* Row 1: Invite + Set password */}
+        {/* Row 1: Billing exempt + Invite + Set password */}
         <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            onClick={() => onToggleBillingExempt(client)}
+            title={client.billing_exempt ? 'Free account — click to require subscription' : 'Paid account — click to mark as free'}
+            style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+              height: 30, padding: '0 10px', borderRadius: 6, flex: 1,
+              fontSize: 11, fontWeight: 700,
+              border: `1px solid ${client.billing_exempt ? 'rgba(139,92,246,0.3)' : 'rgba(59,130,246,0.3)'}`,
+              background: client.billing_exempt ? 'rgba(139,92,246,0.08)' : 'rgba(59,130,246,0.08)',
+              color: client.billing_exempt ? '#a78bfa' : '#3b82f6',
+              cursor: 'pointer', fontFamily: 'inherit',
+              transition: 'opacity 0.12s',
+            }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.7' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+          >
+            <CreditCard size={11} />
+            {client.billing_exempt ? 'Free' : '£75/mo'}
+          </button>
+
           <button
             onClick={async () => {
               if (!client.email) return
@@ -917,7 +937,7 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onToggleTie
             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--muted)'; (e.currentTarget as HTMLElement).style.color = 'var(--foreground)' }}
             onMouseLeave={e => { if (!showSetPw) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)' } }}
           >
-            Set password
+            Set PW
           </button>
         </div>
 

@@ -28,13 +28,36 @@ function BillingCard({ profile }: { profile: Profile }) {
   const days = daysUntil(profile.subscription_period_end)
   const renewalDate = formatDate(profile.subscription_period_end)
   const isCreatorCult = profile.membership_tier === 'creator_cult'
+  const hasSubscription = !!profile.subscription_status
 
   const statusColor = profile.subscription_status === 'active' || profile.subscription_status === 'trialing'
-    ? 'hsl(142 71% 45%)' : 'hsl(0 84% 60%)'
+    ? 'hsl(142 71% 45%)'
+    : profile.subscription_status === 'past_due' || profile.subscription_status === 'unpaid'
+    ? 'hsl(38 92% 50%)'
+    : profile.subscription_status === 'canceled'
+    ? 'hsl(0 84% 60%)'
+    : 'var(--muted-foreground)'
+
+  const statusLabel = profile.subscription_status === 'trialing' ? 'Trial'
+    : profile.subscription_status === 'active' ? 'Active'
+    : profile.subscription_status === 'past_due' ? 'Past Due'
+    : profile.subscription_status === 'canceled' ? 'Canceled'
+    : 'No Sub'
 
   return (
     <Card style={{ padding: 20 }}>
       <SectionLabel>Plan &amp; Billing</SectionLabel>
+
+      {/* Admin preview note */}
+      {profile.role === 'admin' && !hasSubscription && (
+        <div style={{
+          fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 12,
+          padding: '6px 10px', borderRadius: 6,
+          background: 'var(--muted)', border: '1px solid var(--border)',
+        }}>
+          Admin preview — clients with active subscriptions see this section.
+        </div>
+      )}
 
       {/* Current plan summary */}
       <div style={{
@@ -48,7 +71,7 @@ function BillingCard({ profile }: { profile: Profile }) {
             {isCreatorCult ? 'Creator Cult — Full Programme' : planLabel}
           </div>
           <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
-            {isCreatorCult ? 'Lifetime dashboard access included' : planPrice}
+            {isCreatorCult ? 'Lifetime dashboard access included' : hasSubscription ? planPrice : 'No active subscription'}
           </div>
         </div>
         <div style={{
@@ -57,7 +80,7 @@ function BillingCard({ profile }: { profile: Profile }) {
           border: `1px solid ${statusColor}40`,
           borderRadius: 5, padding: '3px 8px',
         }}>
-          {profile.subscription_status === 'trialing' ? 'Trial' : 'Active'}
+          {statusLabel}
         </div>
       </div>
 
@@ -319,8 +342,8 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
           </form>
         </Card>
 
-        {/* Plan & Billing — only for clients, not admins */}
-        {profile.role !== 'admin' && profile.subscription_status && (
+        {/* Plan & Billing */}
+        {(profile.role === 'admin' || profile.subscription_status) && (
           <BillingCard profile={profile} />
         )}
 
