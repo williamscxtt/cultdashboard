@@ -878,8 +878,8 @@ export default function LandingPage() {
         .lp-hero-badge { display: inline-flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #60a5fa; background: rgba(59,130,246,0.08); border: 1px solid rgba(96,165,250,0.2); padding: 7px 16px; border-radius: 999px; margin-bottom: 36px; width: fit-content; }
         .lp-hero-photo-col { position: relative; overflow: hidden; }
         .lp-hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 15%; display: block; filter: brightness(0.85) contrast(1.05) saturate(0.9); }
-        .lp-hero-photo-overlay { position: absolute; inset: 0; background: linear-gradient(to right, #0d0d0a 0%, transparent 20%), linear-gradient(to top, #0d0d0a 0%, transparent 30%), linear-gradient(to bottom, rgba(13,13,10,0.3) 0%, transparent 20%); }
-        @media (max-width: 900px) { .lp-hero-photo { object-position: center 30%; } .lp-hero-photo-overlay { background: linear-gradient(to top, #0d0d0a 0%, transparent 40%), linear-gradient(to bottom, rgba(13,13,10,0.6) 0%, transparent 30%); } }
+        .lp-hero-photo-overlay { position: absolute; inset: 0; background: linear-gradient(to right, #0d0d0a 0%, #0d0d0a 10%, rgba(13,13,10,0.7) 35%, transparent 60%), linear-gradient(to top, #0d0d0a 0%, transparent 30%), linear-gradient(to bottom, rgba(13,13,10,0.3) 0%, transparent 20%); }
+        @media (max-width: 900px) { .lp-hero-photo { object-position: center 5%; } .lp-hero-photo-overlay { background: linear-gradient(to top, #0d0d0a 0%, transparent 40%), linear-gradient(to bottom, rgba(13,13,10,0.6) 0%, transparent 30%); } }
         .lp-hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 56px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 40px; }
         @media (max-width: 640px) { .lp-hero-stats { grid-template-columns: repeat(2, 1fr); gap: 28px 0; } }
         .lp-stat-n { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: clamp(28px, 3.5vw, 42px); font-weight: 800; color: #ffffff; letter-spacing: -.04em; line-height: 1; }
@@ -1458,16 +1458,16 @@ export default function LandingPage() {
             </Fade>
             <Fade delay={120}>
               <div style={{ marginTop: 64, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
-                {/* Track 01 */}
-                <div style={{ border: '1px solid rgba(59,130,246,0.3)', borderRadius: 16, padding: '40px 36px', background: 'rgba(59,130,246,0.04)', position: 'relative', overflow: 'hidden' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 12 }}>Track 01</div>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: '#f1f5f9', marginBottom: 12, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The Cult Dashboard</div>
-                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.75, marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                {/* Track 01 — solid blue */}
+                <div style={{ border: 'none', borderRadius: 16, padding: '40px 36px', background: '#3b82f6', position: 'relative', overflow: 'hidden' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.65)', marginBottom: 12 }}>Track 01</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', marginBottom: 12, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The Cult Dashboard</div>
+                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.75, marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                     12 AI tools built on the Creator Cult methodology: scripts, competitor intel, profile audits and offer builders. Updated automatically every week. Instant access. No application. No call. Live in minutes.
                   </p>
                   <div style={{ marginBottom: 28 }}>
-                    <div style={{ fontSize: 32, fontWeight: 900, color: '#f1f5f9', letterSpacing: '-.04em', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1 }}>£75 <span style={{ fontSize: 16, fontWeight: 500, color: '#94a3b8' }}>/ month</span></div>
-                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>or £300 for 6 months, save £150</div>
+                    <div style={{ fontSize: 32, fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1 }}>£75 <span style={{ fontSize: 16, fontWeight: 500, color: 'rgba(255,255,255,0.7)' }}>/ month</span></div>
+                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>or £300 for 6 months, save £150</div>
                   </div>
                   {[
                     'All 12 AI tools, updated every week',
@@ -1476,25 +1476,28 @@ export default function LandingPage() {
                     'AI Story Generator, Profile Audit, Offer Builder + more',
                     'New tools added automatically',
                   ].map(item => (
-                    <div key={item} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8, fontSize: 13, color: 'rgba(255,255,255,0.7)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                      <span style={{ color: '#3b82f6', flexShrink: 0, fontWeight: 700 }}>+</span>{item}
+                    <div key={item} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8, fontSize: 13, color: 'rgba(255,255,255,0.85)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                      <span style={{ color: 'rgba(255,255,255,0.5)', flexShrink: 0, fontWeight: 700 }}>+</span>{item}
                     </div>
                   ))}
-                  <button onClick={() => openCheckout()} className="lp-cta-primary" style={{ marginTop: 32, width: '100%', justifyContent: 'center' }}>
+                  <button onClick={() => openCheckout()} style={{ marginTop: 32, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#ffffff', color: '#1d4ed8', border: 'none', borderRadius: 8, padding: '14px 32px', fontSize: 14, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', transition: 'background .15s', whiteSpace: 'nowrap' }}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#e0eaff')}
+                    onMouseLeave={e => (e.currentTarget.style.background = '#ffffff')}
+                  >
                     Get Instant Access
                   </button>
-                  <p style={{ marginTop: 12, fontSize: 11, color: '#64748b', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>No application needed. Access unlocks immediately on payment.</p>
+                  <p style={{ marginTop: 12, fontSize: 11, color: 'rgba(255,255,255,0.5)', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>No application needed. Access unlocks immediately on payment.</p>
                 </div>
-                {/* Track 02 */}
-                <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '40px 36px', background: 'rgba(255,255,255,0.02)', position: 'relative' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>Track 02</div>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: '#f1f5f9', marginBottom: 12, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Full Creator Cult</div>
-                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.75, marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                {/* Track 02 — near-black premium */}
+                <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '40px 36px', background: '#080807', position: 'relative' }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: '#e2c97e', marginBottom: 12 }}>Track 02</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', marginBottom: 12, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Full Creator Cult</div>
+                  <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.75, marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                     The complete programme. Lifetime dashboard access, the full 5-phase course curriculum, live weekly group coaching with Will, 1:1 support, and the private Circle community. For creators going all in.
                   </p>
                   <div style={{ marginBottom: 28 }}>
-                    <div style={{ fontSize: 20, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-.02em', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.3 }}>Investment disclosed on call.</div>
-                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cohort size is limited. Not everyone who applies gets in.</div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: '#ffffff', letterSpacing: '-.02em', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.3 }}>Investment disclosed on call.</div>
+                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', marginTop: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cohort size is limited. Not everyone who applies gets in.</div>
                   </div>
                   {[
                     'Lifetime Cult Dashboard access (all 12 tools)',
@@ -1503,14 +1506,14 @@ export default function LandingPage() {
                     '1:1 support and direct access between calls',
                     'Private Circle community (140+ creators)',
                   ].map(item => (
-                    <div key={item} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8, fontSize: 13, color: 'rgba(255,255,255,0.7)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                      <span style={{ color: '#94a3b8', flexShrink: 0, fontWeight: 700 }}>+</span>{item}
+                    <div key={item} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8, fontSize: 13, color: 'rgba(255,255,255,0.65)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                      <span style={{ color: '#e2c97e', flexShrink: 0, fontWeight: 700 }}>+</span>{item}
                     </div>
                   ))}
                   <Link href="/apply" className="lp-cta-ghost" style={{ marginTop: 32, width: '100%', justifyContent: 'center', display: 'flex' }}>
                     Apply for Creator Cult &rarr;
                   </Link>
-                  <p style={{ marginTop: 12, fontSize: 11, color: '#64748b', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>3-minute application. Reviewed personally by Will. No commitment to apply.</p>
+                  <p style={{ marginTop: 12, fontSize: 11, color: 'rgba(255,255,255,0.2)', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>3-minute application. Reviewed personally by Will. No commitment to apply.</p>
                 </div>
               </div>
             </Fade>
