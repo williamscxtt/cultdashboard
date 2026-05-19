@@ -850,9 +850,9 @@ export default function LandingPage() {
         .lp-pill-dot { width: 6px; height: 6px; border-radius: 50%; background: #3b82f6; flex-shrink: 0; }
 
         /* ── CTAs ── */
-        .lp-cta-primary { display: inline-flex; align-items: center; gap: 10px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 14px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 14px 32px; border-radius: 8px; transition: background .15s; cursor: pointer; border: none; }
+        .lp-cta-primary { display: inline-flex; align-items: center; gap: 10px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 14px; font-weight: 700; letter-spacing: -.01em; color: #fff; text-decoration: none; background: #3b82f6; padding: 14px 32px; border-radius: 8px; transition: background .15s; cursor: pointer; border: none; white-space: nowrap; }
         .lp-cta-primary:hover { background: #2563eb; }
-        .lp-cta-ghost { display: inline-flex; align-items: center; gap: 10px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 14px; font-weight: 700; letter-spacing: -.01em; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.3); padding: 14px 32px; border-radius: 8px; transition: background .2s, border-color .2s; cursor: pointer; background: transparent; }
+        .lp-cta-ghost { display: inline-flex; align-items: center; gap: 10px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 14px; font-weight: 700; letter-spacing: -.01em; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.3); padding: 14px 32px; border-radius: 8px; transition: background .2s, border-color .2s; cursor: pointer; background: transparent; white-space: nowrap; }
         .lp-cta-ghost:hover { background: rgba(59,130,246,0.08); border-color: rgba(96,165,250,0.5); }
         .lp-cta-ghost-sm { display: inline-flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 13px; font-weight: 700; color: #60a5fa; text-decoration: none; border: 1px solid rgba(96,165,250,0.25); padding: 10px 20px; border-radius: 8px; transition: background .2s; cursor: pointer; background: transparent; }
         .lp-cta-ghost-sm:hover { background: rgba(59,130,246,0.08); }
