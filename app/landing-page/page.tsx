@@ -877,8 +877,8 @@ export default function LandingPage() {
         @media (max-width: 640px) { .lp-hero-left { padding: calc(88px + env(safe-area-inset-top)) 20px 40px; } }
         .lp-hero-badge { display: inline-flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: #60a5fa; background: rgba(59,130,246,0.08); border: 1px solid rgba(96,165,250,0.2); padding: 7px 16px; border-radius: 999px; margin-bottom: 36px; width: fit-content; }
         .lp-hero-photo-col { position: relative; overflow: hidden; }
-        .lp-hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 30%; display: block; filter: brightness(0.85) contrast(1.05) saturate(0.9); }
-        .lp-hero-photo-overlay { position: absolute; inset: 0; background: linear-gradient(to right, #0d0d0a 0%, rgba(13,13,10,0.75) 20%, rgba(13,13,10,0.2) 45%, transparent 65%), linear-gradient(to top, #0d0d0a 0%, transparent 30%), linear-gradient(to bottom, rgba(13,13,10,0.2) 0%, transparent 15%); }
+        .lp-hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 18%; display: block; filter: brightness(0.85) contrast(1.05) saturate(0.9); }
+        .lp-hero-photo-overlay { position: absolute; inset: 0; background: linear-gradient(to right, #0d0d0a 0%, #0d0d0a 18%, rgba(13,13,10,0.5) 38%, transparent 62%), linear-gradient(to top, #0d0d0a 0%, transparent 30%), linear-gradient(to bottom, rgba(13,13,10,0.2) 0%, transparent 15%); }
         @media (max-width: 900px) { .lp-hero-photo { object-position: center 45%; } .lp-hero-photo-overlay { background: linear-gradient(to top, #0d0d0a 0%, transparent 40%), linear-gradient(to bottom, rgba(13,13,10,0.6) 0%, transparent 30%); } }
         .lp-hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 56px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 40px; }
         @media (max-width: 640px) { .lp-hero-stats { grid-template-columns: repeat(2, 1fr); gap: 28px 0; } }
