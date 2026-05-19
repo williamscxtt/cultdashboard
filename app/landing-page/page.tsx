@@ -879,7 +879,7 @@ export default function LandingPage() {
         .lp-hero-photo-col { position: relative; overflow: hidden; }
         .lp-hero-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; filter: brightness(0.85) contrast(1.05) saturate(0.9); }
         .lp-hero-photo-overlay { position: absolute; inset: 0; background: linear-gradient(to right, #0d0d0a 0%, #0d0d0a 10%, rgba(13,13,10,0.7) 35%, transparent 60%), linear-gradient(to top, #0d0d0a 0%, transparent 30%), linear-gradient(to bottom, rgba(13,13,10,0.3) 0%, transparent 20%); }
-        @media (max-width: 900px) { .lp-hero-photo { object-position: center 5%; } .lp-hero-photo-overlay { background: linear-gradient(to top, #0d0d0a 0%, transparent 40%), linear-gradient(to bottom, rgba(13,13,10,0.6) 0%, transparent 30%); } }
+        @media (max-width: 900px) { .lp-hero-photo { object-position: center 45%; } .lp-hero-photo-overlay { background: linear-gradient(to top, #0d0d0a 0%, transparent 40%), linear-gradient(to bottom, rgba(13,13,10,0.6) 0%, transparent 30%); } }
         .lp-hero-stats { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 56px; border-top: 1px solid rgba(255,255,255,0.07); padding-top: 40px; }
         @media (max-width: 640px) { .lp-hero-stats { grid-template-columns: repeat(2, 1fr); gap: 28px 0; } }
         .lp-stat-n { font-family: 'Plus Jakarta Sans', sans-serif !important; font-size: clamp(28px, 3.5vw, 42px); font-weight: 800; color: #ffffff; letter-spacing: -.04em; line-height: 1; }
