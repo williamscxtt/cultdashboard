@@ -68,16 +68,18 @@ export async function POST(req: NextRequest) {
           .maybeSingle()
 
         if (!existingProfile) {
-          // New customer — create auth account + send invite email to onboarding
-          const { data: invite, error: inviteErr } = await adminClient.auth.admin.inviteUserByEmail(email, {
-            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://cultdashboard.com'}/onboarding`,
+          // New customer — the /welcome page handles instant login via magic link.
+          // Webhook creates the user here as a silent fallback (e.g. browser closed
+          // before /welcome loaded). No invite email sent — welcome page is primary.
+          const { data: created, error: createErr } = await adminClient.auth.admin.createUser({
+            email,
+            email_confirm: true,
           })
-
-          if (inviteErr) {
-            console.error('[webhook] invite error:', inviteErr)
-          } else if (invite?.user) {
+          if (createErr) {
+            console.error('[webhook] createUser error:', createErr)
+          } else if (created?.user) {
             await adminClient.from('profiles').upsert({
-              id: invite.user.id,
+              id: created.user.id,
               email,
               role: 'client',
               is_active: true,
