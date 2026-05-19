@@ -1287,22 +1287,41 @@ export default function LandingPage() {
         {/* ── Checkout overlay (placeholder — Stripe embedded checkout) ── */}
         {showCheckout && (
           <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }} onClick={() => setShowCheckout(false)}>
-            <div style={{ background: '#111110', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '40px', maxWidth: 480, width: '100%', position: 'relative' }} onClick={e => e.stopPropagation()}>
-              <button onClick={() => setShowCheckout(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}><IconX /></button>
-              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 12, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The Cult Dashboard</div>
-              <h3 style={{ fontSize: 24, fontWeight: 800, color: '#f1f5f9', marginBottom: 8, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Get Instant Access</h3>
-              <p style={{ fontSize: 14, color: '#94a3b8', marginBottom: 28, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>12 AI tools, updated every week. Access unlocks immediately on payment.</p>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-                <button onClick={() => { trackCheckout('stripe_monthly'); window.location.href = 'https://buy.stripe.com/28E00i2Mm5CBc0udso9IQ1N' }} style={{ display: 'block', width: '100%', textAlign: 'left', border: '1px solid rgba(59,130,246,0.4)', borderRadius: 10, padding: '18px 20px', textDecoration: 'none', background: 'rgba(59,130,246,0.05)', cursor: 'pointer' }}>
-                  <div style={{ fontWeight: 700, color: '#f1f5f9', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 2 }}>£75 / month</div>
-                  <div style={{ fontSize: 12, color: '#94a3b8', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Monthly subscription. Cancel anytime.</div>
+            <div style={{ background: '#111110', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '32px', maxWidth: 560, width: '100%', position: 'relative' }} onClick={e => e.stopPropagation()}>
+              <button onClick={() => setShowCheckout(false)} style={{ position: 'absolute', top: 16, right: 16, background: 'none', border: 'none', color: '#475569', cursor: 'pointer' }}><IconX /></button>
+              <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 10, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The Cult Dashboard</div>
+              <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f1f5f9', marginBottom: 6, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Get Instant Access</h3>
+              <p style={{ fontSize: 13, color: '#64748b', marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>12 AI tools, updated every week. Unlocks immediately on payment.</p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
+
+                {/* Monthly — blue */}
+                <button onClick={() => { trackCheckout('stripe_monthly'); window.location.href = 'https://buy.stripe.com/28E00i2Mm5CBc0udso9IQ1N' }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', textAlign: 'left', border: 'none', borderRadius: 12, padding: '22px 20px', background: '#3b82f6', cursor: 'pointer', transition: 'background .15s' }}
+                  onMouseEnter={e => (e.currentTarget.style.background = '#2563eb')}
+                  onMouseLeave={e => (e.currentTarget.style.background = '#3b82f6')}
+                >
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: 14, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Monthly</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>£75</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 4, marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>per month</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.5 }}>Full dashboard access.<br />Cancel anytime.</div>
                 </button>
-                <button onClick={() => { trackCheckout('stripe_biannual'); window.location.href = 'https://buy.stripe.com/14A8wObiSaWV3tY3RO9IQ1O' }} style={{ display: 'block', width: '100%', textAlign: 'left', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '18px 20px', textDecoration: 'none', background: 'rgba(255,255,255,0.02)', cursor: 'pointer' }}>
-                  <div style={{ fontWeight: 700, color: '#f1f5f9', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 2 }}>£300 for 6 months <span style={{ fontSize: 11, background: '#3b82f6', color: 'white', padding: '2px 6px', borderRadius: 4, marginLeft: 6 }}>SAVE £150</span></div>
-                  <div style={{ fontSize: 12, color: '#94a3b8', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>6-month access. Best value.</div>
+
+                {/* 6-month — premium dark */}
+                <button onClick={() => { trackCheckout('stripe_biannual'); window.location.href = 'https://buy.stripe.com/14A8wObiSaWV3tY3RO9IQ1O' }}
+                  style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', textAlign: 'left', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '22px 20px', background: '#080807', cursor: 'pointer', transition: 'border-color .15s, background .15s', position: 'relative', overflow: 'hidden' }}
+                  onMouseEnter={e => { (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)'); (e.currentTarget.style.background = '#0f0f0d') }}
+                  onMouseLeave={e => { (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'); (e.currentTarget.style.background = '#080807') }}
+                >
+                  <div style={{ position: 'absolute', top: 12, right: 12, fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0d0d0a', background: '#e2c97e', padding: '3px 7px', borderRadius: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>SAVE £150</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 14, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>6 Months</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>£300</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4, marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>one payment</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.5 }}>Full 6-month access.<br />£50/month effective.</div>
                 </button>
+
               </div>
-              <p style={{ fontSize: 11, color: '#475569', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Secure payment. Access unlocks immediately.</p>
+              <p style={{ fontSize: 11, color: '#334155', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Secure payment · Access unlocks immediately</p>
             </div>
           </div>
         )}
