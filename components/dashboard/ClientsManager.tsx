@@ -31,6 +31,7 @@ export default function ClientsManager({ initialClients }: Props) {
   const [search, setSearch] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [view, setView] = useState<'cards' | 'table' | 'heatmap'>('cards')
+  const [tierFilter, setTierFilter] = useState<'all' | 'creator_cult' | 'dashboard'>('all')
   const [healthData, setHealthData] = useState<Record<string, ClientHealth>>({})
   const [syncingAll, setSyncingAll] = useState(false)
   const [syncingId, setSyncingId] = useState<string | null>(null)
@@ -52,12 +53,18 @@ export default function ClientsManager({ initialClients }: Props) {
 
   const filtered = clients.filter(c => {
     const q = search.toLowerCase()
-    return (
+    const matchesSearch = (
       c.name?.toLowerCase().includes(q) ||
       c.email?.toLowerCase().includes(q) ||
       c.ig_username?.toLowerCase().includes(q)
     )
+    const matchesTier = tierFilter === 'all' ||
+      (tierFilter === 'creator_cult' ? c.membership_tier === 'creator_cult' : c.membership_tier !== 'creator_cult')
+    return matchesSearch && matchesTier
   })
+
+  const creatorCultCount = clients.filter(c => c.membership_tier === 'creator_cult').length
+  const dashboardCount = clients.filter(c => c.membership_tier !== 'creator_cult').length
 
   const atRisk = clients.filter(c => healthData[c.id]?.status === 'red').length
   const slipping = clients.filter(c => healthData[c.id]?.status === 'amber').length
@@ -93,6 +100,21 @@ export default function ClientsManager({ initialClients }: Props) {
     } else {
       setClients(prev => prev.map(c => c.id === client.id ? { ...c, billing_exempt: newVal } : c))
       toast.success(`${client.name || client.email}: ${newVal ? 'set to free account' : 'set to paid account'}`)
+    }
+  }
+
+  async function toggleMembershipTier(client: Profile) {
+    const newTier = client.membership_tier === 'creator_cult' ? 'dashboard' : 'creator_cult'
+    const res = await fetch('/api/admin/clients', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: client.id, membership_tier: newTier }),
+    })
+    if (!res.ok) {
+      toast.error('Failed to update membership tier')
+    } else {
+      setClients(prev => prev.map(c => c.id === client.id ? { ...c, membership_tier: newTier } : c))
+      toast.success(`${client.name || client.email} → ${newTier === 'creator_cult' ? 'Creator Cult' : 'Dashboard'}`)
     }
   }
 
@@ -304,15 +326,53 @@ export default function ClientsManager({ initialClients }: Props) {
         </div>
       )}
 
-      {/* Controls row */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+      {/* Controls row — search + tier tabs + view switcher */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         <input
           type="text"
           placeholder="Search clients..."
           value={search}
           onChange={e => setSearch(e.target.value)}
-          style={{ maxWidth: 280 }}
+          style={{ maxWidth: 200, minWidth: 140 }}
         />
+
+        {/* Tier tabs */}
+        <div style={{ display: 'flex', gap: 3, background: 'var(--muted)', borderRadius: 8, padding: 3 }}>
+          {([
+            ['all',          'All',          clients.length],
+            ['creator_cult', 'Creator Cult', creatorCultCount],
+            ['dashboard',    'Dashboard',    dashboardCount],
+          ] as const).map(([val, label, count]) => {
+            const active = tierFilter === val
+            const isCC = val === 'creator_cult'
+            return (
+              <button
+                key={val}
+                onClick={() => setTierFilter(val)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  padding: '5px 10px', borderRadius: 6, border: 'none',
+                  background: active ? (isCC ? '#3b82f6' : 'var(--card)') : 'transparent',
+                  color: active ? (isCC ? '#fff' : 'var(--foreground)') : 'var(--muted-foreground)',
+                  fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                  boxShadow: active ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+                  transition: 'all 0.1s', whiteSpace: 'nowrap',
+                }}
+              >
+                {label}
+                <span style={{
+                  fontSize: 10, fontWeight: 700,
+                  background: active ? 'rgba(255,255,255,0.18)' : 'transparent',
+                  color: active ? (isCC ? '#fff' : 'var(--foreground)') : 'var(--muted-foreground)',
+                  borderRadius: 4, padding: '1px 5px',
+                }}>
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
         <div style={{ display: 'flex', gap: 2, marginLeft: 'auto', background: 'var(--muted)', borderRadius: 8, padding: 3 }}>
           {([['cards', LayoutGrid, 'Cards'], ['table', Table2, 'Table'], ['heatmap', Grid3X3, 'Heatmap']] as const).map(([v, Icon, label]) => (
             <button key={v} onClick={() => setView(v)} style={{
@@ -337,14 +397,18 @@ export default function ClientsManager({ initialClients }: Props) {
           <Card>
             <EmptyState
               icon={<Users size={20} />}
-              title={search ? 'No results' : 'No clients yet'}
-              description={search ? 'No clients match your search.' : 'Add your first client to get started.'}
+              title={search ? 'No results' : tierFilter === 'dashboard' ? 'No dashboard members yet' : tierFilter === 'creator_cult' ? 'No Creator Cult clients yet' : 'No clients yet'}
+              description={
+                search ? 'No clients match your search.' :
+                tierFilter === 'dashboard' ? 'Dashboard members will appear here once they sign up via the payment links.' :
+                'Add your first client to get started.'
+              }
             />
           </Card>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
             {filtered.map(client => (
-              <ClientCard key={client.id} client={client} onToggleActive={toggleActive} onToggleBillingExempt={toggleBillingExempt} onSendInvite={sendInvite} />
+              <ClientCard key={client.id} client={client} onToggleActive={toggleActive} onToggleBillingExempt={toggleBillingExempt} onToggleTier={toggleMembershipTier} onSendInvite={sendInvite} />
             ))}
           </div>
         )
@@ -599,7 +663,7 @@ function avatarBg(str: string): string {
   return palette[sum % palette.length]
 }
 
-function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvite }: { client: Profile; onToggleActive: (c: Profile) => void; onToggleBillingExempt: (c: Profile) => void; onSendInvite: (email: string, name?: string | null) => void }) {
+function ClientCard({ client, onToggleActive, onToggleBillingExempt, onToggleTier, onSendInvite }: { client: Profile; onToggleActive: (c: Profile) => void; onToggleBillingExempt: (c: Profile) => void; onToggleTier: (c: Profile) => void; onSendInvite: (email: string, name?: string | null) => void }) {
   const [inviting, setInviting] = useState(false)
   const [showSetPw, setShowSetPw] = useState(false)
   const [tempPw, setTempPw] = useState('')
@@ -666,43 +730,46 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onSendInvit
             </div>
           </div>
 
-          {/* Status badges — stacked vertically on the right */}
+          {/* Status badges */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
-            {/* Active / Inactive toggle */}
+            {/* Membership tier toggle — Creator Cult vs Dashboard */}
             <button
-              onClick={() => onToggleActive(client)}
-              title="Toggle active status"
+              onClick={() => onToggleTier(client)}
+              title={client.membership_tier === 'creator_cult' ? 'Creator Cult — click to move to Dashboard' : 'Dashboard — click to move to Creator Cult'}
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
             >
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 5,
-                fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 999,
-                background: client.is_active ? 'rgba(34,197,94,0.12)' : 'var(--muted)',
-                color: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)',
-                border: `1px solid ${client.is_active ? 'rgba(34,197,94,0.25)' : 'var(--border)'}`,
+                fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 999,
+                background: client.membership_tier === 'creator_cult' ? 'rgba(59,130,246,0.15)' : 'var(--muted)',
+                color: client.membership_tier === 'creator_cult' ? '#3b82f6' : 'var(--muted-foreground)',
+                border: `1px solid ${client.membership_tier === 'creator_cult' ? 'rgba(59,130,246,0.3)' : 'var(--border)'}`,
+                letterSpacing: '.02em',
               }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: client.is_active ? 'hsl(142 71% 45%)' : 'var(--muted-foreground)', flexShrink: 0 }} />
-                {client.is_active ? 'Active' : 'Inactive'}
+                {client.membership_tier === 'creator_cult' ? 'Creator Cult' : 'Dashboard'}
               </span>
             </button>
 
-            {/* Billing toggle */}
-            <button
-              onClick={() => onToggleBillingExempt(client)}
-              title={client.billing_exempt ? 'Free account — click to require subscription' : 'Paying £50/mo — click to mark as free'}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
-            >
-              <span style={{
-                display: 'inline-flex', alignItems: 'center', gap: 5,
-                fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 999,
-                background: client.billing_exempt ? 'rgba(139,92,246,0.12)' : 'var(--accent-subtle)',
-                color: client.billing_exempt ? '#a78bfa' : 'var(--accent)',
-                border: `1px solid ${client.billing_exempt ? 'rgba(139,92,246,0.25)' : 'var(--accent-subtle-border)'}`,
-              }}>
-                <CreditCard size={10} />
-                {client.billing_exempt ? 'Free' : '£50/mo'}
-              </span>
-            </button>
+            {/* Subscription status */}
+            {(() => {
+              const s = client.subscription_status
+              const plan = client.plan_type
+              const subColor = s === 'active' ? 'hsl(142 71% 45%)' : s === 'trialing' ? '#3b82f6' : s === 'past_due' || s === 'unpaid' ? 'hsl(38 92% 50%)' : s === 'canceled' ? 'hsl(0 84% 60%)' : 'var(--muted-foreground)'
+              const subBg = s === 'active' ? 'rgba(34,197,94,0.1)' : s === 'trialing' ? 'rgba(59,130,246,0.1)' : s === 'past_due' || s === 'unpaid' ? 'rgba(251,191,36,0.1)' : s === 'canceled' ? 'rgba(239,68,68,0.1)' : 'var(--muted)'
+              const subBorder = s === 'active' ? 'rgba(34,197,94,0.25)' : s === 'trialing' ? 'rgba(59,130,246,0.25)' : s === 'past_due' || s === 'unpaid' ? 'rgba(251,191,36,0.25)' : s === 'canceled' ? 'rgba(239,68,68,0.25)' : 'var(--border)'
+              const planLabel = plan === 'biannual' ? '£300/6mo' : plan === 'monthly' ? '£75/mo' : client.billing_exempt ? 'Free' : null
+              const label = s ? s.replace('_', ' ') : 'no sub'
+              return (
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  fontSize: 11, fontWeight: 600, padding: '4px 9px', borderRadius: 999,
+                  background: subBg, color: subColor, border: `1px solid ${subBorder}`,
+                }}>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', background: subColor, flexShrink: 0 }} />
+                  {label}{planLabel ? ` · ${planLabel}` : ''}
+                </span>
+              )
+            })()}
           </div>
         </div>
 

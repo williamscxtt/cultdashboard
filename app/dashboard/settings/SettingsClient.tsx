@@ -8,6 +8,146 @@ import { Video, LogOut, Eye, EyeOff, RefreshCw, AlertTriangle, Unlink } from 'lu
 import { useIsMobile } from '@/lib/use-mobile'
 import { toast } from 'sonner'
 
+const BIANNUAL_LINK = 'https://buy.stripe.com/bJe28qcmWe970hMews9IQ1P'
+const BOOK_CALL_URL = 'https://apply.scottvip.com'
+
+function formatDate(iso: string | null | undefined) {
+  if (!iso) return '—'
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
+}
+
+function daysUntil(iso: string | null | undefined): number | null {
+  if (!iso) return null
+  const diff = new Date(iso).getTime() - Date.now()
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
+}
+
+function BillingCard({ profile }: { profile: Profile }) {
+  const planLabel = profile.plan_type === 'biannual' ? '6-Month Plan' : 'Monthly Plan'
+  const planPrice = profile.plan_type === 'biannual' ? '£300 / 6 months' : '£75 / month'
+  const days = daysUntil(profile.subscription_period_end)
+  const renewalDate = formatDate(profile.subscription_period_end)
+  const isCreatorCult = profile.membership_tier === 'creator_cult'
+
+  const statusColor = profile.subscription_status === 'active' || profile.subscription_status === 'trialing'
+    ? 'hsl(142 71% 45%)' : 'hsl(0 84% 60%)'
+
+  return (
+    <Card style={{ padding: 20 }}>
+      <SectionLabel>Plan &amp; Billing</SectionLabel>
+
+      {/* Current plan summary */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        padding: '14px 16px', borderRadius: 10,
+        background: 'var(--muted)', border: '1px solid var(--border)',
+        marginBottom: 16,
+      }}>
+        <div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', marginBottom: 2 }}>
+            {isCreatorCult ? 'Creator Cult — Full Programme' : planLabel}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
+            {isCreatorCult ? 'Lifetime dashboard access included' : planPrice}
+          </div>
+        </div>
+        <div style={{
+          fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase',
+          color: statusColor, background: `${statusColor}18`,
+          border: `1px solid ${statusColor}40`,
+          borderRadius: 5, padding: '3px 8px',
+        }}>
+          {profile.subscription_status === 'trialing' ? 'Trial' : 'Active'}
+        </div>
+      </div>
+
+      {/* Renewal info */}
+      {!isCreatorCult && profile.subscription_period_end && (
+        <div style={{
+          fontSize: 13, color: 'var(--muted-foreground)',
+          marginBottom: 16,
+          display: 'flex', alignItems: 'center', gap: 6,
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          Next renewal: <strong style={{ color: 'var(--foreground)' }}>{renewalDate}</strong>
+          {days !== null && <span style={{ color: 'var(--muted-foreground)' }}>({days} day{days !== 1 ? 's' : ''} away)</span>}
+        </div>
+      )}
+
+      {/* Upgrade to biannual — only for monthly subscribers */}
+      {!isCreatorCult && profile.plan_type === 'monthly' && (
+        <div style={{
+          padding: '14px 16px', borderRadius: 10,
+          background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)',
+          marginBottom: 16,
+        }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
+            Switch to 6 months — save £150
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 12, lineHeight: 1.5 }}>
+            Pay £300 every 6 months instead of £75/month. That&apos;s 2 months free — same tools, same access, locked in.
+          </div>
+          <a
+            href={BIANNUAL_LINK}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              fontSize: 12, fontWeight: 700, color: '#ffffff',
+              background: '#3b82f6', borderRadius: 6,
+              padding: '8px 14px', textDecoration: 'none',
+              cursor: 'pointer', transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            Upgrade to 6 months →
+          </a>
+        </div>
+      )}
+
+      {/* Creator Cult upsell — for dashboard-only members */}
+      {!isCreatorCult && (
+        <div style={{
+          padding: '14px 16px', borderRadius: 10,
+          background: 'rgba(226,201,126,0.05)', border: '1px solid rgba(226,201,126,0.2)',
+        }}>
+          <div style={{
+            fontSize: 10, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase',
+            color: '#e2c97e', marginBottom: 8,
+          }}>
+            Full Creator Cult
+          </div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
+            Want Will coaching you every week?
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 12, lineHeight: 1.5 }}>
+            Full Creator Cult adds the complete 5-phase course, live weekly group coaching, 1-to-1 support, and the private Circle community — everything around the tools you already have.
+          </div>
+          <a
+            href={BOOK_CALL_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 6,
+              fontSize: 12, fontWeight: 700, color: '#0d0d0a',
+              background: '#e2c97e', borderRadius: 6,
+              padding: '8px 14px', textDecoration: 'none',
+              cursor: 'pointer', transition: 'opacity 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+          >
+            Apply for Creator Cult →
+          </a>
+        </div>
+      )}
+    </Card>
+  )
+}
+
 // Official Instagram gradient logo
 function InstagramLogo({ size = 36 }: { size?: number }) {
   const id = 'ig-grad'
@@ -178,6 +318,11 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
             </div>
           </form>
         </Card>
+
+        {/* Plan & Billing — only for clients, not admins */}
+        {profile.role !== 'admin' && profile.subscription_status && (
+          <BillingCard profile={profile} />
+        )}
 
         {/* Instagram */}
         <Card style={{ padding: 20 }}>

@@ -11,6 +11,17 @@ const adminClient = createAdmin(
 // Must be raw body — do not parse as JSON
 export const runtime = 'nodejs'
 
+// Price IDs — monthly £75 and biannual £300/6mo
+const MONTHLY_PRICE_ID = 'price_1TX14EB3pws0HrHku6WQV8gm'
+const BIANNUAL_PRICE_ID = 'price_1TYwfDB3pws0HrHkzT58SqLs'
+
+function getPlanType(sub: Stripe.Subscription): 'monthly' | 'biannual' | null {
+  const priceId = sub.items?.data?.[0]?.price?.id
+  if (priceId === MONTHLY_PRICE_ID) return 'monthly'
+  if (priceId === BIANNUAL_PRICE_ID) return 'biannual'
+  return null
+}
+
 async function upsertSubscription(sub: Stripe.Subscription) {
   const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id
 
@@ -27,6 +38,7 @@ async function upsertSubscription(sub: Stripe.Subscription) {
     subscription_trial_end: sub.trial_end
       ? new Date(sub.trial_end * 1000).toISOString()
       : null,
+    plan_type: getPlanType(sub),
   }
 
   const { error } = await adminClient
@@ -83,6 +95,7 @@ export async function POST(req: NextRequest) {
               email,
               role: 'client',
               is_active: true,
+              membership_tier: 'dashboard',
               stripe_customer_id: stripeCustomerId ?? null,
               date_joined: new Date().toISOString().split('T')[0],
             }, { onConflict: 'id' })
@@ -96,12 +109,32 @@ export async function POST(req: NextRequest) {
         }
       }
 
-      // ── Subscription upsert (existing logic) ─────────────────────────────
+      // ── Subscription upsert + upgrade path ──────────────────────────────
       if (session.mode === 'subscription' && session.subscription) {
-        const sub = await stripe.subscriptions.retrieve(
-          typeof session.subscription === 'string' ? session.subscription : session.subscription.id
-        )
+        const newSubId = typeof session.subscription === 'string' ? session.subscription : session.subscription.id
+        const sub = await stripe.subscriptions.retrieve(newSubId)
         await upsertSubscription(sub)
+
+        // If this is a biannual upgrade, cancel any active monthly subscription
+        // that isn't the one we just created.
+        if (getPlanType(sub) === 'biannual' && email) {
+          const { data: profile } = await adminClient
+            .from('profiles')
+            .select('stripe_subscription_id')
+            .eq('email', email)
+            .maybeSingle()
+
+          const oldSubId = profile?.stripe_subscription_id
+          if (oldSubId && oldSubId !== newSubId) {
+            try {
+              // Cancel at period end so they get what they paid for
+              await stripe.subscriptions.update(oldSubId, { cancel_at_period_end: true })
+              console.log('[webhook] scheduled monthly cancellation for upgrade:', oldSubId)
+            } catch (err) {
+              console.error('[webhook] failed to cancel old monthly sub:', err)
+            }
+          }
+        }
       }
       break
     }

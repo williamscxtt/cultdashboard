@@ -89,6 +89,7 @@ export default async function WelcomePage({
       email,
       role: 'client',
       is_active: true,
+      membership_tier: 'dashboard',
       stripe_customer_id: stripeCustomerId ?? null,
       date_joined: new Date().toISOString().split('T')[0],
     }, { onConflict: 'id', ignoreDuplicates: false })

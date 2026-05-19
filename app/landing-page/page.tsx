@@ -1308,7 +1308,7 @@ export default function LandingPage() {
                 </button>
 
                 {/* 6-month — premium dark */}
-                <button onClick={() => { trackCheckout('stripe_biannual'); window.location.href = 'https://buy.stripe.com/14A8wObiSaWV3tY3RO9IQ1O' }}
+                <button onClick={() => { trackCheckout('stripe_biannual'); window.location.href = 'https://buy.stripe.com/bJe28qcmWe970hMews9IQ1P' }}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', textAlign: 'left', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '22px 20px', background: '#080807', cursor: 'pointer', transition: 'border-color .15s, background .15s', position: 'relative', overflow: 'hidden' }}
                   onMouseEnter={e => { (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)'); (e.currentTarget.style.background = '#0f0f0d') }}
                   onMouseLeave={e => { (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'); (e.currentTarget.style.background = '#080807') }}
@@ -1316,8 +1316,8 @@ export default function LandingPage() {
                   <div style={{ position: 'absolute', top: 12, right: 12, fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0d0d0a', background: '#e2c97e', padding: '3px 7px', borderRadius: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>SAVE £150</div>
                   <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 14, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>6 Months</div>
                   <div style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>£300</div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4, marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>one payment</div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.5 }}>Full 6-month access.<br />£50/month effective.</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4, marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>every 6 months</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.5 }}>£50/month effective.<br />2 months free vs monthly.</div>
                 </button>
 
               </div>

@@ -142,6 +142,10 @@ export interface Profile {
   subscription_trial_end?: string | null
   // Billing exempt — higher-tier clients who aren't charged the £50/month
   billing_exempt?: boolean
+  // Which plan they're on
+  plan_type?: 'monthly' | 'biannual' | null
+  // Which product they have access to
+  membership_tier?: 'dashboard' | 'creator_cult' | null
 }
 
 export interface WeeklyReport {

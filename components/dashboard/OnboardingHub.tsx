@@ -8,6 +8,131 @@ import { Button } from '@/components/ui'
 import { ONBOARDING_UNLOCK_THRESHOLD } from '@/lib/onboarding-keys'
 import PathSwitcher from '@/components/dashboard/PathSwitcher'
 
+// ─── First-time path selection gate ──────────────────────────────────────────
+
+const CREATOR_STYLES = [
+  { value: 'educational',   label: 'Educational' },
+  { value: 'entertainment', label: 'Entertainment' },
+  { value: 'motivational',  label: 'Motivational' },
+  { value: 'lifestyle',     label: 'Lifestyle' },
+  { value: 'fitness',       label: 'Fitness' },
+  { value: 'finance',       label: 'Finance' },
+  { value: 'beauty',        label: 'Beauty' },
+  { value: 'gaming',        label: 'Gaming' },
+  { value: 'other',         label: 'Other' },
+]
+
+function PathGate({ profileId, onComplete }: { profileId: string; onComplete: (type: 'coach' | 'creator', style: string | null) => void }) {
+  const [selected, setSelected] = useState<'coach' | 'creator' | null>(null)
+  const [style, setStyle] = useState('educational')
+  const [saving, setSaving] = useState(false)
+
+  async function save() {
+    if (!selected) return
+    setSaving(true)
+    try {
+      await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_type: selected,
+          creator_style: selected === 'creator' ? style : null,
+        }),
+      })
+      onComplete(selected, selected === 'creator' ? style : null)
+    } catch {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div style={{
+      minHeight: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: 24,
+    }}>
+      <div style={{ maxWidth: 560, width: '100%' }}>
+        <div style={{
+          fontSize: 10, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase',
+          color: 'var(--accent)', marginBottom: 16,
+        }}>
+          Step 1 of 2
+        </div>
+        <h1 style={{ fontSize: 28, fontWeight: 800, color: 'var(--foreground)', letterSpacing: '-.03em', margin: '0 0 8px' }}>
+          What best describes you?
+        </h1>
+        <p style={{ fontSize: 14, color: 'var(--muted-foreground)', marginBottom: 32, lineHeight: 1.6 }}>
+          This personalises your tools, AI coaching, and onboarding questions.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 28 }}>
+          {([
+            {
+              value: 'coach' as const,
+              title: 'Coaching Creator',
+              desc: 'I sell coaching, consulting, or services. I grow an audience to convert to clients.',
+            },
+            {
+              value: 'creator' as const,
+              title: 'Content Creator',
+              desc: "I'm building a brand and audience. My income comes from deals, products, or platforms.",
+            },
+          ]).map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setSelected(opt.value)}
+              style={{
+                padding: 20, borderRadius: 12, border: `2px solid`,
+                borderColor: selected === opt.value ? 'var(--foreground)' : 'var(--border)',
+                background: selected === opt.value ? 'var(--foreground)' : 'var(--card)',
+                color: selected === opt.value ? 'var(--background)' : 'var(--foreground)',
+                textAlign: 'left', cursor: 'pointer', fontFamily: 'inherit',
+                transition: 'all 0.15s',
+              }}
+            >
+              <div style={{ fontSize: 14, fontWeight: 700, marginBottom: 6 }}>{opt.title}</div>
+              <div style={{ fontSize: 12, lineHeight: 1.5, opacity: 0.7 }}>{opt.desc}</div>
+            </button>
+          ))}
+        </div>
+
+        {selected === 'creator' && (
+          <div style={{ marginBottom: 28 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--foreground)', marginBottom: 12 }}>
+              What type of content do you make?
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {CREATOR_STYLES.map(s => (
+                <button
+                  key={s.value}
+                  onClick={() => setStyle(s.value)}
+                  style={{
+                    padding: '6px 12px', borderRadius: 20,
+                    border: `1px solid ${style === s.value ? 'var(--foreground)' : 'var(--border)'}`,
+                    background: style === s.value ? 'var(--foreground)' : 'transparent',
+                    color: style === s.value ? 'var(--background)' : 'var(--muted-foreground)',
+                    fontSize: 12, fontWeight: 600, cursor: 'pointer', fontFamily: 'inherit',
+                    transition: 'all 0.12s',
+                  }}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <Button
+          onClick={save}
+          disabled={!selected || saving}
+          style={{ width: '100%', padding: '13px', fontSize: 14 }}
+        >
+          {saving ? 'Saving…' : 'Continue →'}
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 // ─── Section definitions ──────────────────────────────────────────────────────
 
 interface FieldDef {
@@ -546,7 +671,25 @@ interface Props { profile: Profile; adminView?: boolean }
 
 export default function OnboardingHub({ profile, adminView = false }: Props) {
   const router = useRouter()
-  const isCreator = profile.user_type === 'creator'
+
+  // ── Path gate: new users must choose coach/creator before seeing the hub ────
+  const [userType, setUserType] = useState<'coach' | 'creator' | null>(
+    profile.user_type ?? null
+  )
+
+  function handlePathComplete(type: 'coach' | 'creator', style: string | null) {
+    setUserType(type)
+    router.refresh()
+    // The refresh brings down the server-updated profile; local state bridges the gap
+    void style
+  }
+
+  // Show the gate for new users who haven't selected their path yet (never for admin views)
+  if (!adminView && userType === null) {
+    return <PathGate profileId={profile.id} onComplete={handlePathComplete} />
+  }
+
+  const isCreator = userType === 'creator'
   const sections = getSections(isCreator)
   const ALL_KEYS = getAllKeys(isCreator)
 
