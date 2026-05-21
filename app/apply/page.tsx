@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Zap, Check, ArrowRight, Phone } from 'lucide-react'
 import AccessCheckoutPage from '@/components/AccessCheckoutPage'
 
@@ -41,9 +42,19 @@ type FormData = {
 }
 
 export default function ApplyPage() {
+  return <Suspense><ApplyPageInner /></Suspense>
+}
+
+function ApplyPageInner() {
+  const searchParams = useSearchParams()
   const [track, setTrack] = useState<'dashboard' | 'mentorship' | null>(null)
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    const t = searchParams.get('track')
+    if (t === 'mentorship' || t === 'dashboard') setTrack(t)
+  }, [searchParams])
   const [form, setForm] = useState<FormData>({
     first_name: '',
     last_name: '',

@@ -1256,7 +1256,7 @@ export default function LandingPage() {
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <a href="#choose-track" className="lp-nav-cta lp-nav-desktop-only">Get the Dashboard</a>
-          <Link href="/apply" className="lp-client-login lp-nav-desktop-only">Apply for Coaching</Link>
+          <Link href="/apply?track=mentorship" className="lp-client-login lp-nav-desktop-only">Apply for Coaching</Link>
           <Link href="/login" className="lp-client-login">Client Login</Link>
         </div>
       </nav>
@@ -1350,7 +1350,7 @@ export default function LandingPage() {
             <Fade delay={240}>
               <div className="lp-hero-ctas" style={{ marginTop: 40, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                 <button onClick={() => openCheckout()} className="lp-cta-primary">Get the Dashboard</button>
-                <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
+                <Link href="/apply?track=mentorship" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
               </div>
               <p style={{ marginTop: 12, fontSize: 12, color: '#64748b', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Instant dashboard access on payment. Coaching applications reviewed personally by Will.</p>
               <div style={{ marginTop: 6 }}>
@@ -1437,7 +1437,7 @@ export default function LandingPage() {
               <div className="lp-cta-row" style={{ marginTop: 56, display: 'flex', justifyContent: 'flex-start' }}>
                 <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <button onClick={() => openCheckout()} className="lp-cta-primary">Get the Dashboard</button>
-                  <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
+                  <Link href="/apply?track=mentorship" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
               </div>
             </Fade>
@@ -1510,7 +1510,7 @@ export default function LandingPage() {
                       <span style={{ color: '#e2c97e', flexShrink: 0, fontWeight: 700 }}>+</span>{item}
                     </div>
                   ))}
-                  <Link href="/apply" className="lp-cta-ghost" style={{ marginTop: 32, width: '100%', justifyContent: 'center', display: 'flex' }}>
+                  <Link href="/apply?track=mentorship" className="lp-cta-ghost" style={{ marginTop: 32, width: '100%', justifyContent: 'center', display: 'flex' }}>
                     Apply for Creator Cult &rarr;
                   </Link>
                   <p style={{ marginTop: 12, fontSize: 11, color: 'rgba(255,255,255,0.2)', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>3-minute application. Reviewed personally by Will. No commitment to apply.</p>
@@ -1584,7 +1584,7 @@ export default function LandingPage() {
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <button onClick={() => openCheckout()} className="lp-cta-primary">Get Instant Access</button>
-                  <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
+                  <Link href="/apply?track=mentorship" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
               </div>
             </Fade>
@@ -1769,7 +1769,7 @@ export default function LandingPage() {
                 </p>
                 <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <button onClick={() => openCheckout()} className="lp-cta-primary">Get Instant Access</button>
-                  <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
+                  <Link href="/apply?track=mentorship" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
               </div>
             </Fade>
@@ -1897,7 +1897,7 @@ export default function LandingPage() {
               <div style={{ textAlign: 'center', paddingTop: 56 }}>
                 <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <button onClick={() => openCheckout()} className="lp-cta-primary">Get Instant Access</button>
-                  <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
+                  <Link href="/apply?track=mentorship" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
                 </div>
               </div>
             </Fade>
@@ -1972,7 +1972,7 @@ export default function LandingPage() {
               </div>
               <Fade delay={80}>
                 <div style={{ marginTop: 40 }}>
-                  <Link href="/apply" className="lp-cta-ghost">Apply for Creator Cult &rarr;</Link>
+                  <Link href="/apply?track=mentorship" className="lp-cta-ghost">Apply for Creator Cult &rarr;</Link>
                   <p style={{ marginTop: 12, fontSize: 12, color: '#64748b', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>3-minute application. Reviewed personally by Will. Cohort size limited.</p>
                 </div>
               </Fade>
@@ -2031,7 +2031,7 @@ export default function LandingPage() {
             <p className="lp-body-lg" style={{ marginBottom: 36 }}>Applications take 3 minutes. Will reviews every one personally.<br />Cohort size is limited, not everyone who applies gets in.</p>
             <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
               <button onClick={() => openCheckout()} className="lp-cta-primary">Get Instant Access</button>
-              <Link href="/apply" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
+              <Link href="/apply?track=mentorship" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
             </div>
           </Fade>
         </div>
@@ -2102,7 +2102,7 @@ export default function LandingPage() {
                     <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The complete programme. Application required.</div>
                     <div style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-.02em', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 4 }}>Investment disclosed on call.</div>
                     <div style={{ fontSize: 12, color: '#64748b', marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cohort size limited.</div>
-                    <Link href="/apply" className="lp-cta-ghost" style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: 20 }}>Apply for Creator Cult &rarr;</Link>
+                    <Link href="/apply?track=mentorship" className="lp-cta-ghost" style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: 20 }}>Apply for Creator Cult &rarr;</Link>
                     {['Lifetime dashboard access (all 12 tools)', 'Full 5-phase course curriculum', 'Live weekly group coaching with Will', '1:1 support and direct access between calls', 'Private Circle community'].map(t => (
                       <div key={t} style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', display: 'flex', gap: 8, marginBottom: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                         <span style={{ color: '#94a3b8', fontWeight: 700 }}>+</span>{t}
@@ -2143,7 +2143,7 @@ export default function LandingPage() {
             <a href="https://www.instagram.com/williamscxtt" target="_blank" rel="noopener noreferrer">@williamscxtt</a>
             <a href="/privacy">Privacy</a>
             <a href="/data-deletion">Data Deletion</a>
-            <Link href="/apply">Apply</Link>
+            <Link href="/apply?track=mentorship">Apply</Link>
           </div>
           <div className="lp-footer-copy">© {new Date().getFullYear()} Creator Cult</div>
         </div>
