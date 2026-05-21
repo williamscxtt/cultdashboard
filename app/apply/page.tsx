@@ -3,9 +3,20 @@
 import { useState } from 'react'
 import { Zap, Check, ArrowRight, Phone } from 'lucide-react'
 
+const CREATOR_TYPE_OPTIONS = [
+  { value: 'creator', label: 'Pure Content Creator',        desc: 'Building a brand and audience — deals, sponsorships, digital products' },
+  { value: 'coach',   label: 'Coaching / Service Business', desc: 'Using content to attract clients and grow a coaching or service business' },
+  { value: 'both',    label: 'Both',                        desc: 'Building an audience and running a coaching or service business' },
+]
+
 const MONTHLY_INCOME_STEPS = [
   'Under £1,200', '£1,200–£2,000', '£2,000–£3,500', '£3,500–£5,000',
   '£5,000–£7,000', '£7,000–£10,000', '£10,000–£15,000', '£15,000–£20,000', '£20,000+',
+]
+
+const INCOME_GOAL_STEPS = [
+  'Under £2,500/mo', '£2,500–£5,000/mo', '£5,000–£7,500/mo',
+  '£7,500–£10,000/mo', '£10,000–£20,000/mo', '£20,000–£50,000/mo', '£50,000+/mo',
 ]
 
 const INVESTMENT_OPTIONS = [
@@ -21,7 +32,9 @@ type FormData = {
   last_name: string
   instagram_handle: string
   phone: string
+  creator_type: string
   monthly_income: string
+  income_goal: string
   willing_to_invest: string
 }
 
@@ -34,7 +47,9 @@ export default function ApplyPage() {
     last_name: '',
     instagram_handle: '',
     phone: '',
+    creator_type: '',
     monthly_income: MONTHLY_INCOME_STEPS[2],
+    income_goal: INCOME_GOAL_STEPS[2],
     willing_to_invest: '',
   })
 
@@ -47,7 +62,9 @@ export default function ApplyPage() {
     form.last_name.trim() &&
     form.instagram_handle.trim() &&
     form.phone.trim().startsWith('+') && form.phone.trim().length >= 10 &&
+    form.creator_type &&
     form.monthly_income &&
+    form.income_goal &&
     form.willing_to_invest
   )
 
@@ -66,8 +83,10 @@ export default function ApplyPage() {
     setSubmitted(true)
   }
 
-  const incomeIdx = MONTHLY_INCOME_STEPS.indexOf(form.monthly_income)
-  const incomePct = incomeIdx >= 0 ? (incomeIdx / (MONTHLY_INCOME_STEPS.length - 1)) * 100 : 0
+  const incomeIdx     = MONTHLY_INCOME_STEPS.indexOf(form.monthly_income)
+  const incomePct     = incomeIdx >= 0 ? (incomeIdx / (MONTHLY_INCOME_STEPS.length - 1)) * 100 : 0
+  const goalIdx       = INCOME_GOAL_STEPS.indexOf(form.income_goal)
+  const goalPct       = goalIdx >= 0 ? (goalIdx / (INCOME_GOAL_STEPS.length - 1)) * 100 : 0
 
   return (
     <div style={{
@@ -91,19 +110,20 @@ export default function ApplyPage() {
         }
         .apply-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
         .apply-input::placeholder { color: #555; }
-        .income-slider {
+        .apply-slider {
           -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
           border-radius: 2px; outline: none; cursor: pointer;
           background: linear-gradient(to right, #3B82F6 var(--fill, 0%), rgba(255,255,255,0.12) var(--fill, 0%));
         }
-        .income-slider::-webkit-slider-thumb {
+        .apply-slider::-webkit-slider-thumb {
           -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
           background: #3B82F6; cursor: pointer; border: 2.5px solid #000;
           box-shadow: 0 0 0 1.5px rgba(59,130,246,0.7), 0 0 14px rgba(59,130,246,0.4);
         }
-        .income-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #3B82F6; cursor: pointer; border: 2.5px solid #000; }
-        .invest-opt { transition: border-color 0.12s, background 0.12s; }
-        .invest-opt:hover { border-color: rgba(59,130,246,0.5) !important; background: rgba(59,130,246,0.07) !important; }
+        .apply-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #3B82F6; cursor: pointer; border: 2.5px solid #000; }
+        .apply-opt { transition: border-color 0.12s, background 0.12s; }
+        .apply-opt:hover { border-color: rgba(59,130,246,0.5) !important; background: rgba(59,130,246,0.07) !important; }
+        @media (max-width: 440px) { .name-grid { grid-template-columns: 1fr !important; } }
       `}</style>
 
       <div style={{ width: '100%', maxWidth: 520, animation: 'fadeUp 0.45s ease both' }}>
@@ -123,11 +143,10 @@ export default function ApplyPage() {
               What are you here for?
             </h1>
             <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', textAlign: 'center', marginBottom: 36, lineHeight: 1.6 }}>
-              Pick the right path and we'll get you sorted.
+              Pick the right path and we&apos;ll get you sorted.
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {/* Dashboard */}
               <button
                 className="apply-track-btn"
                 onClick={() => window.location.href = '/'}
@@ -147,7 +166,6 @@ export default function ApplyPage() {
                 <ArrowRight size={16} color="rgba(255,255,255,0.3)" style={{ flexShrink: 0, marginLeft: 16 }} />
               </button>
 
-              {/* Mentorship */}
               <button
                 className="apply-track-btn"
                 onClick={() => setTrack('mentorship')}
@@ -189,10 +207,10 @@ export default function ApplyPage() {
               Fill this in and Will&apos;s team will call you within 24 hours.
             </p>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
 
               {/* Name */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+              <div className="name-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                 <div>
                   <label style={labelStyle}>First name</label>
                   <input className="apply-input" type="text" autoComplete="given-name" placeholder="First" value={form.first_name} onChange={e => set('first_name', e.target.value)} />
@@ -214,23 +232,51 @@ export default function ApplyPage() {
 
               {/* Phone */}
               <div>
-                <label style={labelStyle}>Phone number (WhatsApp, include country code)</label>
+                <label style={labelStyle}>Phone number (WhatsApp — include country code)</label>
                 <input className="apply-input" type="tel" inputMode="tel" autoComplete="tel" placeholder="+44 7911 123456" value={form.phone} onChange={e => set('phone', e.target.value)} />
                 {form.phone.trim() && !form.phone.trim().startsWith('+') && (
                   <p style={{ fontSize: 11, color: 'rgba(255,110,60,0.9)', marginTop: 5 }}>Start with your country code — e.g. +44 for UK, +1 for US</p>
                 )}
               </div>
 
-              {/* Monthly income */}
+              {/* Creator type */}
               <div>
-                <label style={labelStyle}>Current monthly income (all sources combined)</label>
-                <div style={{ textAlign: 'center', fontSize: 20, fontWeight: 800, color: '#93c5fd', marginBottom: 16, letterSpacing: '-0.4px' }}>
+                <label style={labelStyle}>What best describes what you&apos;re building?</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                  {CREATOR_TYPE_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className="apply-opt"
+                      onClick={() => set('creator_type', opt.value)}
+                      style={{
+                        width: '100%', padding: '13px 16px', borderRadius: 8, textAlign: 'left',
+                        cursor: 'pointer', fontFamily: 'inherit',
+                        border: form.creator_type === opt.value ? '1px solid #3B82F6' : '1px solid rgba(255,255,255,0.1)',
+                        background: form.creator_type === opt.value ? 'rgba(59,130,246,0.14)' : 'rgba(255,255,255,0.02)',
+                        display: 'flex', flexDirection: 'column', gap: 3,
+                      }}
+                    >
+                      <span style={{ fontSize: 13, fontWeight: 700, color: form.creator_type === opt.value ? '#93c5fd' : 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', gap: 7 }}>
+                        {form.creator_type === opt.value && <Check size={11} style={{ flexShrink: 0 }} />}
+                        {opt.label}
+                      </span>
+                      <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', lineHeight: 1.45 }}>{opt.desc}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Current monthly income */}
+              <div>
+                <label style={labelStyle}>Current monthly income (all sources)</label>
+                <div style={{ textAlign: 'center', fontSize: 20, fontWeight: 800, color: '#93c5fd', margin: '10px 0 14px', letterSpacing: '-0.4px' }}>
                   {form.monthly_income}
                 </div>
                 <input
                   type="range" min={0} max={MONTHLY_INCOME_STEPS.length - 1} value={incomeIdx >= 0 ? incomeIdx : 0}
                   onChange={e => set('monthly_income', MONTHLY_INCOME_STEPS[parseInt(e.target.value)])}
-                  className="income-slider"
+                  className="apply-slider"
                   style={{ '--fill': `${incomePct}%` } as React.CSSProperties}
                 />
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
@@ -239,15 +285,33 @@ export default function ApplyPage() {
                 </div>
               </div>
 
+              {/* Income goal */}
+              <div>
+                <label style={labelStyle}>Where do you want to get to monthly?</label>
+                <div style={{ textAlign: 'center', fontSize: 20, fontWeight: 800, color: '#4ade80', margin: '10px 0 14px', letterSpacing: '-0.4px' }}>
+                  {form.income_goal}
+                </div>
+                <input
+                  type="range" min={0} max={INCOME_GOAL_STEPS.length - 1} value={goalIdx >= 0 ? goalIdx : 0}
+                  onChange={e => set('income_goal', INCOME_GOAL_STEPS[parseInt(e.target.value)])}
+                  className="apply-slider"
+                  style={{ '--fill': `${goalPct}%`, background: `linear-gradient(to right, #4ade80 ${goalPct}%, rgba(255,255,255,0.12) ${goalPct}%)` } as React.CSSProperties}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{INCOME_GOAL_STEPS[0]}</span>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{INCOME_GOAL_STEPS[INCOME_GOAL_STEPS.length - 1]}</span>
+                </div>
+              </div>
+
               {/* Willing to invest */}
               <div>
                 <label style={labelStyle}>Are you willing to invest in your growth?</label>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
                   {INVESTMENT_OPTIONS.map(opt => (
                     <button
                       key={opt.value}
                       type="button"
-                      className="invest-opt"
+                      className="apply-opt"
                       onClick={() => set('willing_to_invest', opt.value)}
                       style={{
                         width: '100%', padding: '12px 16px', borderRadius: 8, textAlign: 'left',
@@ -269,7 +333,7 @@ export default function ApplyPage() {
                 type="submit"
                 disabled={!canSubmit || loading}
                 style={{
-                  width: '100%', height: 50, marginTop: 8,
+                  width: '100%', height: 50, marginTop: 4,
                   background: canSubmit && !loading ? '#3B82F6' : 'rgba(59,130,246,0.3)',
                   color: '#fff', border: 'none', borderRadius: 8,
                   fontSize: 15, fontWeight: 700, cursor: canSubmit && !loading ? 'pointer' : 'not-allowed',

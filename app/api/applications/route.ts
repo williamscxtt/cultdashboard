@@ -18,13 +18,16 @@ async function sendSlackNotification(data: Record<string, unknown>) {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL
   if (!webhookUrl) return
 
-  const firstName = String(data.first_name || '')
-  const lastName  = String(data.last_name  || '')
-  const name      = `${firstName} ${lastName}`.trim()
-  const phone     = String(data.phone     || '—')
-  const ig        = String(data.instagram_handle || '').replace(/^@/, '')
-  const income    = String(data.monthly_income   || '—')
-  const invest    = INVEST_LABEL[String(data.willing_to_invest || '')] ?? String(data.willing_to_invest || '—')
+  const firstName    = String(data.first_name || '')
+  const lastName     = String(data.last_name  || '')
+  const name         = `${firstName} ${lastName}`.trim()
+  const phone        = String(data.phone     || '—')
+  const ig           = String(data.instagram_handle || '').replace(/^@/, '')
+  const income       = String(data.monthly_income   || '—')
+  const incomeGoal   = String(data.income_goal      || '—')
+  const invest       = INVEST_LABEL[String(data.willing_to_invest || '')] ?? String(data.willing_to_invest || '—')
+  const creatorRaw   = String(data.creator_type || '')
+  const creatorLabel = { creator: 'Pure Content Creator', coach: 'Coaching / Service Business', both: 'Both' }[creatorRaw] ?? creatorRaw || '—'
 
   const isHotLead = String(data.willing_to_invest || '').startsWith('yes')
 
@@ -54,7 +57,9 @@ async function sendSlackNotification(data: Record<string, unknown>) {
       text: {
         type: 'mrkdwn',
         text: [
+          `*🎯 Building:* ${creatorLabel}`,
           `*💰 Current monthly income:* ${income}`,
+          `*📈 Income goal:* ${incomeGoal}`,
           `*💳 Willing to invest:* ${invest}`,
         ].join('\n'),
       },
@@ -80,7 +85,7 @@ async function sendSlackNotification(data: Record<string, unknown>) {
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
-  const { first_name, last_name, phone, instagram_handle, monthly_income, willing_to_invest, track } = body
+  const { first_name, last_name, phone, instagram_handle, creator_type, monthly_income, income_goal, willing_to_invest, track } = body
 
   if (!first_name) {
     return NextResponse.json({ error: 'Name is required' }, { status: 400 })
@@ -93,7 +98,7 @@ export async function POST(req: Request) {
     phone,
     instagram_handle,
     status: 'pending',
-    details: { first_name, last_name, monthly_income, willing_to_invest, track },
+    details: { first_name, last_name, creator_type, monthly_income, income_goal, willing_to_invest, track },
   }).then(({ error }) => {
     if (error) console.error('[applications] insert error:', error.message)
   })
