@@ -11,13 +11,16 @@ const adminClient = createAdmin(
 // Must be raw body — do not parse as JSON
 export const runtime = 'nodejs'
 
-// Price IDs — monthly £197 and biannual £997/6mo
-const MONTHLY_PRICE_ID = 'price_1TX14EB3pws0HrHku6WQV8gm'
-const BIANNUAL_PRICE_ID = 'price_1TYwfDB3pws0HrHkzT58SqLs'
+// Price IDs
+const MONTHLY_PRICE_IDS = [
+  'price_1TX14EB3pws0HrHku6WQV8gm', // £75/mo (legacy)
+  'price_1TX1EGB3pws0HrHkAzRYo0Hb', // £95/mo (current)
+]
+const BIANNUAL_PRICE_ID = 'price_1TYwfDB3pws0HrHkzT58SqLs' // £300/6mo
 
 function getPlanType(sub: Stripe.Subscription): 'monthly' | 'biannual' | null {
   const priceId = sub.items?.data?.[0]?.price?.id
-  if (priceId === MONTHLY_PRICE_ID) return 'monthly'
+  if (priceId && MONTHLY_PRICE_IDS.includes(priceId)) return 'monthly'
   if (priceId === BIANNUAL_PRICE_ID) return 'biannual'
   return null
 }
