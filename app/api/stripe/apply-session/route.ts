@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 
 const PRICES = {
-  monthly:  { id: 'price_1TX1EGB3pws0HrHkAzRYo0Hb', amount: 9500  }, // £95/mo recurring
-  sixmonth: { id: 'price_1TX1EMB3pws0HrHkbUU1CiPb', amount: 39500 }, // £395 one-time
+  monthly:  { id: 'price_1TX1EGB3pws0HrHkAzRYo0Hb', amount: 19700 }, // £197/mo recurring — UPDATE price ID in Stripe when new price created
+  sixmonth: { id: 'price_1TX1EMB3pws0HrHkbUU1CiPb', amount: 99700 }, // £997 one-time
 }
 
 export async function POST(req: NextRequest) {

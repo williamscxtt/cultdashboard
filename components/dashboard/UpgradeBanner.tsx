@@ -54,7 +54,7 @@ export default function UpgradeBanner({ profile }: { profile: Profile }) {
         border: '1px solid rgba(59,130,246,0.2)',
         borderRadius: 4, padding: '3px 8px', whiteSpace: 'nowrap',
       }}>
-        Save £150
+        Save £185
       </div>
 
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -62,7 +62,7 @@ export default function UpgradeBanner({ profile }: { profile: Profile }) {
           Switch to 6 months — get 2 months free.
         </span>
         <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', marginLeft: 8 }}>
-          Pay £300 instead of £450. Same everything, locked in.
+          Pay £997 instead of £1,182. Same everything, locked in.
         </span>
       </div>
 
