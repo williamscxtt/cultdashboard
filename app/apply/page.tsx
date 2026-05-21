@@ -1,699 +1,324 @@
 'use client'
 
 import { useState } from 'react'
-import { Zap, ArrowRight, ArrowLeft, Check, Phone } from 'lucide-react'
-import AccessCheckoutPage from '@/components/AccessCheckoutPage'
-
-// ── Options ──────────────────────────────────────────────────────────────────
-
-const CREATOR_TYPE_OPTIONS = [
-  {
-    value: 'creator',
-    label: 'Pure Content Creator',
-    desc: 'Building a brand and audience, income comes from deals, sponsorships, platforms, or digital products',
-  },
-  {
-    value: 'coach',
-    label: 'Coaching / Service Business',
-    desc: 'Using content to attract clients and scale a coaching, consulting, or service business',
-  },
-  {
-    value: 'both',
-    label: 'Both',
-    desc: 'Building an audience AND running a coaching or service business',
-  },
-]
-
-const PLATFORM_OPTIONS = ['Instagram', 'TikTok', 'YouTube', 'Not posting yet']
-
-const FREQUENCY_OPTIONS = ['0–5 posts', '6–15 posts', '16–30 posts', 'Daily or more']
-
-const STRATEGIES_TRIED_OPTIONS = [
-  'Posting consistently',
-  'Outreaching to potential clients',
-  'Posting across platforms',
-  'Email campaigns',
-  'Referrals',
-  'None yet',
-]
+import { Zap, Check, ArrowRight, Phone } from 'lucide-react'
 
 const MONTHLY_INCOME_STEPS = [
   'Under £1,200', '£1,200–£2,000', '£2,000–£3,500', '£3,500–£5,000',
   '£5,000–£7,000', '£7,000–£10,000', '£10,000–£15,000', '£15,000–£20,000', '£20,000+',
 ]
 
-// Investment amount — "Not right now" triggers hard disqualify
-const INVESTMENT_AMOUNT_STEPS = [
-  'Not right now',
-  '£500 or below',
-  '£500–£1,000',
-  '£1,000–£2,000',
-  '£2,000+',
+const INVESTMENT_OPTIONS = [
+  { value: 'yes_500',   label: 'Yes — £500 or below' },
+  { value: 'yes_1000',  label: 'Yes — £500–£1,000' },
+  { value: 'yes_2000',  label: 'Yes — £1,000–£2,000' },
+  { value: 'yes_2000p', label: 'Yes — £2,000+' },
+  { value: 'not_yet',   label: 'Not right now' },
 ]
-
-const INCOME_GOAL_STEPS = [
-  'Under £2,500/month', '£2,500–£5,000/month', '£5,000–£7,500/month',
-  '£7,500–£10,000/month', '£10,000–£20,000/month', '£20,000–£50,000/month', '£50,000+/month',
-]
-
-const WANTS_OPTIONS = [
-  {
-    value: 'dashboard',
-    label: 'Dashboard access only',
-    desc: 'I want the AI tools, content system, analytics, and scripts, self-directed',
-  },
-  {
-    value: 'coaching',
-    label: 'Dashboard + coaching from Will',
-    desc: 'I want direct guidance, accountability, and Will working with me personally',
-  },
-]
-
-// ── Types ─────────────────────────────────────────────────────────────────────
 
 type FormData = {
-  creator_type: string
-  wants: string
   first_name: string
   last_name: string
-  email: string
-  phone: string
   instagram_handle: string
-  platforms: string[]
-  posting_frequency: string
-  niche: string
-  biggest_obstacle: string
-  strategies_tried: string[]
+  phone: string
   monthly_income: string
-  investment_amount: string
-  income_goal: string
-  business_mindset: string
-}
-
-type Outcome = 'qualified' | 'payment' | 'disqualified'
-
-function getOutcome(form: FormData): Outcome {
-  const inv = form.investment_amount
-
-  // Everyone sees the payment page — no hard disqualification
-  if (inv === 'Not right now') return 'payment'
-
-  // £500 or below → can only afford dashboard, self-serve
-  if (inv === '£500 or below') return 'payment'
-
-  // £500+ budget: only qualified if they want coaching from Will
-  if (form.wants === 'coaching') return 'qualified'
-
-  // Wants dashboard only → self-serve payment
-  return 'payment'
-}
-
-const TOTAL_STEPS = 5
-
-// ── Component ─────────────────────────────────────────────────────────────────
-
-// ── Stable session ID for funnel tracking ─────────────────────────────────────
-function getSessionId(): string {
-  if (typeof window === 'undefined') return ''
-  const key = 'apply_session_id'
-  let id = sessionStorage.getItem(key)
-  if (!id) {
-    id = `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-    sessionStorage.setItem(key, id)
-  }
-  return id
-}
-
-function trackStep(step: number) {
-  const session_id = getSessionId()
-  if (!session_id) return
-  fetch('/api/applications/track', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ session_id, step }),
-  }).catch(() => {})
+  willing_to_invest: string
 }
 
 export default function ApplyPage() {
-  const [step, setStep]             = useState(1)
-  const [loading, setLoading]       = useState(false)
-  const [processing, setProcessing] = useState(false)
-  const [done, setDone]             = useState<Outcome | null>(null)
-  const [form, setForm]             = useState<FormData>({
-    creator_type: '', wants: '',
-    first_name: '', last_name: '', email: '', phone: '', instagram_handle: '',
-    platforms: [], posting_frequency: '', niche: '',
-    biggest_obstacle: '', strategies_tried: [],
-    monthly_income:    MONTHLY_INCOME_STEPS[2],
-    investment_amount: INVESTMENT_AMOUNT_STEPS[1],
-    income_goal:       INCOME_GOAL_STEPS[2],
-    business_mindset: '',
+  const [track, setTrack] = useState<'dashboard' | 'mentorship' | null>(null)
+  const [submitted, setSubmitted] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [form, setForm] = useState<FormData>({
+    first_name: '',
+    last_name: '',
+    instagram_handle: '',
+    phone: '',
+    monthly_income: MONTHLY_INCOME_STEPS[2],
+    willing_to_invest: '',
   })
-
-  // Track step 1 on first mount (session started)
-  useState(() => { trackStep(1) })
 
   function set(field: keyof FormData, value: string) {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
-  function toggle(field: 'platforms' | 'strategies_tried', value: string) {
-    setForm(prev => {
-      const arr = prev[field] as string[]
-      return { ...prev, [field]: arr.includes(value) ? arr.filter(v => v !== value) : [...arr, value] }
-    })
-  }
+  const canSubmit = !!(
+    form.first_name.trim() &&
+    form.last_name.trim() &&
+    form.instagram_handle.trim() &&
+    form.phone.trim().startsWith('+') && form.phone.trim().length >= 10 &&
+    form.monthly_income &&
+    form.willing_to_invest
+  )
 
-  function canProceed() {
-    if (step === 1) return !!(form.creator_type && form.platforms.length > 0 && form.niche.trim())
-    if (step === 2) return !!(form.posting_frequency && form.monthly_income)
-    if (step === 3) return !!(form.biggest_obstacle.trim() && form.strategies_tried.length > 0)
-    if (step === 4) return !!(form.wants && form.investment_amount && form.income_goal && form.business_mindset)
-    if (step === 5) return !!(
-      form.first_name.trim() && form.last_name.trim() &&
-      form.email.trim() && form.phone.trim().startsWith('+') && form.phone.trim().length >= 10 &&
-      form.instagram_handle.trim()
-    )
-    return true
-  }
-
-  async function handleNext() {
-    if (step < TOTAL_STEPS) {
-      const nextStep = step + 1
-      setStep(nextStep)
-      trackStep(nextStep) // fire-and-forget, non-blocking
-      return
-    }
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!canSubmit) return
     setLoading(true)
-    setProcessing(true)
-    const outcome = getOutcome(form)
     try {
       await fetch('/api/applications', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...form, outcome }),
+        body: JSON.stringify({ ...form, track: 'mentorship' }),
       })
     } catch { /* non-blocking */ }
-    await new Promise(resolve => setTimeout(resolve, 2200))
     setLoading(false)
-    setProcessing(false)
-    setDone(outcome)
+    setSubmitted(true)
   }
 
-  function handleBack() {
-    if (step > 1) setStep(s => s - 1)
-  }
+  const incomeIdx = MONTHLY_INCOME_STEPS.indexOf(form.monthly_income)
+  const incomePct = incomeIdx >= 0 ? (incomeIdx / (MONTHLY_INCOME_STEPS.length - 1)) * 100 : 0
 
-  const pct       = Math.round(((step - 1) / TOTAL_STEPS) * 100)
-  const firstName = form.first_name.trim()
-
-  // ── Reviewing screen ───────────────────────────────────────────────────────
-  if (processing) {
-    return (
-      <PageShell>
-        <div style={{ textAlign: 'center', animation: 'fadeUp 0.4s ease both' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
-            <div style={{
-              width: 56, height: 56, borderRadius: '50%',
-              border: '2.5px solid rgba(59,130,246,0.15)',
-              borderTopColor: '#3B82F6',
-              animation: 'spin 0.85s linear infinite',
-            }} />
-            <div>
-              <h2 style={{ fontSize: 22, fontWeight: 800, color: '#f0f0f0', margin: '0 0 8px', letterSpacing: '-0.4px' }}>
-                Reviewing your answers…
-              </h2>
-              <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', margin: 0 }}>
-                Matching you against Creator Cult criteria
-              </p>
-            </div>
-          </div>
-        </div>
-        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      </PageShell>
-    )
-  }
-
-  // ── Disqualified screen ────────────────────────────────────────────────────
-  if (done === 'disqualified') {
-    return (
-      <PageShell>
-        <div style={{ animation: 'fadeUp 0.4s ease both', textAlign: 'center' }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16,
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px',
-          }}>
-            <span style={{ fontSize: 24 }}>🤝</span>
-          </div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, color: '#f0f0f0', marginBottom: 12, letterSpacing: '-0.5px' }}>
-            Not the right time{firstName ? `, ${firstName}` : ''}.
-          </h1>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', lineHeight: 1.7, maxWidth: 380, margin: '0 auto 20px' }}>
-            Creator Cult requires an investment to get access. When you&apos;re in a position to move, come back and apply. The door is open.
-          </p>
-          <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 8 }}>
-            Follow Will on Instagram in the meantime for free content strategy.
-          </p>
-        </div>
-      </PageShell>
-    )
-  }
-
-  // ── Payment screen — same layout as /access ────────────────────────────────
-  if (done === 'payment') {
-    return <AccessCheckoutPage firstName={form.first_name.trim() || undefined} email={form.email || undefined} />
-  }
-
-  // ── Qualified screen ───────────────────────────────────────────────────────
-  if (done === 'qualified') {
-    return (
-      <PageShell>
-        <div style={{ animation: 'fadeUp 0.4s ease both', textAlign: 'center' }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16,
-            background: 'rgba(74,222,128,0.12)', border: '1px solid rgba(74,222,128,0.3)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px',
-          }}>
-            <Check size={26} color="rgba(74,222,128,0.9)" strokeWidth={2.5} />
-          </div>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f0f0f0', marginBottom: 10, letterSpacing: '-0.5px' }}>
-            Application received{firstName ? `, ${firstName}` : ''}.
-          </h1>
-          <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.7, maxWidth: 380, margin: '0 auto 16px' }}>
-            Will reviews every application personally and will be in touch within 48 hours. If it&apos;s a fit, you&apos;ll get a link to book a call.
-          </p>
-          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.35)', lineHeight: 1.65, maxWidth: 380, margin: '0 auto 20px' }}>
-            In the meantime, you can explore the Cult Dashboard at{' '}
-            <a href="/" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>cultdashboard.com</a>.
-          </p>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
-            <Phone size={13} color="rgba(255,255,255,0.25)" />
-            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.22)', margin: 0 }}>Keep your phone nearby.</p>
-          </div>
-        </div>
-      </PageShell>
-    )
-  }
-
-  // ── Main quiz ──────────────────────────────────────────────────────────────
-  return (
-    <PageShell>
-
-      {/* Progress */}
-      <div style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-          <span style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-            {step < TOTAL_STEPS ? `${pct}% complete` : 'Almost there'}
-          </span>
-          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.18)' }}>{step} / {TOTAL_STEPS}</span>
-        </div>
-        <div style={{ height: 2, background: 'rgba(255,255,255,0.08)', borderRadius: 2 }}>
-          <div style={{ height: '100%', width: `${pct}%`, background: '#3B82F6', borderRadius: 2, transition: 'width 0.4s ease' }} />
-        </div>
-      </div>
-
-      <div key={step} style={{ animation: 'fadeUp 0.35s ease both' }}>
-
-        {/* ── Step 1: Who are you ────────────────────────────────────────── */}
-        {step === 1 && (
-          <>
-            <h1 style={headingStyle}>Apply for Creator Cult</h1>
-            <p style={subStyle}>Will reviews every application personally. This is an application for the full Creator Cult programme &mdash; live coaching, the course, and lifetime dashboard access. If you&apos;re looking for just the Cult Dashboard, you can get <a href="/" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>instant access on the main page</a>.</p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <Field label="What best describes what you're building?">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {CREATOR_TYPE_OPTIONS.map(({ value, label, desc }) => (
-                    <button
-                      key={value}
-                      className={`pill-option${form.creator_type === value ? ' selected' : ''}`}
-                      onClick={() => set('creator_type', value)}
-                      style={{ padding: '14px 16px', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}
-                    >
-                      <span style={{ fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {form.creator_type === value && <Check size={11} style={{ flexShrink: 0 }} />}
-                        {label}
-                      </span>
-                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.52)', fontWeight: 400 }}>{desc}</span>
-                    </button>
-                  ))}
-                </div>
-              </Field>
-
-              <Field label="What platforms are you posting on? (select all that apply)">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {PLATFORM_OPTIONS.map(opt => (
-                    <button key={opt} className={`pill-option${form.platforms.includes(opt) ? ' selected' : ''}`} onClick={() => toggle('platforms', opt)}>
-                      {form.platforms.includes(opt) && <Check size={11} style={{ marginRight: 5, flexShrink: 0 }} />}
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </Field>
-
-              <Field label="What niche or industry are you in?">
-                <input className="apply-input" type="text" placeholder="e.g. fitness coaching, trading, business mentoring" value={form.niche} onChange={e => set('niche', e.target.value)} />
-              </Field>
-            </div>
-          </>
-        )}
-
-        {/* ── Step 2: Current activity ───────────────────────────────────── */}
-        {step === 2 && (
-          <>
-            <StepBadge text="You're further along than most people who apply here." />
-            <h1 style={headingStyle}>How active are you right now?</h1>
-            <p style={subStyle}>Give us an honest snapshot of your output and where you are financially.</p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <Field label="In the last 30 days, how many posts have you published?">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {FREQUENCY_OPTIONS.map(opt => (
-                    <button key={opt} className={`pill-option${form.posting_frequency === opt ? ' selected' : ''}`} onClick={() => set('posting_frequency', opt)}>
-                      {form.posting_frequency === opt && <Check size={11} style={{ marginRight: 5, flexShrink: 0 }} />}
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </Field>
-
-              <Field label="Total monthly income from all sources">
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: '0 0 14px', lineHeight: 1.5 }}>
-                  Include everything: employment, business revenue, content income, side income. Combined total.
-                </p>
-                <MoneySlider steps={MONTHLY_INCOME_STEPS} value={form.monthly_income} onChange={v => set('monthly_income', v)} />
-              </Field>
-            </div>
-          </>
-        )}
-
-        {/* ── Step 3: What's in the way ──────────────────────────────────── */}
-        {step === 3 && (
-          <>
-            <StepBadge text="Most people at your level are 1–2 moves away from a breakthrough." />
-            <h1 style={headingStyle}>What&apos;s been in the way?</h1>
-            <p style={subStyle}>Be direct. The more specific you are, the clearer the path forward.</p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-              <Field label="What's been the biggest thing stopping your growth?">
-                <textarea
-                  className="apply-input apply-textarea"
-                  placeholder="Be specific, what's the actual blocker?"
-                  value={form.biggest_obstacle}
-                  onChange={e => set('biggest_obstacle', e.target.value)}
-                  rows={3}
-                />
-              </Field>
-
-              <Field label="What have you already tried? (select all that apply)">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {STRATEGIES_TRIED_OPTIONS.map(opt => (
-                    <button key={opt} className={`pill-option${form.strategies_tried.includes(opt) ? ' selected' : ''}`} onClick={() => toggle('strategies_tried', opt)}>
-                      {form.strategies_tried.includes(opt) && <Check size={11} style={{ marginRight: 5, flexShrink: 0 }} />}
-                      {opt}
-                    </button>
-                  ))}
-                </div>
-              </Field>
-            </div>
-          </>
-        )}
-
-        {/* ── Step 4: Commitment & investment ───────────────────────────── */}
-        {step === 4 && (
-          <>
-            <StepBadge text="Almost there. One final check before we match you." />
-            <h1 style={headingStyle}>How serious are you about changing it?</h1>
-            <p style={subStyle}>We need to understand what you&apos;re looking for and what you&apos;re in a position to do.</p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
-
-              <Field label="What do you want from Creator Cult?">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {WANTS_OPTIONS.map(({ value, label, desc }) => (
-                    <button
-                      key={value}
-                      className={`pill-option${form.wants === value ? ' selected' : ''}`}
-                      onClick={() => set('wants', value)}
-                      style={{ padding: '14px 16px', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}
-                    >
-                      <span style={{ fontWeight: 700, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        {form.wants === value && <Check size={11} style={{ flexShrink: 0 }} />}
-                        {label}
-                      </span>
-                      <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.52)', fontWeight: 400 }}>{desc}</span>
-                    </button>
-                  ))}
-                </div>
-              </Field>
-
-              <Field label="How much are you in a position to invest?">
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {INVESTMENT_AMOUNT_STEPS.map(opt => {
-                    const isDisqualify = opt === 'Not right now'
-                    return (
-                      <button
-                        key={opt}
-                        className={`pill-option${form.investment_amount === opt ? ' selected' : ''}`}
-                        onClick={() => set('investment_amount', opt)}
-                        style={isDisqualify ? { opacity: 0.6 } : {}}
-                      >
-                        {form.investment_amount === opt && <Check size={11} style={{ marginRight: 8, flexShrink: 0 }} />}
-                        {opt}
-                      </button>
-                    )
-                  })}
-                </div>
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', marginTop: 12, lineHeight: 1.5 }}>
-                  Dashboard access starts from £197/mo. Coaching with Will starts from £500.
-                </p>
-              </Field>
-
-              <Field label="Your desired monthly income goal">
-                <MoneySlider steps={INCOME_GOAL_STEPS} value={form.income_goal} onChange={v => set('income_goal', v)} />
-              </Field>
-
-              <Field label="This programme is a business investment, not a free coaching session. Are you prepared to engage with a business mindset and make decisions based on outcomes?">
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                  {[
-                    { display: "Yes, I'm ready to commit", value: 'Yes' },
-                    { display: "No, I'm not there yet",    value: 'No'  },
-                  ].map(({ display, value }) => (
-                    <button key={value} className={`pill-option${form.business_mindset === value ? ' selected' : ''}`} onClick={() => set('business_mindset', value)}>
-                      {form.business_mindset === value && <Check size={11} style={{ marginRight: 5, flexShrink: 0 }} />}
-                      {display}
-                    </button>
-                  ))}
-                </div>
-              </Field>
-            </div>
-          </>
-        )}
-
-        {/* ── Step 5: Contact info ───────────────────────────────────────── */}
-        {step === 5 && (
-          <>
-            <div style={{
-              padding: '14px 16px', borderRadius: 10, marginBottom: 24,
-              background: 'rgba(74,222,128,0.06)', border: '1px solid rgba(74,222,128,0.22)',
-            }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: '#4ade80', marginBottom: 4 }}>Your result is ready</div>
-              <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.62)', margin: 0, lineHeight: 1.55 }}>
-                Based on your answers, we&apos;ve got a clear picture. Enter your details below to see where you qualify.
-              </p>
-            </div>
-
-            <h1 style={headingStyle}>One last thing</h1>
-            <p style={subStyle}>Where do we send your result?</p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-              <div className="apply-name-grid">
-                <Field label="First name">
-                  <input className="apply-input" type="text" autoComplete="given-name" placeholder="First" value={form.first_name} onChange={e => set('first_name', e.target.value)} />
-                </Field>
-                <Field label="Last name">
-                  <input className="apply-input" type="text" autoComplete="family-name" placeholder="Last" value={form.last_name} onChange={e => set('last_name', e.target.value)} />
-                </Field>
-              </div>
-              <Field label="Email address">
-                <input className="apply-input" type="email" inputMode="email" autoComplete="email" placeholder="you@example.com" value={form.email} onChange={e => set('email', e.target.value)} />
-              </Field>
-              <Field label="Phone (WhatsApp, include country code)">
-                <input className="apply-input" type="tel" inputMode="tel" autoComplete="tel" placeholder="+44 7911 123456" value={form.phone} onChange={e => set('phone', e.target.value)} />
-                {form.phone.trim() && !form.phone.trim().startsWith('+') && (
-                  <p style={{ fontSize: 11, color: 'rgba(255,110,60,0.9)', marginTop: 5 }}>Start with your country code, e.g. +44 for UK, +1 for US</p>
-                )}
-                <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.22)', marginTop: 5 }}>Make sure it&apos;s the number you use on WhatsApp.</p>
-              </Field>
-              <Field label="Instagram handle">
-                <input className="apply-input" type="text" placeholder="@yourhandle" value={form.instagram_handle} onChange={e => set('instagram_handle', e.target.value)} />
-              </Field>
-            </div>
-          </>
-        )}
-
-      </div>
-
-      {/* CTAs */}
-      <div style={{ marginTop: 32, display: 'flex', flexDirection: 'column', gap: 10 }}>
-        <button className="apply-btn" onClick={handleNext} disabled={!canProceed() || loading}>
-          {loading
-            ? 'Submitting…'
-            : step === TOTAL_STEPS
-              ? <>Submit Application <ArrowRight size={16} /></>
-              : <>Continue <ArrowRight size={16} /></>
-          }
-        </button>
-
-        {step > 1 && (
-          <button className="apply-back-btn" onClick={handleBack}>
-            <ArrowLeft size={14} /> Back
-          </button>
-        )}
-      </div>
-
-      {step === 1 && (
-        <p style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 20 }}>
-          Already a member?{' '}
-          <a href="/login" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>Sign in →</a>
-        </p>
-      )}
-    </PageShell>
-  )
-}
-
-// ── Shared styles ─────────────────────────────────────────────────────────────
-
-const headingStyle: React.CSSProperties = {
-  fontSize: 'clamp(22px, 5.5vw, 26px)', fontWeight: 800, color: '#f0f0f0',
-  marginBottom: 8, letterSpacing: '-0.5px', lineHeight: 1.2,
-}
-const subStyle: React.CSSProperties = {
-  fontSize: 14, color: 'rgba(255,255,255,0.62)', marginBottom: 32, lineHeight: 1.6,
-}
-
-function StepBadge({ text }: { text: string }) {
   return (
     <div style={{
-      display: 'inline-flex', alignItems: 'center', marginBottom: 12,
-      padding: '4px 12px', borderRadius: 99,
-      background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.2)',
+      minHeight: '100dvh', background: '#000',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+      paddingTop: 'max(32px, env(safe-area-inset-top))',
+      paddingBottom: 'max(32px, env(safe-area-inset-bottom))',
+      paddingLeft: 'max(20px, env(safe-area-inset-left))',
+      paddingRight: 'max(20px, env(safe-area-inset-right))',
+      fontFamily: 'Inter, system-ui, sans-serif',
     }}>
-      <span style={{ fontSize: 10, fontWeight: 700, color: '#93c5fd', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-        {text}
-      </span>
-    </div>
-  )
-}
-
-function PageShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ minHeight: '100dvh', background: '#000', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', paddingTop: 'max(24px, env(safe-area-inset-top))', paddingBottom: 'max(24px, env(safe-area-inset-bottom))', paddingLeft: 'max(16px, env(safe-area-inset-left))', paddingRight: 'max(16px, env(safe-area-inset-right))' }}>
       <style>{`
-        @keyframes fadeUp    { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes glowPulse { 0%,100% { opacity:0.07; } 50% { opacity:0.14; } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
+        .apply-track-btn { transition: border-color 0.15s, background 0.15s; }
+        .apply-track-btn:hover { border-color: rgba(59,130,246,0.5) !important; background: rgba(59,130,246,0.07) !important; }
         .apply-input {
           width: 100%; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
           color: #f0f0f0; border-radius: 8px; padding: 0 14px; height: 46px; outline: none;
           font-size: 14px; font-weight: 500; font-family: inherit; box-sizing: border-box;
           transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .apply-textarea { height: auto !important; padding: 12px 14px !important; resize: vertical; min-height: 84px; line-height: 1.6; }
         .apply-input:focus { border-color: #3B82F6; box-shadow: 0 0 0 3px rgba(59,130,246,0.12); }
-        .apply-input::placeholder { color: #666; }
-        .apply-btn {
-          width: 100%; height: 48px; background: #3B82F6; color: #fff; border: none;
-          border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer;
-          font-family: inherit; transition: background 0.15s, opacity 0.15s;
-          display: flex; align-items: center; justify-content: center; gap: 8px;
-        }
-        .apply-btn:hover:not(:disabled) { background: #60A5FA; }
-        .apply-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-        .apply-back-btn {
-          width: 100%; height: 44px; background: transparent; color: rgba(255,255,255,0.3); border: 1px solid rgba(255,255,255,0.08);
-          border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;
-          font-family: inherit; transition: color 0.15s, border-color 0.15s;
-          display: flex; align-items: center; justify-content: center; gap: 6px;
-        }
-        .apply-back-btn:hover { color: rgba(255,255,255,0.55); border-color: rgba(255,255,255,0.18); }
-        .pill-option {
-          padding: 12px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;
-          min-height: 44px;
-          cursor: pointer; border: 1px solid rgba(255,255,255,0.14); color: rgba(255,255,255,0.75);
-          background: rgba(255,255,255,0.02); font-family: inherit; transition: all 0.12s; text-align: left;
-          display: flex; align-items: center;
-        }
-        .pill-option:hover { border-color: rgba(59,130,246,0.55); color: #c0d8ff; background: rgba(59,130,246,0.06); }
-        .pill-option.selected { border-color: #3B82F6; background: rgba(59,130,246,0.14); color: #93c5fd; }
-        .money-slider {
+        .apply-input::placeholder { color: #555; }
+        .income-slider {
           -webkit-appearance: none; appearance: none; width: 100%; height: 4px;
           border-radius: 2px; outline: none; cursor: pointer;
-          background: linear-gradient(to right, #3B82F6 var(--slider-fill, 0%), rgba(255,255,255,0.12) var(--slider-fill, 0%));
+          background: linear-gradient(to right, #3B82F6 var(--fill, 0%), rgba(255,255,255,0.12) var(--fill, 0%));
         }
-        .money-slider::-webkit-slider-thumb {
-          -webkit-appearance: none; appearance: none; width: 22px; height: 22px;
-          border-radius: 50%; background: #3B82F6; cursor: pointer;
-          border: 2.5px solid #000;
+        .income-slider::-webkit-slider-thumb {
+          -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+          background: #3B82F6; cursor: pointer; border: 2.5px solid #000;
           box-shadow: 0 0 0 1.5px rgba(59,130,246,0.7), 0 0 14px rgba(59,130,246,0.4);
-          transition: box-shadow 0.15s, transform 0.1s;
         }
-        .money-slider:active::-webkit-slider-thumb { transform: scale(1.15); box-shadow: 0 0 0 2px rgba(59,130,246,0.9), 0 0 22px rgba(59,130,246,0.6); }
-        .money-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #3B82F6; cursor: pointer; border: 2.5px solid #000; box-shadow: 0 0 0 1.5px rgba(59,130,246,0.7); }
-        .money-slider::-moz-range-track { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.12); }
-        .money-slider::-moz-range-progress { height: 4px; border-radius: 2px; background: #3B82F6; }
-        .apply-name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        @media (max-width: 420px) {
-          .apply-name-grid { grid-template-columns: 1fr !important; }
-        }
+        .income-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #3B82F6; cursor: pointer; border: 2.5px solid #000; }
+        .invest-opt { transition: border-color 0.12s, background 0.12s; }
+        .invest-opt:hover { border-color: rgba(59,130,246,0.5) !important; background: rgba(59,130,246,0.07) !important; }
       `}</style>
 
-      <div style={{ position: 'fixed', top: -100, left: '50%', transform: 'translateX(-50%)', width: 500, height: 400, background: '#3B82F6', borderRadius: '50%', filter: 'blur(120px)', opacity: 0.07, animation: 'glowPulse 5s ease-in-out infinite', pointerEvents: 'none' }} />
+      <div style={{ width: '100%', maxWidth: 520, animation: 'fadeUp 0.45s ease both' }}>
 
-      <div style={{ width: '100%', maxWidth: 520, animation: 'fadeUp 0.5s ease both', position: 'relative', zIndex: 1 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 9, marginBottom: 40, justifyContent: 'center' }}>
-          <div style={{ width: 34, height: 34, borderRadius: 9, background: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Zap size={16} color="white" fill="white" />
+        {/* Logo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 48, justifyContent: 'center' }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#3B82F6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Zap size={17} color="#fff" fill="#fff" />
           </div>
-          <span style={{ fontSize: 16, fontWeight: 800, color: '#f0f0f0', letterSpacing: '-0.3px' }}>Creator Cult</span>
+          <span style={{ fontSize: 15, fontWeight: 800, letterSpacing: '-0.3px', color: '#f0f0f0' }}>Creator Cult</span>
         </div>
-        {children}
+
+        {/* ── Track selection ── */}
+        {!track && (
+          <div key="track" style={{ animation: 'fadeUp 0.35s ease both' }}>
+            <h1 style={{ fontSize: 'clamp(24px, 6vw, 30px)', fontWeight: 800, color: '#f0f0f0', letterSpacing: '-0.6px', lineHeight: 1.15, marginBottom: 10, textAlign: 'center' }}>
+              What are you here for?
+            </h1>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', textAlign: 'center', marginBottom: 36, lineHeight: 1.6 }}>
+              Pick the right path and we'll get you sorted.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {/* Dashboard */}
+              <button
+                className="apply-track-btn"
+                onClick={() => window.location.href = '/'}
+                style={{
+                  width: '100%', padding: '22px 24px', borderRadius: 14, textAlign: 'left',
+                  cursor: 'pointer', background: 'rgba(59,130,246,0.07)',
+                  border: '1px solid rgba(59,130,246,0.28)', fontFamily: 'inherit',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#93c5fd', marginBottom: 4 }}>Get the Cult Dashboard</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
+                    12 AI tools, instant access — £197/mo or £997 for 6 months
+                  </div>
+                </div>
+                <ArrowRight size={16} color="rgba(255,255,255,0.3)" style={{ flexShrink: 0, marginLeft: 16 }} />
+              </button>
+
+              {/* Mentorship */}
+              <button
+                className="apply-track-btn"
+                onClick={() => setTrack('mentorship')}
+                style={{
+                  width: '100%', padding: '22px 24px', borderRadius: 14, textAlign: 'left',
+                  cursor: 'pointer', background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.12)', fontFamily: 'inherit',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                  position: 'relative',
+                }}
+              >
+                <div style={{ position: 'absolute', top: -10, right: 16, fontSize: 10, fontWeight: 800, color: '#000', background: '#e2c97e', padding: '3px 10px', borderRadius: 99, letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                  Application
+                </div>
+                <div>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: '#f0f0f0', marginBottom: 4 }}>Apply for Creator Cult Mentorship</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
+                    Full coaching from Will — course, weekly calls, 1:1 support
+                  </div>
+                </div>
+                <ArrowRight size={16} color="rgba(255,255,255,0.3)" style={{ flexShrink: 0, marginLeft: 16 }} />
+              </button>
+            </div>
+
+            <p style={{ marginTop: 28, textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.22)' }}>
+              Already a member?{' '}
+              <a href="/login" style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: 600 }}>Sign in →</a>
+            </p>
+          </div>
+        )}
+
+        {/* ── Mentorship form ── */}
+        {track === 'mentorship' && !submitted && (
+          <div key="form" style={{ animation: 'fadeUp 0.35s ease both' }}>
+            <h1 style={{ fontSize: 'clamp(22px, 5.5vw, 28px)', fontWeight: 800, color: '#f0f0f0', letterSpacing: '-0.5px', lineHeight: 1.15, marginBottom: 8 }}>
+              Apply for mentorship
+            </h1>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.45)', marginBottom: 32, lineHeight: 1.6 }}>
+              Fill this in and Will&apos;s team will call you within 24 hours.
+            </p>
+
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+              {/* Name */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                <div>
+                  <label style={labelStyle}>First name</label>
+                  <input className="apply-input" type="text" autoComplete="given-name" placeholder="First" value={form.first_name} onChange={e => set('first_name', e.target.value)} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Last name</label>
+                  <input className="apply-input" type="text" autoComplete="family-name" placeholder="Last" value={form.last_name} onChange={e => set('last_name', e.target.value)} />
+                </div>
+              </div>
+
+              {/* Instagram */}
+              <div>
+                <label style={labelStyle}>Instagram username</label>
+                <div style={{ position: 'relative' }}>
+                  <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: 'rgba(255,255,255,0.3)', pointerEvents: 'none' }}>@</span>
+                  <input className="apply-input" type="text" placeholder="yourhandle" value={form.instagram_handle} onChange={e => set('instagram_handle', e.target.value.replace(/^@+/, ''))} style={{ paddingLeft: 26 }} />
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label style={labelStyle}>Phone number (WhatsApp, include country code)</label>
+                <input className="apply-input" type="tel" inputMode="tel" autoComplete="tel" placeholder="+44 7911 123456" value={form.phone} onChange={e => set('phone', e.target.value)} />
+                {form.phone.trim() && !form.phone.trim().startsWith('+') && (
+                  <p style={{ fontSize: 11, color: 'rgba(255,110,60,0.9)', marginTop: 5 }}>Start with your country code — e.g. +44 for UK, +1 for US</p>
+                )}
+              </div>
+
+              {/* Monthly income */}
+              <div>
+                <label style={labelStyle}>Current monthly income (all sources combined)</label>
+                <div style={{ textAlign: 'center', fontSize: 20, fontWeight: 800, color: '#93c5fd', marginBottom: 16, letterSpacing: '-0.4px' }}>
+                  {form.monthly_income}
+                </div>
+                <input
+                  type="range" min={0} max={MONTHLY_INCOME_STEPS.length - 1} value={incomeIdx >= 0 ? incomeIdx : 0}
+                  onChange={e => set('monthly_income', MONTHLY_INCOME_STEPS[parseInt(e.target.value)])}
+                  className="income-slider"
+                  style={{ '--fill': `${incomePct}%` } as React.CSSProperties}
+                />
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{MONTHLY_INCOME_STEPS[0]}</span>
+                  <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>{MONTHLY_INCOME_STEPS[MONTHLY_INCOME_STEPS.length - 1]}</span>
+                </div>
+              </div>
+
+              {/* Willing to invest */}
+              <div>
+                <label style={labelStyle}>Are you willing to invest in your growth?</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
+                  {INVESTMENT_OPTIONS.map(opt => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      className="invest-opt"
+                      onClick={() => set('willing_to_invest', opt.value)}
+                      style={{
+                        width: '100%', padding: '12px 16px', borderRadius: 8, textAlign: 'left',
+                        cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
+                        border: form.willing_to_invest === opt.value ? '1px solid #3B82F6' : '1px solid rgba(255,255,255,0.1)',
+                        background: form.willing_to_invest === opt.value ? 'rgba(59,130,246,0.14)' : 'rgba(255,255,255,0.02)',
+                        color: form.willing_to_invest === opt.value ? '#93c5fd' : 'rgba(255,255,255,0.65)',
+                        display: 'flex', alignItems: 'center', gap: 8,
+                      }}
+                    >
+                      {form.willing_to_invest === opt.value && <Check size={11} style={{ flexShrink: 0 }} />}
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={!canSubmit || loading}
+                style={{
+                  width: '100%', height: 50, marginTop: 8,
+                  background: canSubmit && !loading ? '#3B82F6' : 'rgba(59,130,246,0.3)',
+                  color: '#fff', border: 'none', borderRadius: 8,
+                  fontSize: 15, fontWeight: 700, cursor: canSubmit && !loading ? 'pointer' : 'not-allowed',
+                  fontFamily: 'inherit', transition: 'background 0.15s',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                }}
+              >
+                {loading ? 'Submitting…' : <>Submit Application <ArrowRight size={16} /></>}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setTrack(null)}
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', padding: '4px 0' }}
+              >
+                ← Back
+              </button>
+            </form>
+          </div>
+        )}
+
+        {/* ── Confirmation ── */}
+        {submitted && (
+          <div key="done" style={{ animation: 'fadeUp 0.4s ease both', textAlign: 'center' }}>
+            <div style={{
+              width: 60, height: 60, borderRadius: 18,
+              background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.3)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px',
+            }}>
+              <Phone size={26} color="rgba(74,222,128,0.9)" />
+            </div>
+            <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f0f0f0', marginBottom: 10, letterSpacing: '-0.5px' }}>
+              We&apos;ll call you soon, {form.first_name}.
+            </h1>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.7, maxWidth: 380, margin: '0 auto 20px' }}>
+              Your application is with Will&apos;s team now. Expect a call to <strong style={{ color: 'rgba(255,255,255,0.75)' }}>{form.phone}</strong> within 24 hours.
+            </p>
+            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.2)', marginTop: 12 }}>
+              Keep your phone nearby and make sure it&apos;s a number you answer.
+            </p>
+          </div>
+        )}
+
       </div>
     </div>
   )
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label style={{ display: 'block', fontSize: 12, fontWeight: 700, color: 'rgba(255,255,255,0.72)', marginBottom: 8, letterSpacing: '0.01em', lineHeight: 1.5 }}>
-        {label}
-      </label>
-      {children}
-    </div>
-  )
-}
-
-function MoneySlider({ steps, value, onChange }: { steps: string[]; value: string; onChange: (val: string) => void }) {
-  const idx        = steps.indexOf(value)
-  const currentIdx = idx === -1 ? 0 : idx
-  const pct        = steps.length > 1 ? (currentIdx / (steps.length - 1)) * 100 : 0
-
-  return (
-    <div style={{ paddingTop: 4 }}>
-      <div style={{ textAlign: 'center', fontSize: 22, fontWeight: 800, color: '#93c5fd', marginBottom: 20, letterSpacing: '-0.5px', minHeight: 30, transition: 'color 0.15s' }}>
-        {steps[currentIdx]}
-      </div>
-      <input
-        type="range" min={0} max={steps.length - 1} value={currentIdx}
-        onChange={e => onChange(steps[parseInt(e.target.value)])}
-        className="money-slider"
-        style={{ '--slider-fill': `${pct}%` } as React.CSSProperties}
-      />
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 8 }}>
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)' }}>{steps[0]}</span>
-        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)' }}>{steps[steps.length - 1]}</span>
-      </div>
-    </div>
-  )
+const labelStyle: React.CSSProperties = {
+  display: 'block', fontSize: 12, fontWeight: 700,
+  color: 'rgba(255,255,255,0.6)', marginBottom: 8, letterSpacing: '0.01em',
 }

@@ -6,103 +6,65 @@ const adminClient = createClient(
   process.env.SUPABASE_SERVICE_KEY!
 )
 
-async function sendSlackNotification(data: Record<string, unknown>, isQualified: boolean) {
+const INVEST_LABEL: Record<string, string> = {
+  yes_500:   '✅ Yes — £500 or below',
+  yes_1000:  '✅ Yes — £500–£1,000',
+  yes_2000:  '✅ Yes — £1,000–£2,000',
+  yes_2000p: '✅ Yes — £2,000+',
+  not_yet:   '❌ Not right now',
+}
+
+async function sendSlackNotification(data: Record<string, unknown>) {
   const webhookUrl = process.env.SLACK_WEBHOOK_URL
   if (!webhookUrl) return
 
-  const name        = `${data.first_name} ${data.last_name}`.trim()
-  const phone       = String(data.phone || '')
-  const email       = String(data.email || '')
-  const ig          = String(data.instagram_handle || '').replace(/^@/, '')
-  const niche       = String(data.niche || '')
-  const platforms   = Array.isArray(data.platforms) ? data.platforms.join(', ') : String(data.platforms || '')
-  const frequency   = String(data.posting_frequency || '')
-  const obstacle    = String(data.biggest_obstacle || '')
-  const strategies  = Array.isArray(data.strategies_tried) ? data.strategies_tried.join(', ') : String(data.strategies_tried || '')
-  const income      = String(data.monthly_income || '')
-  const investAmount = String(data.investment_amount || '')
-  const incomeGoal  = String(data.income_goal || '')
-  const creatorType = String(data.creator_type || '')
-  const wants       = String(data.wants || '')
-  const mindset     = String(data.business_mindset || '')
+  const firstName = String(data.first_name || '')
+  const lastName  = String(data.last_name  || '')
+  const name      = `${firstName} ${lastName}`.trim()
+  const phone     = String(data.phone     || '—')
+  const ig        = String(data.instagram_handle || '').replace(/^@/, '')
+  const income    = String(data.monthly_income   || '—')
+  const invest    = INVEST_LABEL[String(data.willing_to_invest || '')] ?? String(data.willing_to_invest || '—')
 
-  const creatorTypeLabel = {
-    creator: 'Pure Content Creator',
-    coach: 'Coaching / Service Business',
-    both: 'Both (creator + coaching)',
-  }[creatorType] ?? creatorType
-
-  const wantsLabel = wants === 'coaching'
-    ? 'Dashboard + Coaching from Will 🎯'
-    : wants === 'dashboard'
-      ? 'Dashboard access only'
-      : wants
-
-  const header = isQualified
-    ? '🔔 New Creator Cult Application — Qualified'
-    : '🟡 New Application — Auto-Disqualified'
+  const isHotLead = String(data.willing_to_invest || '').startsWith('yes')
 
   const blocks = [
     {
       type: 'header',
-      text: { type: 'plain_text', text: header, emoji: true },
+      text: {
+        type: 'plain_text',
+        text: isHotLead ? '🔥 New Mentorship Application — CALL NOW' : '📋 New Mentorship Application',
+        emoji: true,
+      },
     },
-
-    // Contact
     {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: isQualified
-          ? `*📞 CALL NOW: ${phone}*\n*Name:* ${name}\n*Email:* ${email}\n*Instagram:* @${ig}`
-          : `*Name:* ${name}\n*Email:* ${email}  |  *Instagram:* @${ig}\n*Phone:* ${phone || '—'}\n_Said they can't invest right now — not the right fit_`,
+        text: [
+          `*📞 Phone:* \`${phone}\``,
+          `*👤 Name:* ${name}`,
+          `*📸 Instagram:* @${ig}`,
+        ].join('\n'),
       },
     },
-
     { type: 'divider' },
-
-    // Who they are
     {
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `*👤 Who They Are*\n• Creator type: ${creatorTypeLabel}\n• They want: ${wantsLabel}\n• Business mindset: ${mindset || '—'}`,
+        text: [
+          `*💰 Current monthly income:* ${income}`,
+          `*💳 Willing to invest:* ${invest}`,
+        ].join('\n'),
       },
     },
-
-    // Content situation
-    {
+    ...(isHotLead ? [{
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `*📊 Content Situation*\n• Niche: ${niche || '—'}\n• Platforms: ${platforms || '—'}\n• Posts last 30 days: ${frequency || '—'}`,
+        text: `*📲 Ring them now:* \`${phone}\``,
       },
-    },
-
-    // Obstacle + strategies
-    {
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `*🚧 Their Biggest Problem*\n${obstacle || '—'}\n\n*Already tried:* ${strategies || '—'}`,
-      },
-    },
-
-    { type: 'divider' },
-
-    // Money
-    {
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `*💰 Money*\n• Current income (all sources): ${income || '—'}\n• Can invest: ${investAmount || '—'}\n• Income goal: ${incomeGoal || '—'}`,
-      },
-    },
-
-    // CTA for qualified
-    ...(isQualified ? [{
-      type: 'section',
-      text: { type: 'mrkdwn', text: `*📞 Ring them now:* \`${phone}\`` },
     }] : []),
   ]
 
@@ -110,7 +72,7 @@ async function sendSlackNotification(data: Record<string, unknown>, isQualified:
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      text: `${isQualified ? '🔔' : '🟡'} Creator Cult Application — ${name}`,
+      text: `${isHotLead ? '🔥' : '📋'} Mentorship application from ${name} — ${phone}`,
       blocks,
     }),
   })
@@ -118,53 +80,28 @@ async function sendSlackNotification(data: Record<string, unknown>, isQualified:
 
 export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}))
-  const {
-    first_name, last_name, email, phone, instagram_handle,
-    creator_type, wants,
-    platforms, posting_frequency, niche,
-    biggest_obstacle, strategies_tried,
-    monthly_income, investment_amount, income_goal, business_mindset,
-    outcome,
-  } = body
+  const { first_name, last_name, phone, instagram_handle, monthly_income, willing_to_invest, track } = body
 
-  if (!email || !first_name) {
-    return NextResponse.json({ error: 'Name and email are required' }, { status: 400 })
+  if (!first_name) {
+    return NextResponse.json({ error: 'Name is required' }, { status: 400 })
   }
 
-  const name = `${first_name} ${last_name}`.trim()
-  const statusMap: Record<string, string> = { qualified: 'pending', payment: 'payment_tier', disqualified: 'disqualified' }
-  const status = statusMap[outcome] ?? 'pending'
+  const name = `${first_name} ${last_name || ''}`.trim()
 
-  // Save to DB — non-blocking if it fails
-  const { error } = await adminClient.from('applications').insert({
+  await adminClient.from('applications').insert({
     name,
-    email,
     phone,
     instagram_handle,
-    status,
-    details: {
-      first_name, last_name,
-      creator_type, wants,
-      platforms, posting_frequency, niche,
-      biggest_obstacle, strategies_tried,
-      monthly_income, investment_amount,
-      income_goal, business_mindset,
-    },
+    status: 'pending',
+    details: { first_name, last_name, monthly_income, willing_to_invest, track },
+  }).then(({ error }) => {
+    if (error) console.error('[applications] insert error:', error.message)
   })
 
-  if (error) {
-    console.error('[applications] insert error:', error.message)
-  }
-
-  // Only ping Slack for qualified leads (investment ≥ £500 + wants coaching).
-  // Payment tier and disqualified self-serve — no Slack needed.
-  const hasRealData = Boolean(first_name && (phone || niche || biggest_obstacle))
-  if (hasRealData && outcome === 'qualified') {
-    try {
-      await sendSlackNotification(body, true)
-    } catch (err) {
-      console.error('[applications] slack error:', err)
-    }
+  try {
+    await sendSlackNotification(body)
+  } catch (err) {
+    console.error('[applications] slack error:', err)
   }
 
   return NextResponse.json({ ok: true })
