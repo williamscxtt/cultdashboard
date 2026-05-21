@@ -83,7 +83,7 @@ function CheckoutForm({ plan, onBack, intentType }: { plan: 'monthly' | 'sixmont
           opacity: (!stripe || status === 'loading') ? 0.5 : 1,
         }}
       >
-        {status === 'loading' ? 'Processing…' : plan === 'monthly' ? 'Pay £95 / month →' : 'Pay £395 →'}
+        {status === 'loading' ? 'Processing…' : plan === 'monthly' ? 'Pay £197 / month →' : 'Pay £997 →'}
       </button>
       <p style={{ marginTop: 10, fontSize: 11, textAlign: 'center', color: T2, lineHeight: 1.5 }}>
         Secure payment · Powered by Stripe
@@ -222,7 +222,7 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: T2, marginBottom: 5, letterSpacing: '0.02em' }}>Monthly</div>
                     <div style={{ fontSize: 30, fontWeight: 800, color: '#93c5fd', letterSpacing: '-0.6px', lineHeight: 1 }}>
-                      £95<span style={{ fontSize: 13, fontWeight: 500, color: T2 }}>/mo</span>
+                      £197<span style={{ fontSize: 13, fontWeight: 500, color: T2 }}>/mo</span>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: T2, fontWeight: 600 }}>
@@ -244,12 +244,12 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: T2, marginBottom: 5, letterSpacing: '0.02em' }}>6 Months</div>
                     <div style={{ fontSize: 30, fontWeight: 800, color: T1, letterSpacing: '-0.6px', lineHeight: 1 }}>
-                      £395<span style={{ fontSize: 13, fontWeight: 500, color: T2 }}> total</span>
+                      £997<span style={{ fontSize: 13, fontWeight: 500, color: T2 }}> total</span>
                     </div>
-                    <div style={{ fontSize: 11, color: T2, marginTop: 4 }}>~£66/mo · save £175</div>
+                    <div style={{ fontSize: 11, color: T2, marginTop: 4 }}>~£166/mo · save £185</div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, color: 'rgba(74,222,128,0.9)', fontWeight: 700 }}>
-                    Save £175 <ArrowRight size={12} />
+                    Save £185 <ArrowRight size={12} />
                   </div>
                 </div>
               </button>
@@ -261,7 +261,7 @@ export default function AccessCheckoutPage({ firstName, email }: AccessCheckoutP
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                   <Check size={13} color="#4ade80" />
                   <span style={{ fontSize: 13, color: T1, fontWeight: 600 }}>
-                    {selectedPlan === 'monthly' ? 'Monthly · £95/mo' : '6 Months · £395 total'}
+                    {selectedPlan === 'monthly' ? 'Monthly · £197/mo' : '6 Months · £997 total'}
                   </span>
                 </div>
                 <button

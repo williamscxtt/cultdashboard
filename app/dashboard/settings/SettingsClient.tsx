@@ -24,7 +24,7 @@ function daysUntil(iso: string | null | undefined): number | null {
 
 function BillingCard({ profile }: { profile: Profile }) {
   const planLabel = profile.plan_type === 'biannual' ? '6-Month Plan' : 'Monthly Plan'
-  const planPrice = profile.plan_type === 'biannual' ? '£300 / 6 months' : '£75 / month'
+  const planPrice = profile.plan_type === 'biannual' ? '£997 / 6 months' : '£197 / month'
   const days = daysUntil(profile.subscription_period_end)
   const renewalDate = formatDate(profile.subscription_period_end)
   const isCreatorCult = profile.membership_tier === 'creator_cult'
@@ -107,10 +107,10 @@ function BillingCard({ profile }: { profile: Profile }) {
           marginBottom: 16,
         }}>
           <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
-            Switch to 6 months — save £150
+            Switch to 6 months — save £185
           </div>
           <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 12, lineHeight: 1.5 }}>
-            Pay £300 every 6 months instead of £75/month. That&apos;s 2 months free — same tools, same access, locked in.
+            Pay £997 every 6 months instead of £197/month. That&apos;s over £185 off — same tools, same access, locked in.
           </div>
           <a
             href={BIANNUAL_LINK}

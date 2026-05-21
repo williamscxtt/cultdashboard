@@ -11,7 +11,7 @@ const adminClient = createAdmin(
 // Must be raw body — do not parse as JSON
 export const runtime = 'nodejs'
 
-// Price IDs — monthly £75 and biannual £300/6mo
+// Price IDs — monthly £197 and biannual £997/6mo
 const MONTHLY_PRICE_ID = 'price_1TX14EB3pws0HrHku6WQV8gm'
 const BIANNUAL_PRICE_ID = 'price_1TYwfDB3pws0HrHkzT58SqLs'
 

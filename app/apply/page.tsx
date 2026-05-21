@@ -466,7 +466,7 @@ export default function ApplyPage() {
                   })}
                 </div>
                 <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', marginTop: 12, lineHeight: 1.5 }}>
-                  Dashboard access starts from £95/mo. Coaching with Will starts from £500.
+                  Dashboard access starts from £197/mo. Coaching with Will starts from £500.
                 </p>
               </Field>
 
