@@ -7,11 +7,12 @@ const adminClient = createClient(
 )
 
 const INVEST_LABEL: Record<string, string> = {
+  not_yet:   '❌ Not right now',
   yes_500:   '✅ Yes — £500 or below',
   yes_1000:  '✅ Yes — £500–£1,000',
   yes_2000:  '✅ Yes — £1,000–£2,000',
-  yes_2000p: '✅ Yes — £2,000+',
-  not_yet:   '❌ Not right now',
+  yes_5000:  '✅ Yes — £2,000–£5,000',
+  yes_5000p: '✅ Yes — £5,000+',
 }
 
 async function sendSlackNotification(data: Record<string, unknown>) {

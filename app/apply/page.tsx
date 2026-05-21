@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Zap, Check, ArrowRight, Phone } from 'lucide-react'
+import AccessCheckoutPage from '@/components/AccessCheckoutPage'
 
 const CREATOR_TYPE_OPTIONS = [
   { value: 'creator', label: 'Pure Content Creator',        desc: 'Building a brand and audience — deals, sponsorships, digital products' },
@@ -20,11 +21,12 @@ const INCOME_GOAL_STEPS = [
 ]
 
 const INVESTMENT_OPTIONS = [
+  { value: 'not_yet',   label: 'Not right now' },
   { value: 'yes_500',   label: 'Yes — £500 or below' },
   { value: 'yes_1000',  label: 'Yes — £500–£1,000' },
   { value: 'yes_2000',  label: 'Yes — £1,000–£2,000' },
-  { value: 'yes_2000p', label: 'Yes — £2,000+' },
-  { value: 'not_yet',   label: 'Not right now' },
+  { value: 'yes_5000',  label: 'Yes — £2,000–£5,000' },
+  { value: 'yes_5000p', label: 'Yes — £5,000+' },
 ]
 
 type FormData = {
@@ -88,6 +90,8 @@ export default function ApplyPage() {
   const goalIdx       = INCOME_GOAL_STEPS.indexOf(form.income_goal)
   const goalPct       = goalIdx >= 0 ? (goalIdx / (INCOME_GOAL_STEPS.length - 1)) * 100 : 0
 
+  if (track === 'dashboard') return <AccessCheckoutPage />
+
   return (
     <div style={{
       minHeight: '100dvh', background: '#000',
@@ -149,7 +153,7 @@ export default function ApplyPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <button
                 className="apply-track-btn"
-                onClick={() => window.location.href = '/'}
+                onClick={() => setTrack('dashboard')}
                 style={{
                   width: '100%', padding: '22px 24px', borderRadius: 14, textAlign: 'left',
                   cursor: 'pointer', background: 'rgba(59,130,246,0.07)',
