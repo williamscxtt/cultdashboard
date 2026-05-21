@@ -23,11 +23,11 @@ const INCOME_GOAL_STEPS = [
 
 const INVESTMENT_OPTIONS = [
   { value: 'not_yet',   label: 'Not right now' },
-  { value: 'yes_500',   label: 'Yes — £500 or below' },
-  { value: 'yes_1000',  label: 'Yes — £500–£1,000' },
-  { value: 'yes_2000',  label: 'Yes — £1,000–£2,000' },
-  { value: 'yes_5000',  label: 'Yes — £2,000–£5,000' },
-  { value: 'yes_5000p', label: 'Yes — £5,000+' },
+  { value: 'yes_500',   label: '£500 or below' },
+  { value: 'yes_1000',  label: '£500–£1,000' },
+  { value: 'yes_2000',  label: '£1,000–£2,000' },
+  { value: 'yes_5000',  label: '£2,000–£5,000' },
+  { value: 'yes_5000p', label: '£5,000+' },
 ]
 
 type FormData = {
@@ -361,7 +361,7 @@ function ApplyPageInner() {
 
               <button
                 type="button"
-                onClick={() => setTrack(null)}
+                onClick={() => window.location.href = '/'}
                 style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', fontSize: 13, cursor: 'pointer', fontFamily: 'inherit', padding: '4px 0' }}
               >
                 ← Back
