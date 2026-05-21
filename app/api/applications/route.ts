@@ -27,7 +27,7 @@ async function sendSlackNotification(data: Record<string, unknown>) {
   const incomeGoal   = String(data.income_goal      || '—')
   const invest       = INVEST_LABEL[String(data.willing_to_invest || '')] ?? String(data.willing_to_invest || '—')
   const creatorRaw   = String(data.creator_type || '')
-  const creatorLabel = { creator: 'Pure Content Creator', coach: 'Coaching / Service Business', both: 'Both' }[creatorRaw] ?? creatorRaw || '—'
+  const creatorLabel = ({ creator: 'Pure Content Creator', coach: 'Coaching / Service Business', both: 'Both' }[creatorRaw] ?? creatorRaw) || '—'
 
   const isHotLead = String(data.willing_to_invest || '').startsWith('yes')
 
