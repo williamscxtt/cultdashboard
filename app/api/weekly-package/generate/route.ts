@@ -1152,12 +1152,165 @@ Write one bullet for EACH competitor account that has reels this week. Every tra
 [The 1–2 accounts that had the most interesting or unexpected content this week — what specifically to take note of]`
 }
 
+// ── Generate 1 more script (no Apify rescrape, re-uses cached DB data) ───────
+
+async function generateOneMore(profileId: string): Promise<NextResponse> {
+  // Monday of current week
+  const now = new Date()
+  const day = now.getDay()
+  const diff = day === 0 ? 6 : day - 1
+  const monday = new Date(now)
+  monday.setDate(now.getDate() - diff)
+  const weekStart = monday.toISOString().split('T')[0]
+
+  const ninetyDaysAgo = new Date()
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+  const ninetyDaysAgoStr = ninetyDaysAgo.toISOString().split('T')[0]
+  const sevenDaysAgo = new Date()
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
+  const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0]
+
+  // Fetch profile + competitors + own reels + current week's scripts in parallel
+  const [
+    { data: profileRow },
+    { data: competitors },
+    { data: ownReels },
+    { data: existingScript },
+  ] = await Promise.all([
+    adminClient.from('profiles').select('*').eq('id', profileId).single(),
+    adminClient.from('client_competitors').select('ig_username').eq('profile_id', profileId),
+    adminClient.from('client_reels')
+      .select('views, likes, comments, hook, caption, format_type, date, comments_text, transcript')
+      .eq('profile_id', profileId)
+      .gte('date', ninetyDaysAgoStr)
+      .order('date', { ascending: false })
+      .limit(100),
+    adminClient.from('weekly_scripts')
+      .select('scripts_md, script_count')
+      .eq('profile_id', profileId)
+      .eq('week_start', weekStart)
+      .single(),
+  ])
+
+  if (!profileRow) return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+  if (!existingScript?.scripts_md) return NextResponse.json({ error: 'No scripts for this week yet — generate the full package first.' }, { status: 400 })
+
+  const intro = (profileRow.intro_structured ?? {}) as Record<string, unknown>
+  const name = (profileRow.name as string) || 'Creator'
+  const igHandle = (profileRow.ig_username as string) || ''
+  const isCreator = (profileRow.user_type as string) === 'creator'
+  const creatorStyle = (profileRow.creator_style as string | null) ?? null
+
+  // Fetch competitor reels from cache (no Apify — re-use what's already in DB)
+  const handles = (competitors ?? []).map((c: { ig_username: string }) => c.ig_username)
+  const { data: compReels } = handles.length > 0
+    ? await adminClient
+        .from('competitor_reels')
+        .select('account, views, likes, comments, transcript, format_type, date, scraped_week, hook')
+        .in('account', handles)
+        .gte('date', sevenDaysAgoStr)
+        .order('views', { ascending: false })
+        .limit(100)
+    : { data: [] }
+
+  const ownReelsList = (ownReels ?? []) as Reel[]
+  const compReelsList = (compReels ?? []) as CompReel[]
+
+  const calibration = await loadVoiceCalibration(profileId).catch(() => null)
+
+  const competitorReport = buildCompetitorReport(compReelsList)
+  const outlierContext = buildOutlierContext(compReelsList)
+  const kbContext = buildKnowledgeContext(ownReelsList, compReelsList, weekStart)
+  const brandContext = buildBrandContext(intro, profileRow as Record<string, unknown>, isCreator, creatorStyle)
+  const transcriptContext = buildTranscriptContext(ownReelsList)
+  const commentContext = buildCommentContext(ownReelsList)
+
+  const existingCount = existingScript.script_count ?? 7
+  const nextReelNumber = existingCount + 1
+
+  const oneMoreUserPrompt = `${buildUserPrompt(competitorReport, outlierContext, kbContext, brandContext, transcriptContext, commentContext, weekStart, name, isCreator, creatorStyle)}
+
+---
+
+## IMPORTANT — THIS IS AN ADDITIONAL SCRIPT REQUEST
+
+You have already written ${existingCount} scripts this week. The user wants exactly 1 MORE unique script (Reel ${nextReelNumber}).
+
+Here are the scripts you already wrote this week — do NOT duplicate their hooks, formats, topics, or angles:
+
+${existingScript.scripts_md}
+
+---
+
+Write ONLY Reel ${nextReelNumber} using a completely different angle, format, or topic from the ${existingCount} scripts above. Follow the exact same output format:
+
+### 🎬 Reel ${nextReelNumber} | [FORMAT / STYLE]
+
+**Source:** @account — "[opening line]" (N,NNN views)
+
+**Hook:** [Opening line]
+
+**Visual:** [Visual direction]
+
+**Script:**
+[Full script. 120–250 words.]
+
+**Caption:** [2–3 lines.]
+
+**CTA:** [Varied wording]
+
+---
+
+Return ONLY this single reel block. No preamble, no commentary.`
+
+  let newScriptBlock: string
+  try {
+    const message = await anthropic.messages.create({
+      model: 'claude-opus-4-6',
+      max_tokens: 4000,
+      system: buildSystemPrompt(name, igHandle || 'creator', intro, profileRow as Record<string, unknown>, isCreator, creatorStyle, calibration),
+      messages: [{ role: 'user', content: oneMoreUserPrompt }],
+    })
+    newScriptBlock = message.content[0].type === 'text' ? message.content[0].text.trim() : ''
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : 'Generation failed'
+    console.error('[weekly-package/generate/one-more] Claude error:', msg)
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
+
+  // Append new script to existing scripts_md
+  const updatedMd = existingScript.scripts_md.trimEnd() + '\n\n' + newScriptBlock
+  const newCount = nextReelNumber
+
+  const { error: updateErr } = await adminClient
+    .from('weekly_scripts')
+    .update({ scripts_md: updatedMd, script_count: newCount })
+    .eq('profile_id', profileId)
+    .eq('week_start', weekStart)
+
+  if (updateErr) {
+    console.error('[weekly-package/generate/one-more] update error:', updateErr.message)
+  }
+
+  return NextResponse.json({
+    ok: true,
+    week_start: weekStart,
+    script_count: newCount,
+    scripts_md: updatedMd,
+  })
+}
+
 // ── POST: generate a weekly package ──────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({})) as { profileId?: string }
-  const { profileId } = body
+  const body = await req.json().catch(() => ({})) as { profileId?: string; one_more?: boolean }
+  const { profileId, one_more } = body
   if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
+
+  // ── "Generate 1 more" fast path ──────────────────────────────────────────────
+  if (one_more) {
+    return generateOneMore(profileId)
+  }
 
   // Monday of current week
   const now = new Date()

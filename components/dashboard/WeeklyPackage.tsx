@@ -506,6 +506,7 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
   const [packages, setPackages] = useState<WeeklyScript[]>([])
   const [activeIdx, setActiveIdx] = useState(0)
   const [generating, setGenerating] = useState(false)
+  const [generatingMore, setGeneratingMore] = useState(false)
   const [loading, setLoading] = useState(true)
   const [intelOpen, setIntelOpen] = useState(true)
   // Local reel overrides so edits are reflected immediately without refetch
@@ -553,6 +554,26 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
 
   function handleReelSaved(index: number, updates: Partial<ParsedReel>) {
     setReelOverrides(prev => ({ ...prev, [index]: { ...(prev[index] ?? {}), ...updates } }))
+  }
+
+  async function handleGenerateMore() {
+    setGeneratingMore(true)
+    try {
+      const res = await fetch('/api/weekly-package/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ profileId, one_more: true }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Generation failed')
+      toast.success('New script added!')
+      // Reload packages so the new script shows up
+      await loadPackages()
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to generate script')
+    } finally {
+      setGeneratingMore(false)
+    }
   }
 
   const active = packages[activeIdx]
@@ -817,6 +838,33 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
                 />
               ))}
             </div>
+
+            {/* Generate 1 more button — only shown for the current week */}
+            {active.week_start === thisWeekStart && (
+              <div style={{ marginTop: 20, display: 'flex', justifyContent: 'center' }}>
+                <button
+                  onClick={handleGenerateMore}
+                  disabled={generatingMore}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    padding: '10px 22px', borderRadius: 9, fontSize: 13, fontWeight: 700,
+                    border: '1.5px solid var(--border)',
+                    background: generatingMore ? 'var(--muted)' : 'var(--card)',
+                    color: generatingMore ? 'var(--muted-foreground)' : 'var(--foreground)',
+                    cursor: generatingMore ? 'not-allowed' : 'pointer',
+                    fontFamily: 'inherit', transition: 'all 0.15s',
+                    opacity: generatingMore ? 0.7 : 1,
+                  }}
+                  onMouseEnter={e => { if (!generatingMore) e.currentTarget.style.borderColor = 'var(--accent)' }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)' }}
+                >
+                  {generatingMore
+                    ? <><RefreshCw size={13} style={{ animation: 'spin 1s linear infinite' }} /> Generating…</>
+                    : <><Zap size={13} style={{ color: 'var(--accent)' }} /> Generate another script</>
+                  }
+                </button>
+              </div>
+            )}
           </div>
         </div>
       ) : null}
