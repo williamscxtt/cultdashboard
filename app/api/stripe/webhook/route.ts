@@ -13,8 +13,9 @@ export const runtime = 'nodejs'
 
 // Price IDs
 const MONTHLY_PRICE_IDS = [
-  'price_1TX14EB3pws0HrHku6WQV8gm', // £75/mo (legacy)
-  'price_1TX1EGB3pws0HrHkAzRYo0Hb', // £95/mo (current)
+  'price_1TX14EB3pws0HrHku6WQV8gm', // £75/mo (legacy dashboard)
+  'price_1TX1EGB3pws0HrHkAzRYo0Hb', // £95/mo (current dashboard)
+  'price_1TQR9OB3pws0HrHkDOIbwXdD', // £50/mo (Creator Cult Dashboard)
 ]
 const BIANNUAL_PRICE_ID = 'price_1TYwfDB3pws0HrHkzT58SqLs' // £300/6mo
 
@@ -32,6 +33,7 @@ async function upsertSubscription(sub: Stripe.Subscription) {
   // to SubscriptionItem — read it from the first item.
   const periodEnd = sub.items?.data?.[0]?.current_period_end ?? null
 
+  const priceItem = sub.items?.data?.[0]
   const updates = {
     stripe_subscription_id: sub.id,
     subscription_status: sub.status,
@@ -42,6 +44,7 @@ async function upsertSubscription(sub: Stripe.Subscription) {
       ? new Date(sub.trial_end * 1000).toISOString()
       : null,
     plan_type: getPlanType(sub),
+    subscription_amount: priceItem?.price?.unit_amount ?? null,
   }
 
   const { error } = await adminClient

@@ -598,7 +598,7 @@ function ClientRow({ client, onToggleActive, onToggleBillingExempt, onSendInvite
               color: client.billing_exempt ? '#a78bfa' : 'var(--accent)',
             }}>
               <CreditCard size={9} />
-              {client.billing_exempt ? 'Free' : '£95/mo'}
+              {client.billing_exempt ? 'Free' : (fmtSubAmount({ ...client, billing_exempt: false }) ?? 'No sub')}
             </span>
           </button>
         </div>
@@ -654,6 +654,24 @@ function ClientRow({ client, onToggleActive, onToggleBillingExempt, onSendInvite
       </td>
     </tr>
   )
+}
+
+/** Format a client's subscription amount for display */
+function fmtSubAmount(client: Profile): string | null {
+  if (client.billing_exempt) return 'Free'
+  const amount = client.subscription_amount
+  const plan = client.plan_type
+  if (plan === 'biannual') {
+    if (amount) return `£${amount / 100}/6mo`
+    return '£997/6mo'
+  }
+  // Monthly or unknown plan — show actual amount if we have it
+  if (amount) {
+    const pounds = amount / 100
+    return `£${Number.isInteger(pounds) ? pounds : pounds.toFixed(2)}/mo`
+  }
+  if (plan === 'monthly') return '£197/mo' // fallback if amount not yet backfilled
+  return null
 }
 
 /** Deterministic avatar colour from name/email string */
@@ -757,8 +775,13 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onToggleTie
               const subColor = s === 'active' ? 'hsl(142 71% 45%)' : s === 'trialing' ? '#3b82f6' : s === 'past_due' || s === 'unpaid' ? 'hsl(38 92% 50%)' : s === 'canceled' ? 'hsl(0 84% 60%)' : 'var(--muted-foreground)'
               const subBg = s === 'active' ? 'rgba(34,197,94,0.1)' : s === 'trialing' ? 'rgba(59,130,246,0.1)' : s === 'past_due' || s === 'unpaid' ? 'rgba(251,191,36,0.1)' : s === 'canceled' ? 'rgba(239,68,68,0.1)' : 'var(--muted)'
               const subBorder = s === 'active' ? 'rgba(34,197,94,0.25)' : s === 'trialing' ? 'rgba(59,130,246,0.25)' : s === 'past_due' || s === 'unpaid' ? 'rgba(251,191,36,0.25)' : s === 'canceled' ? 'rgba(239,68,68,0.25)' : 'var(--border)'
-              const planLabel = plan === 'biannual' ? '£300/6mo' : plan === 'monthly' ? '£95/mo' : client.billing_exempt ? 'Free' : null
-              const label = s ? s.replace('_', ' ') : 'no sub'
+              const planLabel = fmtSubAmount(client)
+              const statusLabel: Record<string, string> = {
+                active: 'Active', trialing: 'Trialing', past_due: 'Past Due',
+                unpaid: 'Unpaid', canceled: 'Canceled', incomplete: 'Incomplete',
+                incomplete_expired: 'Expired',
+              }
+              const label = s ? (statusLabel[s] ?? s) : 'No sub'
               return (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -894,7 +917,7 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onToggleTie
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
           >
             <CreditCard size={11} />
-            {client.billing_exempt ? 'Free' : '£197/mo'}
+            {client.billing_exempt ? 'Free' : (fmtSubAmount({ ...client, billing_exempt: false }) ?? 'No sub')}
           </button>
 
           <button

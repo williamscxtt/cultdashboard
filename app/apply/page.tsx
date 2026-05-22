@@ -22,12 +22,12 @@ const INCOME_GOAL_STEPS = [
 ]
 
 const INVESTMENT_OPTIONS = [
-  { value: 'not_yet',   label: 'Not right now' },
-  { value: 'yes_500',   label: '£500 or below' },
-  { value: 'yes_1000',  label: '£500–£1,000' },
-  { value: 'yes_2000',  label: '£1,000–£2,000' },
-  { value: 'yes_5000',  label: '£2,000–£5,000' },
-  { value: 'yes_5000p', label: '£5,000+' },
+  { value: 'yes_500',    label: '£500 or below' },
+  { value: 'yes_2000',   label: '£500–£2,000' },
+  { value: 'yes_5000',   label: '£2,000–£5,000' },
+  { value: 'yes_10000',  label: '£5,000–£10,000' },
+  { value: 'yes_10000p', label: '£10,000 plus' },
+  { value: 'not_yet',    label: 'Not right now' },
 ]
 
 type FormData = {

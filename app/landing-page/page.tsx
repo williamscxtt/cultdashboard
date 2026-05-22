@@ -653,13 +653,13 @@ export default function LandingPage() {
   }, [])
 
   useEffect(() => {
-    if (selectedWin) {
+    if (selectedWin || showCheckout) {
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
     }
     return () => { document.body.style.overflow = '' }
-  }, [selectedWin])
+  }, [selectedWin, showCheckout])
 
   const tickerItems = [
     'Freddie: First clients at £1,000 each with 148 followers',
@@ -1261,8 +1261,7 @@ export default function LandingPage() {
           Creator Cult
         </a>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <a href="#choose-track" className="lp-nav-cta lp-nav-desktop-only">Get the Dashboard</a>
-          <Link href="/apply?track=mentorship" className="lp-client-login lp-nav-desktop-only">Apply for Coaching</Link>
+          <a href="#choose-track" className="lp-nav-cta">Apply Now</a>
           <Link href="/login" className="lp-client-login">Client Login</Link>
         </div>
       </nav>
@@ -1302,28 +1301,28 @@ export default function LandingPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
 
                 {/* Monthly — blue */}
-                <button onClick={() => { trackCheckout('stripe_monthly'); window.location.href = 'https://buy.stripe.com/28EcN4fz84yx2pUbkg9IQ1Q' }}
+                <button onClick={() => { trackCheckout('stripe_monthly'); window.location.href = '/apply?track=dashboard&plan=monthly' }}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', textAlign: 'left', border: 'none', borderRadius: 12, padding: '22px 20px', background: '#3b82f6', cursor: 'pointer', transition: 'background .15s' }}
                   onMouseEnter={e => (e.currentTarget.style.background = '#2563eb')}
                   onMouseLeave={e => (e.currentTarget.style.background = '#3b82f6')}
                 >
                   <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: 14, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Monthly</div>
-                  <div style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>£95</div>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>£197</div>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)', marginTop: 4, marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>per month</div>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.8)', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.5 }}>Full dashboard access.<br />Cancel anytime.</div>
                 </button>
 
                 {/* 6-month — premium dark */}
-                <button onClick={() => { trackCheckout('stripe_biannual'); window.location.href = 'https://buy.stripe.com/bJe28qcmWe970hMews9IQ1P' }}
+                <button onClick={() => { trackCheckout('stripe_biannual'); window.location.href = '/apply?track=dashboard&plan=sixmonth' }}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', textAlign: 'left', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '22px 20px', background: '#080807', cursor: 'pointer', transition: 'border-color .15s, background .15s', position: 'relative', overflow: 'hidden' }}
                   onMouseEnter={e => { (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)'); (e.currentTarget.style.background = '#0f0f0d') }}
                   onMouseLeave={e => { (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'); (e.currentTarget.style.background = '#080807') }}
                 >
-                  <div style={{ position: 'absolute', top: 12, right: 12, fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0d0d0a', background: '#e2c97e', padding: '3px 7px', borderRadius: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>SAVE £270</div>
+                  <div style={{ position: 'absolute', top: 12, right: 12, fontSize: 9, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase', color: '#0d0d0a', background: '#e2c97e', padding: '3px 7px', borderRadius: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>SAVE £185</div>
                   <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 14, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>6 Months</div>
                   <div style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', letterSpacing: '-.04em', lineHeight: 1, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>£997</div>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginTop: 4, marginBottom: 16, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>every 6 months</div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.5 }}>£50/month effective.<br />Save £270 vs monthly.</div>
+                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.5 }}>~£166/mo effective.<br />Save £185 vs monthly.</div>
                 </button>
 
               </div>
@@ -1472,8 +1471,8 @@ export default function LandingPage() {
                     12 AI tools built on the Creator Cult methodology: scripts, competitor intel, profile audits and offer builders. Updated automatically every week. Instant access. No application. No call. Live in minutes.
                   </p>
                   <div style={{ marginBottom: 28 }}>
-                    <div style={{ fontSize: 32, fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1 }}>£95 <span style={{ fontSize: 16, fontWeight: 500, color: 'rgba(255,255,255,0.7)' }}>/ month</span></div>
-                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>or £300 for 6 months, save £270</div>
+                    <div style={{ fontSize: 32, fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1 }}>£197 <span style={{ fontSize: 16, fontWeight: 500, color: 'rgba(255,255,255,0.7)' }}>/ month</span></div>
+                    <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>or £997 for 6 months, save £185</div>
                   </div>
                   {[
                     'All 12 AI tools, updated every week',
@@ -1519,7 +1518,7 @@ export default function LandingPage() {
                   <Link href="/apply?track=mentorship" className="lp-cta-ghost" style={{ marginTop: 32, width: '100%', justifyContent: 'center', display: 'flex' }}>
                     Apply for Creator Cult &rarr;
                   </Link>
-                  <p style={{ marginTop: 12, fontSize: 11, color: 'rgba(255,255,255,0.2)', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>3-minute application. Reviewed personally by Will. No commitment to apply.</p>
+                  <p style={{ marginTop: 12, fontSize: 11, color: 'rgba(255,255,255,0.2)', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Short application. Reviewed personally by Will. No commitment to apply.</p>
                 </div>
               </div>
             </Fade>
@@ -1586,7 +1585,7 @@ export default function LandingPage() {
             <Fade delay={60}>
               <div style={{ textAlign: 'center', paddingTop: 56 }}>
                 <p style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: 14, color: '#94a3b8', marginBottom: 20 }}>
-                  The Dashboard is your unfair advantage. Get instant access for £95/month, or apply for full coaching and get everything.
+                  The Dashboard is your unfair advantage. Get instant access for £197/month, or apply for full coaching and get everything.
                 </p>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
                   <button onClick={() => openCheckout()} className="lp-cta-primary">Get Instant Access</button>
@@ -1601,7 +1600,7 @@ export default function LandingPage() {
 
         {/* ── What is Creator Cult — bridge/methodology section ── */}
         <div className="lp-section">
-          <div className="lp-container-sm">
+          <div className="lp-container">
             <Fade><span className="lp-pill"><span className="lp-pill-dot" />The Methodology</span></Fade>
             <Fade delay={60}>
               <h2 className="lp-h2">The Dashboard runs<br /><span style={{ color: '#ffffff' }}>on a proven system.</span></h2>
@@ -1922,7 +1921,7 @@ export default function LandingPage() {
 
             {/* Track 01 */}
             <div style={{ marginTop: 64, paddingBottom: 64, borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <Fade><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 16 }}>Track 01 · £95/Month or £300 for 6 Months</div></Fade>
+              <Fade><div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 16 }}>Track 01 · £197/Month or £997 for 6 Months</div></Fade>
               <Fade delay={60}><div style={{ fontSize: 26, fontWeight: 800, color: '#f1f5f9', marginBottom: 36, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The Cult Dashboard</div></Fade>
               <div className="lp-incl-grid">
                 {[
@@ -1979,7 +1978,7 @@ export default function LandingPage() {
               <Fade delay={80}>
                 <div style={{ marginTop: 40 }}>
                   <Link href="/apply?track=mentorship" className="lp-cta-ghost">Apply for Creator Cult &rarr;</Link>
-                  <p style={{ marginTop: 12, fontSize: 12, color: '#64748b', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>3-minute application. Reviewed personally by Will. Cohort size limited.</p>
+                  <p style={{ marginTop: 12, fontSize: 12, color: '#64748b', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Short application. Reviewed personally by Will. Cohort size limited.</p>
                 </div>
               </Fade>
             </div>
@@ -2034,7 +2033,7 @@ export default function LandingPage() {
         <div className="lp-cta-block" style={{ padding: '140px 48px 100px' }}>
           <Fade>
             <h2 className="lp-h2" style={{ marginBottom: 20 }}>Ready to stop figuring<br /><span style={{ color: '#ffffff' }}>it out alone?</span></h2>
-            <p className="lp-body-lg" style={{ marginBottom: 36 }}>Applications take 3 minutes. Will reviews every one personally.<br />Cohort size is limited, not everyone who applies gets in.</p>
+            <p className="lp-body-lg" style={{ marginBottom: 36 }}>Will reviews every application personally.<br />Cohort size is limited, not everyone who applies gets in.</p>
             <div className="lp-cta-pair" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
               <button onClick={() => openCheckout()} className="lp-cta-primary">Get Instant Access</button>
               <Link href="/apply?track=mentorship" className="lp-cta-ghost">Apply for Coaching &rarr;</Link>
@@ -2052,7 +2051,7 @@ export default function LandingPage() {
               <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: 16, overflow: 'hidden' }}>
                 <Faq q="What&apos;s the difference between the Dashboard and Full Creator Cult?" a="The Cult Dashboard is the tool suite: 12 AI tools built on the Creator Cult methodology, updated every week, available on a monthly or 6-month subscription. That&apos;s the whole product. Full Creator Cult is the complete programme: lifetime dashboard access, the full 5-phase course curriculum, live weekly group coaching with Will, 1:1 support between calls, and the private Circle community. If you want the tools now and the flexibility to upgrade later, start with the Dashboard. If you want everything (the course, the coaching, Will in your corner) apply for Creator Cult." />
                 <Faq q="Can I start with the Dashboard and upgrade to full Creator Cult later?" a="Yes. The Dashboard is a genuine starting point. A number of Creator Cult members started with the tools first and upgraded when they were ready to go all in. When you join Creator Cult, your subscription ends and you get lifetime dashboard access as part of the programme, so you&apos;re not paying twice." />
-                <Faq q="How do I apply and what happens next?" a="There are two ways to join. If you want the Cult Dashboard, get instant access right now: £95/month or £300 for 6 months, no application needed, no call. If you want the full Creator Cult programme, click Apply for Creator Cult, fill in the 3-minute form, and Will reviews it personally. If it&apos;s a fit, you&apos;ll get a link to book a call where the investment is discussed. Cohort size is limited." />
+                <Faq q="How do I apply and what happens next?" a="There are two ways to join. If you want the Cult Dashboard, get instant access right now: £197/month or £997 for 6 months, no application needed, no call. If you want the full Creator Cult programme, click Apply for Creator Cult, fill in the short form, and Will reviews it personally. If it&apos;s a fit, you&apos;ll get a link to book a call where the investment is discussed. Cohort size is limited." />
                 <Faq q="What exactly do I get when I join Creator Cult?" a="You get access to the full 5-phase curriculum, weekly live group coaching calls with recordings, 1:1 access to Will between calls, content and offer reviews, the Cult Dashboard with all 12 AI tools, and the private Circle community. Ongoing support at every stage." />
                 <Faq q="How long does the programme run?" a="Creator Cult is an ongoing coaching programme. Most clients see their first real results within 30 to 60 days of starting. There is no set end date. You stay in as long as you are growing." />
                 <Faq q="Do I need a big following to join?" a="No. Several of our members signed their first clients with under 1,000 followers. Following size does not determine your results. Your system does. We build the system first." />
@@ -2088,35 +2087,66 @@ export default function LandingPage() {
                 <p className="lp-body-lg" style={{ marginBottom: 56, maxWidth: 480, margin: '0 auto 56px' }}>
                   Two ways in. One system. Pick the track that&apos;s right for where you are right now.
                 </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20, maxWidth: 680, margin: '0 auto', textAlign: 'left' }}>
-                  {/* Dashboard card */}
-                  <div style={{ border: '1px solid rgba(59,130,246,0.35)', borderRadius: 14, padding: '32px 28px', background: 'rgba(59,130,246,0.05)' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: '#3b82f6', marginBottom: 8, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The Cult Dashboard</div>
-                    <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Instant access. No application.</div>
-                    <div style={{ fontSize: 26, fontWeight: 900, color: '#f1f5f9', letterSpacing: '-.04em', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 4 }}>£95 <span style={{ fontSize: 14, fontWeight: 500, color: '#64748b' }}>/ month</span></div>
-                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>or £300 for 6 months, save £270</div>
-                    <button onClick={() => openCheckout()} className="lp-cta-primary" style={{ width: '100%', justifyContent: 'center', marginBottom: 20 }}>Get Instant Access</button>
-                    {['All 12 AI tools, updated every week', 'Reel scripts, hooks, competitor intel + more', 'Built on 350M+ views of real creator data', 'New tools added automatically'].map(t => (
-                      <div key={t} style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', display: 'flex', gap: 8, marginBottom: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                        <span style={{ color: '#3b82f6', fontWeight: 700 }}>+</span>{t}
+                <div style={{ marginTop: 0, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24, maxWidth: 860, margin: '0 auto' }}>
+                  {/* Track 01 — solid blue (matches Choose Your Track) */}
+                  <div style={{ border: 'none', borderRadius: 16, padding: '40px 36px', background: '#3b82f6', position: 'relative', overflow: 'hidden', textAlign: 'left' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.65)', marginBottom: 12 }}>Track 01</div>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', marginBottom: 12, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The Cult Dashboard</div>
+                    <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.75)', lineHeight: 1.75, marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                      12 AI tools built on the Creator Cult methodology. Updated automatically every week. Instant access. No application. No call. Live in minutes.
+                    </p>
+                    <div style={{ marginBottom: 28 }}>
+                      <div style={{ fontSize: 32, fontWeight: 900, color: '#ffffff', letterSpacing: '-.04em', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1 }}>£197 <span style={{ fontSize: 16, fontWeight: 500, color: 'rgba(255,255,255,0.7)' }}>/ month</span></div>
+                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>or £997 for 6 months, save £185</div>
+                    </div>
+                    {[
+                      'All 12 AI tools, updated every week',
+                      'Reel Script Generator',
+                      'Competitor Intel Engine (auto-weekly)',
+                      'AI Story Generator, Profile Audit, Offer Builder + more',
+                      'New tools added automatically',
+                    ].map(item => (
+                      <div key={item} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8, fontSize: 13, color: 'rgba(255,255,255,0.85)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                        <span style={{ color: 'rgba(255,255,255,0.5)', flexShrink: 0, fontWeight: 700 }}>+</span>{item}
                       </div>
                     ))}
+                    <button onClick={() => openCheckout()} style={{ marginTop: 32, width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#ffffff', color: '#1d4ed8', border: 'none', borderRadius: 8, padding: '14px 32px', fontSize: 14, fontWeight: 700, fontFamily: "'Plus Jakarta Sans', sans-serif", cursor: 'pointer', transition: 'background .15s', whiteSpace: 'nowrap' }}
+                      onMouseEnter={e => (e.currentTarget.style.background = '#e0eaff')}
+                      onMouseLeave={e => (e.currentTarget.style.background = '#ffffff')}
+                    >
+                      Get Instant Access
+                    </button>
+                    <p style={{ marginTop: 12, fontSize: 11, color: 'rgba(255,255,255,0.5)', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>No application needed. Access unlocks immediately on payment.</p>
                   </div>
-                  {/* Full programme card */}
-                  <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, padding: '32px 28px', background: 'rgba(255,255,255,0.02)' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.16em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 8, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Full Creator Cult</div>
-                    <div style={{ fontSize: 13, color: '#94a3b8', marginBottom: 20, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>The complete programme. Application required.</div>
-                    <div style={{ fontSize: 18, fontWeight: 700, color: '#f1f5f9', letterSpacing: '-.02em', fontFamily: "'Plus Jakarta Sans', sans-serif", marginBottom: 4 }}>Investment disclosed on call.</div>
-                    <div style={{ fontSize: 12, color: '#64748b', marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cohort size limited.</div>
-                    <Link href="/apply?track=mentorship" className="lp-cta-ghost" style={{ display: 'flex', width: '100%', justifyContent: 'center', marginBottom: 20 }}>Apply for Creator Cult &rarr;</Link>
-                    {['Lifetime dashboard access (all 12 tools)', 'Full 5-phase course curriculum', 'Live weekly group coaching with Will', '1:1 support and direct access between calls', 'Private Circle community'].map(t => (
-                      <div key={t} style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', display: 'flex', gap: 8, marginBottom: 6, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
-                        <span style={{ color: '#94a3b8', fontWeight: 700 }}>+</span>{t}
+                  {/* Track 02 — near-black premium (matches Choose Your Track) */}
+                  <div style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: 16, padding: '40px 36px', background: '#080807', position: 'relative', textAlign: 'left' }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '.18em', textTransform: 'uppercase', color: '#e2c97e', marginBottom: 12 }}>Track 02</div>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: '#ffffff', marginBottom: 12, letterSpacing: '-.03em', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Full Creator Cult</div>
+                    <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.5)', lineHeight: 1.75, marginBottom: 24, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                      The complete programme. Lifetime dashboard access, the full 5-phase course curriculum, live weekly group coaching with Will, 1:1 support, and the private Circle community.
+                    </p>
+                    <div style={{ marginBottom: 28 }}>
+                      <div style={{ fontSize: 20, fontWeight: 700, color: '#ffffff', letterSpacing: '-.02em', fontFamily: "'Plus Jakarta Sans', sans-serif", lineHeight: 1.3 }}>Investment disclosed on call.</div>
+                      <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.3)', marginTop: 4, fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Cohort size is limited. Not everyone who applies gets in.</div>
+                    </div>
+                    {[
+                      'Lifetime Cult Dashboard access (all 12 tools)',
+                      'Full 5-phase course curriculum',
+                      'Live weekly group coaching with Will',
+                      '1:1 support and direct access between calls',
+                      'Private Circle community (140+ creators)',
+                    ].map(item => (
+                      <div key={item} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8, fontSize: 13, color: 'rgba(255,255,255,0.65)', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                        <span style={{ color: '#e2c97e', flexShrink: 0, fontWeight: 700 }}>+</span>{item}
                       </div>
                     ))}
+                    <Link href="/apply?track=mentorship" className="lp-cta-ghost" style={{ marginTop: 32, width: '100%', justifyContent: 'center', display: 'flex' }}>
+                      Apply for Creator Cult &rarr;
+                    </Link>
+                    <p style={{ marginTop: 12, fontSize: 11, color: 'rgba(255,255,255,0.2)', textAlign: 'center', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>Short application. Reviewed personally by Will. No commitment to apply.</p>
                   </div>
                 </div>
-                <p style={{ textAlign: 'center', marginTop: 28, fontSize: 12, color: '#64748b', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+                <p style={{ textAlign: 'center', marginTop: 36, fontSize: 13, color: '#64748b', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
                   Start with the Dashboard. Upgrade to the full programme whenever you&apos;re ready.
                 </p>
               </div>

@@ -24,7 +24,18 @@ function daysUntil(iso: string | null | undefined): number | null {
 
 function BillingCard({ profile }: { profile: Profile }) {
   const planLabel = profile.plan_type === 'biannual' ? '6-Month Plan' : 'Monthly Plan'
-  const planPrice = profile.plan_type === 'biannual' ? '£300 / 6 months' : '£95 / month'
+  const planPrice = (() => {
+    if (profile.plan_type === 'biannual') {
+      const amt = profile.subscription_amount
+      return amt ? `£${amt / 100} / 6 months` : '£997 / 6 months'
+    }
+    const amt = profile.subscription_amount
+    if (amt) {
+      const pounds = amt / 100
+      return `£${Number.isInteger(pounds) ? pounds : pounds.toFixed(2)} / month`
+    }
+    return '£197 / month'
+  })()
   const days = daysUntil(profile.subscription_period_end)
   const renewalDate = formatDate(profile.subscription_period_end)
   const isCreatorCult = profile.membership_tier === 'creator_cult'
@@ -106,12 +117,21 @@ function BillingCard({ profile }: { profile: Profile }) {
           background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)',
           marginBottom: 16,
         }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
-            Switch to 6 months — save £270
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 12, lineHeight: 1.5 }}>
-            Pay £300 every 6 months instead of £95/month. That&apos;s a saving of £270 — same tools, same access, locked in.
-          </div>
+          {(() => {
+            const monthlyPence = profile.subscription_amount ?? 19700
+            const sixMonths = monthlyPence * 6 / 100
+            const saving = Math.round(sixMonths - 997)
+            return (
+              <>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
+                  Switch to 6 months — save £{saving}
+                </div>
+                <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 12, lineHeight: 1.5 }}>
+                  Pay £997 every 6 months instead of {planPrice}. That&apos;s a saving of £{saving} — same tools, same access, locked in.
+                </div>
+              </>
+            )
+          })()}
           <a
             href={BIANNUAL_LINK}
             target="_blank"

@@ -144,6 +144,8 @@ export interface Profile {
   billing_exempt?: boolean
   // Which plan they're on
   plan_type?: 'monthly' | 'biannual' | null
+  // Actual subscription amount in pence (e.g. 5000 = £50, 9500 = £95)
+  subscription_amount?: number | null
   // Which product they have access to
   membership_tier?: 'dashboard' | 'creator_cult' | null
 }
