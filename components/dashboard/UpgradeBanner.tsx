@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import type { Profile } from '@/lib/types'
 
-const BIANNUAL_LINK = 'https://buy.stripe.com/bJe28qcmWe970hMews9IQ1P'
+const BIANNUAL_LINK = 'https://buy.stripe.com/3cIbJ0biS5CBfcG8849IQ1S'
 const DISMISS_KEY = 'upgrade_banner_dismissed_at'
 const COOLDOWN_DAYS = 7
 

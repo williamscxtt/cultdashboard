@@ -1301,7 +1301,7 @@ export default function LandingPage() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 20 }}>
 
                 {/* Monthly — blue */}
-                <button onClick={() => { trackCheckout('stripe_monthly'); window.location.href = '/apply?track=dashboard&plan=monthly' }}
+                <button onClick={() => { trackCheckout('stripe_monthly'); window.location.href = 'https://buy.stripe.com/5kQ9ASdr03utggKcok9IQ1R' }}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', textAlign: 'left', border: 'none', borderRadius: 12, padding: '22px 20px', background: '#3b82f6', cursor: 'pointer', transition: 'background .15s' }}
                   onMouseEnter={e => (e.currentTarget.style.background = '#2563eb')}
                   onMouseLeave={e => (e.currentTarget.style.background = '#3b82f6')}
@@ -1313,7 +1313,7 @@ export default function LandingPage() {
                 </button>
 
                 {/* 6-month — premium dark */}
-                <button onClick={() => { trackCheckout('stripe_biannual'); window.location.href = '/apply?track=dashboard&plan=sixmonth' }}
+                <button onClick={() => { trackCheckout('stripe_biannual'); window.location.href = 'https://buy.stripe.com/3cIbJ0biS5CBfcG8849IQ1S' }}
                   style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', width: '100%', textAlign: 'left', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '22px 20px', background: '#080807', cursor: 'pointer', transition: 'border-color .15s, background .15s', position: 'relative', overflow: 'hidden' }}
                   onMouseEnter={e => { (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.22)'); (e.currentTarget.style.background = '#0f0f0d') }}
                   onMouseLeave={e => { (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)'); (e.currentTarget.style.background = '#080807') }}

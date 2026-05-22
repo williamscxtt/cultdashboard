@@ -14,15 +14,19 @@ export const runtime = 'nodejs'
 // Price IDs
 const MONTHLY_PRICE_IDS = [
   'price_1TX14EB3pws0HrHku6WQV8gm', // £75/mo (legacy dashboard)
-  'price_1TX1EGB3pws0HrHkAzRYo0Hb', // £95/mo (current dashboard)
+  'price_1TX1EGB3pws0HrHkAzRYo0Hb', // £95/mo (legacy dashboard)
   'price_1TQR9OB3pws0HrHkDOIbwXdD', // £50/mo (Creator Cult Dashboard)
+  'price_1TZhJYB3pws0HrHkzzFsw84g', // £197/mo (current dashboard)
 ]
-const BIANNUAL_PRICE_ID = 'price_1TYwfDB3pws0HrHkzT58SqLs' // £300/6mo
+const BIANNUAL_PRICE_IDS = [
+  'price_1TYwfDB3pws0HrHkzT58SqLs', // £300/6mo (legacy)
+  'price_1TZhJeB3pws0HrHkbWQBvTaD', // £997/6mo (current)
+]
 
 function getPlanType(sub: Stripe.Subscription): 'monthly' | 'biannual' | null {
   const priceId = sub.items?.data?.[0]?.price?.id
   if (priceId && MONTHLY_PRICE_IDS.includes(priceId)) return 'monthly'
-  if (priceId === BIANNUAL_PRICE_ID) return 'biannual'
+  if (priceId && BIANNUAL_PRICE_IDS.includes(priceId)) return 'biannual'
   return null
 }
 
