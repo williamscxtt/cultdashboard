@@ -589,11 +589,17 @@ export default function WeeklyPackage({ profileId, embedded }: { profileId: stri
       }
     : null
 
+  // Use LOCAL date components to avoid UTC-offset midnight bug (toISOString converts
+  // to UTC, which shifts the date backward during BST and other UTC+ zones).
   const now = new Date()
   const diff = now.getDay() === 0 ? 6 : now.getDay() - 1
   const thisMonday = new Date(now)
   thisMonday.setDate(now.getDate() - diff)
-  const thisWeekStart = thisMonday.toISOString().split('T')[0]
+  const thisWeekStart = [
+    thisMonday.getFullYear(),
+    String(thisMonday.getMonth() + 1).padStart(2, '0'),
+    String(thisMonday.getDate()).padStart(2, '0'),
+  ].join('-')
   const hasThisWeek = packages.some(p => p.week_start === thisWeekStart)
   const isStale = !!active && active.week_start < thisWeekStart
 
