@@ -108,7 +108,7 @@ export default function ClientDetailActions({ clientId, clientName, isActive, bi
     }
   }
 
-  // Shared base — every button is the same height and font
+  // Every button: same shape, same height — colour only changes text + border, never fills
   const base: React.CSSProperties = {
     display: 'inline-flex',
     alignItems: 'center',
@@ -124,7 +124,7 @@ export default function ClientDetailActions({ clientId, clientName, isActive, bi
     cursor: 'pointer',
     fontFamily: 'inherit',
     whiteSpace: 'nowrap' as const,
-    transition: 'all 0.12s',
+    transition: 'color 0.12s, border-color 0.12s',
   }
 
   return (
@@ -143,30 +143,20 @@ export default function ClientDetailActions({ clientId, clientName, isActive, bi
             }}
             placeholder="DM keyword"
             style={{
-              height: 30,
-              padding: '0 10px',
-              fontSize: 12,
-              fontWeight: 600,
-              borderRadius: 7,
-              border: '1px solid var(--accent)',
-              background: 'var(--card)',
-              color: 'var(--foreground)',
-              width: 110,
-              outline: 'none',
-              fontFamily: 'inherit',
+              height: 30, padding: '0 10px', fontSize: 12, fontWeight: 600,
+              borderRadius: 7, border: '1px solid var(--accent)',
+              background: 'var(--card)', color: 'var(--foreground)',
+              width: 110, outline: 'none', fontFamily: 'inherit',
             }}
           />
           <button
             onClick={saveKeyword}
             disabled={loading === 'keyword'}
-            style={{ ...base, border: 'none', background: 'var(--accent)', color: 'white', padding: '0 10px' }}
+            style={{ ...base, borderColor: 'var(--accent)', color: 'var(--accent)', padding: '0 10px' }}
           >
             <Check size={12} />
           </button>
-          <button
-            onClick={() => setEditingKeyword(false)}
-            style={{ ...base, padding: '0 9px', fontSize: 13 }}
-          >
+          <button onClick={() => setEditingKeyword(false)} style={{ ...base }}>
             ✕
           </button>
         </div>
@@ -175,24 +165,19 @@ export default function ClientDetailActions({ clientId, clientName, isActive, bi
           onClick={() => setEditingKeyword(true)}
           style={{
             ...base,
-            color: keyword ? 'var(--foreground)' : 'var(--muted-foreground)',
-            borderStyle: keyword ? 'solid' : 'dashed',
-            background: keywordSaved ? 'rgba(34,197,94,0.08)' : 'transparent',
-            borderColor: keywordSaved ? 'hsl(142 71% 45%)' : 'var(--border)',
+            color: keywordSaved ? 'hsl(142 71% 45%)' : keyword ? 'var(--foreground)' : 'var(--muted-foreground)',
+            borderColor: keywordSaved ? 'hsl(142 71% 45% / 0.4)' : 'var(--border)',
           }}
           title="DM keyword for script CTAs — click to edit"
         >
-          {keywordSaved
-            ? <Check size={11} style={{ color: 'hsl(142 71% 45%)' }} />
-            : <MessageCircle size={11} />
-          }
+          {keywordSaved ? <Check size={11} /> : <MessageCircle size={11} />}
           {keyword || 'DM keyword'}
         </button>
       )}
 
       {/* View as Client */}
       <button
-        style={{ ...base, border: 'none', background: 'var(--accent)', color: 'white' }}
+        style={{ ...base, color: 'var(--accent)', borderColor: 'color-mix(in srgb, var(--accent) 35%, transparent)' }}
         onClick={viewAs}
         disabled={loading === 'view'}
       >
@@ -204,9 +189,8 @@ export default function ClientDetailActions({ clientId, clientName, isActive, bi
       <button
         style={{
           ...base,
-          borderColor: billingExempt ? 'rgba(139,92,246,0.4)' : 'var(--border)',
           color: billingExempt ? '#a78bfa' : 'var(--muted-foreground)',
-          background: billingExempt ? 'rgba(139,92,246,0.08)' : 'transparent',
+          borderColor: billingExempt ? 'rgba(139,92,246,0.35)' : 'var(--border)',
         }}
         onClick={toggleBillingExempt}
         disabled={loading === 'billing'}
@@ -227,9 +211,9 @@ export default function ClientDetailActions({ clientId, clientName, isActive, bi
         {loading === 'active' ? '…' : isActive ? 'Deactivate' : 'Activate'}
       </button>
 
-      {/* Delete — solid red */}
+      {/* Delete */}
       <button
-        style={{ ...base, border: 'none', background: 'hsl(0 72% 51%)', color: 'white' }}
+        style={{ ...base, color: 'hsl(0 72% 55%)', borderColor: 'hsl(0 72% 55% / 0.35)' }}
         onClick={deleteClient}
         disabled={loading === 'delete'}
         title="Delete account permanently"
