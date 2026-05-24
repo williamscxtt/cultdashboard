@@ -18,11 +18,11 @@ import { useState, useEffect } from 'react'
 // Same nav for everyone — admin just gets the extra section at the bottom
 // DM Sales label changes to "Sales & Deals" for creators (passed as prop to SidebarContent)
 const makeMainNav = (isCreator: boolean) => [
-  { href: '/dashboard/analytics',   label: 'Dashboard',                           icon: BarChart2 },
-  { href: '/dashboard/content',     label: 'Content Studio',                      icon: Lightbulb },
-  { href: '/dashboard/calendar',    label: 'Content Calendar',                    icon: Calendar },
-  { href: '/dashboard/dm-sales',    label: isCreator ? 'Sales & Deals' : 'DM Sales', icon: PhoneCall },
-  { href: '/dashboard/ai',          label: 'Ask Will AI',                         icon: MessageSquare },
+  { href: '/dashboard/analytics',   label: 'Dashboard',    icon: BarChart2 },
+  { href: '/dashboard/content',     label: 'Content Studio', icon: Lightbulb },
+  { href: '/dashboard/calendar',    label: 'Content Calendar', icon: Calendar },
+  ...(isCreator ? [] : [{ href: '/dashboard/dm-sales', label: 'DM Sales', icon: PhoneCall }]),
+  { href: '/dashboard/ai',          label: 'Ask Will AI',  icon: MessageSquare },
 ]
 
 const toolsNavBase = [

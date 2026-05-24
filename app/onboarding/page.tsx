@@ -287,14 +287,23 @@ function TypeSelector({
   styleOptions: string[]
 }) {
   const [selected, setSelected] = useState<'coach' | 'creator' | null>(null)
-  const [creatorStylePick, setCreatorStylePick] = useState<string | null>(null)
+  const [creatorStylePicks, setCreatorStylePicks] = useState<string[]>([])
   const [saving, setSaving] = useState(false)
+
+  function toggleStyle(o: string) {
+    setCreatorStylePicks(prev =>
+      prev.includes(o) ? prev.filter(s => s !== o) : [...prev, o]
+    )
+  }
 
   async function confirm() {
     if (!selected) return
-    if (selected === 'creator' && !creatorStylePick) return
+    if (selected === 'creator' && creatorStylePicks.length === 0) return
     setSaving(true)
-    await onSelect(selected, selected === 'creator' ? creatorStylePick!.toLowerCase() : null)
+    await onSelect(
+      selected,
+      selected === 'creator' ? creatorStylePicks.map(s => s.toLowerCase()).join(',') : null,
+    )
   }
 
   const cardBase: React.CSSProperties = {
@@ -349,7 +358,7 @@ function TypeSelector({
 
           {/* Creator card */}
           <div
-            onClick={() => setSelected('creator')}
+            onClick={() => { setSelected('creator'); setCreatorStylePicks([]) }}
             style={{
               ...cardBase,
               borderColor: selected === 'creator' ? 'var(--accent)' : 'var(--border)',
@@ -366,42 +375,48 @@ function TypeSelector({
           </div>
         </div>
 
-        {/* Creator style picker — only shown when creator is selected */}
+        {/* Creator style picker — multi-select, shown when creator is selected */}
         {selected === 'creator' && (
           <div style={{ marginBottom: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 10 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--foreground)', marginBottom: 4 }}>
               What type of content do you make?
             </div>
+            <div style={{ fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 10 }}>
+              Select all that apply — you can pick more than one.
+            </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-              {styleOptions.map(o => (
-                <button
-                  key={o}
-                  type="button"
-                  onClick={() => setCreatorStylePick(o)}
-                  style={{
-                    padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
-                    border: `1.5px solid ${creatorStylePick === o ? 'var(--accent)' : 'var(--border)'}`,
-                    background: creatorStylePick === o ? 'hsl(var(--accent-hsl, 25 100% 55%) / 0.1)' : 'transparent',
-                    color: creatorStylePick === o ? 'var(--accent)' : 'var(--muted-foreground)',
-                    cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit',
-                  }}
-                >
-                  {o}
-                </button>
-              ))}
+              {styleOptions.map(o => {
+                const active = creatorStylePicks.includes(o)
+                return (
+                  <button
+                    key={o}
+                    type="button"
+                    onClick={() => toggleStyle(o)}
+                    style={{
+                      padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 600,
+                      border: `1.5px solid ${active ? 'var(--accent)' : 'var(--border)'}`,
+                      background: active ? 'hsl(var(--accent-hsl, 25 100% 55%) / 0.1)' : 'transparent',
+                      color: active ? 'var(--accent)' : 'var(--muted-foreground)',
+                      cursor: 'pointer', transition: 'all 0.15s', fontFamily: 'inherit',
+                    }}
+                  >
+                    {o}
+                  </button>
+                )
+              })}
             </div>
           </div>
         )}
 
         <button
           onClick={confirm}
-          disabled={!selected || saving || (selected === 'creator' && !creatorStylePick)}
+          disabled={!selected || saving || (selected === 'creator' && creatorStylePicks.length === 0)}
           style={{
             width: '100%', height: 44, borderRadius: 9, border: 'none',
-            background: (!selected || (selected === 'creator' && !creatorStylePick)) ? 'var(--muted)' : 'var(--accent)',
-            color: (!selected || (selected === 'creator' && !creatorStylePick)) ? 'var(--muted-foreground)' : 'white',
+            background: (!selected || (selected === 'creator' && creatorStylePicks.length === 0)) ? 'var(--muted)' : 'var(--accent)',
+            color: (!selected || (selected === 'creator' && creatorStylePicks.length === 0)) ? 'var(--muted-foreground)' : 'white',
             fontSize: 14, fontWeight: 700,
-            cursor: (!selected || (selected === 'creator' && !creatorStylePick)) ? 'not-allowed' : 'pointer',
+            cursor: (!selected || (selected === 'creator' && creatorStylePicks.length === 0)) ? 'not-allowed' : 'pointer',
             fontFamily: 'inherit', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             transition: 'background 0.15s',
           }}
