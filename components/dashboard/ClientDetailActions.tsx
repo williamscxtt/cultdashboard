@@ -2,18 +2,20 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Eye, Power, Trash2, Check, MessageCircle } from 'lucide-react'
+import { Eye, Power, Trash2, Check, MessageCircle, CreditCard } from 'lucide-react'
 
 interface Props {
   clientId: string
   clientName: string
   isActive: boolean
+  billingExempt: boolean
   dmKeyword?: string | null
 }
 
-export default function ClientDetailActions({ clientId, clientName, isActive, dmKeyword }: Props) {
+export default function ClientDetailActions({ clientId, clientName, isActive, billingExempt: initialBillingExempt, dmKeyword }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState<string | null>(null)
+  const [billingExempt, setBillingExempt] = useState(initialBillingExempt)
   const [keyword, setKeyword] = useState(dmKeyword ?? '')
   const [keywordSaved, setKeywordSaved] = useState(false)
   const [editingKeyword, setEditingKeyword] = useState(false)
@@ -47,6 +49,24 @@ export default function ClientDetailActions({ clientId, clientName, isActive, dm
       router.refresh()
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to update')
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  async function toggleBillingExempt() {
+    setLoading('billing')
+    const newVal = !billingExempt
+    try {
+      const res = await fetch('/api/admin/clients', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: clientId, billing_exempt: newVal }),
+      })
+      if (!res.ok) throw new Error((await res.json()).error)
+      setBillingExempt(newVal)
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to update billing')
     } finally {
       setLoading(null)
     }
@@ -178,6 +198,22 @@ export default function ClientDetailActions({ clientId, clientName, isActive, dm
       >
         <Eye size={12} />
         {loading === 'view' ? 'Switching…' : 'View as Client'}
+      </button>
+
+      {/* Free / Paid toggle */}
+      <button
+        style={{
+          ...base,
+          borderColor: billingExempt ? 'rgba(139,92,246,0.4)' : 'var(--border)',
+          color: billingExempt ? '#a78bfa' : 'var(--muted-foreground)',
+          background: billingExempt ? 'rgba(139,92,246,0.08)' : 'transparent',
+        }}
+        onClick={toggleBillingExempt}
+        disabled={loading === 'billing'}
+        title={billingExempt ? 'Free account — click to require subscription' : 'Paid account — click to mark as free'}
+      >
+        <CreditCard size={12} />
+        {loading === 'billing' ? '…' : billingExempt ? 'Free' : 'Paid'}
       </button>
 
       {/* Activate / Deactivate */}
