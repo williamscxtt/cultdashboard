@@ -340,7 +340,7 @@ function TypeSelector({
         <div className="card-row" style={{ display: 'flex', gap: 14, marginBottom: 24 }}>
           {/* Coach card */}
           <div
-            onClick={() => { setSelected('coach'); setCreatorStylePick(null) }}
+            onClick={() => { setSelected('coach'); setCreatorStylePicks([]) }}
             style={{
               ...cardBase,
               borderColor: selected === 'coach' ? 'var(--accent)' : 'var(--border)',
