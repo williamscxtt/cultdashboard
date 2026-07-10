@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
-import { stripe } from '@/lib/stripe'
+import { stripe, MEMBERSHIP_ACCESS_DAYS } from '@/lib/stripe'
 import Link from 'next/link'
 
 const adminClient = createClient(
@@ -84,12 +84,19 @@ export default async function WelcomePage({
     }
 
     // 3. Upsert profile (user is guaranteed to exist now)
+    // The full membership grants a 6-month prepaid access window up front so
+    // BNPL buyers (who have no subscription) get in immediately.
+    const isMembership = session.mode === 'payment' && session.metadata?.plan === 'creator_cult_membership'
+    const membershipWindowEnd = isMembership
+      ? new Date(Date.now() + MEMBERSHIP_ACCESS_DAYS * 86_400_000).toISOString()
+      : null
     await adminClient.from('profiles').upsert({
       id: linkData.user.id,
       email,
       role: 'client',
       is_active: true,
-      membership_tier: 'dashboard',
+      membership_tier: isMembership ? 'creator_cult' : 'dashboard',
+      ...(membershipWindowEnd ? { subscription_period_end: membershipWindowEnd } : {}),
       stripe_customer_id: stripeCustomerId ?? null,
       date_joined: new Date().toISOString().split('T')[0],
     }, { onConflict: 'id', ignoreDuplicates: false })

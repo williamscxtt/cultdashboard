@@ -5,7 +5,7 @@ import DashboardShell from '@/components/dashboard/DashboardShell'
 import { SyncProgressProvider } from '@/components/dashboard/SyncProgress'
 import { Toaster } from 'sonner'
 import { getImpersonatedId } from '@/lib/effective-user'
-import { stripe, isSubscriptionActive } from '@/lib/stripe'
+import { stripe, isSubscriptionActive, isWithinMembershipWindow } from '@/lib/stripe'
 import type { Profile } from '@/lib/types'
 
 const adminClient = createAdmin(
@@ -77,7 +77,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
       }
     }
 
-    if (!isSubscriptionActive(status)) {
+    // Access is granted by an active/trialing subscription OR by a prepaid
+    // Creator Cult membership window (BNPL buyers have no subscription until
+    // they opt into £150/mo near the end of their 6 months).
+    const withinWindow = isWithinMembershipWindow(
+      realProfile.membership_tier as string | null,
+      realProfile.subscription_period_end as string | null,
+    )
+    if (!isSubscriptionActive(status) && !withinWindow) {
       const isPastDue = status === 'past_due' || status === 'unpaid'
       redirect(`/subscribe${isPastDue ? '?past_due=1' : ''}`)
     }

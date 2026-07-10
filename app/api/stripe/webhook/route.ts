@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
-import { stripe } from '@/lib/stripe'
+import { stripe, MEMBERSHIP_MONTHLY_PRICE_ID, MEMBERSHIP_ACCESS_DAYS } from '@/lib/stripe'
 import type Stripe from 'stripe'
 
 const adminClient = createAdmin(
@@ -17,6 +17,7 @@ const MONTHLY_PRICE_IDS = [
   'price_1TX1EGB3pws0HrHkAzRYo0Hb', // £95/mo (legacy dashboard)
   'price_1TQR9OB3pws0HrHkDOIbwXdD', // £50/mo (Creator Cult Dashboard)
   'price_1TZhJYB3pws0HrHkzzFsw84g', // £197/mo (current dashboard)
+  'price_1TrbheB3pws0HrHkl2WRRmm8', // £150/mo (Creator Cult Membership)
 ]
 const BIANNUAL_PRICE_IDS = [
   'price_1TYwfDB3pws0HrHkzT58SqLs', // £300/6mo (legacy)
@@ -116,6 +117,46 @@ export async function POST(req: NextRequest) {
             is_active: true,
             ...(stripeCustomerId ? { stripe_customer_id: stripeCustomerId } : {}),
           }).eq('id', existingProfile.id)
+        }
+      }
+
+      // ── Creator Cult Membership: one-time £997 → 6-month access window ────
+      // Card payers get a £150/mo subscription (6-month trial) so it auto-renews;
+      // BNPL payers have no reusable payment method and opt in near month 6.
+      if (session.mode === 'payment' && session.metadata?.plan === 'creator_cult_membership' && email) {
+        const accessEnd = new Date(Date.now() + MEMBERSHIP_ACCESS_DAYS * 86_400_000).toISOString()
+        await adminClient.from('profiles').update({
+          membership_tier: 'creator_cult',
+          is_active: true,
+          subscription_period_end: accessEnd,
+          ...(stripeCustomerId ? { stripe_customer_id: stripeCustomerId } : {}),
+        }).eq('email', email)
+
+        if (stripeCustomerId && session.payment_intent) {
+          try {
+            const piId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent.id
+            const pi = await stripe.paymentIntents.retrieve(piId, { expand: ['payment_method'] })
+            const pm = pi.payment_method
+            const pmType = typeof pm === 'string' ? null : pm?.type
+            const pmId = typeof pm === 'string' ? pm : pm?.id
+            // Only card payments leave a reusable payment method (BNPL can't be saved).
+            if (pmType === 'card' && pmId) {
+              const existing = await stripe.subscriptions.list({ customer: stripeCustomerId, status: 'all', limit: 5 })
+              const hasMembershipSub = existing.data.some(s => s.metadata?.plan === 'creator_cult_membership')
+              if (!hasMembershipSub) {
+                const trialEnd = Math.floor(Date.now() / 1000) + MEMBERSHIP_ACCESS_DAYS * 86_400
+                await stripe.subscriptions.create({
+                  customer: stripeCustomerId,
+                  items: [{ price: MEMBERSHIP_MONTHLY_PRICE_ID }],
+                  trial_end: trialEnd,
+                  default_payment_method: pmId,
+                  metadata: { plan: 'creator_cult_membership' },
+                })
+              }
+            }
+          } catch (err) {
+            console.error('[webhook] membership subscription setup failed:', err)
+          }
         }
       }
 
