@@ -2,10 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
-import { Copy, Bookmark, Trash2, ChevronDown, ChevronUp, Upload, FileAudio, AlignLeft, Link as LinkIcon } from 'lucide-react'
+import { Copy, Bookmark, Trash2, ChevronDown, ChevronUp, Upload, FileAudio, AlignLeft, Link as LinkIcon, History, X, ExternalLink } from 'lucide-react'
 import { PageHeader, Card, Button, EmptyState } from '@/components/ui'
 import { useIsMobile } from '@/lib/use-mobile'
-// createClient import removed — using /api/effective-profile instead
 
 interface Analysis {
   verdict: string
@@ -18,6 +17,19 @@ interface Analysis {
   key_lessons: string[]
   adaptation_brief: string
   suggested_hook: string
+}
+
+interface HistoryEntry {
+  id: string
+  reel_url: string | null
+  verdict: string
+  overall_score: number
+  performance_score: number
+  script_quality_score: number
+  adaptation_brief: string | null
+  analysis_json: Analysis
+  transcript: string | null
+  created_at: string
 }
 
 interface IdeaBankEntry {
@@ -37,11 +49,36 @@ const VERDICT_COLORS: Record<string, { bg: string; text: string; border: string 
   Poor:        { bg: 'hsl(0 50% 96%)',   text: 'hsl(0 72% 40%)',   border: 'hsl(0 70% 85%)' },
 }
 
+const VERDICT_DOT: Record<string, string> = {
+  Exceptional: 'hsl(142 71% 45%)',
+  Strong:      'hsl(220 90% 56%)',
+  Average:     'var(--muted-foreground)',
+  Weak:        'hsl(25 80% 50%)',
+  Poor:        'hsl(0 72% 51%)',
+}
+
 function scoreColor(score: number) {
-  if (score >= 80) return 'rgba(255,255,255,0.5)'
+  if (score >= 80) return 'hsl(142 71% 45%)'
   if (score >= 65) return 'var(--accent)'
-  if (score >= 50) return 'rgba(255,255,255,0.35)'
+  if (score >= 50) return 'hsl(25 80% 50%)'
   return 'hsl(0 72% 51%)'
+}
+
+function formatDate(iso: string) {
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+}
+
+function shortUrl(url: string | null) {
+  if (!url) return 'Manual'
+  try {
+    const u = new URL(url)
+    const parts = u.pathname.split('/').filter(Boolean)
+    return '@' + (parts[0] || 'reel')
+  } catch {
+    return 'Reel'
+  }
 }
 
 export default function ReelCopyPage() {
@@ -60,6 +97,12 @@ export default function ReelCopyPage() {
   const [resultTranscript, setResultTranscript] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // History state
+  const [showHistory, setShowHistory] = useState(false)
+  const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+
   useEffect(() => {
     fetch('/api/effective-profile').then(r => r.json()).then(({ profileId }) => {
       if (profileId) {
@@ -74,6 +117,48 @@ export default function ReelCopyPage() {
     const data = await res.json()
     if (data.hooks) setIdeaBank(data.hooks)
   }, [])
+
+  const loadHistory = useCallback(async (uid: string) => {
+    setHistoryLoading(true)
+    try {
+      const res = await fetch(`/api/reel-analyze?profileId=${uid}`)
+      const data = await res.json()
+      if (data.analyses) setHistory(data.analyses)
+    } catch {
+      toast.error('Failed to load history')
+    } finally {
+      setHistoryLoading(false)
+    }
+  }, [])
+
+  function openHistory() {
+    setShowHistory(true)
+    if (userId) loadHistory(userId)
+  }
+
+  function loadFromHistory(entry: HistoryEntry) {
+    setAnalysis(entry.analysis_json)
+    setResultTranscript(entry.transcript ?? '')
+    setShowHistory(false)
+    setErrorMsg('')
+    // Scroll to top
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  async function deleteHistoryEntry(id: string) {
+    setDeletingId(id)
+    try {
+      const res = await fetch(`/api/reel-analyze?id=${id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
+      setHistory(prev => prev.filter(h => h.id !== id))
+      // If currently viewing this analysis, clear it
+      toast.success('Removed from history')
+    } catch {
+      toast.error('Failed to delete')
+    } finally {
+      setDeletingId(null)
+    }
+  }
 
   async function handleAnalyze() {
     setAnalysis(null)
@@ -114,6 +199,8 @@ export default function ReelCopyPage() {
 
       setResultTranscript(data.transcript || transcript)
       setAnalysis(data.analysis)
+      // Refresh history count in background
+      if (userId) loadHistory(userId)
     } catch {
       setErrorMsg('Network error — please try again')
     } finally {
@@ -147,12 +234,169 @@ export default function ReelCopyPage() {
   const verdict = analysis?.verdict ?? ''
   const verdictStyle = VERDICT_COLORS[verdict] ?? VERDICT_COLORS.Average
 
+  // ── History panel ─────────────────────────────────────────────────────────
+
+  if (showHistory) {
+    return (
+      <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1400, margin: '0 auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+          <button
+            onClick={() => setShowHistory(false)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: 'transparent', border: '1px solid var(--border)',
+              borderRadius: 8, padding: '6px 12px', fontSize: 13, fontWeight: 600,
+              color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: 'inherit',
+            }}
+          >
+            <X size={13} /> Close
+          </button>
+          <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--foreground)' }}>
+            Analysis History
+          </div>
+          <div style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--muted-foreground)' }}>
+            {history.length} {history.length === 1 ? 'analysis' : 'analyses'}
+          </div>
+        </div>
+
+        {historyLoading ? (
+          <div style={{ textAlign: 'center', padding: 60, color: 'var(--muted-foreground)', fontSize: 14 }}>
+            Loading…
+          </div>
+        ) : history.length === 0 ? (
+          <EmptyState
+            icon={<History size={18} />}
+            title="No history yet"
+            description="Analyses you run will appear here."
+          />
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {history.map(entry => (
+              <Card
+                key={entry.id}
+                style={{ padding: '14px 16px', cursor: 'pointer' }}
+                onClick={() => loadFromHistory(entry)}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {/* Verdict dot */}
+                  <div style={{
+                    width: 8, height: 8, borderRadius: '50%', flexShrink: 0,
+                    background: VERDICT_DOT[entry.verdict] ?? 'var(--muted-foreground)',
+                  }} />
+
+                  {/* Info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)' }}>
+                        {entry.verdict}
+                      </span>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: scoreColor(entry.overall_score) }}>
+                        {entry.overall_score}/100
+                      </span>
+                      {entry.reel_url && (
+                        <a
+                          href={entry.reel_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          style={{ display: 'flex', alignItems: 'center', gap: 3, fontSize: 11, color: 'var(--muted-foreground)', textDecoration: 'none' }}
+                        >
+                          <ExternalLink size={10} />
+                          {shortUrl(entry.reel_url)}
+                        </a>
+                      )}
+                      {!entry.reel_url && (
+                        <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>Manual</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>
+                      {formatDate(entry.created_at)}
+                    </div>
+                    {entry.adaptation_brief && (
+                      <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginTop: 5, lineHeight: 1.5, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        {entry.adaptation_brief}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Score pills */}
+                  <div style={{ display: 'flex', gap: 6, flexShrink: 0, alignItems: 'center' }}>
+                    {[
+                      { label: 'Perf', score: entry.performance_score },
+                      { label: 'Script', score: entry.script_quality_score },
+                    ].map(({ label, score }) => (
+                      <div key={label} style={{
+                        display: 'flex', flexDirection: 'column', alignItems: 'center',
+                        background: 'var(--muted)', borderRadius: 6, padding: '4px 8px', minWidth: 40,
+                      }}>
+                        <span style={{ fontSize: 10, color: 'var(--muted-foreground)', fontWeight: 600 }}>{label}</span>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: scoreColor(score) }}>{score}</span>
+                      </div>
+                    ))}
+                    <button
+                      onClick={e => { e.stopPropagation(); deleteHistoryEntry(entry.id) }}
+                      disabled={deletingId === entry.id}
+                      style={{
+                        background: 'transparent', border: 'none', cursor: 'pointer',
+                        color: 'var(--muted-foreground)', padding: 6, borderRadius: 6,
+                        transition: 'color 0.12s',
+                      }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = 'hsl(0 72% 51%)' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)' }}
+                      title="Delete"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // ── Main view ─────────────────────────────────────────────────────────────
+
   return (
     <div style={{ padding: isMobile ? '12px' : '24px', maxWidth: 1400, margin: '0 auto' }}>
-      <PageHeader
-        title="Reel Copy Tool"
-        description="Drop an Instagram reel link — get a full AI breakdown, personalised adaptation advice, and a rewritten hook for your niche."
-      />
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+        <PageHeader
+          title="Reel Copy Tool"
+          description="Drop an Instagram reel link — get a full AI breakdown, personalised adaptation advice, and a rewritten hook for your niche."
+        />
+        <button
+          onClick={openHistory}
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'transparent', border: '1px solid var(--border)',
+            borderRadius: 8, padding: '7px 12px', fontSize: 13, fontWeight: 600,
+            color: 'var(--muted-foreground)', cursor: 'pointer', fontFamily: 'inherit',
+            flexShrink: 0, alignSelf: 'flex-start',
+            transition: 'color 0.12s, border-color 0.12s',
+          }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLElement).style.color = 'var(--foreground)'
+            ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--foreground)'
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLElement).style.color = 'var(--muted-foreground)'
+            ;(e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'
+          }}
+        >
+          <History size={13} />
+          History
+          {history.length > 0 && (
+            <span style={{
+              background: 'var(--muted)', borderRadius: 10, padding: '1px 6px',
+              fontSize: 11, fontWeight: 700, color: 'var(--muted-foreground)',
+            }}>
+              {history.length}
+            </span>
+          )}
+        </button>
+      </div>
 
       {/* Mode selector */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: isMobile ? 'wrap' : 'nowrap' }}>

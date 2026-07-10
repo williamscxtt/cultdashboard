@@ -264,7 +264,37 @@ Based on this data, answer in JSON:
   return analysis
 }
 
-// ── Route handler ─────────────────────────────────────────────────────────────
+// ── History handlers ──────────────────────────────────────────────────────────
+
+export async function GET(req: NextRequest) {
+  const profileId = req.nextUrl.searchParams.get('profileId')
+  if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
+
+  const { data, error } = await getAdminClient()
+    .from('reel_analyses')
+    .select('id, reel_url, verdict, overall_score, performance_score, script_quality_score, adaptation_brief, analysis_json, transcript, created_at')
+    .eq('profile_id', profileId)
+    .order('created_at', { ascending: false })
+    .limit(50)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ analyses: data ?? [] })
+}
+
+export async function DELETE(req: NextRequest) {
+  const id = req.nextUrl.searchParams.get('id')
+  if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
+
+  const { error } = await getAdminClient()
+    .from('reel_analyses')
+    .delete()
+    .eq('id', id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}
+
+// ── POST handler ──────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
   let transcript = ''
