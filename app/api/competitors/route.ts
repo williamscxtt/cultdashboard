@@ -39,9 +39,13 @@ export async function GET() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: realProfile } = await adminClient.from('profiles').select('role').eq('id', user.id).single()
+  const { data: realProfile } = await adminClient.from('profiles').select('role, billing_exempt').eq('id', user.id).single()
   const isAdmin = realProfile?.role === 'admin'
   const profileId = await getProfileId(user.id)
+
+  // Also check the effective profile's billing_exempt (handles impersonation)
+  const { data: effectiveProfile } = await adminClient.from('profiles').select('billing_exempt').eq('id', profileId).single()
+  const isUnlimited = isAdmin || !!realProfile?.billing_exempt || !!effectiveProfile?.billing_exempt
 
   const { data, error } = await adminClient
     .from('client_competitors')
@@ -76,7 +80,7 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    limit: isAdmin ? null : 3,  // null = unlimited for admins
+    limit: isUnlimited ? null : 3,  // null = unlimited for admins + billing_exempt accounts
     competitors: competitors.map((c: { ig_username: string; insight?: string; insight_updated_at?: string }) => {
       const s = stats[c.ig_username]
       const reel_count = s?.reel_count ?? 0
@@ -115,10 +119,12 @@ export async function POST(request: Request) {
 
   if (existing) return NextResponse.json({ error: 'Already tracking this account' }, { status: 409 })
 
-  // Enforce 3-competitor limit for non-admin profiles
-  const { data: realProfile } = await adminClient.from('profiles').select('role').eq('id', user.id).single()
-  const isAdmin = realProfile?.role === 'admin'
-  if (!isAdmin) {
+  // Enforce 3-competitor limit for non-admin, non-billing-exempt profiles
+  const { data: realProfilePost } = await adminClient.from('profiles').select('role, billing_exempt').eq('id', user.id).single()
+  const isAdminPost = realProfilePost?.role === 'admin'
+  const { data: effectiveProfilePost } = await adminClient.from('profiles').select('billing_exempt').eq('id', profileId).single()
+  const isUnlimitedPost = isAdminPost || !!realProfilePost?.billing_exempt || !!effectiveProfilePost?.billing_exempt
+  if (!isUnlimitedPost) {
     const { count } = await adminClient
       .from('client_competitors')
       .select('id', { count: 'exact', head: true })
