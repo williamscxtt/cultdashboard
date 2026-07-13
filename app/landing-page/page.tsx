@@ -56,6 +56,18 @@ const results = [
     start: 'Plus his first £2,000 client.',
   },
   {
+    image: '/testimonials/testimonial-zack-instagram-growth.jpg',
+    name: 'Zack',
+    result: '0 to 100K+ followers',
+    start: 'Built the audience in four months.',
+  },
+  {
+    image: '/testimonials/testimonial-matte-first-payout-500.jpeg',
+    name: 'Matte',
+    result: 'First €500 payout',
+    start: 'First income from his content.',
+  },
+  {
     image: '/testimonials/testimonial-michael-10k-day.jpeg',
     name: 'Michael',
     result: 'Multiple $10K days',
@@ -284,7 +296,7 @@ export default function LandingPage() {
               </div>
               <div className={`${styles.floatCard} ${styles.floatTop}`}>
                 <span className={styles.floatIcon}><BarChart3 size={16} /></span>
-                <span><strong>350M+</strong> combined views</span>
+                <span><strong>500M+</strong> combined views</span>
               </div>
               <div className={`${styles.floatCard} ${styles.floatBottom}`}>
                 <span className={styles.floatIcon}><Target size={16} /></span>
@@ -324,7 +336,7 @@ export default function LandingPage() {
                     src={item.image}
                     alt={`${item.name}: ${item.result}`}
                     fill
-                    sizes="(max-width: 680px) 44vw, (max-width: 1000px) 45vw, 23vw"
+                    sizes="(max-width: 680px) 44vw, (max-width: 1000px) 45vw, 30vw"
                     className={styles.resultImage}
                   />
                 </div>
@@ -390,14 +402,14 @@ export default function LandingPage() {
                 I did not have a team, a big budget, or a famous name. I had 412 followers, a phone, and a job I did not want to be doing forever.
               </p>
               <p>
-                I spent two years learning how to turn fitness content into attention, attention into trust, and trust into a real business. That system took me to 860K followers and £30K months.
+                I spent two years learning how to turn fitness content into attention, attention into trust, and trust into a real business. That system took me past 1 million followers and to £30K months.
               </p>
               <p>
                 Creator Cult is the playbook I wish I had at the start, with coaching and tools to stop you wasting the same time I did.
               </p>
               <div className={styles.storyStats}>
                 <div><strong>412</strong><span>starting followers</span></div>
-                <div><strong>860K</strong><span>followers built</span></div>
+                <div><strong>1M+</strong><span>followers built</span></div>
                 <div><strong>£30K</strong><span>months reached</span></div>
               </div>
               <PurchaseButton className={styles.textCta}>Build your system <ArrowRight size={17} /></PurchaseButton>
@@ -484,7 +496,7 @@ export default function LandingPage() {
               <div className={styles.pricingProof}>
                 <div><strong>140+</strong><span>creators inside</span></div>
                 <div><strong>15+</strong><span>countries</span></div>
-                <div><strong>350M+</strong><span>combined views</span></div>
+                <div><strong>500M+</strong><span>combined views</span></div>
               </div>
             </div>
             <div className={styles.priceCard}>

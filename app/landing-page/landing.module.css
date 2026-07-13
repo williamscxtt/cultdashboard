@@ -591,7 +591,8 @@
 
 .resultGrid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 1020px;
   gap: 12px;
   margin-top: 44px;
 }
@@ -800,14 +801,14 @@
 .storyImageWrap {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 1.08 / 1;
+  aspect-ratio: 4091 / 2744;
   border: 1px solid var(--line);
   border-radius: 20px;
   background: #101318;
 }
 
 .storyImage {
-  object-fit: cover;
+  object-fit: contain;
   filter: saturate(0.8) contrast(1.03);
 }
 
@@ -1423,10 +1424,6 @@
     margin: 0 auto;
   }
 
-  .storyImageWrap {
-    aspect-ratio: 1.4 / 1;
-  }
-
   .phaseBody {
     grid-template-columns: 90px 1fr;
   }
@@ -1639,10 +1636,6 @@
 
   .bridgeCta > button {
     width: 100%;
-  }
-
-  .storyImageWrap {
-    aspect-ratio: 1.08 / 1;
   }
 
   .storyCaption {
