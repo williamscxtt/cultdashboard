@@ -293,6 +293,18 @@
   color: #8e98a7;
 }
 
+.hero h1 .heroTitleLine {
+  display: inline;
+  margin-top: 0;
+  color: inherit;
+}
+
+.hero h1 .heroTitleMuted {
+  display: block;
+  margin-top: 8px;
+  color: #8e98a7;
+}
+
 .heroLead {
   max-width: 590px;
   margin: 21px 0 0;
@@ -1489,7 +1501,25 @@
   }
 
   .hero h1 {
-    font-size: clamp(45px, 14vw, 66px);
+    font-size: clamp(30px, 9.2vw, 38px);
+    line-height: 1.04;
+  }
+
+  .hero h1 .heroTitleLine {
+    display: block;
+    white-space: nowrap;
+  }
+
+  .hero h1 .heroTitleMuted {
+    margin-top: 5px;
+  }
+
+  .heroTag {
+    max-width: none;
+    padding: 7px 10px;
+    font-size: clamp(7.5px, 2.2vw, 9px);
+    letter-spacing: 0.09em;
+    white-space: nowrap;
   }
 
   .heroLead {

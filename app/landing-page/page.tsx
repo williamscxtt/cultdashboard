@@ -246,10 +246,13 @@ export default function LandingPage() {
         <div className={styles.container}>
           <div className={styles.heroGrid}>
             <div className={styles.heroCopy}>
-              <p className={styles.heroTag}>For fitness creators posting and going nowhere</p>
+              <p className={styles.heroTag}>For fitness coaches posting and going nowhere</p>
               <h1>
-                Stop winging it.
-                <span>Build the system that gets you paid.</span>
+                <span className={styles.heroTitleLine}>Stop winging it.</span>
+                <span className={styles.heroTitleMuted}>
+                  <span className={styles.heroTitleLine}>Build the system that</span>{' '}
+                  <span className={styles.heroTitleLine}>gets you paid.</span>
+                </span>
               </h1>
               <p className={styles.heroLead}>
                 Turn what you know into content that grows, an offer people want, and a personal brand that can replace your job.
