@@ -15,6 +15,7 @@ import {
   WandSparkles,
 } from 'lucide-react'
 import PurchaseButton from './PurchaseButton'
+import ResultsShowcase from './ResultsShowcase'
 import styles from './landing.module.css'
 
 export const metadata: Metadata = {
@@ -38,40 +39,120 @@ export const metadata: Metadata = {
 
 const results = [
   {
-    image: '/testimonials/testimonial-brett-first-client-3weeks.jpeg',
+    images: [
+      {
+        src: '/testimonials/testimonial-brett-first-client-3weeks.jpeg',
+        alt: 'Brett reporting his first paying client within three weeks of joining Creator Cult',
+      },
+    ],
     name: 'Brett',
-    result: 'First client in 3 weeks',
-    start: '18 months stuck with no paying clients.',
+    result: 'First paying client within 3 weeks',
+    context: 'Joined Creator Cult three weeks before sharing the win.',
+    story: 'Brett shared that he had landed his first paying client four days before posting this update, within three weeks of joining Creator Cult.',
   },
   {
-    image: '/testimonials/testimonial-asfand-first-client.png',
+    images: [
+      {
+        src: '/testimonials/testimonial-asfand-first-client.png',
+        alt: 'Asfand reporting his first online coaching client after launching Instagram',
+      },
+    ],
     name: 'Asfand',
-    result: 'First client in 7 days',
-    start: 'Launched on Monday. Closed on Friday.',
+    result: 'First client in his first week',
+    context: 'A newly launched Instagram and a lead from his DMs.',
+    story: 'Asfand launched his Instagram, moved a qualified lead from an Instagram DM to WhatsApp, and signed his first online coaching client that same week.',
   },
   {
-    image: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg',
+    images: [
+      {
+        src: '/testimonials/testimonial-tom-600-to-1300-followers.jpeg',
+        alt: 'Tom reporting growth from 600 to 1,300 followers in one week',
+      },
+    ],
     name: 'Tom',
-    result: '0 to 10K followers in 1 month',
-    start: 'Plus his first £2,000 client.',
+    result: '600 to 1,300 followers in one week',
+    context: 'Around 300 followers came in a single day.',
+    story: 'Tom added 700 followers in one week while his first videos began reaching 20,000 views. His update shows the exact numbers in his own words.',
   },
   {
-    image: '/testimonials/testimonial-zack-instagram-growth.jpg',
-    name: 'Zack',
-    result: '0 to 100K+ followers',
-    start: 'Built the audience in four months.',
+    images: [
+      {
+        src: '/testimonials/testimonial-bile-first-2-clients.jpg',
+        alt: 'Bile reporting his first two clients after applying the content strategy',
+      },
+      {
+        src: '/testimonials/testimonial-bile-third-client.jpg',
+        alt: 'Bile reporting his third client at 600 euros per month',
+      },
+    ],
+    name: 'Bile',
+    result: 'First 3 clients signed',
+    context: 'The third was €600 a month for three months.',
+    story: 'Bile applied the content strategy, improved his bio and personal brand, and signed his first two clients. He then added a third at €600 per month on a three-month contract.',
   },
   {
-    image: '/testimonials/testimonial-matte-first-payout-500.jpeg',
-    name: 'Matte',
-    result: 'First €500 payout',
-    start: 'First income from his content.',
+    images: [
+      {
+        src: '/testimonials/testimonial-gabrielle-1k-followers.jpg',
+        alt: 'Gabrielle reporting her first 100,000 views and passing 1,000 followers',
+      },
+      {
+        src: '/testimonials/testimonial-gabrielle-first-100k-views.jpg',
+        alt: 'Gabrielle sharing the insights from her first reel over 100,000 views',
+      },
+    ],
+    name: 'Gabrielle',
+    result: 'First 100K views + 1K followers',
+    context: 'Her profile reached 1,125 followers and 14.9K likes.',
+    story: 'Gabrielle shared her first Instagram reel to pass 100,000 views, then followed it with a profile update showing she had passed 1,000 followers.',
   },
   {
-    image: '/testimonials/testimonial-michael-10k-day.jpeg',
+    images: [
+      {
+        src: '/testimonials/testimonial-michael-10k-day.jpeg',
+        alt: 'Michael showing 10,000 dollars in gross volume in one day',
+      },
+      {
+        src: '/testimonials/testimonial-first-client-1942.png',
+        alt: 'Michael sharing the payment from his first 2,000 dollar client',
+      },
+      {
+        src: '/testimonials/testimonial-michael-5k-pif.jpeg',
+        alt: 'Michael sharing a 5,000 dollar paid-in-full coaching sale',
+      },
+      {
+        src: '/testimonials/testimonial-michael-1m-views-30days.png',
+        alt: 'Michael showing 1 million Instagram views in 30 days',
+      },
+    ],
     name: 'Michael',
-    result: 'Multiple $10K days',
-    start: 'Then consistent £50K months.',
+    result: '$10K day + 1M views in 30 days',
+    context: 'From a first $2K client to a $5K paid-in-full offer.',
+    story: 'Michael shared a clear progression: his first $2,000 client, a $5,000 paid-in-full offer, $10,000 in gross volume in one day, and 1 million profile views in 30 days.',
+  },
+  {
+    images: [
+      {
+        src: '/testimonials/testimonial-matte-first-payout-500.jpeg',
+        alt: 'Matte sharing his first 500 euro coaching payout',
+      },
+    ],
+    name: 'Matte',
+    result: 'First €500 coaching payout',
+    context: 'One month of coaching sold.',
+    story: 'Matte shared the successful €500 transaction as his first payout after selling one month of his coaching.',
+  },
+  {
+    images: [
+      {
+        src: '/testimonials/testimonial-jakub-reels-views.jpg',
+        alt: 'Jakub showing a reel at 114,000 views and several other high-performing reels',
+      },
+    ],
+    name: 'Jakub',
+    result: 'A reel reached 114K views',
+    context: 'Other reels reached 47K, 12.6K, 5.5K and 4.6K.',
+    story: 'Jakub shared a grid of reels as his Instagram began picking up, led by one at 114,000 views and supported by several more with thousands of views.',
   },
 ]
 
@@ -111,7 +192,7 @@ const included = [
     icon: Users,
     title: 'The coaching',
     copy: 'Bring your content, offer, and blockers. Leave every week knowing exactly what to improve next.',
-    items: ['Weekly live coaching with Will', '1:1 feedback between calls'],
+    items: ['Weekly live coaching with me', '1:1 feedback between calls'],
   },
   {
     number: '03',
@@ -123,9 +204,9 @@ const included = [
 ]
 
 const tickerItems = [
-  'First client in 7 days',
-  '0 to 10K followers in 1 month',
-  'Multiple $10K days',
+  'First paying client within 3 weeks',
+  '600 to 1,300 followers in one week',
+  '$10K day + 1M views in 30 days',
   '140+ creators inside',
 ]
 
@@ -181,7 +262,7 @@ const faqs = [
   {
     question: 'How does the pricing work?',
     answer:
-      'Your first payment is £997 for six months of full access. After the first six months, access continues at £150 per month. You can cancel the ongoing membership at any time.',
+      'Choose one payment of $997 USD or £740 GBP, or three instalments of $333 USD or £250 GBP. Both options give you six months of full access.',
   },
   {
     question: 'How much time do I need each week?',
@@ -268,7 +349,7 @@ export default function LandingPage() {
               <div className={styles.priceNote}>
                 <LockKeyhole size={14} />
                 <span>
-                  <strong>£997</strong> for 6 months, then £150/month. Secure checkout.
+                  Six months for <strong>$997 USD / £740 GBP</strong>, or choose 3 instalments. Secure checkout.
                 </span>
               </div>
               <div className={styles.heroTrust}>
@@ -331,26 +412,7 @@ export default function LandingPage() {
             title={<>They started where <span>you are now.</span></>}
             copy="Small audiences. Inconsistent views. No clear offer. These are real Creator Cult wins, from first clients to serious scale."
           />
-          <div className={styles.resultGrid}>
-            {results.map((item) => (
-              <article className={styles.resultCard} key={`${item.name}-${item.result}`}>
-                <div className={styles.resultImageWrap}>
-                  <Image
-                    src={item.image}
-                    alt={`${item.name}: ${item.result}`}
-                    fill
-                    sizes="(max-width: 680px) 44vw, (max-width: 1000px) 45vw, 30vw"
-                    className={styles.resultImage}
-                  />
-                </div>
-                <div className={styles.resultText}>
-                  <p>{item.name}</p>
-                  <h3>{item.result}</h3>
-                  <span>{item.start}</span>
-                </div>
-              </article>
-            ))}
-          </div>
+          <ResultsShowcase results={results} />
           <p className={styles.disclaimer}>Member results vary. These examples are not a promise of what every member will achieve.</p>
         </div>
       </section>
@@ -385,37 +447,37 @@ export default function LandingPage() {
 
       <section className={`${styles.section} ${styles.storySection}`}>
         <div className={styles.container}>
+          <div className={styles.storyStats} aria-label="My creator business results">
+            <div><strong>1.5M+</strong><span>followers online</span></div>
+            <div><strong>£500K+</strong><span>revenue generated</span></div>
+            <div><strong>£50K</strong><span>months reached</span></div>
+          </div>
           <div className={styles.storyGrid}>
+            <div className={styles.storyCopy}>
+              <p className={styles.eyebrow}>Why my story matters</p>
+              <h2>I was delivering pizzas with <span>£20K of debt.</span></h2>
+              <p>
+                I did not have a team, a big budget, or a famous name. I had 412 followers, a phone, and a job I did not want to be doing forever.
+              </p>
+              <p>
+                I spent two years learning how to turn fitness content into attention, attention into trust, and trust into a real business. That system took me past 1.5 million followers, generated more than £500K in revenue, and got me to £50K months.
+              </p>
+              <p>
+                Creator Cult is the playbook I wish I had at the start, with coaching and tools to stop you wasting the same time I did.
+              </p>
+              <PurchaseButton className={styles.textCta}>Build your system <ArrowRight size={17} /></PurchaseButton>
+            </div>
             <div className={styles.storyVisual}>
               <div className={styles.storyImageWrap}>
                 <Image
-                  src="/IMG_6327.JPG"
-                  alt="Will Scott before and after building his personal brand"
+                  src="/B5D8C241-1826-46EE-898C-A40008641860.jpg"
+                  alt="Will Scott after building his personal brand and creator business"
                   fill
                   sizes="(max-width: 800px) 92vw, 44vw"
                   className={styles.storyImage}
                 />
               </div>
               <div className={styles.storyCaption}>Same person. Better system.</div>
-            </div>
-            <div className={styles.storyCopy}>
-              <p className={styles.eyebrow}>Why Will&apos;s story matters</p>
-              <h2>I was delivering pizzas with <span>£20K of debt.</span></h2>
-              <p>
-                I did not have a team, a big budget, or a famous name. I had 412 followers, a phone, and a job I did not want to be doing forever.
-              </p>
-              <p>
-                I spent two years learning how to turn fitness content into attention, attention into trust, and trust into a real business. That system took me past 1 million followers and to £30K months.
-              </p>
-              <p>
-                Creator Cult is the playbook I wish I had at the start, with coaching and tools to stop you wasting the same time I did.
-              </p>
-              <div className={styles.storyStats}>
-                <div><strong>412</strong><span>starting followers</span></div>
-                <div><strong>1M+</strong><span>followers built</span></div>
-                <div><strong>£30K</strong><span>months reached</span></div>
-              </div>
-              <PurchaseButton className={styles.textCta}>Build your system <ArrowRight size={17} /></PurchaseButton>
             </div>
           </div>
         </div>
@@ -487,12 +549,16 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className={`${styles.section} ${styles.pricingSection}`} id="pricing">
+      <section
+        className={`${styles.section} ${styles.pricingSection}`}
+        id="pricing"
+        aria-labelledby="pricing-title"
+      >
         <div className={styles.container}>
           <div className={styles.pricingGrid}>
             <div className={styles.pricingCopy}>
               <p className={styles.eyebrow}>Join Creator Cult</p>
-              <h2>Stop figuring it out <span>alone.</span></h2>
+              <h2 id="pricing-title">Stop figuring it out <span>alone.</span></h2>
               <p>
                 Six months gives you enough time to build the foundation, publish with purpose, create your offer, and learn how to sell it.
               </p>
@@ -505,24 +571,78 @@ export default function LandingPage() {
             <div className={styles.priceCard}>
               <div className={styles.priceCardGlow} />
               <p className={styles.priceLabel}>Six months of full access</p>
-              <div className={styles.price}>
-                <span>£997</span>
-                <p>one payment</p>
+              <h3 className={styles.paymentHeading}>Choose how you pay</h3>
+              <p className={styles.paymentIntro}>The access is identical. Pick the option that works best for you.</p>
+              <div className={styles.paymentOptions}>
+                <article className={`${styles.paymentOption} ${styles.paymentOptionFeatured}`}>
+                  <div className={styles.paymentOptionTop}>
+                    <h4>Pay in full</h4>
+                    <span>Best value</span>
+                  </div>
+                  <div className={styles.currencyPrices} role="group" aria-label="$997 USD or £740 GBP">
+                    <div className={styles.currencyPrice}>
+                      <strong>$997</strong>
+                      <span>USD</span>
+                    </div>
+                    <span className={styles.currencyOr}>or</span>
+                    <div className={styles.currencyPrice}>
+                      <strong>£740</strong>
+                      <span>GBP</span>
+                    </div>
+                  </div>
+                  <p className={styles.paymentDescription}>One payment for the full six-month membership.</p>
+                  <a
+                    className={styles.checkoutCta}
+                    href="https://commas.com/checkout/qLkzpmpZrFYjbX7L"
+                    data-checkout-plan="pay-in-full"
+                    aria-label="Pay in full: $997 USD or £740 GBP"
+                  >
+                    Pay in full <ArrowRight size={17} />
+                  </a>
+                </article>
+
+                <article className={styles.paymentOption}>
+                  <div className={styles.paymentOptionTop}>
+                    <h4>3 instalments</h4>
+                    <span>Split the cost</span>
+                  </div>
+                  <div
+                    className={styles.currencyPrices}
+                    role="group"
+                    aria-label="Three instalments of $333 USD or £250 GBP"
+                  >
+                    <div className={styles.currencyPrice}>
+                      <strong>3 × $333</strong>
+                      <span>USD</span>
+                    </div>
+                    <span className={styles.currencyOr}>or</span>
+                    <div className={styles.currencyPrice}>
+                      <strong>3 × £250</strong>
+                      <span>GBP</span>
+                    </div>
+                  </div>
+                  <p className={styles.paymentDescription}>Three payments while keeping the same six months of access.</p>
+                  <a
+                    className={styles.checkoutCta}
+                    href="https://commas.com/checkout/n69wWQYTD3Hnl7"
+                    data-checkout-plan="instalments"
+                    aria-label="Pay in three instalments of $333 USD or £250 GBP"
+                  >
+                    Choose 3 instalments <ArrowRight size={17} />
+                  </a>
+                </article>
               </div>
-              <p className={styles.renewal}>Then £150/month to continue. Cancel anytime.</p>
               <div className={styles.priceRule} />
+              <p className={styles.includedLabel}>Both payment options include:</p>
               <ul>
                 <li><Check size={16} /> Full 5-phase Creator Cult course</li>
-                <li><Check size={16} /> Weekly live coaching with Will</li>
+                <li><Check size={16} /> Weekly live coaching with me</li>
                 <li><Check size={16} /> 1:1 feedback between calls</li>
                 <li><Check size={16} /> Private Circle community</li>
                 <li><Check size={16} /> Cult Dashboard with 12 AI tools</li>
                 <li><Check size={16} /> Weekly strategy packages</li>
               </ul>
-              <PurchaseButton className={styles.purchaseCta}>
-                Join Creator Cult <ArrowRight size={18} />
-              </PurchaseButton>
-              <p className={styles.checkoutNote}><LockKeyhole size={13} /> Secure checkout. Instant access on payment.</p>
+              <p className={styles.checkoutNote}><LockKeyhole size={13} /> Secure checkout. Instant access with either option.</p>
             </div>
           </div>
         </div>
@@ -553,7 +673,7 @@ export default function LandingPage() {
           <h2>Or it can be the first move in a <span>real system.</span></h2>
           <p>Join Creator Cult today. No application. No sales call. Start as soon as you pay.</p>
           <PurchaseButton className={styles.primaryCta}>Join Creator Cult <ArrowRight size={17} /></PurchaseButton>
-          <span className={styles.finalPrice}>£997 for 6 months, then £150/month.</span>
+          <span className={styles.finalPrice}>$997 USD / £740 GBP once, or 3 instalments of $333 USD / £250 GBP.</span>
         </div>
       </section>
 
@@ -571,7 +691,7 @@ export default function LandingPage() {
       </footer>
 
       <div className={styles.mobileBar}>
-        <div><strong>£997</strong><span>6 months access</span></div>
+        <div><strong>$997 / £740</strong><span>6 months access</span></div>
         <PurchaseButton className={styles.mobileCta}>Join now <ArrowRight size={16} /></PurchaseButton>
       </div>
     </main>
