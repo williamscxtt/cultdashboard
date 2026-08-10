@@ -1552,46 +1552,29 @@
   white-space: nowrap;
 }
 
-.currencyPrices {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-  align-items: center;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.currencyPrice {
+.membershipPrice {
   display: flex;
-  min-width: 0;
+  align-items: center;
   flex-direction: column;
-  gap: 5px;
+  gap: 7px;
+  margin-top: 18px;
+  text-align: center;
 }
 
-.currencyPrice strong {
+.membershipPrice strong {
   font-family: var(--font-display), sans-serif;
-  font-size: clamp(23px, 2.5vw, 31px);
+  font-size: clamp(28px, 4vw, 42px);
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.055em;
   line-height: 1;
   white-space: nowrap;
 }
 
-.currencyPrice span {
+.membershipPrice span {
   color: #6f7a89;
-  font-size: 8px;
+  font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.13em;
-}
-
-.currencyPrice:last-child {
-  align-items: flex-end;
-  text-align: right;
-}
-
-.currencyOr {
-  color: #596474;
-  font-size: 9px;
-  font-weight: 700;
   text-transform: uppercase;
 }
 
@@ -1622,15 +1605,10 @@
   transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease, opacity 160ms ease;
 }
 
-.checkoutCta:not(:disabled):hover {
+.checkoutCta:hover {
   background: #2563eb;
   transform: translateY(-1px);
   box-shadow: 0 12px 28px rgba(59, 130, 246, 0.23);
-}
-
-.checkoutCta:disabled {
-  cursor: not-allowed;
-  opacity: 0.58;
 }
 
 .includedLabel {
@@ -2289,12 +2267,8 @@
     padding: 17px;
   }
 
-  .currencyPrices {
-    gap: 7px;
-  }
-
-  .currencyPrice strong {
-    font-size: clamp(22px, 6.8vw, 28px);
+  .membershipPrice strong {
+    font-size: clamp(28px, 8vw, 36px);
   }
 
   .faqItem summary {
@@ -2334,9 +2308,9 @@
     justify-content: space-between;
     gap: 14px;
     padding: 10px max(16px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-    border-top: 1px solid rgba(96, 165, 250, 0.24);
-    background: rgba(7, 10, 15, 0.94);
-    backdrop-filter: blur(18px);
+    border-top: 1px solid rgba(191, 219, 254, 0.65);
+    background: linear-gradient(135deg, #1e40af 0%, #2563eb 58%, #3b82f6 100%);
+    box-shadow: 0 -14px 38px rgba(37, 99, 235, 0.32);
   }
 
   .mobileBar > div {
@@ -2346,12 +2320,13 @@
   }
 
   .mobileBar strong {
+    color: white;
     font-family: var(--font-display), sans-serif;
     font-size: 17px;
   }
 
   .mobileBar > div span {
-    color: #76808e;
+    color: rgba(239, 246, 255, 0.78);
     font-size: 9px;
     font-weight: 700;
     letter-spacing: 0.05em;
@@ -2362,7 +2337,16 @@
     min-height: 46px;
     border-radius: 9px;
     padding: 0 19px;
+    background: white;
+    color: #1d4ed8;
     font-size: 13px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.2);
+  }
+
+  .mobileCta > a:hover {
+    background: #eff6ff;
+    color: #1d4ed8;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.24);
   }
 }
 
@@ -2414,22 +2398,6 @@
 @media (max-width: 360px) {
   .paymentOption {
     padding: 15px;
-  }
-
-  .currencyPrices {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .currencyOr {
-    display: none;
-  }
-
-  .currencyPrice:last-child {
-    align-items: flex-start;
-    padding-top: 10px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    text-align: left;
   }
 
   .paymentDescription {
