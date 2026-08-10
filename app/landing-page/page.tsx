@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'Creator Cult | Stop Posting and Going Nowhere',
     description:
-      'Course, monthly coaching, personal feedback in the member chat, private community, and the Cult Dashboard. One membership. One system.',
+      'Course, monthly live coaching, personal feedback in the member chat, private community, and the Cult Dashboard. One membership. One system.',
     images: ['/will-hero-2.jpg'],
   },
   twitter: {
@@ -379,7 +379,7 @@ const faqs = [
   {
     question: 'What if I have tried another course before?',
     answer:
-      'This is not a course you binge and forget. The lessons give you the system. Live coaching, personal feedback in the member chat, the community, and the Dashboard help you actually use it.',
+      'This is not a course you binge and forget. The lessons give you the system. Monthly live coaching, personal feedback in the member chat, the community, and the Dashboard help you actually use it.',
   },
   {
     question: 'Does this only work for fitness creators?',
@@ -687,7 +687,11 @@ export default function LandingPage() {
                     <span>Flexible</span>
                   </div>
                   <div className={styles.membershipPrice} role="group" aria-label="£79 GBP or $97 USD per month">
-                    <strong>£79 / $97</strong>
+                    <strong aria-hidden="true">
+                      <span className={styles.pricePrimary}>£79</span>
+                      <span className={styles.priceDivider}>/</span>
+                      <span className={styles.priceSecondary}>$97</span>
+                    </strong>
                     <span>/ month</span>
                   </div>
                   <p className={styles.paymentDescription}>Full access with a simple monthly membership.</p>
@@ -707,7 +711,11 @@ export default function LandingPage() {
                     <span>2 months free</span>
                   </div>
                   <div className={styles.membershipPrice} role="group" aria-label="£790 GBP or $970 USD per year">
-                    <strong>£790 / $970</strong>
+                    <strong aria-hidden="true">
+                      <span className={styles.pricePrimary}>£790</span>
+                      <span className={styles.priceDivider}>/</span>
+                      <span className={styles.priceSecondary}>$970</span>
+                    </strong>
                     <span>/ year</span>
                   </div>
                   <p className={styles.paymentDescription}>Save £158 or $194—exactly two months compared with paying monthly.</p>
@@ -780,7 +788,14 @@ export default function LandingPage() {
       </footer>
 
       <div className={styles.mobileBar}>
-        <div><strong>£79 / $97</strong><span>per month</span></div>
+        <div>
+          <strong aria-label="£79 GBP or $97 USD per month">
+            <span className={styles.pricePrimary}>£79</span>
+            <span className={styles.priceDivider}>/</span>
+            <span className={styles.priceSecondary}>$97</span>
+          </strong>
+          <span>per month</span>
+        </div>
         <PurchaseButton className={styles.mobileCta}>Join now <ArrowRight size={16} /></PurchaseButton>
       </div>
     </main>

@@ -1570,12 +1570,32 @@
   white-space: nowrap;
 }
 
-.membershipPrice span {
+.membershipPrice > span {
   color: #6f7a89;
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.13em;
   text-transform: uppercase;
+}
+
+.pricePrimary {
+  font-size: 1em;
+}
+
+.priceDivider {
+  display: inline-block;
+  margin: 0 0.14em;
+  color: #6f7a89;
+  font-size: 0.62em;
+  vertical-align: 0.08em;
+}
+
+.priceSecondary {
+  display: inline-block;
+  color: #c4ccd7;
+  font-size: 0.76em;
+  letter-spacing: -0.035em;
+  vertical-align: 0.08em;
 }
 
 .paymentDescription {
@@ -2309,8 +2329,8 @@
     gap: 14px;
     padding: 10px max(16px, env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     border-top: 1px solid rgba(191, 219, 254, 0.65);
-    background: linear-gradient(135deg, #1e40af 0%, #2563eb 58%, #3b82f6 100%);
-    box-shadow: 0 -14px 38px rgba(37, 99, 235, 0.32);
+    background: var(--blue);
+    box-shadow: 0 -14px 38px rgba(59, 130, 246, 0.34);
   }
 
   .mobileBar > div {
@@ -2325,7 +2345,7 @@
     font-size: 17px;
   }
 
-  .mobileBar > div span {
+  .mobileBar > div > span {
     color: rgba(239, 246, 255, 0.78);
     font-size: 9px;
     font-weight: 700;
