@@ -369,7 +369,7 @@ const faqs = [
   {
     question: 'How does the pricing work?',
     answer:
-      'Choose £79 GBP or $97 USD per month, or pay £790 GBP or $970 USD for a full year. The annual option gives you two months free, and both options unlock the same membership.',
+      'Choose £74 GBP or $97 USD per month, or pay £765 GBP or $970 USD for a full year. The annual option saves £123 GBP or $194 USD compared with monthly billing, and both options unlock the same membership.',
   },
   {
     question: 'How much time do I need each week?',
@@ -456,7 +456,7 @@ export default function LandingPage() {
               <div className={styles.priceNote}>
                 <LockKeyhole size={14} />
                 <span>
-                  Join for <strong>£79 GBP / $97 USD per month</strong>, or save with annual access.
+                  Join for <strong>£74 GBP / $97 USD per month</strong>, or save with annual access.
                 </span>
               </div>
               <div className={styles.heroTrust}>
@@ -667,7 +667,7 @@ export default function LandingPage() {
               <p className={styles.eyebrow}>Join Creator Cult</p>
               <h2 id="pricing-title">Stop figuring it out <span>alone.</span></h2>
               <p>
-                Join month to month, or save two months with annual access. Both plans unlock the complete Creator Cult system from day one.
+                Join month to month, or save with annual access. Both plans unlock the complete Creator Cult system from day one.
               </p>
               <div className={styles.pricingProof}>
                 <div><strong>160+</strong><span>creators inside</span></div>
@@ -679,16 +679,16 @@ export default function LandingPage() {
               <div className={styles.priceCardGlow} />
               <p className={styles.priceLabel}>Creator Cult membership</p>
               <h3 className={styles.paymentHeading}>Choose how you join</h3>
-              <p className={styles.paymentIntro}>Same complete membership. Choose flexibility or get two months free.</p>
+              <p className={styles.paymentIntro}>Same complete membership. Choose flexibility or save with annual billing.</p>
               <div className={styles.paymentOptions}>
                 <article className={styles.paymentOption}>
                   <div className={styles.paymentOptionTop}>
                     <h4>Monthly</h4>
                     <span>Flexible</span>
                   </div>
-                  <div className={styles.membershipPrice} role="group" aria-label="£79 GBP or $97 USD per month">
+                  <div className={styles.membershipPrice} role="group" aria-label="£74 GBP or $97 USD per month">
                     <strong aria-hidden="true">
-                      <span className={styles.pricePrimary}>£79</span>
+                      <span className={styles.pricePrimary}>£74</span>
                       <span className={styles.priceDivider}>/</span>
                       <span className={styles.priceSecondary}>$97</span>
                     </strong>
@@ -699,7 +699,7 @@ export default function LandingPage() {
                     className={styles.checkoutCta}
                     href="https://commas.com/checkout/2Jv3WEf8tgAtTRdFG"
                     data-checkout-plan="monthly"
-                    aria-label="Join Creator Cult monthly for £79 GBP or $97 USD"
+                    aria-label="Join Creator Cult monthly for £74 GBP or $97 USD"
                   >
                     Join monthly <ArrowRight size={17} />
                   </a>
@@ -708,22 +708,22 @@ export default function LandingPage() {
                 <article className={`${styles.paymentOption} ${styles.paymentOptionFeatured}`}>
                   <div className={styles.paymentOptionTop}>
                     <h4>Annual</h4>
-                    <span>2 months free</span>
+                    <span>Best value</span>
                   </div>
-                  <div className={styles.membershipPrice} role="group" aria-label="£790 GBP or $970 USD per year">
+                  <div className={styles.membershipPrice} role="group" aria-label="£765 GBP or $970 USD per year">
                     <strong aria-hidden="true">
-                      <span className={styles.pricePrimary}>£790</span>
+                      <span className={styles.pricePrimary}>£765</span>
                       <span className={styles.priceDivider}>/</span>
                       <span className={styles.priceSecondary}>$970</span>
                     </strong>
                     <span>/ year</span>
                   </div>
-                  <p className={styles.paymentDescription}>Save £158 or $194—exactly two months compared with paying monthly.</p>
+                  <p className={styles.paymentDescription}>Save £123 or $194 compared with paying monthly.</p>
                   <a
                     className={styles.checkoutCta}
                     href="https://commas.com/checkout/9XQlYPjkWBukJdE7"
                     data-checkout-plan="annual"
-                    aria-label="Join Creator Cult annually for £790 GBP or $970 USD"
+                    aria-label="Join Creator Cult annually for £765 GBP or $970 USD"
                   >
                     Join annually <ArrowRight size={17} />
                   </a>
@@ -770,7 +770,7 @@ export default function LandingPage() {
           <h2>Or it can be the first move in a <span>real system.</span></h2>
           <p>Join Creator Cult today. No application. No sales call. Start as soon as you pay.</p>
           <PurchaseButton className={styles.primaryCta}>Join Creator Cult <ArrowRight size={17} /></PurchaseButton>
-          <span className={styles.finalPrice}>£79 GBP / $97 USD monthly, or save two months with annual access.</span>
+          <span className={styles.finalPrice}>£74 GBP / $97 USD monthly, or save with annual access.</span>
         </div>
       </section>
 
@@ -789,8 +789,8 @@ export default function LandingPage() {
 
       <div className={styles.mobileBar}>
         <div>
-          <strong aria-label="£79 GBP or $97 USD per month">
-            <span className={styles.pricePrimary}>£79</span>
+          <strong aria-label="£74 GBP or $97 USD per month">
+            <span className={styles.pricePrimary}>£74</span>
             <span className={styles.priceDivider}>/</span>
             <span className={styles.priceSecondary}>$97</span>
           </strong>
