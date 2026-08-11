@@ -59,14 +59,18 @@ const results = [
     category: 'growth' as const,
     images: [
       {
+        src: '/testimonials/zack-64k-followers.png',
+        alt: 'Zack Sinclair’s Instagram profile showing 64,200 followers',
+      },
+      {
         src: '/testimonials/zack-10k-followers.png',
         alt: 'Zack reporting that his Instagram grew from 1,500 to 10,000 followers',
       },
     ],
     name: 'Zack',
-    result: '1.5K to 10K followers',
-    context: 'A 6.6× increase from where he started.',
-    story: 'Zack joined at roughly 1,500 followers and shared the moment his Instagram passed 10,000.',
+    result: '1.5K to 64K followers',
+    context: 'More than 40× the audience he started with.',
+    story: 'Zack joined at roughly 1,500 followers, first shared the moment he passed 10,000, and has now grown his Instagram to 64,200 followers.',
   },
   {
     category: 'growth' as const,
@@ -415,11 +419,6 @@ export default function LandingPage() {
           <a href="#top" className={styles.logoLink}>
             <Logo />
           </a>
-          <div className={styles.navStatus}>
-            <span className={styles.liveDot} />
-            <strong>Creator Cult is open</strong>
-            <span>Instant access</span>
-          </div>
           <div className={styles.navActions}>
             <Link href="/login" className={styles.loginLink}>
               Client login
@@ -681,7 +680,7 @@ export default function LandingPage() {
               <h3 className={styles.paymentHeading}>Choose how you join</h3>
               <p className={styles.paymentIntro}>Same complete membership. Choose flexibility or save with annual billing.</p>
               <div className={styles.paymentOptions}>
-                <article className={styles.paymentOption}>
+                <article className={`${styles.paymentOption} ${styles.paymentOptionMonthly}`}>
                   <div className={styles.paymentOptionTop}>
                     <h4>Monthly</h4>
                     <span>Flexible</span>
@@ -705,7 +704,7 @@ export default function LandingPage() {
                   </a>
                 </article>
 
-                <article className={`${styles.paymentOption} ${styles.paymentOptionFeatured}`}>
+                <article className={`${styles.paymentOption} ${styles.paymentOptionAnnual}`}>
                   <div className={styles.paymentOptionTop}>
                     <h4>Annual</h4>
                     <span>Best value</span>

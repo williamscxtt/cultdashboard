@@ -42,7 +42,7 @@ const resultGroups = [
 
 const resultImpact = [
   { value: '24M', label: 'views', detail: 'Dino' },
-  { value: '10K', label: 'followers from 1.5K', detail: 'Zack' },
+  { value: '64K', label: 'followers from 1.5K', detail: 'Zack' },
   { value: '$10K', label: 'in one day', detail: 'Michael' },
   { value: '3 weeks', label: 'to first client', detail: 'Brett' },
 ]
