@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
+import Script from 'next/script'
 import {
-  ArrowDown,
   ArrowRight,
   BarChart3,
   Check,
@@ -17,6 +17,16 @@ import {
 import PurchaseButton from './PurchaseButton'
 import ResultsShowcase from './ResultsShowcase'
 import styles from './landing.module.css'
+
+const vidalyticsEmbedScript = `(function (v, i, d, a, l, y, t, c, s) {
+  y='_'+d.toLowerCase();c=d+'L';if(!v[d]){v[d]={};}if(!v[c]){v[c]={};}if(!v[y]){v[y]={};}var vl='Loader',vli=v[y][vl],vsl=v[c][vl + 'Script'],vlf=v[c][vl + 'Loaded'],ve='Embed';
+  if (!vsl){vsl=function(u,cb){
+    if(t){cb();return;}s=i.createElement("script");s.type="text/javascript";s.async=1;s.src=u;
+    if(s.readyState){s.onreadystatechange=function(){if(s.readyState==="loaded"||s.readyState==="complete"){s.onreadystatechange=null;vlf=1;cb();}};}else{s.onload=function(){vlf=1;cb();};}
+    i.getElementsByTagName("head")[0].appendChild(s);
+  };}
+  vsl(l+'loader.min.js',function(){if(!vli){var vlc=v[c][vl];vli=new vlc();}vli.loadScript(l+'player.min.js',function(){var vec=v[d][ve];t=new vec();t.run(a);});});
+})(window, document, 'Vidalytics', 'vidalytics_embed_xi2MrwSxKd_2tR6f', 'https://fast.vidalytics.com/embeds/dJhP3TzA/xi2MrwSxKd_2tR6f/');`
 
 export const metadata: Metadata = {
   title: 'Creator Cult | Turn Your Content Into a Business',
@@ -431,7 +441,7 @@ export default function LandingPage() {
       <section className={styles.hero} id="top">
         <div className={styles.heroGlow} />
         <div className={styles.container}>
-          <div className={styles.heroGrid}>
+          <div className={styles.heroContent}>
             <div className={styles.heroCopy}>
               <p className={styles.heroTag}>For fitness coaches posting and going nowhere</p>
               <h1>
@@ -444,54 +454,52 @@ export default function LandingPage() {
               <p className={styles.heroLead}>
                 Turn what you know into content that grows, an offer people want, and a personal brand that can replace your job.
               </p>
-              <div className={styles.heroActions}>
-                <PurchaseButton className={styles.primaryCta}>
-                  Join Creator Cult <ArrowRight size={17} />
-                </PurchaseButton>
-                <a href="#results" className={styles.secondaryCta}>
-                  See member results <ArrowDown size={16} />
-                </a>
-              </div>
+            </div>
+
+            <div className={styles.vslFrame} aria-label="Creator Cult video presentation">
+              <div
+                id="vidalytics_embed_xi2MrwSxKd_2tR6f"
+                style={{ width: '100%', position: 'relative', paddingTop: '56.25%' }}
+              />
+              <Script id="vidalytics-player-xi2MrwSxKd-2tR6f" strategy="afterInteractive">
+                {vidalyticsEmbedScript}
+              </Script>
+            </div>
+
+            <div className={styles.vslAction}>
+              <a
+                className={styles.vslCheckoutCta}
+                href="https://commas.com/checkout/2Jv3WEf8tgAtTRdFG"
+                data-checkout-plan="monthly"
+                data-checkout-source="vsl"
+                aria-label="Join Creator Cult monthly for £74 GBP or $97 USD"
+              >
+                Join Creator Cult <ArrowRight size={18} />
+              </a>
               <div className={styles.priceNote}>
                 <LockKeyhole size={14} />
                 <span>
-                  Join for <strong>£74 GBP / $97 USD per month</strong>, or save with annual access.
+                  <strong>£74 GBP / $97 USD per month.</strong> Secure checkout and instant access.
                 </span>
-              </div>
-              <div className={styles.heroTrust}>
-                <div className={styles.avatarStack} aria-hidden="true">
-                  <span>FW</span>
-                  <span>BC</span>
-                  <span>TK</span>
-                  <span>+157</span>
-                </div>
-                <p>
-                  <strong>160+ creators</strong>
-                  <span>building inside Creator Cult</span>
-                </p>
               </div>
             </div>
 
-            <div className={styles.heroVisual}>
-              <div className={styles.heroImageWrap}>
-                <Image
-                  src="/will-hero-2.jpg"
-                  alt="Will Scott filming content for Creator Cult"
-                  fill
-                  priority
-                  sizes="(max-width: 800px) 92vw, 42vw"
-                  className={styles.heroImage}
-                />
-                <div className={styles.heroImageShade} />
+            <div className={styles.heroTrust}>
+              <div className={styles.avatarStack} aria-hidden="true">
+                <span>FW</span>
+                <span>BC</span>
+                <span>TK</span>
+                <span>+157</span>
               </div>
-              <div className={`${styles.floatCard} ${styles.floatTop}`}>
-                <span className={styles.floatIcon}><BarChart3 size={16} /></span>
-                <span><strong>500M+</strong> combined views</span>
-              </div>
-              <div className={`${styles.floatCard} ${styles.floatBottom}`}>
-                <span className={styles.floatIcon}><Target size={16} /></span>
-                <span><strong>£500K+</strong> verified member wins</span>
-              </div>
+              <p>
+                <strong>160+ creators</strong>
+                <span>building inside Creator Cult</span>
+              </p>
+              <span className={styles.heroTrustDivider} aria-hidden="true" />
+              <p>
+                <strong>500M+ combined views</strong>
+                <span>generated by Will and Creator Cult members</span>
+              </p>
             </div>
           </div>
         </div>
@@ -680,7 +688,10 @@ export default function LandingPage() {
               <h3 className={styles.paymentHeading}>Choose how you join</h3>
               <p className={styles.paymentIntro}>Same complete membership. Choose flexibility or save with annual billing.</p>
               <div className={styles.paymentOptions}>
-                <article className={`${styles.paymentOption} ${styles.paymentOptionMonthly}`}>
+                <article
+                  className={`${styles.paymentOption} ${styles.paymentOptionMonthly}`}
+                  id="monthly-membership"
+                >
                   <div className={styles.paymentOptionTop}>
                     <h4>Monthly</h4>
                     <span>Flexible</span>

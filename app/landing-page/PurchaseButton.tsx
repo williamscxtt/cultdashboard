@@ -6,7 +6,7 @@ type PurchaseButtonProps = {
 export default function PurchaseButton({ children, className }: PurchaseButtonProps) {
   return (
     <span className={className}>
-      <a href="#pricing" data-pricing-cta>
+      <a href="#monthly-membership" data-pricing-cta>
         {children}
       </a>
     </span>

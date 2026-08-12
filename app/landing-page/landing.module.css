@@ -187,8 +187,7 @@
   position: relative;
   overflow: clip;
   scroll-margin-top: 66px;
-  min-height: 700px;
-  padding: 58px 0 78px;
+  padding: 62px 0 74px;
 }
 
 .heroGlow {
@@ -203,17 +202,19 @@
   pointer-events: none;
 }
 
-.heroGrid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.06fr) minmax(360px, 0.94fr);
+.heroContent {
+  position: relative;
+  z-index: 2;
+  display: flex;
   align-items: center;
-  gap: clamp(48px, 7vw, 92px);
+  flex-direction: column;
 }
 
 .heroCopy {
   position: relative;
   z-index: 2;
-  max-width: 650px;
+  max-width: 880px;
+  text-align: center;
 }
 
 .heroTag,
@@ -248,8 +249,8 @@
 }
 
 .hero h1 {
-  max-width: 680px;
-  font-size: clamp(50px, 5.55vw, 72px);
+  max-width: 880px;
+  font-size: clamp(50px, 6.2vw, 76px);
   line-height: 0.98;
 }
 
@@ -272,11 +273,56 @@
 }
 
 .heroLead {
-  max-width: 590px;
-  margin: 21px 0 0;
+  max-width: 720px;
+  margin: 21px auto 0;
   color: #a9b1bd;
   font-size: clamp(16px, 1.6vw, 19px);
   line-height: 1.7;
+}
+
+.vslFrame {
+  position: relative;
+  isolation: isolate;
+  width: min(100%, 960px);
+  overflow: hidden;
+  margin-top: 38px;
+  border: 1px solid rgba(147, 197, 253, 0.28);
+  border-radius: 20px;
+  background: #080b10;
+  box-shadow:
+    0 30px 90px rgba(0, 0, 0, 0.48),
+    0 0 0 1px rgba(59, 130, 246, 0.05),
+    0 0 80px rgba(59, 130, 246, 0.13);
+}
+
+.vslAction {
+  display: flex;
+  align-items: center;
+  margin-top: 24px;
+  flex-direction: column;
+}
+
+.vslCheckoutCta {
+  display: inline-flex;
+  min-width: min(100%, 310px);
+  min-height: 58px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  border-radius: 11px;
+  padding: 0 28px;
+  background: var(--blue);
+  box-shadow: 0 18px 45px rgba(37, 99, 235, 0.3);
+  color: white;
+  font-size: 14px;
+  font-weight: 800;
+  transition: background 160ms ease, transform 160ms ease, box-shadow 160ms ease;
+}
+
+.vslCheckoutCta:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 21px 50px rgba(37, 99, 235, 0.38);
 }
 
 .heroActions {
@@ -333,9 +379,18 @@
   display: flex;
   align-items: center;
   gap: 15px;
-  margin-top: 34px;
+  width: min(100%, 760px);
+  justify-content: center;
+  margin-top: 28px;
   padding-top: 25px;
   border-top: 1px solid var(--line);
+}
+
+.heroTrustDivider {
+  width: 1px;
+  height: 34px;
+  margin: 0 8px;
+  background: var(--line);
 }
 
 .avatarStack {
@@ -378,78 +433,6 @@
 .heroTrust strong {
   color: #e6ebf2;
   font-size: 13px;
-}
-
-.heroVisual {
-  position: relative;
-  min-height: 540px;
-}
-
-.heroImageWrap {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;
-  background: #101318;
-}
-
-.heroImage {
-  object-fit: cover;
-  object-position: center 32%;
-  filter: saturate(0.74) contrast(1.05);
-}
-
-.heroImageShade {
-  position: absolute;
-  inset: 0;
-  background:
-    linear-gradient(180deg, transparent 44%, rgba(5, 8, 13, 0.78) 100%),
-    linear-gradient(90deg, rgba(5, 8, 13, 0.18), transparent 45%);
-  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.22);
-}
-
-.floatCard {
-  position: absolute;
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 12px;
-  padding: 12px 15px;
-  background: rgba(8, 12, 19, 0.86);
-  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.38);
-  backdrop-filter: blur(14px);
-  color: #98a2b0;
-  font-size: 11px;
-}
-
-.floatCard strong {
-  display: block;
-  color: white;
-  font-size: 14px;
-}
-
-.floatIcon {
-  display: inline-flex;
-  width: 32px;
-  height: 32px;
-  align-items: center;
-  justify-content: center;
-  border-radius: 8px;
-  background: rgba(59, 130, 246, 0.14);
-  color: var(--blue-bright);
-}
-
-.floatTop {
-  top: 36px;
-  right: -28px;
-}
-
-.floatBottom {
-  bottom: 34px;
-  left: -32px;
 }
 
 .proofTicker {
@@ -1492,6 +1475,7 @@
 }
 
 .paymentOptionMonthly {
+  scroll-margin-top: 86px;
   border-color: rgba(147, 197, 253, 0.78);
   background: linear-gradient(145deg, #4b91ff 0%, var(--blue) 48%, #2563eb 100%);
   box-shadow: 0 24px 58px rgba(37, 99, 235, 0.32);
@@ -1863,19 +1847,6 @@
 }
 
 @media (max-width: 1020px) {
-  .heroGrid {
-    grid-template-columns: minmax(0, 1fr) minmax(330px, 0.8fr);
-    gap: 45px;
-  }
-
-  .floatTop {
-    right: -12px;
-  }
-
-  .floatBottom {
-    left: -12px;
-  }
-
   .phaseBody {
     grid-template-columns: 110px minmax(220px, 0.9fr) minmax(220px, 1fr);
   }
@@ -1886,7 +1857,6 @@
     padding-top: 58px;
   }
 
-  .heroGrid,
   .storyGrid,
   .pricingGrid {
     grid-template-columns: 1fr;
@@ -1906,19 +1876,12 @@
     margin-left: auto;
   }
 
-  .heroActions,
   .heroTrust {
     justify-content: center;
   }
 
   .priceNote {
     justify-content: center;
-  }
-
-  .heroVisual {
-    width: min(100%, 600px);
-    min-height: 640px;
-    margin: 0 auto;
   }
 
   .resultGrid,
@@ -2017,9 +1980,14 @@
     line-height: 1.65;
   }
 
-  .heroActions {
+  .vslFrame {
+    margin-top: 30px;
+    border-radius: 13px;
+  }
+
+  .vslAction,
+  .vslCheckoutCta {
     width: 100%;
-    flex-direction: column;
   }
 
   .primaryCta,
@@ -2038,22 +2006,21 @@
   }
 
   .heroTrust {
-    justify-content: flex-start;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    justify-content: normal;
     text-align: left;
   }
 
-  .heroVisual {
-    min-height: 500px;
+  .heroTrustDivider {
+    display: none;
   }
 
-  .floatTop {
-    top: 20px;
-    right: -5px;
-  }
-
-  .floatBottom {
-    bottom: 20px;
-    left: -5px;
+  .heroTrust > p:last-child {
+    grid-column: 1 / -1;
+    margin-top: 3px;
+    padding-top: 14px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
   }
 
   .tickerTrack {
