@@ -1542,6 +1542,19 @@
   text-align: center;
 }
 
+.membershipPrice .regularPrice {
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.membershipPrice .regularPrice s {
+  text-decoration-color: rgba(255, 255, 255, 0.72);
+  text-decoration-thickness: 1.5px;
+}
+
 .membershipPrice strong {
   font-family: var(--font-display), sans-serif;
   font-size: clamp(28px, 4vw, 42px);

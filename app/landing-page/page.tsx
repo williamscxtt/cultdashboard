@@ -385,7 +385,7 @@ const faqs = [
   {
     question: 'How does the pricing work?',
     answer:
-      'Creator Cult is currently $49 USD per month through Skool. You can cancel at any time, and your course, community, coaching, and Cult Dashboard access are all included while your membership is active.',
+      'Creator Cult is normally $97 USD per month. The current discounted price is $49 USD per month through Skool, saving you $48 every month. You can cancel at any time, and your course, community, coaching, and Cult Dashboard access are all included while your membership is active.',
   },
   {
     question: 'How much time do I need each week?',
@@ -477,14 +477,14 @@ export default function LandingPage() {
               <a
                 className={styles.vslCheckoutCta}
                 href={SKOOL_URL}
-                aria-label="Join Creator Cult on Skool for $49 per month"
+                aria-label="Join Creator Cult on Skool for the discounted price of $49 per month, normally $97"
               >
                 Join Creator Cult <ArrowRight size={18} />
               </a>
               <div className={styles.priceNote}>
                 <LockKeyhole size={14} />
                 <span>
-                  <strong>$49 USD per month.</strong> Join and get instant access on Skool.
+                  <strong>Discounted to $49/month.</strong> Normally $97. Get instant access on Skool.
                 </span>
               </div>
             </div>
@@ -699,19 +699,20 @@ export default function LandingPage() {
                 >
                   <div className={styles.paymentOptionTop}>
                     <h4>Monthly membership</h4>
-                    <span>Founding rate</span>
+                    <span>Save $48/month</span>
                   </div>
-                  <div className={styles.membershipPrice} role="group" aria-label="$49 USD per month">
+                  <div className={styles.membershipPrice} role="group" aria-label="$49 USD per month, discounted from the usual price of $97">
+                    <span className={styles.regularPrice}>Usually <s>$97/month</s></span>
                     <strong aria-hidden="true">
                       <span className={styles.pricePrimary}>$49</span>
                     </strong>
                     <span>/ month</span>
                   </div>
-                  <p className={styles.paymentDescription}>Cancel any time. Your current price stays locked in while your membership remains active.</p>
+                  <p className={styles.paymentDescription}>Discounted launch price. Your $49 rate stays locked in while your membership remains active. Cancel any time.</p>
                   <a
                     className={styles.checkoutCta}
                     href={SKOOL_URL}
-                    aria-label="Join Creator Cult on Skool for $49 per month"
+                    aria-label="Join Creator Cult on Skool for the discounted price of $49 per month, normally $97"
                   >
                     Join on Skool <ArrowRight size={17} />
                   </a>
@@ -758,7 +759,7 @@ export default function LandingPage() {
           <h2>Or it can be the first move in a <span>real system.</span></h2>
           <p>Join Creator Cult today. No application. No sales call. Start as soon as you pay.</p>
           <PurchaseButton className={styles.primaryCta}>Join Creator Cult <ArrowRight size={17} /></PurchaseButton>
-          <span className={styles.finalPrice}>$49 USD per month on Skool. Cancel any time.</span>
+          <span className={styles.finalPrice}>Discounted to $49/month on Skool — normally $97. Cancel any time.</span>
         </div>
       </section>
 
@@ -777,10 +778,10 @@ export default function LandingPage() {
 
       <div className={styles.mobileBar}>
         <div>
-          <strong aria-label="$49 USD per month">
+          <strong aria-label="$49 USD per month, discounted from $97">
             <span className={styles.pricePrimary}>$49</span>
           </strong>
-          <span>per month</span>
+          <span>per month · usually $97</span>
         </div>
         <PurchaseButton
           className={styles.mobileCta}
