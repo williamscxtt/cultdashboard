@@ -253,7 +253,7 @@ export default function ClientAccessPage() {
                 Create your account
               </h1>
               <p style={{ fontSize: 13, color: 'hsl(0 5% 45%)', marginBottom: 32 }}>
-                Get access to your Creator Cult dashboard
+                Use the same email address you used to join Creator Cult
               </p>
 
               {success ? (

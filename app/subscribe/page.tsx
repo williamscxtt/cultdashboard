@@ -1,46 +1,22 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import Link from 'next/link'
+import { Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Zap, Check, Lock, CreditCard } from 'lucide-react'
+import { Check, Lock, MessageCircle, Zap } from 'lucide-react'
 
-// Separated so useSearchParams() has a Suspense boundary (Next.js requirement)
+const CREATOR_CULT_CHECKOUT = 'https://commas.com/checkout/nmy5WClQgG80UCAcF'
+
 function SubscribeContent() {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const searchParams = useSearchParams()
-  const canceled = searchParams.get('canceled') === '1'
   const pastDue = searchParams.get('past_due') === '1'
 
-  async function handleSubscribe() {
-    setLoading(true)
-    setError(null)
-    try {
-      const res = await fetch('/api/stripe/checkout', { method: 'POST' })
-      const data = await res.json()
-      if (data.url) {
-        window.location.href = data.url
-      } else {
-        setError(data.error ?? 'Something went wrong. Please try again.')
-      }
-    } catch {
-      setError('Network error. Please try again.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   return (
-    <div style={{ width: '100%', maxWidth: 420 }}>
-
-      {/* Logo */}
-      <div style={{ textAlign: 'center', marginBottom: 32 }}>
+    <div style={{ width: '100%', maxWidth: 460 }}>
+      <div style={{ textAlign: 'center', marginBottom: 28 }}>
         <div style={{
           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-          width: 48, height: 48, borderRadius: 14,
-          background: 'rgba(255,255,255,0.08)',
-          border: '1px solid rgba(255,255,255,0.1)',
-          marginBottom: 16,
+          width: 48, height: 48, borderRadius: 14, background: '#3b82f6', marginBottom: 16,
         }}>
           <Zap size={22} color="white" fill="white" />
         </div>
@@ -49,127 +25,73 @@ function SubscribeContent() {
         </div>
       </div>
 
-      {/* Past due / canceled banners */}
-      {(pastDue || canceled) && (
-        <div style={{
-          marginBottom: 20, padding: '12px 16px', borderRadius: 10,
-          background: pastDue ? 'rgba(239,68,68,0.1)' : 'rgba(255,255,255,0.04)',
-          border: `1px solid ${pastDue ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.08)'}`,
-          color: pastDue ? '#f87171' : 'rgba(255,255,255,0.5)',
-          fontSize: 13,
-        }}>
-          {pastDue
-            ? 'Your last payment failed. Please subscribe to regain access.'
-            : 'Checkout was cancelled. Subscribe below to access your dashboard.'}
-        </div>
-      )}
-
-      {/* Card */}
       <div style={{
-        background: '#141414',
-        border: '1px solid rgba(255,255,255,0.08)',
-        borderRadius: 16,
-        overflow: 'hidden',
+        background: '#141414', border: '1px solid rgba(255,255,255,0.09)',
+        borderRadius: 18, overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,0.35)',
       }}>
-        {/* Header */}
         <div style={{
-          padding: '28px 28px 24px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
-          background: 'linear-gradient(160deg, rgba(59,130,246,0.07) 0%, transparent 60%)',
+          padding: '30px 28px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+          background: 'linear-gradient(160deg, rgba(59,130,246,0.12) 0%, transparent 65%)',
         }}>
-          {/* Free month hero */}
-          <div style={{ fontSize: 34, fontWeight: 800, color: '#fff', letterSpacing: '-0.8px', lineHeight: 1.1, marginBottom: 10 }}>
-            30 days free
+          <div style={{ fontSize: 30, fontWeight: 800, color: '#fff', letterSpacing: '-0.8px', lineHeight: 1.1, marginBottom: 12 }}>
+            Your Dashboard is included.
           </div>
-          <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.4)', fontWeight: 400, marginBottom: 16 }}>
-            then £50/month · cancel anytime
-          </div>
-
-          {/* Why it costs */}
-          <div style={{
-            padding: '12px 14px',
-            borderRadius: 10,
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.07)',
-            fontSize: 12,
-            color: 'rgba(255,255,255,0.4)',
-            lineHeight: 1.65,
-          }}>
-            <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>Why £50/month?</span>
-            {' '}The dashboard runs real AI. Weekly scripts, competitor analysis, hook scoring, and Ask Will AI are all powered by live AI credits. The £50 covers those running costs so the tools stay fast, accurate, and always on.
-          </div>
+          <p style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65 }}>
+            Creator Cult members do not need a second subscription or a separate 30-day trial. Use the same email address you used when joining.
+          </p>
         </div>
 
-        {/* Features */}
-        <div style={{ padding: '20px 28px' }}>
-          {[
-            'Full Instagram analytics and follower tracking',
-            'AI competitor analysis on your niche',
-            'Weekly AI script writer based on competitor data',
-            'Story sequence generator',
-            'Offer builder',
-            'Lead magnet generator',
-            'Ask Will AI, available 24/7',
-          ].map((feature) => (
-            <div key={feature} style={{
-              display: 'flex', alignItems: 'flex-start', gap: 10,
-              marginBottom: 10,
-            }}>
-              <div style={{
-                flexShrink: 0, width: 18, height: 18, borderRadius: '50%',
-                background: 'rgba(59,130,246,0.15)',
-                border: '1px solid rgba(59,130,246,0.3)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                marginTop: 1,
-              }}>
-                <Check size={10} color="#60a5fa" strokeWidth={3} />
-              </div>
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>{feature}</span>
-            </div>
-          ))}
-        </div>
-
-        {/* CTA */}
-        <div style={{ padding: '4px 28px 28px' }}>
-          {error && (
+        <div style={{ padding: '22px 28px 28px' }}>
+          {pastDue ? (
             <div style={{
-              marginBottom: 12, padding: '10px 14px', borderRadius: 8,
+              marginBottom: 18, padding: '12px 14px', borderRadius: 10,
               background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)',
-              color: '#f87171', fontSize: 13,
+              color: '#fca5a5', fontSize: 13, lineHeight: 1.55,
             }}>
-              {error}
+              Your Creator Cult payment needs attention. Update it in Commas, then sign in again. If you have already paid, message Will below.
+            </div>
+          ) : (
+            <div style={{
+              display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 20,
+              color: 'rgba(255,255,255,0.68)', fontSize: 13, lineHeight: 1.55,
+            }}>
+              <Check size={18} color="#60a5fa" style={{ flexShrink: 0, marginTop: 1 }} />
+              We could not confirm an active Creator Cult membership for this login yet.
             </div>
           )}
-          <button
-            onClick={handleSubscribe}
-            disabled={loading}
-            style={{
-              width: '100%', padding: '15px', borderRadius: 10,
-              background: loading ? 'rgba(59,130,246,0.5)' : '#3b82f6',
-              border: 'none', color: '#fff', fontSize: 15, fontWeight: 700,
-              cursor: loading ? 'not-allowed' : 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-              transition: 'background 0.15s',
-              fontFamily: 'inherit',
-              letterSpacing: '-0.1px',
-            }}
-          >
-            <CreditCard size={16} />
-            {loading ? 'Redirecting to checkout…' : 'Claim your free month →'}
-          </button>
-          <p style={{ marginTop: 12, fontSize: 11, color: 'rgba(255,255,255,0.25)', textAlign: 'center', lineHeight: 1.6 }}>
-            Card saved but not charged today. First month completely free,<br />then £50/month. Cancel before it ends and pay nothing.
-          </p>
+
+          <Link href="/client-access" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '100%', minHeight: 48, borderRadius: 10, background: '#3b82f6',
+            color: '#fff', fontSize: 14, fontWeight: 750, textDecoration: 'none',
+            boxSizing: 'border-box', marginBottom: 10,
+          }}>
+            Sign in with my purchase email →
+          </Link>
+
+          <a href={CREATOR_CULT_CHECKOUT} target="_blank" rel="noopener noreferrer" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '100%', minHeight: 46, borderRadius: 10,
+            border: '1px solid rgba(255,255,255,0.11)', color: 'rgba(255,255,255,0.75)',
+            fontSize: 13, fontWeight: 700, textDecoration: 'none', boxSizing: 'border-box',
+          }}>
+            Join Creator Cult — $49/month
+          </a>
+
+          <a href="https://instagram.com/willscxtt" target="_blank" rel="noopener noreferrer" style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+            color: 'rgba(255,255,255,0.4)', fontSize: 12, textDecoration: 'none', marginTop: 18,
+          }}>
+            <MessageCircle size={13} /> Already paid but still locked out? Message Will
+          </a>
         </div>
       </div>
 
-      {/* Lock note */}
       <div style={{
-        marginTop: 20, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        marginTop: 18, display: 'flex', alignItems: 'center', justifyContent: 'center',
         gap: 6, color: 'rgba(255,255,255,0.25)', fontSize: 12,
       }}>
-        <Lock size={11} />
-        Dashboard access requires an active subscription
+        <Lock size={11} /> Access follows your Creator Cult membership
       </div>
     </div>
   )
@@ -178,18 +100,12 @@ function SubscribeContent() {
 export default function SubscribePage() {
   return (
     <div style={{
-      minHeight: '100dvh',
-      background: '#0a0a0a',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingTop: 'max(24px, env(safe-area-inset-top))',
-      paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
-      paddingLeft: 'max(24px, env(safe-area-inset-left))',
-      paddingRight: 'max(24px, env(safe-area-inset-right))',
+      minHeight: '100dvh', background: '#080808', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      paddingTop: 'max(24px, env(safe-area-inset-top))', paddingBottom: 'max(24px, env(safe-area-inset-bottom))',
+      paddingLeft: 'max(20px, env(safe-area-inset-left))', paddingRight: 'max(20px, env(safe-area-inset-right))',
       fontFamily: 'Inter, system-ui, sans-serif',
     }}>
-      <Suspense fallback={<div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 14 }}>Loading…</div>}>
+      <Suspense fallback={<div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Loading…</div>}>
         <SubscribeContent />
       </Suspense>
     </div>

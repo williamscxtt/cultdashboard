@@ -16,6 +16,51 @@ const admin = createAdmin(
   process.env.SUPABASE_SERVICE_KEY!
 )
 
+type MemberEntitlement = {
+  provider: string
+  external_customer_id: string | null
+  external_subscription_id: string | null
+  status: string
+  plan_type: 'monthly' | 'biannual' | null
+  amount: number | null
+  currency: string | null
+  period_end: string | null
+}
+
+async function claimPaidMembership(email: string, userId?: string) {
+  const normalizedEmail = email.trim().toLowerCase()
+  const { data } = await admin
+    .from('member_entitlements')
+    .select('provider, external_customer_id, external_subscription_id, status, plan_type, amount, currency, period_end')
+    .eq('email', normalizedEmail)
+    .maybeSingle()
+
+  const entitlement = data as MemberEntitlement | null
+
+  if (!entitlement) return null
+
+  const updates = {
+    membership_tier: 'creator_cult',
+    billing_provider: entitlement.provider,
+    external_customer_id: entitlement.external_customer_id,
+    external_subscription_id: entitlement.external_subscription_id,
+    subscription_status: entitlement.status,
+    subscription_period_end: entitlement.period_end,
+    plan_type: entitlement.plan_type,
+    subscription_amount: entitlement.amount,
+    subscription_currency: entitlement.currency,
+    is_active: true,
+  }
+
+  const query = admin.from('profiles').update(updates)
+  const { error } = userId
+    ? await query.eq('id', userId)
+    : await query.eq('email', normalizedEmail)
+
+  if (error) console.error('[signup] membership claim failed:', error)
+  return entitlement
+}
+
 function buildWelcomeEmail(name: string, email: string, loginUrl: string): string {
   const firstName = name.split(' ')[0] || 'there'
   return `<!DOCTYPE html>
@@ -89,6 +134,7 @@ export async function POST(req: NextRequest) {
   if (createError) {
     const msg = createError.message.toLowerCase()
     if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('duplicate')) {
+      await claimPaidMembership(email)
       return NextResponse.json({ error: 'already_exists' }, { status: 409 })
     }
     return NextResponse.json({ error: createError.message }, { status: 400 })
@@ -106,6 +152,8 @@ export async function POST(req: NextRequest) {
     onboarding_completed: true,
     onboarding_hub_complete: false,
   }, { onConflict: 'id', ignoreDuplicates: false })
+
+  await claimPaidMembership(email, userId)
 
   // Send welcome email via Resend
   if (process.env.RESEND_API_KEY) {

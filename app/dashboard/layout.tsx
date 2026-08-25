@@ -5,7 +5,8 @@ import DashboardShell from '@/components/dashboard/DashboardShell'
 import { SyncProgressProvider } from '@/components/dashboard/SyncProgress'
 import { Toaster } from 'sonner'
 import { getImpersonatedId } from '@/lib/effective-user'
-import { stripe, isSubscriptionActive, isWithinMembershipWindow } from '@/lib/stripe'
+import { stripe } from '@/lib/stripe'
+import { hasDashboardAccess, isSubscriptionActive } from '@/lib/dashboard-access'
 import type { Profile } from '@/lib/types'
 
 const adminClient = createAdmin(
@@ -43,10 +44,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   if (!isAdmin && !impersonatingAs && !realProfile.billing_exempt) {
     let status = realProfile.subscription_status as string | null | undefined
 
-    // Race condition fix: Stripe redirects to /dashboard before the webhook fires.
-    // If status is still null but the client has a stripe_customer_id, check Stripe
-    // directly and update the DB so they're not bounced back to /subscribe immediately.
-    if (!isSubscriptionActive(status) && realProfile.stripe_customer_id && status == null) {
+    // Legacy Stripe customers can still land here before the Stripe webhook.
+    // Commas memberships are synced by the Commas webhook instead.
+    if (
+      !isSubscriptionActive(status)
+      && realProfile.billing_provider !== 'commas'
+      && realProfile.stripe_customer_id
+      && status == null
+    ) {
       try {
         const subscriptions = await stripe.subscriptions.list({
           customer: realProfile.stripe_customer_id as string,
@@ -77,14 +82,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
       }
     }
 
-    // Access is granted by an active/trialing subscription OR by a prepaid
-    // Creator Cult membership window (BNPL buyers have no subscription until
-    // they opt into £150/mo near the end of their 6 months).
-    const withinWindow = isWithinMembershipWindow(
-      realProfile.membership_tier as string | null,
-      realProfile.subscription_period_end as string | null,
-    )
-    if (!isSubscriptionActive(status) && !withinWindow) {
+    const accessProfile = { ...realProfile, subscription_status: status }
+    if (!hasDashboardAccess(accessProfile)) {
       const isPastDue = status === 'past_due' || status === 'unpaid'
       redirect(`/subscribe${isPastDue ? '?past_due=1' : ''}`)
     }

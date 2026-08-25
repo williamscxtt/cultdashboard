@@ -134,9 +134,13 @@ export interface Profile {
   call_transcripts?: Array<{ id: string; label: string; content: string; added_at: string }> | null
   roadmap_json?: Record<string, unknown> | null
   roadmap_generated_at?: string | null
-  // Stripe subscription
+  // Subscription / billing entitlement
   stripe_customer_id?: string | null
   stripe_subscription_id?: string | null
+  billing_provider?: 'stripe' | 'commas' | null
+  external_customer_id?: string | null
+  external_subscription_id?: string | null
+  subscription_currency?: string | null
   subscription_status?: 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | null
   subscription_period_end?: string | null
   subscription_trial_end?: string | null

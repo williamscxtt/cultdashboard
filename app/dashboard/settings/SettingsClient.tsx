@@ -24,24 +24,26 @@ function daysUntil(iso: string | null | undefined): number | null {
 
 function BillingCard({ profile }: { profile: Profile }) {
   const planLabel = profile.plan_type === 'biannual' ? '6-Month Plan' : 'Monthly Plan'
+  const currencySymbol = profile.subscription_currency === 'USD' ? '$' : '£'
   const planPrice = (() => {
     if (profile.plan_type === 'biannual') {
       const amt = profile.subscription_amount
-      return amt ? `£${amt / 100} / 6 months` : '£997 / 6 months'
+      return amt ? `${currencySymbol}${amt / 100} / 6 months` : '6-month membership'
     }
     const amt = profile.subscription_amount
     if (amt) {
-      const pounds = amt / 100
-      return `£${Number.isInteger(pounds) ? pounds : pounds.toFixed(2)} / month`
+      const value = amt / 100
+      return `${currencySymbol}${Number.isInteger(value) ? value : value.toFixed(2)} / month`
     }
-    return '£197 / month'
+    return 'Monthly membership'
   })()
   const days = daysUntil(profile.subscription_period_end)
   const renewalDate = formatDate(profile.subscription_period_end)
   const isCreatorCult = profile.membership_tier === 'creator_cult'
   const hasSubscription = !!profile.subscription_status
+  const isLegacyLifetime = isCreatorCult && !profile.billing_provider
 
-  const statusColor = profile.subscription_status === 'active' || profile.subscription_status === 'trialing'
+  const statusColor = isLegacyLifetime || profile.subscription_status === 'active' || profile.subscription_status === 'trialing'
     ? 'hsl(142 71% 45%)'
     : profile.subscription_status === 'past_due' || profile.subscription_status === 'unpaid'
     ? 'hsl(38 92% 50%)'
@@ -49,7 +51,8 @@ function BillingCard({ profile }: { profile: Profile }) {
     ? 'hsl(0 84% 60%)'
     : 'var(--muted-foreground)'
 
-  const statusLabel = profile.subscription_status === 'trialing' ? 'Trial'
+  const statusLabel = isLegacyLifetime ? 'Member'
+    : profile.subscription_status === 'trialing' ? 'Trial'
     : profile.subscription_status === 'active' ? 'Active'
     : profile.subscription_status === 'past_due' ? 'Past Due'
     : profile.subscription_status === 'canceled' ? 'Canceled'
@@ -82,7 +85,11 @@ function BillingCard({ profile }: { profile: Profile }) {
             {isCreatorCult ? 'Creator Cult — Full Programme' : planLabel}
           </div>
           <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
-            {isCreatorCult ? 'Lifetime dashboard access included' : hasSubscription ? planPrice : 'No active subscription'}
+            {isLegacyLifetime
+              ? 'Lifetime member — Dashboard included'
+              : isCreatorCult
+                ? `${planPrice} — Dashboard included`
+                : hasSubscription ? planPrice : 'No active subscription'}
           </div>
         </div>
         <div style={{
@@ -96,7 +103,7 @@ function BillingCard({ profile }: { profile: Profile }) {
       </div>
 
       {/* Renewal info */}
-      {!isCreatorCult && profile.subscription_period_end && (
+      {profile.billing_provider === 'commas' && profile.subscription_period_end && (
         <div style={{
           fontSize: 13, color: 'var(--muted-foreground)',
           marginBottom: 16,
@@ -363,7 +370,7 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
         </Card>
 
         {/* Plan & Billing */}
-        {(profile.role === 'admin' || profile.subscription_status) && (
+        {(profile.role === 'admin' || profile.subscription_status || profile.membership_tier === 'creator_cult') && (
           <BillingCard profile={profile} />
         )}
 
