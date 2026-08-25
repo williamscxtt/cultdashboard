@@ -5,8 +5,6 @@ import { usePathname } from 'next/navigation'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 import ImpersonationBanner from './ImpersonationBanner'
-import UpgradeBanner from './UpgradeBanner'
-import CreatorCultUpsellModal from './CreatorCultUpsellModal'
 import type { Profile } from '@/lib/types'
 
 interface Props {
@@ -96,19 +94,9 @@ export default function DashboardShell({
           paddingBottom: 'env(safe-area-inset-bottom)',
           WebkitOverflowScrolling: 'touch',
         }}>
-          {/* Upgrade banner — only shown to monthly subscribers, never to admins or during impersonation */}
-          {!isImpersonating && realProfile.role !== 'admin' && (
-            <div style={{ paddingLeft: 24, paddingRight: 24, paddingBottom: 0 }}>
-              <UpgradeBanner profile={realProfile} />
-            </div>
-          )}
           {children}
         </main>
       </div>
-      {/* Creator Cult upsell modal — shows every 21 days for dashboard-tier subscribers */}
-      {!isImpersonating && realProfile.role !== 'admin' && (
-        <CreatorCultUpsellModal profile={realProfile} />
-      )}
     </div>
   )
 }

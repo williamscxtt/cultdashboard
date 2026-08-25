@@ -8,192 +8,43 @@ import { Video, LogOut, Eye, EyeOff, RefreshCw, AlertTriangle, Unlink } from 'lu
 import { useIsMobile } from '@/lib/use-mobile'
 import { toast } from 'sonner'
 
-const BIANNUAL_LINK = 'https://buy.stripe.com/bJe28qcmWe970hMews9IQ1P'
-const BOOK_CALL_URL = 'https://apply.scottvip.com'
+function MembershipCard({ profile }: { profile: Profile }) {
+  const isLegacyLifetime = profile.access_type === 'legacy_lifetime'
+    || (profile.membership_tier === 'creator_cult' && !profile.access_type && !profile.billing_provider)
+  const isSkoolMember = profile.access_type === 'skool_subscription' || profile.billing_provider === 'skool'
 
-function formatDate(iso: string | null | undefined) {
-  if (!iso) return '—'
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
-}
+  const title = profile.role === 'admin'
+    ? 'Creator Cult admin'
+    : isLegacyLifetime
+      ? 'Original Creator Cult member'
+      : isSkoolMember
+        ? 'Creator Cult Skool member'
+        : 'Creator Cult member'
 
-function daysUntil(iso: string | null | undefined): number | null {
-  if (!iso) return null
-  const diff = new Date(iso).getTime() - Date.now()
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)))
-}
-
-function BillingCard({ profile }: { profile: Profile }) {
-  const planLabel = profile.plan_type === 'biannual' ? '6-Month Plan' : 'Monthly Plan'
-  const currencySymbol = profile.subscription_currency === 'USD' ? '$' : '£'
-  const planPrice = (() => {
-    if (profile.plan_type === 'biannual') {
-      const amt = profile.subscription_amount
-      return amt ? `${currencySymbol}${amt / 100} / 6 months` : '6-month membership'
-    }
-    const amt = profile.subscription_amount
-    if (amt) {
-      const value = amt / 100
-      return `${currencySymbol}${Number.isInteger(value) ? value : value.toFixed(2)} / month`
-    }
-    return 'Monthly membership'
-  })()
-  const days = daysUntil(profile.subscription_period_end)
-  const renewalDate = formatDate(profile.subscription_period_end)
-  const isCreatorCult = profile.membership_tier === 'creator_cult'
-  const hasSubscription = !!profile.subscription_status
-  const isLegacyLifetime = isCreatorCult && !profile.billing_provider
-
-  const statusColor = isLegacyLifetime || profile.subscription_status === 'active' || profile.subscription_status === 'trialing'
-    ? 'hsl(142 71% 45%)'
-    : profile.subscription_status === 'past_due' || profile.subscription_status === 'unpaid'
-    ? 'hsl(38 92% 50%)'
-    : profile.subscription_status === 'canceled'
-    ? 'hsl(0 84% 60%)'
-    : 'var(--muted-foreground)'
-
-  const statusLabel = isLegacyLifetime ? 'Member'
-    : profile.subscription_status === 'trialing' ? 'Trial'
-    : profile.subscription_status === 'active' ? 'Active'
-    : profile.subscription_status === 'past_due' ? 'Past Due'
-    : profile.subscription_status === 'canceled' ? 'Canceled'
-    : 'No Sub'
+  const description = isLegacyLifetime
+    ? 'Lifetime Cult Dashboard access included'
+    : isSkoolMember
+      ? 'Cult Dashboard access included with your active Skool membership'
+      : 'Cult Dashboard access included'
 
   return (
     <Card style={{ padding: 20 }}>
-      <SectionLabel>Plan &amp; Billing</SectionLabel>
-
-      {/* Admin preview note */}
-      {profile.role === 'admin' && !hasSubscription && (
-        <div style={{
-          fontSize: 11, color: 'var(--muted-foreground)', marginBottom: 12,
-          padding: '6px 10px', borderRadius: 6,
-          background: 'var(--muted)', border: '1px solid var(--border)',
-        }}>
-          Admin preview — clients with active subscriptions see this section.
-        </div>
-      )}
-
-      {/* Current plan summary */}
+      <SectionLabel>Membership access</SectionLabel>
       <div style={{
-        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16,
         padding: '14px 16px', borderRadius: 10,
         background: 'var(--muted)', border: '1px solid var(--border)',
-        marginBottom: 16,
       }}>
         <div>
           <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--foreground)', marginBottom: 2 }}>
-            {isCreatorCult ? 'Creator Cult — Full Programme' : planLabel}
+            {title}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>
-            {isLegacyLifetime
-              ? 'Lifetime member — Dashboard included'
-              : isCreatorCult
-                ? `${planPrice} — Dashboard included`
-                : hasSubscription ? planPrice : 'No active subscription'}
+          <div style={{ fontSize: 12, color: 'var(--muted-foreground)', lineHeight: 1.5 }}>
+            {description}
           </div>
         </div>
-        <div style={{
-          fontSize: 11, fontWeight: 700, letterSpacing: '.1em', textTransform: 'uppercase',
-          color: statusColor, background: `${statusColor}18`,
-          border: `1px solid ${statusColor}40`,
-          borderRadius: 5, padding: '3px 8px',
-        }}>
-          {statusLabel}
-        </div>
+        <Badge variant="success">Active</Badge>
       </div>
-
-      {/* Renewal info */}
-      {profile.billing_provider === 'commas' && profile.subscription_period_end && (
-        <div style={{
-          fontSize: 13, color: 'var(--muted-foreground)',
-          marginBottom: 16,
-          display: 'flex', alignItems: 'center', gap: 6,
-        }}>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-          </svg>
-          Next renewal: <strong style={{ color: 'var(--foreground)' }}>{renewalDate}</strong>
-          {days !== null && <span style={{ color: 'var(--muted-foreground)' }}>({days} day{days !== 1 ? 's' : ''} away)</span>}
-        </div>
-      )}
-
-      {/* Upgrade to biannual — only for monthly subscribers */}
-      {!isCreatorCult && profile.plan_type === 'monthly' && (
-        <div style={{
-          padding: '14px 16px', borderRadius: 10,
-          background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)',
-          marginBottom: 16,
-        }}>
-          {(() => {
-            const monthlyPence = profile.subscription_amount ?? 19700
-            const sixMonths = monthlyPence * 6 / 100
-            const saving = Math.round(sixMonths - 997)
-            return (
-              <>
-                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
-                  Switch to 6 months — save £{saving}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 12, lineHeight: 1.5 }}>
-                  Pay £997 every 6 months instead of {planPrice}. That&apos;s a saving of £{saving} — same tools, same access, locked in.
-                </div>
-              </>
-            )
-          })()}
-          <a
-            href={BIANNUAL_LINK}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              fontSize: 12, fontWeight: 700, color: '#ffffff',
-              background: '#3b82f6', borderRadius: 6,
-              padding: '8px 14px', textDecoration: 'none',
-              cursor: 'pointer', transition: 'opacity 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.8')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >
-            Upgrade to 6 months →
-          </a>
-        </div>
-      )}
-
-      {/* Creator Cult upsell — for dashboard-only members */}
-      {!isCreatorCult && (
-        <div style={{
-          padding: '14px 16px', borderRadius: 10,
-          background: 'rgba(226,201,126,0.05)', border: '1px solid rgba(226,201,126,0.2)',
-        }}>
-          <div style={{
-            fontSize: 10, fontWeight: 700, letterSpacing: '.14em', textTransform: 'uppercase',
-            color: '#e2c97e', marginBottom: 8,
-          }}>
-            Full Creator Cult
-          </div>
-          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--foreground)', marginBottom: 4 }}>
-            Want Will coaching you every week?
-          </div>
-          <div style={{ fontSize: 12, color: 'var(--muted-foreground)', marginBottom: 12, lineHeight: 1.5 }}>
-            Full Creator Cult adds the complete 5-phase course, live weekly group coaching, 1-to-1 support, and the private Circle community — everything around the tools you already have.
-          </div>
-          <a
-            href={BOOK_CALL_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              fontSize: 12, fontWeight: 700, color: '#0d0d0a',
-              background: '#e2c97e', borderRadius: 6,
-              padding: '8px 14px', textDecoration: 'none',
-              cursor: 'pointer', transition: 'opacity 0.15s',
-            }}
-            onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
-            onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
-          >
-            Apply for Creator Cult →
-          </a>
-        </div>
-      )}
     </Card>
   )
 }
@@ -369,10 +220,7 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
           </form>
         </Card>
 
-        {/* Plan & Billing */}
-        {(profile.role === 'admin' || profile.subscription_status || profile.membership_tier === 'creator_cult') && (
-          <BillingCard profile={profile} />
-        )}
+        <MembershipCard profile={profile} />
 
         {/* Instagram */}
         <Card style={{ padding: 20 }}>

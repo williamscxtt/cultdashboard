@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 400 })
   }
 
-  // Update profile — billing_exempt so admin-added clients bypass the subscription gate
+  // Admin-added clients receive an explicit manual access override.
   const { error: profileError } = await adminClient
     .from('profiles')
     .update({ name, ig_username: ig_username || null, billing_exempt: true, is_active: true })
@@ -140,7 +140,18 @@ export async function PATCH(req: NextRequest) {
 
   const adminClient = createAdminClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_KEY!)
   const body = await req.json()
-  const { id, is_active, dm_keyword, user_type, creator_style, membership_tier, billing_exempt } = body
+  const {
+    id,
+    is_active,
+    dm_keyword,
+    user_type,
+    creator_style,
+    membership_tier,
+    access_type,
+    billing_provider,
+    subscription_status,
+    billing_exempt,
+  } = body
   if (!id) return NextResponse.json({ error: 'id required' }, { status: 400 })
 
   const updates: Record<string, unknown> = {}
@@ -149,6 +160,9 @@ export async function PATCH(req: NextRequest) {
   if (user_type !== undefined) updates.user_type = user_type || null
   if ('creator_style' in body) updates.creator_style = creator_style || null
   if (membership_tier !== undefined) updates.membership_tier = membership_tier || null
+  if (access_type !== undefined) updates.access_type = access_type || null
+  if (billing_provider !== undefined) updates.billing_provider = billing_provider || null
+  if (subscription_status !== undefined) updates.subscription_status = subscription_status || null
   if (billing_exempt !== undefined) updates.billing_exempt = !!billing_exempt
 
   const { error } = await adminClient.from('profiles').update(updates).eq('id', id)

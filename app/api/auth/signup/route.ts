@@ -39,8 +39,19 @@ async function claimPaidMembership(email: string, userId?: string) {
 
   if (!entitlement) return null
 
+  const { data: existingProfile } = userId
+    ? await admin.from('profiles').select('access_type').eq('id', userId).maybeSingle()
+    : await admin.from('profiles').select('access_type').eq('email', normalizedEmail).maybeSingle()
+
+  // A Skool join or cancellation must never replace an original member's
+  // lifetime entitlement.
+  if (existingProfile?.access_type === 'legacy_lifetime') return entitlement
+
+  const hasActiveMembership = entitlement.status === 'active' || entitlement.status === 'trialing'
+
   const updates = {
     membership_tier: 'creator_cult',
+    access_type: entitlement.provider === 'skool' ? 'skool_subscription' : null,
     billing_provider: entitlement.provider,
     external_customer_id: entitlement.external_customer_id,
     external_subscription_id: entitlement.external_subscription_id,
@@ -49,7 +60,7 @@ async function claimPaidMembership(email: string, userId?: string) {
     plan_type: entitlement.plan_type,
     subscription_amount: entitlement.amount,
     subscription_currency: entitlement.currency,
-    is_active: true,
+    is_active: hasActiveMembership,
   }
 
   const query = admin.from('profiles').update(updates)

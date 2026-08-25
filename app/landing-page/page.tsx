@@ -18,6 +18,8 @@ import PurchaseButton from './PurchaseButton'
 import ResultsShowcase from './ResultsShowcase'
 import styles from './landing.module.css'
 
+const SKOOL_URL = 'https://www.skool.com/creator/about'
+
 const vidalyticsEmbedScript = `(function (v, i, d, a, l, y, t, c, s) {
   y='_'+d.toLowerCase();c=d+'L';if(!v[d]){v[d]={};}if(!v[c]){v[c]={};}if(!v[y]){v[y]={};}var vl='Loader',vli=v[y][vl],vsl=v[c][vl + 'Script'],vlf=v[c][vl + 'Loaded'],ve='Embed';
   if (!vsl){vsl=function(u,cb){
@@ -378,12 +380,12 @@ const faqs = [
   {
     question: 'What exactly happens when I join?',
     answer:
-      'Payment unlocks the full five-phase course, monthly live coaching, the private Circle community, the Cult Dashboard, and a member chat where you can ask questions and get personal feedback from me. There is no application and no sales call.',
+      'You join Creator Cult on Skool and immediately unlock the full five-phase course, monthly live coaching, the private community, the Cult Dashboard, and a member chat where you can ask questions and get personal feedback from me. There is no application and no sales call.',
   },
   {
     question: 'How does the pricing work?',
     answer:
-      'Choose £74 GBP or $97 USD per month, or pay $495 USD for six months. The six-month option saves $87 USD compared with six monthly payments, and both options unlock the same membership.',
+      'Creator Cult is currently $49 USD per month through Skool. You can cancel at any time, and your course, community, coaching, and Cult Dashboard access are all included while your membership is active.',
   },
   {
     question: 'How much time do I need each week?',
@@ -435,7 +437,7 @@ export default function LandingPage() {
             </Link>
             <PurchaseButton
               className={styles.navCta}
-              href="https://commas.com/checkout/nmy5WClQgG80UCAcF"
+              href={SKOOL_URL}
             >
               Join now
             </PurchaseButton>
@@ -474,17 +476,15 @@ export default function LandingPage() {
             <div className={styles.vslAction}>
               <a
                 className={styles.vslCheckoutCta}
-                href="https://commas.com/checkout/nmy5WClQgG80UCAcF"
-                data-checkout-plan="monthly"
-                data-checkout-source="vsl"
-                aria-label="Join Creator Cult monthly for £74 GBP or $97 USD"
+                href={SKOOL_URL}
+                aria-label="Join Creator Cult on Skool for $49 per month"
               >
                 Join Creator Cult <ArrowRight size={18} />
               </a>
               <div className={styles.priceNote}>
                 <LockKeyhole size={14} />
                 <span>
-                  <strong>£74 GBP / $97 USD per month.</strong> Secure checkout and instant access.
+                  <strong>$49 USD per month.</strong> Join and get instant access on Skool.
                 </span>
               </div>
             </div>
@@ -679,7 +679,7 @@ export default function LandingPage() {
               <p className={styles.eyebrow}>Join Creator Cult</p>
               <h2 id="pricing-title">Stop figuring it out <span>alone.</span></h2>
               <p>
-                Join month to month, or save with six-month access. Both plans unlock the complete Creator Cult system from day one.
+                One simple Skool membership unlocks the complete Creator Cult system from day one.
               </p>
               <div className={styles.pricingProof}>
                 <div><strong>160+</strong><span>creators inside</span></div>
@@ -690,69 +690,44 @@ export default function LandingPage() {
             <div className={styles.priceCard}>
               <div className={styles.priceCardGlow} />
               <p className={styles.priceLabel}>Creator Cult membership</p>
-              <h3 className={styles.paymentHeading}>Choose how you join</h3>
-              <p className={styles.paymentIntro}>Same complete membership. Choose flexibility or save with six-month billing.</p>
-              <div className={styles.paymentOptions}>
+              <h3 className={styles.paymentHeading}>Everything included. One price.</h3>
+              <p className={styles.paymentIntro}>Join on Skool and get the course, community, coaching, and Cult Dashboard together.</p>
+              <div className={`${styles.paymentOptions} ${styles.paymentOptionsSingle}`}>
                 <article
                   className={`${styles.paymentOption} ${styles.paymentOptionMonthly}`}
                   id="monthly-membership"
                 >
                   <div className={styles.paymentOptionTop}>
-                    <h4>Monthly</h4>
-                    <span>Flexible</span>
+                    <h4>Monthly membership</h4>
+                    <span>Founding rate</span>
                   </div>
-                  <div className={styles.membershipPrice} role="group" aria-label="£74 GBP or $97 USD per month">
+                  <div className={styles.membershipPrice} role="group" aria-label="$49 USD per month">
                     <strong aria-hidden="true">
-                      <span className={styles.pricePrimary}>£74</span>
-                      <span className={styles.priceDivider}>/</span>
-                      <span className={styles.priceSecondary}>$97</span>
+                      <span className={styles.pricePrimary}>$49</span>
                     </strong>
                     <span>/ month</span>
                   </div>
-                  <p className={styles.paymentDescription}>Full access with a simple monthly membership.</p>
+                  <p className={styles.paymentDescription}>Cancel any time. Your current price stays locked in while your membership remains active.</p>
                   <a
                     className={styles.checkoutCta}
-                    href="https://commas.com/checkout/nmy5WClQgG80UCAcF"
-                    data-checkout-plan="monthly"
-                    aria-label="Join Creator Cult monthly for £74 GBP or $97 USD"
+                    href={SKOOL_URL}
+                    aria-label="Join Creator Cult on Skool for $49 per month"
                   >
-                    Join monthly <ArrowRight size={17} />
-                  </a>
-                </article>
-
-                <article className={`${styles.paymentOption} ${styles.paymentOptionAnnual}`}>
-                  <div className={styles.paymentOptionTop}>
-                    <h4>Six months</h4>
-                    <span>Best value</span>
-                  </div>
-                  <div className={styles.membershipPrice} role="group" aria-label="$495 USD for six months">
-                    <strong aria-hidden="true">
-                      <span className={styles.pricePrimary}>$495</span>
-                    </strong>
-                    <span>/ 6 months</span>
-                  </div>
-                  <p className={styles.paymentDescription}>Save $87 compared with paying monthly for six months.</p>
-                  <a
-                    className={styles.checkoutCta}
-                    href="https://commas.com/checkout/gDoJ3TG5a21G0EY"
-                    data-checkout-plan="six-month"
-                    aria-label="Join Creator Cult for six months for $495 USD"
-                  >
-                    Join for 6 months <ArrowRight size={17} />
+                    Join on Skool <ArrowRight size={17} />
                   </a>
                 </article>
               </div>
               <div className={styles.priceRule} />
-              <p className={styles.includedLabel}>Both memberships include:</p>
+              <p className={styles.includedLabel}>Your membership includes:</p>
               <ul>
                 <li><Check size={16} /> Full 5-phase Creator Cult course</li>
                 <li><Check size={16} /> Monthly live coaching and Q&amp;A with me</li>
                 <li><Check size={16} /> Ask questions and get my personal feedback in the member chat</li>
-                <li><Check size={16} /> Private Circle community</li>
+                <li><Check size={16} /> Private Skool community</li>
                 <li><Check size={16} /> Cult Dashboard with 12 AI tools</li>
                 <li><Check size={16} /> Weekly strategy packages</li>
               </ul>
-              <p className={styles.checkoutNote}><LockKeyhole size={13} /> Secure checkout. Instant access begins as soon as you join.</p>
+              <p className={styles.checkoutNote}><LockKeyhole size={13} /> Secure checkout and instant access are handled by Skool.</p>
             </div>
           </div>
         </div>
@@ -783,7 +758,7 @@ export default function LandingPage() {
           <h2>Or it can be the first move in a <span>real system.</span></h2>
           <p>Join Creator Cult today. No application. No sales call. Start as soon as you pay.</p>
           <PurchaseButton className={styles.primaryCta}>Join Creator Cult <ArrowRight size={17} /></PurchaseButton>
-          <span className={styles.finalPrice}>£74 GBP / $97 USD monthly, or $495 USD for six months.</span>
+          <span className={styles.finalPrice}>$49 USD per month on Skool. Cancel any time.</span>
         </div>
       </section>
 
@@ -802,16 +777,14 @@ export default function LandingPage() {
 
       <div className={styles.mobileBar}>
         <div>
-          <strong aria-label="£74 GBP or $97 USD per month">
-            <span className={styles.pricePrimary}>£74</span>
-            <span className={styles.priceDivider}>/</span>
-            <span className={styles.priceSecondary}>$97</span>
+          <strong aria-label="$49 USD per month">
+            <span className={styles.pricePrimary}>$49</span>
           </strong>
           <span>per month</span>
         </div>
         <PurchaseButton
           className={styles.mobileCta}
-          href="https://commas.com/checkout/nmy5WClQgG80UCAcF"
+          href={SKOOL_URL}
         >
           Join now <ArrowRight size={16} />
         </PurchaseButton>

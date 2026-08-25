@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 import type { Profile } from '@/lib/types'
 import { Card, Badge, Button, PageHeader, EmptyState, StatCard } from '@/components/ui'
-import { Users, Grid3X3, Table2, AlertTriangle, LayoutGrid, Mail, RefreshCw, CreditCard } from 'lucide-react'
+import { Users, Grid3X3, Table2, AlertTriangle, LayoutGrid, Mail, RefreshCw } from 'lucide-react'
 import { toast } from 'sonner'
 import { useIsMobile } from '@/lib/use-mobile'
 
@@ -87,34 +87,45 @@ export default function ClientsManager({ initialClients }: Props) {
     }
   }
 
-  async function toggleBillingExempt(client: Profile) {
-    const supabase = createClient()
-    const newVal = !client.billing_exempt
-    const { error } = await supabase
-      .from('profiles')
-      .update({ billing_exempt: newVal })
-      .eq('id', client.id)
-
-    if (error) {
-      toast.error(error.message)
-    } else {
-      setClients(prev => prev.map(c => c.id === client.id ? { ...c, billing_exempt: newVal } : c))
-      toast.success(`${client.name || client.email}: ${newVal ? 'set to free account' : 'set to paid account'}`)
-    }
-  }
-
   async function toggleMembershipTier(client: Profile) {
-    const newTier = client.membership_tier === 'creator_cult' ? 'dashboard' : 'creator_cult'
+    const newAccessType = client.access_type === 'legacy_lifetime'
+      ? null
+      : client.access_type === 'skool_subscription'
+        ? 'legacy_lifetime'
+        : 'skool_subscription'
+    const newTier = newAccessType ? 'creator_cult' : 'dashboard'
+    const newStatus = newAccessType === 'skool_subscription' ? 'active' : null
+    const newProvider = newAccessType === 'skool_subscription' ? 'skool' : null
+    const newIsActive = newAccessType !== null
     const res = await fetch('/api/admin/clients', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: client.id, membership_tier: newTier }),
+      body: JSON.stringify({
+        id: client.id,
+        membership_tier: newTier,
+        access_type: newAccessType,
+        billing_provider: newProvider,
+        subscription_status: newStatus,
+        is_active: newIsActive,
+      }),
     })
     if (!res.ok) {
       toast.error('Failed to update membership tier')
     } else {
-      setClients(prev => prev.map(c => c.id === client.id ? { ...c, membership_tier: newTier } : c))
-      toast.success(`${client.name || client.email} → ${newTier === 'creator_cult' ? 'Creator Cult' : 'Dashboard'}`)
+      setClients(prev => prev.map(c => c.id === client.id ? {
+        ...c,
+        membership_tier: newTier,
+        access_type: newAccessType,
+        billing_provider: newProvider,
+        subscription_status: newStatus,
+        is_active: newIsActive,
+      } : c))
+      const label = newAccessType === 'legacy_lifetime'
+        ? 'Original CC — lifetime'
+        : newAccessType === 'skool_subscription'
+          ? 'Skool member — active'
+          : 'Access removed'
+      toast.success(`${client.name || client.email} → ${label}`)
     }
   }
 
@@ -400,7 +411,7 @@ export default function ClientsManager({ initialClients }: Props) {
               title={search ? 'No results' : tierFilter === 'dashboard' ? 'No dashboard members yet' : tierFilter === 'creator_cult' ? 'No Creator Cult clients yet' : 'No clients yet'}
               description={
                 search ? 'No clients match your search.' :
-                tierFilter === 'dashboard' ? 'Dashboard members will appear here once they sign up via the payment links.' :
+                tierFilter === 'dashboard' ? 'Members without Creator Cult access will appear here.' :
                 'Add your first client to get started.'
               }
             />
@@ -408,7 +419,7 @@ export default function ClientsManager({ initialClients }: Props) {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 14 }}>
             {filtered.map(client => (
-              <ClientCard key={client.id} client={client} onToggleActive={toggleActive} onToggleBillingExempt={toggleBillingExempt} onToggleTier={toggleMembershipTier} onSendInvite={sendInvite} />
+              <ClientCard key={client.id} client={client} onToggleActive={toggleActive} onToggleTier={toggleMembershipTier} onSendInvite={sendInvite} />
             ))}
           </div>
         )
@@ -506,7 +517,7 @@ export default function ClientsManager({ initialClients }: Props) {
               </tr>
             ) : (
               filtered.map(client => (
-                <ClientRow key={client.id} client={client} onToggleActive={toggleActive} onToggleBillingExempt={toggleBillingExempt} onSendInvite={sendInvite} onSyncIG={syncIG} isSyncing={syncingId === client.id} />
+                <ClientRow key={client.id} client={client} onToggleActive={toggleActive} onSendInvite={sendInvite} onSyncIG={syncIG} isSyncing={syncingId === client.id} />
               ))
             )}
           </tbody>
@@ -524,10 +535,9 @@ export default function ClientsManager({ initialClients }: Props) {
   )
 }
 
-function ClientRow({ client, onToggleActive, onToggleBillingExempt, onSendInvite, onSyncIG, isSyncing }: {
+function ClientRow({ client, onToggleActive, onSendInvite, onSyncIG, isSyncing }: {
   client: Profile
   onToggleActive: (c: Profile) => void
-  onToggleBillingExempt: (c: Profile) => void
   onSendInvite: (email: string, name?: string | null) => void
   onSyncIG: (c: Profile) => void
   isSyncing: boolean
@@ -586,21 +596,18 @@ function ClientRow({ client, onToggleActive, onToggleBillingExempt, onSendInvite
               {client.is_active ? 'Active' : 'Inactive'}
             </span>
           </button>
-          <button
-            onClick={() => onToggleBillingExempt(client)}
-            title={client.billing_exempt ? 'Free account — click to require subscription' : 'Paid account — click to mark as free'}
-            style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit', flexShrink: 0 }}
-          >
-            <span style={{
-              display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
-              fontSize: 10, fontWeight: 700, padding: '3px 7px', borderRadius: 999,
-              background: client.billing_exempt ? 'rgba(139,92,246,0.12)' : 'var(--accent-subtle)',
-              color: client.billing_exempt ? '#a78bfa' : 'var(--accent)',
-            }}>
-              <CreditCard size={9} />
-              {client.billing_exempt ? 'Free' : (fmtSubAmount({ ...client, billing_exempt: false }) ?? 'No sub')}
-            </span>
-          </button>
+          <span style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4, whiteSpace: 'nowrap',
+            fontSize: 10, fontWeight: 700, padding: '3px 7px', borderRadius: 999,
+            background: client.access_type === 'legacy_lifetime' ? 'rgba(139,92,246,0.12)' : 'var(--accent-subtle)',
+            color: client.access_type === 'legacy_lifetime' ? '#a78bfa' : 'var(--accent)',
+          }}>
+            {client.access_type === 'legacy_lifetime'
+              ? 'Original CC'
+              : client.access_type === 'skool_subscription'
+                ? 'Skool member'
+                : 'Unassigned'}
+          </span>
         </div>
       </td>
       <td style={{ padding: '12px 16px' }}>
@@ -656,24 +663,6 @@ function ClientRow({ client, onToggleActive, onToggleBillingExempt, onSendInvite
   )
 }
 
-/** Format a client's subscription amount for display */
-function fmtSubAmount(client: Profile): string | null {
-  if (client.billing_exempt) return 'Free'
-  const amount = client.subscription_amount
-  const plan = client.plan_type
-  if (plan === 'biannual') {
-    if (amount) return `£${amount / 100}/6mo`
-    return '£997/6mo'
-  }
-  // Monthly or unknown plan — show actual amount if we have it
-  if (amount) {
-    const pounds = amount / 100
-    return `£${Number.isInteger(pounds) ? pounds : pounds.toFixed(2)}/mo`
-  }
-  if (plan === 'monthly') return '£197/mo' // fallback if amount not yet backfilled
-  return null
-}
-
 /** Deterministic avatar colour from name/email string */
 function avatarBg(str: string): string {
   const palette = ['#3b82f6', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#6366f1', '#14b8a6', '#f97316']
@@ -681,7 +670,7 @@ function avatarBg(str: string): string {
   return palette[sum % palette.length]
 }
 
-function ClientCard({ client, onToggleActive, onToggleBillingExempt, onToggleTier, onSendInvite }: { client: Profile; onToggleActive: (c: Profile) => void; onToggleBillingExempt: (c: Profile) => void; onToggleTier: (c: Profile) => void; onSendInvite: (email: string, name?: string | null) => void }) {
+function ClientCard({ client, onToggleActive, onToggleTier, onSendInvite }: { client: Profile; onToggleActive: (c: Profile) => void; onToggleTier: (c: Profile) => void; onSendInvite: (email: string, name?: string | null) => void }) {
   const [inviting, setInviting] = useState(false)
   const [showSetPw, setShowSetPw] = useState(false)
   const [tempPw, setTempPw] = useState('')
@@ -750,38 +739,38 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onToggleTie
 
           {/* Status badges */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 5, flexShrink: 0 }}>
-            {/* Membership tier toggle — Creator Cult vs Dashboard */}
+            {/* Membership access source toggle */}
             <button
               onClick={() => onToggleTier(client)}
-              title={client.membership_tier === 'creator_cult' ? 'Creator Cult — click to move to Dashboard' : 'Dashboard — click to move to Creator Cult'}
+              title="Change access: Skool → Original CC → Remove access"
               style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'inherit' }}
             >
               <span style={{
                 display: 'inline-flex', alignItems: 'center', gap: 5,
                 fontSize: 11, fontWeight: 700, padding: '4px 9px', borderRadius: 999,
-                background: client.membership_tier === 'creator_cult' ? 'rgba(59,130,246,0.15)' : 'var(--muted)',
-                color: client.membership_tier === 'creator_cult' ? '#3b82f6' : 'var(--muted-foreground)',
-                border: `1px solid ${client.membership_tier === 'creator_cult' ? 'rgba(59,130,246,0.3)' : 'var(--border)'}`,
+                background: client.access_type === 'legacy_lifetime' ? 'rgba(139,92,246,0.12)' : client.access_type === 'skool_subscription' ? 'rgba(59,130,246,0.15)' : 'var(--muted)',
+                color: client.access_type === 'legacy_lifetime' ? '#a78bfa' : client.access_type === 'skool_subscription' ? '#3b82f6' : 'var(--muted-foreground)',
+                border: `1px solid ${client.access_type === 'legacy_lifetime' ? 'rgba(139,92,246,0.3)' : client.access_type === 'skool_subscription' ? 'rgba(59,130,246,0.3)' : 'var(--border)'}`,
                 letterSpacing: '.02em',
               }}>
-                {client.membership_tier === 'creator_cult' ? 'Creator Cult' : 'Dashboard'}
+                {client.access_type === 'legacy_lifetime'
+                  ? 'Original CC'
+                  : client.access_type === 'skool_subscription'
+                    ? 'Skool member'
+                    : 'No access'}
               </span>
             </button>
 
-            {/* Subscription status */}
+            {/* Membership access type */}
             {(() => {
               const s = client.subscription_status
-              const plan = client.plan_type
-              const subColor = s === 'active' ? 'hsl(142 71% 45%)' : s === 'trialing' ? '#3b82f6' : s === 'past_due' || s === 'unpaid' ? 'hsl(38 92% 50%)' : s === 'canceled' ? 'hsl(0 84% 60%)' : 'var(--muted-foreground)'
-              const subBg = s === 'active' ? 'rgba(34,197,94,0.1)' : s === 'trialing' ? 'rgba(59,130,246,0.1)' : s === 'past_due' || s === 'unpaid' ? 'rgba(251,191,36,0.1)' : s === 'canceled' ? 'rgba(239,68,68,0.1)' : 'var(--muted)'
-              const subBorder = s === 'active' ? 'rgba(34,197,94,0.25)' : s === 'trialing' ? 'rgba(59,130,246,0.25)' : s === 'past_due' || s === 'unpaid' ? 'rgba(251,191,36,0.25)' : s === 'canceled' ? 'rgba(239,68,68,0.25)' : 'var(--border)'
-              const planLabel = fmtSubAmount(client)
-              const statusLabel: Record<string, string> = {
-                active: 'Active', trialing: 'Trialing', past_due: 'Past Due',
-                unpaid: 'Unpaid', canceled: 'Canceled', incomplete: 'Incomplete',
-                incomplete_expired: 'Expired',
-              }
-              const label = s ? (statusLabel[s] ?? s) : 'No sub'
+              const isLegacy = client.access_type === 'legacy_lifetime'
+              const isSkool = client.access_type === 'skool_subscription'
+              const isActiveSkool = isSkool && (s === 'active' || s === 'trialing') && client.is_active
+              const subColor = isLegacy ? '#a78bfa' : isActiveSkool ? 'hsl(142 71% 45%)' : isSkool ? 'hsl(0 84% 60%)' : 'var(--muted-foreground)'
+              const subBg = isLegacy ? 'rgba(139,92,246,0.1)' : isActiveSkool ? 'rgba(34,197,94,0.1)' : isSkool ? 'rgba(239,68,68,0.1)' : 'var(--muted)'
+              const subBorder = isLegacy ? 'rgba(139,92,246,0.25)' : isActiveSkool ? 'rgba(34,197,94,0.25)' : isSkool ? 'rgba(239,68,68,0.25)' : 'var(--border)'
+              const label = isLegacy ? 'Original · Lifetime' : isActiveSkool ? 'Skool · Active' : isSkool ? 'Skool · Inactive' : 'Access unassigned'
               return (
                 <span style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -789,7 +778,7 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onToggleTie
                   background: subBg, color: subColor, border: `1px solid ${subBorder}`,
                 }}>
                   <span style={{ width: 6, height: 6, borderRadius: '50%', background: subColor, flexShrink: 0 }} />
-                  {label}{planLabel ? ` · ${planLabel}` : ''}
+                  {label}
                 </span>
               )
             })()}
@@ -898,27 +887,25 @@ function ClientCard({ client, onToggleActive, onToggleBillingExempt, onToggleTie
         display: 'flex', flexDirection: 'column', gap: 7,
         background: 'var(--muted)',
       }}>
-        {/* Row 1: Billing exempt + Invite + Set password */}
+        {/* Row 1: Membership source + Invite + Set password */}
         <div style={{ display: 'flex', gap: 8 }}>
-          <button
-            onClick={() => onToggleBillingExempt(client)}
-            title={client.billing_exempt ? 'Free account — click to require subscription' : 'Paid account — click to mark as free'}
+          <div
             style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
               height: 30, padding: '0 10px', borderRadius: 6, flex: 1,
               fontSize: 11, fontWeight: 700,
-              border: `1px solid ${client.billing_exempt ? 'rgba(139,92,246,0.3)' : 'rgba(59,130,246,0.3)'}`,
-              background: client.billing_exempt ? 'rgba(139,92,246,0.08)' : 'rgba(59,130,246,0.08)',
-              color: client.billing_exempt ? '#a78bfa' : '#3b82f6',
-              cursor: 'pointer', fontFamily: 'inherit',
-              transition: 'opacity 0.12s',
+              border: `1px solid ${client.access_type === 'legacy_lifetime' ? 'rgba(139,92,246,0.3)' : 'rgba(59,130,246,0.3)'}`,
+              background: client.access_type === 'legacy_lifetime' ? 'rgba(139,92,246,0.08)' : 'rgba(59,130,246,0.08)',
+              color: client.access_type === 'legacy_lifetime' ? '#a78bfa' : '#3b82f6',
+              fontFamily: 'inherit',
             }}
-            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '0.7' }}
-            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
           >
-            <CreditCard size={11} />
-            {client.billing_exempt ? 'Free' : (fmtSubAmount({ ...client, billing_exempt: false }) ?? 'No sub')}
-          </button>
+            {client.access_type === 'legacy_lifetime'
+              ? 'Original CC'
+              : client.access_type === 'skool_subscription'
+                ? 'Skool member'
+                : 'Unassigned'}
+          </div>
 
           <button
             onClick={async () => {

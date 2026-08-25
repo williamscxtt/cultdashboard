@@ -1463,6 +1463,10 @@
   margin-top: 24px;
 }
 
+.paymentOptionsSingle {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .paymentOption {
   display: flex;
   min-width: 0;

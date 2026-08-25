@@ -1,5 +1,5 @@
-import AccessCheckoutPage from '@/components/AccessCheckoutPage'
+import { redirect } from 'next/navigation'
 
 export default function AccessPage() {
-  return <AccessCheckoutPage />
+  redirect('/client-access')
 }

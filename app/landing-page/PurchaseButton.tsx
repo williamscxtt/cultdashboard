@@ -4,10 +4,12 @@ type PurchaseButtonProps = {
   href?: string
 }
 
-export default function PurchaseButton({ children, className, href = '#monthly-membership' }: PurchaseButtonProps) {
+const SKOOL_URL = 'https://www.skool.com/creator/about'
+
+export default function PurchaseButton({ children, className, href = SKOOL_URL }: PurchaseButtonProps) {
   return (
     <span className={className}>
-      <a href={href} data-pricing-cta={href.startsWith('#') ? true : undefined}>
+      <a href={href}>
         {children}
       </a>
     </span>

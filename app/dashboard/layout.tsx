@@ -5,8 +5,7 @@ import DashboardShell from '@/components/dashboard/DashboardShell'
 import { SyncProgressProvider } from '@/components/dashboard/SyncProgress'
 import { Toaster } from 'sonner'
 import { getImpersonatedId } from '@/lib/effective-user'
-import { stripe } from '@/lib/stripe'
-import { hasDashboardAccess, isSubscriptionActive } from '@/lib/dashboard-access'
+import { hasDashboardAccess } from '@/lib/dashboard-access'
 import type { Profile } from '@/lib/types'
 
 const adminClient = createAdmin(
@@ -39,54 +38,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
     if (data) effectiveProfile = data as Profile
   }
 
-  // ── Subscription gate (clients only, not admins, not impersonation sessions) ──
+  // Original members have lifetime access. New members have access while their
+  // Skool membership is active. Admin and impersonation sessions bypass this.
   const isAdmin = realProfile.role === 'admin'
   if (!isAdmin && !impersonatingAs && !realProfile.billing_exempt) {
-    let status = realProfile.subscription_status as string | null | undefined
-
-    // Legacy Stripe customers can still land here before the Stripe webhook.
-    // Commas memberships are synced by the Commas webhook instead.
-    if (
-      !isSubscriptionActive(status)
-      && realProfile.billing_provider !== 'commas'
-      && realProfile.stripe_customer_id
-      && status == null
-    ) {
-      try {
-        const subscriptions = await stripe.subscriptions.list({
-          customer: realProfile.stripe_customer_id as string,
-          limit: 1,
-          status: 'all',
-        })
-        const latest = subscriptions.data[0]
-        if (latest && isSubscriptionActive(latest.status)) {
-          // Webhook hasn't landed yet — persist what Stripe knows and continue
-          const periodEnd = latest.items?.data?.[0]?.current_period_end ?? null
-          await adminClient
-            .from('profiles')
-            .update({
-              stripe_subscription_id: latest.id,
-              subscription_status: latest.status,
-              subscription_period_end: periodEnd
-                ? new Date(periodEnd * 1000).toISOString()
-                : null,
-              subscription_trial_end: latest.trial_end
-                ? new Date(latest.trial_end * 1000).toISOString()
-                : null,
-            })
-            .eq('id', realProfile.id)
-          status = latest.status
-        }
-      } catch {
-        // Stripe check failed — fall through to the normal gate below
-      }
-    }
-
-    const accessProfile = { ...realProfile, subscription_status: status }
-    if (!hasDashboardAccess(accessProfile)) {
-      const isPastDue = status === 'past_due' || status === 'unpaid'
-      redirect(`/subscribe${isPastDue ? '?past_due=1' : ''}`)
-    }
+    if (!hasDashboardAccess(realProfile)) redirect('/subscribe')
   }
 
   if (!realProfile.is_active && !impersonatingAs) {

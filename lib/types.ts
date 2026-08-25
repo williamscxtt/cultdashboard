@@ -137,14 +137,15 @@ export interface Profile {
   // Subscription / billing entitlement
   stripe_customer_id?: string | null
   stripe_subscription_id?: string | null
-  billing_provider?: 'stripe' | 'commas' | null
+  billing_provider?: 'stripe' | 'commas' | 'skool' | null
+  access_type?: 'legacy_lifetime' | 'skool_subscription' | null
   external_customer_id?: string | null
   external_subscription_id?: string | null
   subscription_currency?: string | null
   subscription_status?: 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | null
   subscription_period_end?: string | null
   subscription_trial_end?: string | null
-  // Billing exempt — higher-tier clients who aren't charged the £50/month
+  // Manual access override for clients who should bypass membership checks
   billing_exempt?: boolean
   // Which plan they're on
   plan_type?: 'monthly' | 'biannual' | null
