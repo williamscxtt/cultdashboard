@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { Zap, Check } from 'lucide-react'
 
@@ -20,9 +19,14 @@ export default function ClientAccessPage() {
   })
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   const reset = (m: Mode) => { setMode(m); setError(''); setSuccess('') }
+
+  function continueAfterAuth(path: string) {
+    // Use a full navigation after password auth so Supabase's cookies are
+    // persisted before the protected Dashboard route reaches the proxy.
+    window.location.replace(path)
+  }
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
@@ -57,7 +61,7 @@ export default function ClientAccessPage() {
       return
     }
 
-    router.push('/dashboard/onboarding')
+    continueAfterAuth('/dashboard/onboarding')
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -66,7 +70,7 @@ export default function ClientAccessPage() {
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) { setError(error.message); setLoading(false) }
-    else router.push('/dashboard')
+    else continueAfterAuth('/dashboard')
   }
 
   async function handleForgot(e: React.FormEvent) {

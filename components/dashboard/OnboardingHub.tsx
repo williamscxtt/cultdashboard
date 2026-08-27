@@ -8,6 +8,8 @@ import { Button } from '@/components/ui'
 import { ONBOARDING_UNLOCK_THRESHOLD } from '@/lib/onboarding-keys'
 import PathSwitcher from '@/components/dashboard/PathSwitcher'
 
+const GAMEPLAN_CHECKOUT_URL = 'https://commas.com/checkout/onz23miv7600W'
+
 // ─── First-time path selection gate ──────────────────────────────────────────
 
 const CREATOR_STYLES = [
@@ -933,7 +935,7 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
         </button>
       )}
 
-      {/* ── Booking CTA — shown once hub is unlocked ─────────────────────────── */}
+      {/* ── Optional paid Gameplan Call — shown once hub is unlocked ─────────── */}
       {!adminView && hubComplete && (
         <div style={{
           marginTop: 24,
@@ -952,13 +954,13 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
             <CalendarCheck size={20} color="white" />
           </div>
           <h3 style={{ fontSize: 18, fontWeight: 800, color: 'var(--foreground)', margin: '0 0 8px', letterSpacing: '-0.3px' }}>
-            You&apos;ve unlocked the full dashboard 🎉
+            Want a private 1:1 Gameplan Call?
           </h3>
           <p style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.6, margin: '0 0 20px', maxWidth: 380, marginLeft: 'auto', marginRight: 'auto' }}>
-            Next step: book your 1-to-1 onboarding call with Will. You&apos;ll map out your first 90 days, get your content plan set, and hit the ground running.
+            Once your onboarding is complete, you can add a focused private session with Will to map out your first 90 days, sharpen your content plan, and leave with clear next steps. $149 one-off.
           </p>
           <a
-            href="https://calendly.com/scottvip/mentorship-call"
+            href={GAMEPLAN_CHECKOUT_URL}
             target="_blank"
             rel="noopener noreferrer"
             style={{
@@ -973,7 +975,7 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
           >
             <CalendarCheck size={15} />
-            Book your onboarding call →
+            Get my 1:1 Gameplan Call — $149 →
           </a>
         </div>
       )}
@@ -994,10 +996,7 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
                 : 'Hit Save'
               }
             </span>
-            {ONBOARDING_UNLOCK_THRESHOLD - filledCount > 0
-              ? ' to unlock the full dashboard and book your onboarding call.'
-              : ' to unlock the full dashboard and book your onboarding call.'
-            }
+            {' to unlock the full dashboard and the optional 1:1 Gameplan Call.'}
           </div>
         </div>
       )}

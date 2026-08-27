@@ -1,9 +1,13 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { Check, Lock, MessageCircle, Zap } from 'lucide-react'
+import { createClient } from '@/lib/supabase-server'
+import { hasDashboardAccess } from '@/lib/dashboard-access'
+import type { Profile } from '@/lib/types'
 
 const SKOOL_URL = 'https://www.skool.com/creator/about'
 
-function SubscribeContent() {
+function SubscribeContent({ isSignedIn }: { isSignedIn: boolean }) {
   return (
     <div style={{ width: '100%', maxWidth: 460 }}>
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
@@ -27,10 +31,12 @@ function SubscribeContent() {
           background: 'linear-gradient(160deg, rgba(59,130,246,0.12) 0%, transparent 65%)',
         }}>
           <div style={{ fontSize: 30, fontWeight: 800, color: '#fff', letterSpacing: '-0.8px', lineHeight: 1.1, marginBottom: 12 }}>
-            Your Dashboard is included.
+            {isSignedIn ? 'Your access needs linking.' : 'Your Dashboard is included.'}
           </div>
           <p style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65 }}>
-            Original Creator Cult members and active Skool members both get access at no extra cost.
+            {isSignedIn
+              ? 'You are signed in, but this account is not currently linked to an original Creator Cult or active Skool membership.'
+              : 'Original Creator Cult members and active Skool members both get access at no extra cost.'}
           </p>
         </div>
 
@@ -43,14 +49,25 @@ function SubscribeContent() {
             Use the same email address connected to your Creator Cult membership.
           </div>
 
-          <Link href="/client-access" style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: '100%', minHeight: 48, borderRadius: 10, background: '#3b82f6',
-            color: '#fff', fontSize: 14, fontWeight: 750, textDecoration: 'none',
-            boxSizing: 'border-box', marginBottom: 10,
-          }}>
-            Sign in to my Dashboard →
-          </Link>
+          {isSignedIn ? (
+            <a href="https://instagram.com/willscxtt" target="_blank" rel="noopener noreferrer" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              width: '100%', minHeight: 48, borderRadius: 10, background: '#3b82f6',
+              color: '#fff', fontSize: 14, fontWeight: 750, textDecoration: 'none',
+              boxSizing: 'border-box', marginBottom: 10,
+            }}>
+              <MessageCircle size={16} /> Message Will to link access
+            </a>
+          ) : (
+            <Link href="/client-access" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '100%', minHeight: 48, borderRadius: 10, background: '#3b82f6',
+              color: '#fff', fontSize: 14, fontWeight: 750, textDecoration: 'none',
+              boxSizing: 'border-box', marginBottom: 10,
+            }}>
+              Sign in to my Dashboard →
+            </Link>
+          )}
 
           <a href={SKOOL_URL} target="_blank" rel="noopener noreferrer" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -61,12 +78,14 @@ function SubscribeContent() {
             Open Creator Cult on Skool
           </a>
 
-          <a href="https://instagram.com/willscxtt" target="_blank" rel="noopener noreferrer" style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-            color: 'rgba(255,255,255,0.4)', fontSize: 12, textDecoration: 'none', marginTop: 18,
-          }}>
-            <MessageCircle size={13} /> Already a member but still locked out? Message Will
-          </a>
+          {!isSignedIn && (
+            <a href="https://instagram.com/willscxtt" target="_blank" rel="noopener noreferrer" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
+              color: 'rgba(255,255,255,0.4)', fontSize: 12, textDecoration: 'none', marginTop: 18,
+            }}>
+              <MessageCircle size={13} /> Already a member but still locked out? Message Will
+            </a>
+          )}
         </div>
       </div>
 
@@ -80,7 +99,22 @@ function SubscribeContent() {
   )
 }
 
-export default function SubscribePage() {
+export default async function SubscribePage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (profile && profile.is_active && (profile.role === 'admin' || hasDashboardAccess(profile as Profile))) {
+      redirect('/dashboard')
+    }
+  }
+
   return (
     <div style={{
       minHeight: '100dvh', background: '#080808', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -88,7 +122,7 @@ export default function SubscribePage() {
       paddingLeft: 'max(20px, env(safe-area-inset-left))', paddingRight: 'max(20px, env(safe-area-inset-right))',
       fontFamily: 'Inter, system-ui, sans-serif',
     }}>
-      <SubscribeContent />
+      <SubscribeContent isSignedIn={Boolean(user)} />
     </div>
   )
 }
