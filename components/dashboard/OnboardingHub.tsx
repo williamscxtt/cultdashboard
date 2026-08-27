@@ -957,7 +957,7 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
             Want a private 1:1 Gameplan Call?
           </h3>
           <p style={{ fontSize: 13, color: 'var(--muted-foreground)', lineHeight: 1.6, margin: '0 0 20px', maxWidth: 380, marginLeft: 'auto', marginRight: 'auto' }}>
-            Once your onboarding is complete, you can add a focused private session with Will to map out your first 90 days, sharpen your content plan, and leave with clear next steps. $149 one-off.
+            Once your onboarding is complete, you can add a focused private session with Will to map out your first 90 days, sharpen your content plan, and leave with clear next steps. $297 one-off.
           </p>
           <a
             href={GAMEPLAN_CHECKOUT_URL}
@@ -975,7 +975,7 @@ export default function OnboardingHub({ profile, adminView = false }: Props) {
             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
           >
             <CalendarCheck size={15} />
-            Get my 1:1 Gameplan Call — $149 →
+            Get my 1:1 Gameplan Call — $297 →
           </a>
         </div>
       )}
