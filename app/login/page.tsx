@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 import { Zap, Check } from 'lucide-react'
 
@@ -21,9 +20,15 @@ export default function LoginPage() {
   })
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   const reset = (m: Mode) => { setMode(m); setError(''); setSuccess('') }
+
+  function continueAfterAuth(path: string) {
+    // A full document navigation waits for the browser to persist Supabase's
+    // auth cookies before the protected route is requested. Next router
+    // prefetching can otherwise reach the proxy without the new session.
+    window.location.replace(path)
+  }
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -39,11 +44,11 @@ export default function LoginPage() {
         .eq('id', data.user.id)
         .single()
       if (profile?.role === 'client' && !profile?.onboarding_completed) {
-        router.push('/dashboard/onboarding')
+        continueAfterAuth('/dashboard/onboarding')
         return
       }
     }
-    router.push('/dashboard')
+    continueAfterAuth('/dashboard')
   }
 
   async function handleSignup(e: React.FormEvent) {
@@ -79,7 +84,7 @@ export default function LoginPage() {
       return
     }
 
-    router.push('/dashboard/onboarding')
+    continueAfterAuth('/dashboard/onboarding')
   }
 
   async function handleForgot(e: React.FormEvent) {
