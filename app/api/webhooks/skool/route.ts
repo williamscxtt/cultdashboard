@@ -1,6 +1,8 @@
 import { timingSafeEqual } from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { applyMembershipToProfiles, type MembershipAccessUpdates } from '@/lib/membership-sync'
+import { parseSkoolMembershipEvent } from '@/lib/skool-membership-event'
 
 export const runtime = 'nodejs'
 
@@ -8,20 +10,6 @@ const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!,
 )
-
-type SkoolMembershipEvent = {
-  event?: string
-  event_type?: string
-  action?: string
-  email?: string
-  member_email?: string
-  member_id?: string
-  transaction_id?: string
-  event_id?: string
-}
-
-const ACTIVE_EVENTS = new Set(['member_joined', 'new_paid_member', 'active'])
-const INACTIVE_EVENTS = new Set(['member_removed', 'member_canceled', 'member_cancelled', 'canceled', 'cancelled'])
 
 function secretsMatch(received: string, expected: string): boolean {
   const receivedBuffer = Buffer.from(received)
@@ -31,8 +19,13 @@ function secretsMatch(received: string, expected: string): boolean {
 }
 
 export async function POST(req: NextRequest) {
+  const startedAt = Date.now()
+  const requestId = req.headers.get('x-vercel-id')
   const secret = process.env.SKOOL_WEBHOOK_SECRET
-  if (!secret) return NextResponse.json({ error: 'Membership sync not configured' }, { status: 503 })
+  if (!secret) {
+    console.error(JSON.stringify({ level: 'error', message: 'Skool membership sync not configured', requestId }))
+    return NextResponse.json({ error: 'Membership sync not configured' }, { status: 503 })
+  }
 
   const authorization = req.headers.get('authorization') ?? ''
   const receivedSecret = authorization.startsWith('Bearer ')
@@ -43,25 +36,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const body = await req.json().catch(() => null) as SkoolMembershipEvent | null
+  const body = await req.json().catch(() => null) as unknown
   if (!body) return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
 
-  const eventType = (body.event ?? body.event_type ?? body.action ?? '').trim().toLowerCase()
-  const isActive = ACTIVE_EVENTS.has(eventType)
-  const isInactive = INACTIVE_EVENTS.has(eventType)
-  if (!isActive && !isInactive) {
-    return NextResponse.json({ error: 'Unsupported membership event' }, { status: 400 })
+  const membershipEvent = parseSkoolMembershipEvent(body)
+  if (!membershipEvent) {
+    return NextResponse.json({ error: 'A supported membership event and member email are required' }, { status: 400 })
   }
 
-  const email = (body.email ?? body.member_email ?? '').trim().toLowerCase()
-  if (!email) return NextResponse.json({ error: 'Member email is required' }, { status: 400 })
-
-  const status = isActive ? 'active' : 'canceled'
+  const status = membershipEvent.isActive ? 'active' : 'canceled'
   const entitlement = {
-    email,
+    email: membershipEvent.email,
     provider: 'skool',
-    external_customer_id: body.member_id ?? null,
-    external_subscription_id: body.transaction_id ?? null,
+    external_customer_id: membershipEvent.memberId,
+    external_subscription_id: membershipEvent.subscriptionId,
     status,
     plan_type: 'monthly',
     amount: null,
@@ -79,45 +67,51 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to sync membership' }, { status: 500 })
   }
 
-  const { data: profile } = await admin
-    .from('profiles')
-    .select('id, access_type')
-    .eq('email', email)
-    .maybeSingle()
-
-  // Original Creator Cult members retain lifetime access even if they later
-  // leave the Skool community.
-  if (profile && profile.access_type !== 'legacy_lifetime') {
-    const { error: profileError } = await admin
-      .from('profiles')
-      .update({
-        membership_tier: 'creator_cult',
-        access_type: 'skool_subscription',
-        billing_provider: 'skool',
-        external_customer_id: entitlement.external_customer_id,
-        external_subscription_id: entitlement.external_subscription_id,
-        subscription_status: status,
-        subscription_period_end: null,
-        plan_type: 'monthly',
-        subscription_amount: null,
-        subscription_currency: null,
-        is_active: isActive,
-      })
-      .eq('id', profile.id)
-
-    if (profileError) {
-      console.error('[skool membership] profile update failed:', profileError)
-      return NextResponse.json({ error: 'Failed to sync profile' }, { status: 500 })
-    }
+  const accessUpdates: MembershipAccessUpdates = {
+    membership_tier: 'creator_cult',
+    access_type: 'skool_subscription',
+    billing_provider: 'skool',
+    external_customer_id: entitlement.external_customer_id,
+    external_subscription_id: entitlement.external_subscription_id,
+    subscription_status: status,
+    subscription_period_end: null,
+    plan_type: 'monthly',
+    subscription_amount: null,
+    subscription_currency: null,
+    is_active: membershipEvent.isActive,
   }
 
-  if (body.event_id || body.transaction_id) {
+  let profilesUpdated = 0
+  try {
+    profilesUpdated = await applyMembershipToProfiles(membershipEvent.email, accessUpdates)
+  } catch (profileError) {
+    console.error(JSON.stringify({
+      level: 'error', message: 'Skool profile sync failed', requestId,
+      error: profileError instanceof Error ? profileError.message : String(profileError),
+      durationMs: Date.now() - startedAt,
+    }))
+    return NextResponse.json({ error: 'Failed to sync profile' }, { status: 500 })
+  }
+
+  if (membershipEvent.eventId || membershipEvent.subscriptionId) {
     await admin.from('billing_events').upsert({
-      event_id: body.event_id ?? `${eventType}:${body.transaction_id}`,
+      event_id: membershipEvent.eventId ?? `${membershipEvent.eventType}:${membershipEvent.subscriptionId}`,
       provider: 'skool',
-      event_type: eventType,
+      event_type: membershipEvent.eventType,
     }, { onConflict: 'event_id', ignoreDuplicates: true })
   }
 
-  return NextResponse.json({ received: true, access: isActive ? 'granted' : 'revoked' })
+  console.log(JSON.stringify({
+    level: 'info', message: 'Skool membership synced', requestId,
+    eventType: membershipEvent.eventType,
+    access: membershipEvent.isActive ? 'granted' : 'revoked',
+    profilesUpdated,
+    durationMs: Date.now() - startedAt,
+  }))
+
+  return NextResponse.json({
+    received: true,
+    access: membershipEvent.isActive ? 'granted' : 'revoked',
+    profilesUpdated,
+  })
 }

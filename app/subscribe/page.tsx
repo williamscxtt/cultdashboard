@@ -4,6 +4,7 @@ import { Check, Lock, MessageCircle, Zap } from 'lucide-react'
 import { createClient } from '@/lib/supabase-server'
 import { hasDashboardAccess } from '@/lib/dashboard-access'
 import type { Profile } from '@/lib/types'
+import { claimMembershipEntitlement } from '@/lib/membership-sync'
 
 const SKOOL_URL = 'https://www.skool.com/creator/about'
 
@@ -104,13 +105,19 @@ export default async function SubscribePage() {
   const { data: { user } } = await supabase.auth.getUser()
 
   if (user) {
-    const { data: profile } = await supabase
+    const { data: loadedProfile } = await supabase
       .from('profiles')
       .select('*')
       .eq('id', user.id)
       .maybeSingle()
 
-    if (profile && profile.is_active && (profile.role === 'admin' || hasDashboardAccess(profile as Profile))) {
+    let profile = loadedProfile as Profile | null
+    if (profile && !hasDashboardAccess(profile) && profile.email) {
+      const claimed = await claimMembershipEntitlement(profile.email, profile.id)
+      if (claimed?.profilesUpdated) profile = { ...profile, ...claimed.updates }
+    }
+
+    if (profile && profile.is_active && (profile.role === 'admin' || hasDashboardAccess(profile))) {
       redirect('/dashboard')
     }
   }

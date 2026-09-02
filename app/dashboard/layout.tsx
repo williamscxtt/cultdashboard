@@ -7,6 +7,7 @@ import { Toaster } from 'sonner'
 import { getImpersonatedId } from '@/lib/effective-user'
 import { hasDashboardAccess } from '@/lib/dashboard-access'
 import type { Profile } from '@/lib/types'
+import { claimMembershipEntitlement } from '@/lib/membership-sync'
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,17 +19,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: realProfile } = await adminClient
+  const { data: loadedProfile } = await adminClient
     .from('profiles')
     .select('*')
     .eq('id', user.id)
     .single()
 
-  if (!realProfile) redirect('/login')
+  if (!loadedProfile) redirect('/login')
+
+  let realProfile = loadedProfile as Profile
+  if (!hasDashboardAccess(realProfile) && realProfile.email) {
+    const claimed = await claimMembershipEntitlement(realProfile.email, realProfile.id)
+    if (claimed?.profilesUpdated) realProfile = { ...realProfile, ...claimed.updates }
+  }
 
   const impersonatingAs = realProfile.role === 'admin' ? await getImpersonatedId() : null
 
-  let effectiveProfile: Profile = realProfile as Profile
+  let effectiveProfile: Profile = realProfile
   if (impersonatingAs) {
     const { data } = await adminClient
       .from('profiles')
@@ -84,7 +91,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <SyncProgressProvider>
       <DashboardShell
-        realProfile={realProfile as Profile}
+        realProfile={realProfile}
         effectiveProfile={effectiveProfile}
         isImpersonating={!!impersonatingAs}
       >

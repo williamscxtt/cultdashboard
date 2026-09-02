@@ -25,7 +25,11 @@ export function hasDashboardAccess(profile: DashboardAccessProfile): boolean {
   if (profile.billing_exempt) return true
   if (profile.access_type === 'legacy_lifetime') return true
   if (profile.access_type === 'skool_subscription') {
-    return isSubscriptionActive(profile.subscription_status)
+    if (profile.subscription_status === 'active') return true
+    if (profile.subscription_status === 'trialing') {
+      return hasUnexpiredAccessWindow(profile.subscription_period_end)
+    }
+    return false
   }
 
   if (profile.membership_tier === 'creator_cult') {

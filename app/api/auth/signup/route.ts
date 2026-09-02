@@ -10,67 +10,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { Resend } from 'resend'
+import { ensureSignupMembershipAccess } from '@/lib/membership-sync'
+import { normalizeMemberEmail } from '@/lib/skool-membership-event'
 
 const admin = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!
 )
-
-type MemberEntitlement = {
-  provider: string
-  external_customer_id: string | null
-  external_subscription_id: string | null
-  status: string
-  plan_type: 'monthly' | 'biannual' | null
-  amount: number | null
-  currency: string | null
-  period_end: string | null
-}
-
-async function claimPaidMembership(email: string, userId?: string) {
-  const normalizedEmail = email.trim().toLowerCase()
-  const { data } = await admin
-    .from('member_entitlements')
-    .select('provider, external_customer_id, external_subscription_id, status, plan_type, amount, currency, period_end')
-    .eq('email', normalizedEmail)
-    .maybeSingle()
-
-  const entitlement = data as MemberEntitlement | null
-
-  if (!entitlement) return null
-
-  const { data: existingProfile } = userId
-    ? await admin.from('profiles').select('access_type').eq('id', userId).maybeSingle()
-    : await admin.from('profiles').select('access_type').eq('email', normalizedEmail).maybeSingle()
-
-  // A Skool join or cancellation must never replace an original member's
-  // lifetime entitlement.
-  if (existingProfile?.access_type === 'legacy_lifetime') return entitlement
-
-  const hasActiveMembership = entitlement.status === 'active' || entitlement.status === 'trialing'
-
-  const updates = {
-    membership_tier: 'creator_cult',
-    access_type: entitlement.provider === 'skool' ? 'skool_subscription' : null,
-    billing_provider: entitlement.provider,
-    external_customer_id: entitlement.external_customer_id,
-    external_subscription_id: entitlement.external_subscription_id,
-    subscription_status: entitlement.status,
-    subscription_period_end: entitlement.period_end,
-    plan_type: entitlement.plan_type,
-    subscription_amount: entitlement.amount,
-    subscription_currency: entitlement.currency,
-    is_active: hasActiveMembership,
-  }
-
-  const query = admin.from('profiles').update(updates)
-  const { error } = userId
-    ? await query.eq('id', userId)
-    : await query.eq('email', normalizedEmail)
-
-  if (error) console.error('[signup] membership claim failed:', error)
-  return entitlement
-}
 
 function buildWelcomeEmail(name: string, email: string, loginUrl: string): string {
   const firstName = name.split(' ')[0] || 'there'
@@ -134,9 +80,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
   }
 
+  const normalizedEmail = normalizeMemberEmail(email)
+
   // Create user via admin — email auto-confirmed, no Supabase SMTP involved
   const { data, error: createError } = await admin.auth.admin.createUser({
-    email,
+    email: normalizedEmail,
     password,
     email_confirm: true,
     user_metadata: { name: name || '' },
@@ -145,7 +93,15 @@ export async function POST(req: NextRequest) {
   if (createError) {
     const msg = createError.message.toLowerCase()
     if (msg.includes('already registered') || msg.includes('already exists') || msg.includes('duplicate')) {
-      await claimPaidMembership(email)
+      const { data: existingProfile } = await admin
+        .from('profiles')
+        .select('id')
+        .ilike('email', normalizedEmail)
+        .limit(1)
+        .maybeSingle()
+      if (existingProfile?.id) {
+        await ensureSignupMembershipAccess(normalizedEmail, existingProfile.id)
+      }
       return NextResponse.json({ error: 'already_exists' }, { status: 409 })
     }
     return NextResponse.json({ error: createError.message }, { status: 400 })
@@ -157,14 +113,14 @@ export async function POST(req: NextRequest) {
   await admin.from('profiles').upsert({
     id: userId,
     name: name || '',
-    email: email,
+    email: normalizedEmail,
     role: 'client',
     is_active: true,
     onboarding_completed: true,
     onboarding_hub_complete: false,
   }, { onConflict: 'id', ignoreDuplicates: false })
 
-  await claimPaidMembership(email, userId)
+  await ensureSignupMembershipAccess(normalizedEmail, userId)
 
   // Send welcome email via Resend
   if (process.env.RESEND_API_KEY) {
@@ -175,9 +131,9 @@ export async function POST(req: NextRequest) {
 
     await resend.emails.send({
       from,
-      to: email,
+      to: normalizedEmail,
       subject: 'Welcome to Creator Cult — your dashboard is ready',
-      html: buildWelcomeEmail(name || '', email, loginUrl),
+      html: buildWelcomeEmail(name || '', normalizedEmail, loginUrl),
     }).catch(err => console.error('[signup] Resend error:', err))
   }
 

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
+import { ensureSignupMembershipAccess } from '@/lib/membership-sync'
+import { normalizeMemberEmail } from '@/lib/skool-membership-event'
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -18,13 +20,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'userId required' }, { status: 400 })
     }
 
+    const normalizedEmail = normalizeMemberEmail(email || '')
+
     // Upsert profile — safe to call even if a trigger already created the row
     const { error } = await adminClient
       .from('profiles')
       .upsert({
         id: userId,
         name: name || '',
-        email: email || '',
+        email: normalizedEmail,
         role: 'client',
         is_active: true,
         // Mark legacy 5-step onboarding as done — new users go straight to the hub
@@ -36,6 +40,10 @@ export async function POST(req: NextRequest) {
     if (error) {
       console.error('[create-profile]', error.message)
       return NextResponse.json({ error: error.message }, { status: 500 })
+    }
+
+    if (normalizedEmail) {
+      await ensureSignupMembershipAccess(normalizedEmail, userId)
     }
 
     return NextResponse.json({ success: true })
