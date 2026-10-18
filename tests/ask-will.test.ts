@@ -59,6 +59,15 @@ test('structured output rejects an empty answer and caps conversation memory', (
   assert.equal(parsed.memory_candidates.length, 8)
 })
 
+test('structured output strips internal file citations from member-facing copy', () => {
+  const parsed = parseModelOutput(JSON.stringify({
+    answer: 'Post once a day and review what actually changed. fileciteturn0file7turn0file5',
+    conversation_summary: '',
+    memory_candidates: [],
+  }))
+  assert.equal(parsed.answer, 'Post once a day and review what actually changed.')
+})
+
 test('Will OS preserves source provenance, privacy and variable answer length', () => {
   assert.match(WILL_OS, /Never imply that an outside framework/)
   assert.match(WILL_OS, /Do not reveal private operational notes/)

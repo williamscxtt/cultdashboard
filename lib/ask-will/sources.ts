@@ -43,8 +43,13 @@ export function extractFileSearchSources(output: unknown): AskWillSource[] {
 export function parseModelOutput(raw: string) {
   const parsed = JSON.parse(raw) as Record<string, unknown>
   if (typeof parsed.answer !== 'string' || !parsed.answer.trim()) throw new Error('Ask Will returned no answer')
+  const answer = parsed.answer
+    .replace(/\s*filecite[^]*/g, '')
+    .replace(/\s*【\d+(?::\d+)?†[^】]+】/g, '')
+    .trim()
+  if (!answer) throw new Error('Ask Will returned no usable answer')
   return {
-    answer: parsed.answer.trim(),
+    answer,
     conversation_summary: typeof parsed.conversation_summary === 'string' ? parsed.conversation_summary.trim().slice(0, 1200) : '',
     memory_candidates: Array.isArray(parsed.memory_candidates) ? parsed.memory_candidates.slice(0, 8) : [],
   }
