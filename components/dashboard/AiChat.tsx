@@ -15,6 +15,12 @@ interface Message {
 
 type AskMode = 'quick' | 'deep' | 'draft'
 
+const MODE_DESCRIPTIONS: Record<AskMode, string> = {
+  quick: 'A short, direct answer when you just need the next move.',
+  deep: 'A proper diagnosis and step-by-step plan for a harder problem.',
+  draft: 'Finished copy for a Reel, post, Story, DM or offer.',
+}
+
 interface MemoryItem {
   id: string
   kind: string
@@ -318,7 +324,7 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
 
         <div style={{
           padding: '8px 16px', borderBottom: '1px solid var(--border)', background: 'var(--card)',
-          display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0,
+          display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', flexShrink: 0,
         }}>
           <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 3 }}>
             Answer mode
@@ -332,6 +338,7 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
               key={value}
               onClick={() => setMode(value)}
               disabled={loading}
+              title={MODE_DESCRIPTIONS[value]}
               style={{
                 border: `1px solid ${mode === value ? 'var(--accent)' : 'var(--border)'}`,
                 background: mode === value ? 'hsl(220 90% 56% / 0.1)' : 'transparent',
@@ -343,6 +350,12 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
               {label}
             </button>
           ))}
+          <div style={{
+            width: '100%', fontSize: 10.5, lineHeight: 1.35,
+            color: 'var(--muted-foreground)', marginTop: 1,
+          }}>
+            {MODE_DESCRIPTIONS[mode]}
+          </div>
         </div>
 
         {showMemory && (
