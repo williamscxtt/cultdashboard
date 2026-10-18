@@ -1,13 +1,27 @@
 'use client'
 import { useState, useRef, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Send, MessageSquare, Sparkles } from 'lucide-react'
+import { Brain, Check, Send, MessageSquare, Sparkles, ThumbsDown, ThumbsUp, X } from 'lucide-react'
 import { useIsMobile } from '@/lib/use-mobile'
 
 interface Message {
   role: 'user' | 'assistant'
   content: string
   timestamp: string
+  answerRunId?: string | null
+  sources?: Array<{ title: string; sourcePath?: string; knowledgeType?: string }>
+  feedback?: 'useful' | 'not_useful'
+}
+
+type AskMode = 'quick' | 'deep' | 'draft'
+
+interface MemoryItem {
+  id: string
+  kind: string
+  key: string
+  value: string
+  status: 'pending' | 'active'
+  confidence: number
 }
 
 const SUGGESTED_QUESTIONS = [
@@ -59,6 +73,10 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
   const [input, setInput] = useState(prefilledQ ?? '')
   const [loading, setLoading] = useState(false)
   const [sessionId, setSessionId] = useState<string | null>(null)
+  const [mode, setMode] = useState<AskMode>('deep')
+  const [showMemory, setShowMemory] = useState(false)
+  const [memories, setMemories] = useState<MemoryItem[]>([])
+  const [memoryLoading, setMemoryLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
@@ -85,7 +103,7 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
       const res = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text.trim(), profileId, sessionId }),
+        body: JSON.stringify({ message: text.trim(), profileId, sessionId, mode }),
       })
 
       if (!res.ok) {
@@ -99,6 +117,8 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
         role: 'assistant',
         content: data.message,
         timestamp: new Date().toISOString(),
+        answerRunId: data.answerRunId,
+        sources: data.sources,
       }])
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Failed to get a response')
@@ -115,6 +135,61 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
   }
 
   const canSend = input.trim().length > 0 && !loading
+
+  async function sendFeedback(index: number, useful: boolean) {
+    const message = messages[index]
+    if (!message?.answerRunId) return
+    const feedback = useful ? 'useful' : 'not_useful'
+    setMessages(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, feedback } : item))
+    try {
+      const response = await fetch('/api/ai/feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          answerRunId: message.answerRunId,
+          useful,
+          issueType: useful ? null : 'missed_point',
+        }),
+      })
+      if (!response.ok) throw new Error('Feedback failed')
+    } catch {
+      setMessages(current => current.map((item, itemIndex) => itemIndex === index ? { ...item, feedback: undefined } : item))
+    }
+  }
+
+  async function toggleMemory() {
+    const next = !showMemory
+    setShowMemory(next)
+    if (!next || memories.length || memoryLoading) return
+    setMemoryLoading(true)
+    try {
+      const response = await fetch('/api/ai/memory')
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Could not load memory')
+      setMemories(data.memories || [])
+    } catch {
+      setError('Could not load Ask Will memory')
+    } finally {
+      setMemoryLoading(false)
+    }
+  }
+
+  async function updateMemory(id: string, status: 'active' | 'rejected' | 'expired') {
+    const response = await fetch('/api/ai/memory', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id, status }),
+    })
+    if (!response.ok) {
+      setError('Could not update Ask Will memory')
+      return
+    }
+    if (status === 'active') {
+      setMemories(current => current.map(item => item.id === id ? { ...item, status: 'active' } : item))
+    } else {
+      setMemories(current => current.filter(item => item.id !== id))
+    }
+  }
 
   return (
     <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', height: '100%', flex: 1, overflow: 'hidden' }}>
@@ -219,6 +294,18 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
             </div>
           </div>
           <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <button
+              onClick={toggleMemory}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 5, border: '1px solid var(--border)',
+                background: showMemory ? 'hsl(220 90% 56% / 0.1)' : 'transparent',
+                color: showMemory ? 'var(--accent)' : 'var(--muted-foreground)',
+                borderRadius: 7, padding: '4px 7px', fontSize: 10.5, fontWeight: 650,
+                cursor: 'pointer', fontFamily: 'inherit', marginRight: 8,
+              }}
+            >
+              <Brain size={12} /> Memory
+            </button>
             <span style={{
               width: 7, height: 7, borderRadius: '50%',
               background: 'rgba(255,255,255,0.5)',
@@ -228,6 +315,76 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
             <span style={{ fontSize: 11, fontWeight: 600, color: '#3B82F6' }}>Online</span>
           </div>
         </div>
+
+        <div style={{
+          padding: '8px 16px', borderBottom: '1px solid var(--border)', background: 'var(--card)',
+          display: 'flex', gap: 6, alignItems: 'center', flexShrink: 0,
+        }}>
+          <span style={{ fontSize: 10, fontWeight: 700, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.08em', marginRight: 3 }}>
+            Answer mode
+          </span>
+          {([
+            ['quick', 'Quick'],
+            ['deep', 'Deep coaching'],
+            ['draft', 'Draft it'],
+          ] as Array<[AskMode, string]>).map(([value, label]) => (
+            <button
+              key={value}
+              onClick={() => setMode(value)}
+              disabled={loading}
+              style={{
+                border: `1px solid ${mode === value ? 'var(--accent)' : 'var(--border)'}`,
+                background: mode === value ? 'hsl(220 90% 56% / 0.1)' : 'transparent',
+                color: mode === value ? 'var(--accent)' : 'var(--muted-foreground)',
+                borderRadius: 999, padding: '4px 9px', fontSize: 10.5, fontWeight: 650,
+                cursor: loading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {showMemory && (
+          <div style={{
+            padding: '12px 16px', borderBottom: '1px solid var(--border)', background: 'var(--background)',
+            maxHeight: 220, overflowY: 'auto', flexShrink: 0,
+          }}>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: 'var(--foreground)' }}>What Ask Will remembers</div>
+            <div style={{ fontSize: 10.5, color: 'var(--muted-foreground)', marginTop: 2, marginBottom: 9 }}>
+              Ask Will only uses memories you have approved. You can remove one whenever it stops being true.
+            </div>
+            {memoryLoading ? (
+              <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>Loading memory…</div>
+            ) : memories.length === 0 ? (
+              <div style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>Nothing saved yet.</div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {memories.map(memory => (
+                  <div key={memory.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 8, padding: '7px 9px',
+                    border: '1px solid var(--border)', borderRadius: 8, background: 'var(--card)',
+                  }}>
+                    <div style={{ minWidth: 0, flex: 1 }}>
+                      <div style={{ fontSize: 10, color: 'var(--muted-foreground)', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 700 }}>
+                        {memory.kind}{memory.status === 'pending' ? ' · approve?' : ''}
+                      </div>
+                      <div style={{ fontSize: 11.5, color: 'var(--foreground)', marginTop: 2 }}>{memory.value}</div>
+                    </div>
+                    {memory.status === 'pending' ? (
+                      <>
+                        <button onClick={() => updateMemory(memory.id, 'active')} aria-label="Approve memory" style={{ border: 'none', background: 'hsl(220 90% 56% / 0.1)', color: 'var(--accent)', borderRadius: 6, padding: 5, display: 'flex', cursor: 'pointer' }}><Check size={13} /></button>
+                        <button onClick={() => updateMemory(memory.id, 'rejected')} aria-label="Reject memory" style={{ border: 'none', background: 'transparent', color: 'var(--muted-foreground)', borderRadius: 6, padding: 5, display: 'flex', cursor: 'pointer' }}><X size={13} /></button>
+                      </>
+                    ) : (
+                      <button onClick={() => updateMemory(memory.id, 'expired')} aria-label="Forget memory" style={{ border: 'none', background: 'transparent', color: 'var(--muted-foreground)', borderRadius: 6, padding: 5, display: 'flex', cursor: 'pointer' }}><X size={13} /></button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Messages */}
         <div style={{
@@ -275,24 +432,62 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
             >
               {msg.role === 'assistant' && <WillAvatar size={28} />}
 
-              <div style={{
-                maxWidth: '72%',
-                padding: '11px 15px',
-                borderRadius: msg.role === 'user'
-                  ? '14px 4px 14px 14px'
-                  : '4px 14px 14px 14px',
-                background: msg.role === 'user'
-                  ? 'var(--foreground)'
-                  : 'var(--card)',
-                color: msg.role === 'user'
-                  ? 'var(--background)'
-                  : 'var(--foreground)',
-                fontSize: 13.5, lineHeight: 1.7,
-                whiteSpace: 'pre-wrap',
-                border: msg.role === 'assistant' ? '1px solid var(--border)' : 'none',
-                boxShadow: 'var(--shadow-sm)',
-              }}>
-                {msg.content}
+              <div style={{ maxWidth: '72%', display: 'flex', flexDirection: 'column', gap: 6, alignItems: msg.role === 'user' ? 'flex-end' : 'flex-start' }}>
+                <div style={{
+                  padding: '11px 15px',
+                  borderRadius: msg.role === 'user'
+                    ? '14px 4px 14px 14px'
+                    : '4px 14px 14px 14px',
+                  background: msg.role === 'user'
+                    ? 'var(--foreground)'
+                    : 'var(--card)',
+                  color: msg.role === 'user'
+                    ? 'var(--background)'
+                    : 'var(--foreground)',
+                  fontSize: 13.5, lineHeight: 1.7,
+                  whiteSpace: 'pre-wrap',
+                  border: msg.role === 'assistant' ? '1px solid var(--border)' : 'none',
+                  boxShadow: 'var(--shadow-sm)',
+                  width: '100%',
+                }}>
+                  {msg.content}
+                </div>
+
+                {msg.role === 'assistant' && (msg.sources?.length || msg.answerRunId) && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 2, flexWrap: 'wrap' }}>
+                    {!!msg.sources?.length && (
+                      <details style={{ fontSize: 10.5, color: 'var(--muted-foreground)' }}>
+                        <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
+                          Based on {msg.sources.length} Creator Cult source{msg.sources.length !== 1 ? 's' : ''}
+                        </summary>
+                        <div style={{ marginTop: 5, display: 'flex', flexDirection: 'column', gap: 3, maxWidth: 440 }}>
+                          {msg.sources.map((source, sourceIndex) => (
+                            <span key={`${source.title}-${sourceIndex}`}>• {source.title}</span>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+                    {!!msg.answerRunId && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                        <span style={{ fontSize: 10.5, color: 'var(--muted-foreground)', marginRight: 2 }}>Useful?</span>
+                        <button
+                          onClick={() => sendFeedback(idx, true)}
+                          aria-label="Mark answer useful"
+                          style={{ border: 'none', background: msg.feedback === 'useful' ? 'hsl(220 90% 56% / 0.12)' : 'transparent', color: msg.feedback === 'useful' ? 'var(--accent)' : 'var(--muted-foreground)', padding: 4, borderRadius: 5, display: 'flex', cursor: 'pointer' }}
+                        >
+                          <ThumbsUp size={12} />
+                        </button>
+                        <button
+                          onClick={() => sendFeedback(idx, false)}
+                          aria-label="Mark answer not useful"
+                          style={{ border: 'none', background: msg.feedback === 'not_useful' ? 'hsl(0 80% 55% / 0.1)' : 'transparent', color: msg.feedback === 'not_useful' ? 'hsl(0 70% 55%)' : 'var(--muted-foreground)', padding: 4, borderRadius: 5, display: 'flex', cursor: 'pointer' }}
+                        >
+                          <ThumbsDown size={12} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -308,7 +503,7 @@ export default function AiChat({ profileId, profileName }: { profileId: string; 
                 display: 'flex', alignItems: 'center', gap: 8,
                 fontSize: 12, color: 'var(--muted-foreground)',
               }}>
-                Will is thinking <ThinkingDots />
+                Ask Will is thinking <ThinkingDots />
               </div>
             </div>
           )}

@@ -10,7 +10,9 @@
     "test": "playwright test",
     "test:public": "playwright test --project=public",
     "test:admin": "playwright test --project=auth-setup --project=admin",
-    "test:ui": "playwright test --ui"
+    "test:ui": "playwright test --ui",
+    "ask-will:sync": "node --env-file=.env.local scripts/ask-will-sync.mjs",
+    "ask-will:eval": "node --env-file=.env.local scripts/ask-will-eval.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.80.0",

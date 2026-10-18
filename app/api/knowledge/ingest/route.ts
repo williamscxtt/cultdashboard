@@ -111,7 +111,7 @@ Rules:
 - MULTIPLE documents (max 4) if content clearly covers distinct, separable topics
 - Titles must be specific (not "Notes" or "Content")
 - Categories: ${CATEGORIES.join(', ')}
-- Source: always "Will Scott" — this is a knowledge base for Will's own coaching methodology.
+- Source: preserve the actual author, speaker or supplied source when it is known. Use "Will Scott" only when the content is clearly William's own. Otherwise use "Unknown source". Never relabel another person's framework or experience as William's.
 
 Return ONLY valid JSON array:
 [{ "title": "...", "category": "...", "source": "..." }]
@@ -123,12 +123,12 @@ ${content.slice(0, 3000)}`,
 
   const raw = msg.content[0].type === 'text' ? msg.content[0].text : ''
   const match = raw.match(/\[[\s\S]*?\]/)
-  if (!match) return [{ title: description || 'Knowledge Document', category: 'Other', source: 'Will Scott' }]
+  if (!match) return [{ title: description || 'Knowledge Document', category: 'Other', source: 'Unknown source' }]
 
   try {
     return JSON.parse(match[0])
   } catch {
-    return [{ title: description || 'Knowledge Document', category: 'Other', source: 'Will Scott' }]
+    return [{ title: description || 'Knowledge Document', category: 'Other', source: 'Unknown source' }]
   }
 }
 
@@ -240,7 +240,7 @@ export async function POST(req: NextRequest) {
       documents = [{
         title: metaDocs[0]?.title || description || 'Knowledge Document',
         category: metaDocs[0]?.category || 'Other',
-        source: metaDocs[0]?.source || 'Will Scott',
+        source: metaDocs[0]?.source || 'Unknown source',
         content: cleanedContent,
       }]
     } else {

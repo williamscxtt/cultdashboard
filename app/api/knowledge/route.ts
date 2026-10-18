@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   if (chunks.length > 0) {
     const rows = chunks.map(chunk => ({
       content: chunk,
-      source_type: source || 'document',
+      source_type: 'coaching_framework',
       source_id: data.id,
       metadata: { title, source, category, document_id: data.id },
     }))

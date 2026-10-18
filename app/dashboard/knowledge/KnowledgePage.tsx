@@ -78,7 +78,7 @@ export default function KnowledgePage() {
 
   // Manual add (collapsed by default)
   const [showManual, setShowManual] = useState(false)
-  const [manual, setManual] = useState({ title: '', content: '', source: 'Will Scott', category: 'Content Strategy' })
+  const [manual, setManual] = useState({ title: '', content: '', source: '', category: 'Content Strategy' })
   const [manualSaving, setManualSaving] = useState(false)
 
   async function fetchDocs() {
@@ -154,7 +154,7 @@ export default function KnowledgePage() {
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Failed to save')
       toast.success('Document added')
-      setManual({ title: '', content: '', source: 'Will Scott', category: 'Content Strategy' })
+      setManual({ title: '', content: '', source: '', category: 'Content Strategy' })
       fetchDocs()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Failed')
