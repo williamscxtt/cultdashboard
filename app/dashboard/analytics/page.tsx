@@ -5,6 +5,8 @@ import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
 import Anthropic from '@anthropic-ai/sdk'
 import AnalyticsDashboard from '@/components/dashboard/AnalyticsDashboard'
 import type { FollowerSnapshot } from '@/lib/types'
+import { restoreLinkedInstagramStatistics } from '@/lib/instagram-cached-statistics'
+import { loadWeeklyAnalysis } from '@/lib/weekly-analysis-server'
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -52,76 +54,6 @@ Be concrete and specific. No fluff. Use present tense. Do not use quotation mark
   return res.content[0].type === 'text' ? res.content[0].text.trim() : ''
 }
 
-async function generateWeeklyAnalysis(
-  profile: Record<string, unknown>,
-  last7: Array<{ views: number; likes: number | null; comments: number | null; saves: number | null; format_type: string | null; hook: string | null; caption: string | null }>,
-  prev7: Array<{ views: number }>,
-  recentChatTopics: string[],
-): Promise<string> {
-  const intro = (profile.intro_structured ?? {}) as Record<string, unknown>
-  const firstName = String(profile.name || '').split(' ')[0] || 'this creator'
-  const niche = String(intro.specific_niche || intro.what_you_coach || profile.niche || '')
-  const challenge = String(intro.biggest_problem || profile.biggest_challenge || '')
-  const goal90 = String(intro.goal_90_days || profile.ninety_day_goal || '')
-  const revGoal = String(intro.revenue_goal || intro.goal_revenue || profile.revenue_goal || '')
-
-  const fmt = (n: number) => n >= 1_000_000 ? `${(n/1_000_000).toFixed(1)}M` : n >= 1_000 ? `${(n/1_000).toFixed(1)}K` : String(n)
-  const sorted = [...last7].sort((a, b) => b.views - a.views)
-  const avgViews = last7.length ? Math.round(last7.reduce((a, r) => a + r.views, 0) / last7.length) : 0
-  const prevAvg = prev7.length ? Math.round(prev7.reduce((a, r) => a + r.views, 0) / prev7.length) : 0
-  const trendPct = prevAvg > 0 ? Math.round(((avgViews - prevAvg) / prevAvg) * 100) : null
-
-  if (last7.length === 0 && !niche && !goal90) {
-    return JSON.stringify({
-      what_worked: "No reels posted this week — no content data to analyse yet.",
-      what_to_improve: "Fill in your Onboarding Hub with your niche, goals, and biggest challenge so future analyses are fully personalised.",
-      this_week: "Post your first reel and connect Instagram in Settings to start tracking.",
-    })
-  }
-
-  const reelLines = sorted.slice(0, 10).map((r, i) => {
-    const hookText = (r.hook || r.caption || '').slice(0, 70) || '(no hook recorded)'
-    const eng = (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0)
-    return `${i + 1}. ${fmt(r.views)} views | ${r.format_type?.replace(/_/g, ' ') || 'unknown format'} | "${hookText}" | ${eng} engagements`
-  }).join('\n') || '(no reels this week)'
-
-  const chatContext = recentChatTopics.length
-    ? `\nWhat ${firstName} has been working on / asking about recently:\n${recentChatTopics.slice(0, 4).map(t => `- ${t}`).join('\n')}`
-    : ''
-
-  const prompt = `You are a sharp, direct content performance coach for ${firstName}${niche ? ` (${niche} creator)` : ''}.
-
-WEEK IN NUMBERS:
-${last7.length} reels posted | avg ${fmt(avgViews)} views per reel${trendPct !== null ? ` | ${trendPct > 0 ? `↑ ${trendPct}%` : `↓ ${Math.abs(trendPct)}%`} vs prior week` : ''}
-
-REELS THIS WEEK (ranked by views):
-${reelLines}
-${challenge ? `\nBiggest challenge: ${challenge}` : ''}
-${goal90 ? `90-day goal: ${goal90}${revGoal ? ` (${revGoal})` : ''}` : ''}${chatContext}
-
-Write a weekly analysis in this exact JSON format. Reference actual hooks, formats, and numbers from their data. No generic advice — everything tied to what they actually posted.
-
-{
-  "what_worked": "1-2 sentences. What specifically performed best and why. Name the hook text or format, give the number.",
-  "what_to_improve": "1-2 sentences. The single biggest weakness this week — specific to what they posted, not vague.",
-  "this_week": "One clear action to prioritise in the next 7 days — tied to their goal and the gap you identified."
-}
-
-Max 45 words per section. Return only valid JSON.`
-
-  const res = await anthropic.messages.create({
-    model: 'claude-haiku-4-5',
-    max_tokens: 450,
-    messages: [{ role: 'user', content: prompt }],
-  })
-  const text = res.content[0].type === 'text' ? res.content[0].text.trim() : ''
-  const match = text.match(/\{[\s\S]*\}/)
-  if (match) {
-    try { const p = JSON.parse(match[0]); if (p.what_worked) return match[0] } catch {}
-  }
-  return JSON.stringify({ what_worked: text, what_to_improve: '', this_week: '' })
-}
-
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default async function AnalyticsPage() {
@@ -134,13 +66,14 @@ export default async function AnalyticsPage() {
 
   const impersonatingAs = realProfile?.role === 'admin' ? await getImpersonatedId() : null
   const profileId = effectiveId(user.id, realProfile?.role === 'admin', impersonatingAs)
+  await restoreLinkedInstagramStatistics(adminClient, profileId).catch(() => {
+    console.error('[analytics] Could not restore linked public statistics')
+  })
 
   const sixtyDaysAgo = new Date(Date.now() - 60 * 86400000).toISOString().split('T')[0]
 
-  const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]
-  const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString().split('T')[0]
 
-  const [{ data: profile }, { data: snapshots }, { data: recentReels }, { data: recentConversations }] = await Promise.all([
+  const [{ data: profile }, { data: snapshots }, { data: recentReels }] = await Promise.all([
     adminClient.from('profiles').select('*').eq('id', profileId).single(),
     adminClient
       .from('follower_snapshots')
@@ -155,25 +88,13 @@ export default async function AnalyticsPage() {
       .gte('date', sixtyDaysAgo)
       .order('date', { ascending: false })
       .limit(120),
-    adminClient
-      .from('ai_conversations')
-      .select('messages, created_at')
-      .eq('profile_id', profileId)
-      .order('created_at', { ascending: false })
-      .limit(5),
   ])
 
   if (!profile) redirect('/login')
 
   // Compute reel windows for weekly analysis + legacy ReelSummary (still used for admin benchmarks)
   const now = Date.now()
-  const sevenDaysMs = 7 * 86400000
   const thirtyDaysMs = 30 * 86400000
-  const last7 = (recentReels ?? []).filter(r => now - new Date(r.date).getTime() <= sevenDaysMs)
-  const prev7 = (recentReels ?? []).filter(r => {
-    const age = now - new Date(r.date).getTime()
-    return age > sevenDaysMs && age <= 2 * sevenDaysMs
-  })
   const last30 = (recentReels ?? []).filter(r => now - new Date(r.date).getTime() <= thirtyDaysMs)
   const prev30 = (recentReels ?? []).filter(r => {
     const age = now - new Date(r.date).getTime()
@@ -203,27 +124,8 @@ export default async function AnalyticsPage() {
     bestFormatAvgViews: fmtRanked[0]?.avg ?? 0,
   }
 
-  // Extract recent user chat topics to personalise the weekly analysis
-  const recentChatTopics: string[] = []
-  if (recentConversations) {
-    for (const conv of recentConversations) {
-      const msgs = (conv.messages ?? []) as Array<{ role: string; content: string; timestamp?: string }>
-      for (const m of msgs) {
-        if (m.role === 'user' && m.content.length > 25) {
-          recentChatTopics.push(m.content.slice(0, 100))
-          if (recentChatTopics.length >= 5) break
-        }
-      }
-      if (recentChatTopics.length >= 5) break
-    }
-  }
-
-  // sevenDaysAgo / fourteenDaysAgo used above for filtering; reelSummary used in Will benchmark section
-
-
   const profileData = profile as Record<string, unknown>
   let dashboardBio = String(profile.dashboard_bio || '')
-  let focusThisWeek = String(profile.focus_this_week || '')
 
   const onboarded = Boolean(profile.onboarding_completed)
   const firstName = String(profile.name || '').split(' ')[0].toLowerCase()
@@ -235,38 +137,19 @@ export default async function AnalyticsPage() {
     : false
   const needsBio = onboarded && (!dashboardBio || bioHasMarkdown || bioHasDoubleName)
 
-  // Weekly analysis: regenerate if missing, or older than 6 days
-  const focusUpdatedAt = profile.focus_updated_at ? new Date(String(profile.focus_updated_at)) : null
-  const focusAgeMs = focusUpdatedAt ? Date.now() - focusUpdatedAt.getTime() : Infinity
-  const focusIsStale = focusAgeMs > 6 * 24 * 60 * 60 * 1000
-  // Also regenerate if stored value is plain text (not JSON) — that's the old format
-  const isLegacyFocus = focusThisWeek && !focusThisWeek.trim().startsWith('{')
-  const needsFocus = onboarded && (!focusThisWeek || focusIsStale || isLegacyFocus)
-
-  if (needsBio || needsFocus) {
-    const [bio, focus] = await Promise.all([
-      needsBio ? generateDashboardBio(profileData) : Promise.resolve(dashboardBio),
-      needsFocus ? generateWeeklyAnalysis(
-        profileData,
-        last7 as Array<{ views: number; likes: number | null; comments: number | null; saves: number | null; format_type: string | null; hook: string | null; caption: string | null }>,
-        prev7 as Array<{ views: number }>,
-        recentChatTopics,
-      ) : Promise.resolve(focusThisWeek),
-    ])
-
-    dashboardBio = bio
-    focusThisWeek = focus
-
-    const updates: Record<string, string> = {}
-    if (needsBio && bio && !bio.startsWith('Honestly ')) updates.dashboard_bio = bio
-    if (needsFocus && focus) {
-      updates.focus_this_week = focus
-      updates.focus_updated_at = new Date().toISOString()
-    }
-    if (Object.keys(updates).length > 0) {
-      adminClient.from('profiles').update(updates).eq('id', profileId).then(() => {})
-    }
+  if (needsBio) {
+    try {
+      const bio = await generateDashboardBio(profileData)
+      if (bio && !bio.startsWith('Honestly ')) {
+        dashboardBio = bio
+        await adminClient.from('profiles').update({ dashboard_bio: bio }).eq('id', profileId)
+      }
+    } catch { console.error('[analytics] Could not update Dashboard bio', profileId) }
   }
+
+  // Serve only a report tied to the current evidence. The client refreshes the
+  // analysis after data arrives; rendering must never cache an empty judgement.
+  const weeklyReport = await loadWeeklyAnalysis(adminClient, profileId, profileData, false)
 
   // Will's benchmark follower-to-view ratio (views per follower gained, 30 days)
   // Skip if Will is viewing his own dashboard (no point comparing to yourself)
@@ -315,7 +198,7 @@ export default async function AnalyticsPage() {
       followerHistory={(snapshots ?? []) as FollowerSnapshot[]}
       profileName={String(profile?.name || '')}
       dashboardBio={dashboardBio}
-      focusThisWeek={focusThisWeek}
+      focusThisWeek={JSON.stringify(weeklyReport)}
       willFollowerViewRatio={willFollowerViewRatio}
     />
   )

@@ -177,14 +177,14 @@ export default function ClientsManager({ initialClients }: Props) {
       const res = await fetch('/api/instagram/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId: client.id }),
+        body: JSON.stringify({ profileId: client.id, statisticsOnly: true }),
       })
       const data = await res.json()
       if (!res.ok) {
         toast.error(`${client.name || client.email}: ${data.error || res.status}`)
       } else {
         const followers = data.followers ? ` · ${data.followers.toLocaleString()} followers` : ''
-        toast.success(`${client.name || client.email}: ${data.synced} new reels${followers}`)
+        toast.success(`${client.name || client.email}: ${data.message || "Statistics refreshed"}${followers}`)
         if (data.followers) {
           setClients(prev => prev.map(c => c.id === client.id ? { ...c, followers_count: data.followers } : c))
         }
@@ -209,7 +209,7 @@ export default function ClientsManager({ initialClients }: Props) {
         const res = await fetch('/api/instagram/sync', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ profileId: client.id }),
+          body: JSON.stringify({ profileId: client.id, statisticsOnly: true }),
         })
         const data = await res.json()
         done++
@@ -228,9 +228,9 @@ export default function ClientsManager({ initialClients }: Props) {
     setSyncingAll(false)
     toast.dismiss('sync-all')
     if (errors > 0) {
-      toast.success(`Synced ${done - errors}/${toSync.length} accounts (${errors} failed — check console)`)
+      toast.success(`Requested daily refresh for ${done - errors}/${toSync.length} accounts (${errors} unavailable)`)
     } else {
-      toast.success(`All ${toSync.length} Instagram accounts synced`)
+      toast.success(`Daily statistics refresh requested for all ${toSync.length} Instagram accounts`)
     }
   }
 

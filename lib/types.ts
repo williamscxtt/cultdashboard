@@ -145,6 +145,7 @@ export interface Profile {
   subscription_status?: 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid' | null
   subscription_period_end?: string | null
   subscription_trial_end?: string | null
+  skool_access_review_due_at?: string | null
   // Manual access override for clients who should bypass membership checks
   billing_exempt?: boolean
   // Which plan they're on

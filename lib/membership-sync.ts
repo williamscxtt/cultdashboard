@@ -2,13 +2,12 @@ import 'server-only'
 
 import { createClient } from '@supabase/supabase-js'
 import { normalizeMemberEmail } from '@/lib/skool-membership-event'
+import { skoolSignupAccess } from '@/lib/skool-signup-access'
 
 const admin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!,
 )
-
-const PROVISIONAL_ACCESS_DAYS = 14
 
 type BillingProvider = 'stripe' | 'commas' | 'skool'
 type MembershipStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'unpaid'
@@ -28,7 +27,10 @@ type MembershipProfile = {
   id: string
   access_type: string | null
   billing_provider?: string | null
+  billing_exempt?: boolean | null
+  role?: string | null
   subscription_status?: string | null
+  is_active?: boolean | null
 }
 
 export type MembershipAccessUpdates = {
@@ -39,6 +41,7 @@ export type MembershipAccessUpdates = {
   external_subscription_id: string | null
   subscription_status: MembershipStatus
   subscription_period_end: string | null
+  skool_access_review_due_at: string | null
   plan_type: 'monthly' | 'biannual' | null
   subscription_amount: number | null
   subscription_currency: string | null
@@ -58,6 +61,7 @@ function entitlementUpdates(entitlement: MemberEntitlement): MembershipAccessUpd
     external_subscription_id: entitlement.external_subscription_id,
     subscription_status: entitlement.status,
     subscription_period_end: entitlement.period_end,
+    skool_access_review_due_at: null,
     plan_type: entitlement.plan_type,
     subscription_amount: entitlement.amount,
     subscription_currency: entitlement.currency,
@@ -66,10 +70,10 @@ function entitlementUpdates(entitlement: MemberEntitlement): MembershipAccessUpd
 }
 
 async function findProfiles(email: string, userId?: string): Promise<MembershipProfile[]> {
-  const query = admin.from('profiles').select('id, access_type')
+  const query = admin.from('profiles').select('id, access_type, billing_exempt, role, billing_provider, subscription_status, is_active')
   const { data, error } = userId
     ? await query.eq('id', userId)
-    : await query.ilike('email', email)
+    : await query.ilike('email', email.replace(/[\\%_]/g, '\\$&'))
 
   if (error) throw error
   return (data ?? []) as MembershipProfile[]
@@ -82,7 +86,10 @@ export async function applyMembershipToProfiles(
 ): Promise<number> {
   const profiles = await findProfiles(normalizeMemberEmail(email), userId)
   const profileIds = profiles
-    .filter(profile => profile.access_type !== 'legacy_lifetime')
+    .filter(profile => profile.access_type !== 'legacy_lifetime' && !profile.billing_exempt && profile.role !== 'admin')
+    .filter(profile => !profile.billing_provider || profile.billing_provider === updates.billing_provider)
+    .filter(profile => !updates.is_active || profile.is_active !== false
+      || (profile.billing_provider === 'skool' && ['canceled', 'unpaid'].includes(profile.subscription_status ?? '')))
     .map(profile => profile.id)
 
   if (profileIds.length === 0) return 0
@@ -103,7 +110,7 @@ export async function claimMembershipEntitlement(email: string, userId?: string)
   const { data, error } = await admin
     .from('member_entitlements')
     .select('provider, external_customer_id, external_subscription_id, status, plan_type, amount, currency, period_end')
-    .ilike('email', normalizedEmail)
+    .ilike('email', normalizedEmail.replace(/[\\%_]/g, '\\$&'))
     .order('updated_at', { ascending: false })
     .limit(1)
     .maybeSingle()
@@ -118,50 +125,41 @@ export async function claimMembershipEntitlement(email: string, userId?: string)
 }
 
 /**
- * New accounts get a bounded access window while Skool/Zapier catches up.
- * A verified join replaces this with normal active Skool access. The window
- * prevents a delayed automation from blocking real members without turning
- * public signup into permanent free access.
+ * Signup grants active access immediately. Reconciliation verifies the Skool
+ * email and removes the separate review deadline. Unmatched accounts cannot
+ * keep using member tools beyond thirty days, even if a check is unavailable.
  */
-export async function grantProvisionalSkoolAccess(email: string, userId: string) {
+export async function grantSignupSkoolAccess(email: string, userId: string) {
   const { data: profile, error: profileError } = await admin
     .from('profiles')
-    .select('access_type, billing_provider, subscription_status')
+    .select('email, created_at, role, is_active, billing_exempt, access_type, billing_provider, subscription_status')
     .eq('id', userId)
     .maybeSingle()
 
   if (profileError) throw profileError
-  // Only grant the one-time window to a genuinely unlinked profile. Never
-  // revive a canceled membership or overwrite another billing entitlement.
-  if (!profile || profile.access_type || profile.billing_provider || profile.subscription_status) {
+  // Repeated signup must not reset a deadline, revive churn or a suspension,
+  // or replace an independently paid, lifetime, exempt or admin account.
+  if (!profile || normalizeMemberEmail(profile.email) !== normalizeMemberEmail(email)
+    || profile.role !== 'client' || profile.is_active === false || profile.billing_exempt
+    || profile.access_type || profile.billing_provider || profile.subscription_status) {
     return null
   }
 
-  const expiresAt = new Date(Date.now() + PROVISIONAL_ACCESS_DAYS * 24 * 60 * 60 * 1000).toISOString()
-  const updates: MembershipAccessUpdates = {
-    membership_tier: 'creator_cult',
-    access_type: 'skool_subscription',
-    billing_provider: 'skool',
-    external_customer_id: null,
-    external_subscription_id: null,
-    subscription_status: 'trialing',
-    subscription_period_end: expiresAt,
-    plan_type: 'monthly',
-    subscription_amount: null,
-    subscription_currency: null,
-    is_active: true,
-  }
+  const updates: MembershipAccessUpdates = skoolSignupAccess(profile.created_at)
 
-  const { error } = await admin.from('profiles').update(updates).eq('id', userId)
+  const { data, error } = await admin.from('profiles').update(updates).eq('id', userId)
+    .is('access_type', null).is('billing_provider', null).is('subscription_status', null)
+    .eq('is_active', true).eq('role', 'client').select('id')
   if (error) throw error
+  if (!data?.length) return null
 
-  return { updates, expiresAt, email: normalizeMemberEmail(email) }
+  return { updates, reviewDueAt: updates.skool_access_review_due_at, email: normalizeMemberEmail(email) }
 }
 
 export async function ensureSignupMembershipAccess(email: string, userId: string) {
   const claimed = await claimMembershipEntitlement(email, userId)
   if (claimed) return { kind: 'verified' as const, ...claimed }
 
-  const provisional = await grantProvisionalSkoolAccess(email, userId)
-  return { kind: 'provisional' as const, provisional }
+  const signup = await grantSignupSkoolAccess(email, userId)
+  return { kind: 'signup' as const, signup }
 }

@@ -215,8 +215,8 @@ export default function ClientAccessPage() {
               <h1 style={{ fontSize: 24, fontWeight: 800, color: 'hsl(0 5% 94%)', marginBottom: 4, letterSpacing: '-0.5px', fontFamily: 'var(--font-display)' }}>
                 Welcome back
               </h1>
-              <p style={{ fontSize: 13, color: 'hsl(0 5% 45%)', marginBottom: 32 }}>
-                Sign in to your dashboard
+              <p style={{ fontSize: 13, color: '#A1A4A5', lineHeight: 1.6, marginBottom: 24 }}>
+                Included with your active Creator Cult membership. Use your Skool email and your Dashboard password.
               </p>
 
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -244,7 +244,7 @@ export default function ClientAccessPage() {
               <p style={{ textAlign: 'center', fontSize: 13, color: 'hsl(0 5% 40%)', marginTop: 28 }}>
                 Don&apos;t have an account?{' '}
                 <button onClick={() => reset('signup')} style={{ color: '#3B82F6', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13, padding: 0 }}>
-                  Sign up
+                  Create a free account
                 </button>
               </p>
             </>
@@ -256,8 +256,8 @@ export default function ClientAccessPage() {
               <h1 style={{ fontSize: 24, fontWeight: 800, color: 'hsl(0 5% 94%)', marginBottom: 4, letterSpacing: '-0.5px', fontFamily: 'var(--font-display)' }}>
                 Create your account
               </h1>
-              <p style={{ fontSize: 13, color: 'hsl(0 5% 45%)', marginBottom: 32 }}>
-                Use the same email address you used to join Creator Cult
+              <p style={{ fontSize: 13, color: '#A1A4A5', lineHeight: 1.6, marginBottom: 24 }}>
+                Your Dashboard account is free with an active Creator Cult membership. Use your Skool email and choose a separate Dashboard password.
               </p>
 
               {success ? (
@@ -287,7 +287,7 @@ export default function ClientAccessPage() {
                   {error && <ErrorBox>{error}</ErrorBox>}
 
                   <button type="submit" className="login-btn-primary" disabled={loading} style={{ marginTop: 4 }}>
-                    {loading ? 'Creating account…' : 'Create account →'}
+                    {loading ? 'Creating account…' : 'Create free account →'}
                   </button>
                 </form>
               )}

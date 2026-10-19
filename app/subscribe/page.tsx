@@ -2,13 +2,13 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Check, Lock, MessageCircle, Zap } from 'lucide-react'
 import { createClient } from '@/lib/supabase-server'
-import { hasDashboardAccess } from '@/lib/dashboard-access'
+import { hasDashboardAccess, hasEndedSkoolMembership, SKOOL_REJOIN_URL } from '@/lib/dashboard-access'
 import type { Profile } from '@/lib/types'
 import { claimMembershipEntitlement } from '@/lib/membership-sync'
 
-const SKOOL_URL = 'https://www.skool.com/creator/about'
+const SKOOL_URL = SKOOL_REJOIN_URL
 
-function SubscribeContent({ isSignedIn }: { isSignedIn: boolean }) {
+function SubscribeContent({ isSignedIn, hasChurned }: { isSignedIn: boolean; hasChurned: boolean }) {
   return (
     <div style={{ width: '100%', maxWidth: 460 }}>
       <div style={{ textAlign: 'center', marginBottom: 28 }}>
@@ -32,10 +32,12 @@ function SubscribeContent({ isSignedIn }: { isSignedIn: boolean }) {
           background: 'linear-gradient(160deg, rgba(59,130,246,0.12) 0%, transparent 65%)',
         }}>
           <div style={{ fontSize: 30, fontWeight: 800, color: '#fff', letterSpacing: '-0.8px', lineHeight: 1.1, marginBottom: 12 }}>
-            {isSignedIn ? 'Your access needs linking.' : 'Your Dashboard is included.'}
+            {hasChurned ? 'Your Dashboard access is paused.' : isSignedIn ? 'Your access needs linking.' : 'Your Dashboard is included.'}
           </div>
           <p style={{ margin: 0, fontSize: 14, color: 'rgba(255,255,255,0.55)', lineHeight: 1.65 }}>
-            {isSignedIn
+            {hasChurned
+              ? 'Your Creator Cult membership has ended. Rejoin on Skool to get your Dashboard back. Your saved work is still here.'
+              : isSignedIn
               ? 'You are signed in, but this account is not currently linked to an original Creator Cult or active Skool membership.'
               : 'Original Creator Cult members and active Skool members both get access at no extra cost.'}
           </p>
@@ -50,7 +52,16 @@ function SubscribeContent({ isSignedIn }: { isSignedIn: boolean }) {
             Use the same email address connected to your Creator Cult membership.
           </div>
 
-          {isSignedIn ? (
+          {hasChurned ? (
+            <a href={SKOOL_URL} style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              width: '100%', minHeight: 48, borderRadius: 10, background: '#3b82f6',
+              color: '#fff', fontSize: 14, fontWeight: 750, textDecoration: 'none',
+              boxSizing: 'border-box', marginBottom: 10,
+            }}>
+              Rejoin Creator Cult →
+            </a>
+          ) : isSignedIn ? (
             <a href="https://instagram.com/willscxtt" target="_blank" rel="noopener noreferrer" style={{
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
               width: '100%', minHeight: 48, borderRadius: 10, background: '#3b82f6',
@@ -70,14 +81,20 @@ function SubscribeContent({ isSignedIn }: { isSignedIn: boolean }) {
             </Link>
           )}
 
-          <a href={SKOOL_URL} target="_blank" rel="noopener noreferrer" style={{
+          {!hasChurned && <a href={SKOOL_URL} target="_blank" rel="noopener noreferrer" style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             width: '100%', minHeight: 46, borderRadius: 10,
             border: '1px solid rgba(255,255,255,0.11)', color: 'rgba(255,255,255,0.75)',
             fontSize: 13, fontWeight: 700, textDecoration: 'none', boxSizing: 'border-box',
           }}>
             Open Creator Cult on Skool
-          </a>
+          </a>}
+
+          {hasChurned && (
+            <a href="/dashboard" style={{ display: 'block', textAlign: 'center', color: '#a1a1aa', fontSize: 13, marginTop: 16 }}>
+              I’ve rejoined. Check my access
+            </a>
+          )}
 
           {!isSignedIn && (
             <a href="https://instagram.com/willscxtt" target="_blank" rel="noopener noreferrer" style={{
@@ -103,6 +120,7 @@ function SubscribeContent({ isSignedIn }: { isSignedIn: boolean }) {
 export default async function SubscribePage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
+  let hasChurned = false
 
   if (user) {
     const { data: loadedProfile } = await supabase
@@ -117,6 +135,8 @@ export default async function SubscribePage() {
       if (claimed?.profilesUpdated) profile = { ...profile, ...claimed.updates }
     }
 
+    hasChurned = Boolean(profile && hasEndedSkoolMembership(profile))
+
     if (profile && profile.is_active && (profile.role === 'admin' || hasDashboardAccess(profile))) {
       redirect('/dashboard')
     }
@@ -129,7 +149,7 @@ export default async function SubscribePage() {
       paddingLeft: 'max(20px, env(safe-area-inset-left))', paddingRight: 'max(20px, env(safe-area-inset-right))',
       fontFamily: 'Inter, system-ui, sans-serif',
     }}>
-      <SubscribeContent isSignedIn={Boolean(user)} />
+      <SubscribeContent isSignedIn={Boolean(user)} hasChurned={hasChurned} />
     </div>
   )
 }

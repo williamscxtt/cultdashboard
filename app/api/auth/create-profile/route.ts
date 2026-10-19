@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { ensureSignupMembershipAccess } from '@/lib/membership-sync'
 import { normalizeMemberEmail } from '@/lib/skool-membership-event'
+import { createClient } from '@/lib/supabase-server'
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -10,19 +11,24 @@ const adminClient = createAdmin(
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, name, email } = await req.json() as {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { userId: requestedUserId, name } = await req.json() as {
       userId?: string
       name?: string
       email?: string
     }
 
-    if (!userId) {
-      return NextResponse.json({ error: 'userId required' }, { status: 400 })
+    if (requestedUserId && requestedUserId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const normalizedEmail = normalizeMemberEmail(email || '')
+    const userId = user.id
+    const normalizedEmail = normalizeMemberEmail(user.email)
 
-    // Upsert profile — safe to call even if a trigger already created the row
+    // Never reset an existing profile or claim another member's email/access.
     const { error } = await adminClient
       .from('profiles')
       .upsert({
@@ -35,7 +41,7 @@ export async function POST(req: NextRequest) {
         onboarding_completed: true,
         // Hub not yet complete — they'll unlock it by filling ≥75% of the hub
         onboarding_hub_complete: false,
-      }, { onConflict: 'id', ignoreDuplicates: false })
+      }, { onConflict: 'id', ignoreDuplicates: true })
 
     if (error) {
       console.error('[create-profile]', error.message)

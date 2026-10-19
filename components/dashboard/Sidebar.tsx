@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import {
   BarChart2, Lightbulb, MessageSquare,
   Settings, Users, LogOut, Calendar, Copy, Search,
-  BookOpen, TrendingUp, PhoneCall,
+  BookOpen, TrendingUp, PhoneCall, Trophy,
   ChevronDown, ChevronUp, Send, Zap, PanelLeft, User, X,
   Sun, Moon, Lock, List, Magnet, ClipboardList,
 } from 'lucide-react'
@@ -68,6 +68,7 @@ function NavItem({
   active: boolean
   collapsed: boolean
 }) {
+  const isLeaderboard = href === '/dashboard/leaderboard'
   return (
     <Link
       href={href}
@@ -85,8 +86,8 @@ function NavItem({
         fontWeight: active ? 700 : 500,
         marginBottom: 1,
         transition: 'background 0.12s, color 0.12s',
-        background: active ? 'var(--muted)' : 'transparent',
-        color: active ? 'var(--foreground)' : 'var(--muted-foreground)',
+        background: active ? (isLeaderboard ? 'rgba(223,191,122,0.09)' : 'var(--muted)') : 'transparent',
+        color: isLeaderboard ? '#dfbf7a' : active ? 'var(--foreground)' : 'var(--muted-foreground)',
         boxShadow: 'none',
         position: 'relative',
         overflow: 'hidden',
@@ -97,14 +98,14 @@ function NavItem({
         if (!active) {
           const el = e.currentTarget as HTMLElement
           el.style.background = 'var(--muted)'
-          el.style.color = 'var(--foreground)'
+          el.style.color = isLeaderboard ? '#dfbf7a' : 'var(--foreground)'
         }
       }}
       onMouseLeave={e => {
         if (!active) {
           const el = e.currentTarget as HTMLElement
           el.style.background = 'transparent'
-          el.style.color = 'var(--muted-foreground)'
+          el.style.color = isLeaderboard ? '#dfbf7a' : 'var(--muted-foreground)'
         }
       }}
     >
@@ -338,6 +339,7 @@ function SidebarContent({
         flexDirection: 'column',
       }}>
         <div style={{ flex: 1 }}>
+          <NavItem href="/dashboard/leaderboard" label="Leaderboard" icon={Trophy} active={isActive('/dashboard/leaderboard')} collapsed={collapsed} />
           {mainNav.map(item => hubLocked
             ? <LockedNavItem key={item.href} icon={item.icon} label={item.label} collapsed={collapsed} />
             : <NavItem key={item.href} {...item} active={isActive(item.href)} collapsed={collapsed} />

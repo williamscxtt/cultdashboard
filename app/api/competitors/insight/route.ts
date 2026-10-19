@@ -10,8 +10,6 @@ import { cookies } from 'next/headers'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
 import { generateInsightForAccount } from '../_lib/generate-insight'
 
-export { generateInsightForAccount }
-
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_KEY!

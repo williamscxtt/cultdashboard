@@ -7,6 +7,7 @@ import { Card, Badge, Button, PageHeader, SectionLabel } from '@/components/ui'
 import { Video, LogOut, Eye, EyeOff, RefreshCw, AlertTriangle, Unlink } from 'lucide-react'
 import { useIsMobile } from '@/lib/use-mobile'
 import { toast } from 'sonner'
+import InstagramConnectionCard, { type InstagramConnectionStatus } from '@/components/dashboard/InstagramConnectionCard'
 
 function MembershipCard({ profile }: { profile: Profile }) {
   const isLegacyLifetime = profile.access_type === 'legacy_lifetime'
@@ -70,7 +71,7 @@ function InstagramLogo({ size = 36 }: { size?: number }) {
   )
 }
 
-export default function SettingsClient({ profile, isImpersonating = false }: { profile: Profile; isImpersonating?: boolean }) {
+export default function SettingsClient({ profile, isImpersonating = false, officialPilot = false, instagramConnection = null, instagramResult }: { profile: Profile; isImpersonating?: boolean; officialPilot?: boolean; instagramConnection?: InstagramConnectionStatus; instagramResult?: string }) {
   const isMobile = useIsMobile()
   const [name, setName] = useState(profile.name || '')
   const [saving, setSaving] = useState(false)
@@ -294,6 +295,8 @@ export default function SettingsClient({ profile, isImpersonating = false }: { p
             </div>
           </div>
         </Card>
+
+        {officialPilot && <InstagramConnectionCard username={profile.ig_username} connection={instagramConnection} result={instagramResult} />}
 
         {/* YouTube / TikTok */}
         <Card style={{ padding: 20 }}>

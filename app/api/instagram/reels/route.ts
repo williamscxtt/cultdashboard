@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { createClient as createServerClient } from '@/lib/supabase-server'
+import { loadFounderStatistics } from '@/lib/founder-statistics-server'
 
 const adminClient = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -57,8 +58,15 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  let founderStatistics
+  try {
+    founderStatistics = await loadFounderStatistics(adminClient, profileId)
+  } catch {
+    return NextResponse.json({ error: 'Your combined statistics could not load. Please refresh.' }, { status: 503 })
+  }
   return NextResponse.json({
     reels: reels ?? [],
     total: count ?? 0,
+    founderStatistics,
   })
 }

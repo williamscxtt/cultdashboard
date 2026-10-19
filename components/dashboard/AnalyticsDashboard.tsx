@@ -1,5 +1,9 @@
 'use client'
 
+import { founderOverview, type FounderStatistics } from '@/lib/founder-statistics'
+
+import type { WeeklyAnalysisReport } from '@/lib/weekly-analysis'
+
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { motion } from 'framer-motion'
 import {
@@ -12,6 +16,7 @@ import {
 } from 'recharts'
 import { Card } from '@/components/ui'
 import { useSyncProgress } from '@/components/dashboard/SyncProgress'
+import { instagramSyncFeedback } from '@/lib/instagram-sync-feedback'
 import { useIsMobile } from '@/lib/use-mobile'
 import type { ClientReel, FollowerSnapshot } from '@/lib/types'
 
@@ -124,6 +129,12 @@ function AnimatedValue({ value }: { value: string }) {
 
   useEffect(() => {
     if (prevRef.current === value) return
+    if (!/\d/.test(value)) {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
+      prevRef.current = value
+      setDisplay(value)
+      return
+    }
     // Parse numbers like "17.3M", "1.4K", "123"
     const parse = (s: string) => {
       const m = s.match(/([\d.]+)([MKmk]?)/)
@@ -187,10 +198,10 @@ function StatCard({
       }} />
 
       <div style={{ padding: '20px 20px 18px', position: 'relative' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
           <span style={{
             fontSize: 10, fontWeight: 700, color: accentColor,
-            textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.85,
+            textTransform: 'uppercase', letterSpacing: '0.06em', opacity: 0.85, whiteSpace: 'nowrap', flexShrink: 0,
           }}>
             {label}
           </span>
@@ -611,14 +622,10 @@ function ReelCard({ reel, idx, profileId }: { reel: ClientReel; idx: number; pro
 }
 
 // ─── weekly analysis ──────────────────────────────────────────────────────────
-interface WeeklyAnalysisData {
-  what_worked: string
-  what_to_improve: string
-  this_week: string
-}
+type WeeklyAnalysisData = WeeklyAnalysisReport
 
 function WeeklyAnalysisCard({ analysis, isMobile, updatedDaysAgo }: { analysis: WeeklyAnalysisData; isMobile: boolean; updatedDaysAgo: number | null }) {
-  const sections: { key: keyof WeeklyAnalysisData; label: string; color: string }[] = [
+  const sections: { key: 'what_worked' | 'what_to_improve' | 'this_week'; label: string; color: string }[] = [
     { key: 'what_worked',    label: 'What worked',    color: '#4ade80' },
     { key: 'what_to_improve', label: 'Improve',       color: 'hsl(38 92% 60%)' },
     { key: 'this_week',      label: 'This week',      color: '#3B82F6' },
@@ -653,9 +660,15 @@ function WeeklyAnalysisCard({ analysis, isMobile, updatedDaysAgo }: { analysis: 
         </div>
         {updatedDaysAgo !== null && (
           <span style={{ fontSize: 10, color: 'var(--muted-foreground)' }}>
-            {updatedDaysAgo === 0 ? 'Updated today' : `Updated ${updatedDaysAgo}d ago`}
+            {analysis._meta.source === 'syncing' ? 'Statistics updating' : analysis._meta.source !== 'ready' ? 'Saved data' : updatedDaysAgo === 0 ? 'Updated today' : `Updated ${updatedDaysAgo}d ago`}
           </span>
         )}
+      </div>
+      <div style={{ padding: '9px 16px', fontSize: 11, lineHeight: 1.5, color: 'var(--muted-foreground)', borderBottom: '1px solid var(--border)' }}>
+        {new Date(`${analysis._meta.period_start}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })}
+        {' – '}
+        {new Date(`${analysis._meta.period_end}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })}
+        {' · '}{analysis._meta.post_count} posts tracked{' · '}{analysis._meta.active_days}/7 days active
       </div>
       <div style={{
         display: 'grid',
@@ -699,46 +712,67 @@ interface Props {
   focusThisWeek?: string
   willFollowerViewRatio?: number | null
 }
-interface SyncResult { synced: number; total: number; classified?: number; warning?: string }
+interface SyncResult { synced: number; total: number; classified?: number; warning?: string; message?: string }
 
 export default function AnalyticsDashboard({ profileId, followersCount, igUsername, followerHistory = [], profileName, dashboardBio, focusThisWeek, willFollowerViewRatio }: Props) {
   const { startSync, updateProgress, finishSync } = useSyncProgress()
   const isMobile = useIsMobile()
 
-  // Parse weekly analysis — stored as JSON since the new format, plain text in legacy
-  const weeklyAnalysis = useMemo<WeeklyAnalysisData | null>(() => {
-    if (!focusThisWeek) return null
+  function parseWeeklyReport(raw?: string): WeeklyAnalysisData | null {
+    if (!raw) return null
     try {
-      const p = JSON.parse(focusThisWeek)
-      if (p.what_worked) return p as WeeklyAnalysisData
-    } catch {}
-    // Legacy plain text — treat as the "this_week" field only
-    return { what_worked: '', what_to_improve: '', this_week: focusThisWeek }
-  }, [focusThisWeek])
+      const report = JSON.parse(raw)
+      return report._meta?.version === 3 && report.what_worked ? report as WeeklyAnalysisData : null
+    } catch { return null }
+  }
+  const [weeklyAnalysis, setWeeklyAnalysis] = useState<WeeklyAnalysisData | null>(() => parseWeeklyReport(focusThisWeek))
+  useEffect(() => { setWeeklyAnalysis(parseWeeklyReport(focusThisWeek)) }, [profileId, focusThisWeek])
   const [reels, setReels] = useState<ClientReel[]>([])
+  const [founderStatistics, setFounderStatistics] = useState<FounderStatistics | null>(null)
   const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null)
   const [syncError, setSyncError] = useState<string | null>(null)
+  const [hasSynced, setHasSynced] = useState(false)
+  const [refreshPending, setRefreshPending] = useState(false)
+  const [lastSynced, setLastSynced] = useState<string | null>(null)
   const [libraryVisible, setLibraryVisible] = useState(24)
   const [timeRange, setTimeRange] = useState('1m')
   const [viewsMode, setViewsMode] = useState('Daily')
   const [engMode, setEngMode] = useState('Daily')
   const [contentSort, setContentSort] = useState('Recent')
   const [activePlatform, setActivePlatform] = useState('All')
-  // Local followers count — starts with server value, updated by silent quick-sync on mount
+  // Saved followers: opening Analytics does not start an additional paid read.
   const [localFollowers, setLocalFollowers] = useState<number | null>(followersCount ?? null)
 
   const fetchReels = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch(`/api/instagram/reels?profileId=${profileId}&limit=500&offset=0`)
+      const [res, statusRes] = await Promise.all([
+        fetch(`/api/instagram/reels?profileId=${profileId}&limit=500&offset=0`),
+        fetch(`/api/instagram/sync?profileId=${profileId}`),
+      ])
       if (res.ok) {
         const data = await res.json()
         setReels(data.reels ?? [])
         setTotal(data.total ?? 0)
+        setFounderStatistics(data.founderStatistics ?? null)
+      } else {
+        setSyncError('Your saved statistics could not load. Please refresh the page.')
       }
+      if (statusRes.ok) {
+        const status = await statusRes.json()
+        setHasSynced(Boolean(status.has_synced))
+        setLastSynced(status.last_synced ?? null)
+        setRefreshPending(['queued', 'running'].includes(status.sync_status))
+        if (status.sync_status === 'succeeded') setSyncResult(previous => previous
+          ? { ...previous, message: 'Your daily statistics are up to date.' } : previous)
+        if (typeof status.followers === 'number') setLocalFollowers(status.followers)
+        if (status.sync_issue) setSyncError(instagramSyncFeedback(status.sync_issue).message)
+      }
+    } catch {
+      setSyncError('Your saved statistics could not load. Please check your connection and refresh the page.')
     } finally {
       setLoading(false)
     }
@@ -746,87 +780,51 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
   useEffect(() => { fetchReels() }, [fetchReels])
 
-  // Silent quick-sync on every page load — refreshes follower count in background
   useEffect(() => {
-    if (!igUsername) return
-    fetch('/api/instagram/sync', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profileId, quick: true }),
-    })
-      .then(r => r.ok ? r.json() : null)
-      .then((data: { followers?: number } | null) => {
-        if (data?.followers) setLocalFollowers(data.followers)
-      })
-      .catch(() => {})
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileId])
+    if (!refreshPending) return
+    const poll = setInterval(fetchReels, 30_000)
+    return () => clearInterval(poll)
+  }, [refreshPending, fetchReels])
+
+  // Re-read the report after saved activity/sync completion changes. The API
+  // uses a data fingerprint and never requests another paid Instagram scan.
+  useEffect(() => {
+    if (loading) return
+    const controller = new AbortController()
+    fetch(`/api/instagram/weekly-analysis?profileId=${profileId}`, { cache: 'no-store', signal: controller.signal })
+      .then(async response => {
+        if (!response.ok) return
+        const data = await response.json()
+        if (!controller.signal.aborted && data.analysis?._meta?.version === 3) setWeeklyAnalysis(data.analysis)
+      }).catch(() => { /* The server-rendered saved-data summary remains available. */ })
+    return () => controller.abort()
+  }, [profileId, igUsername, loading, lastSynced])
 
   async function handleSync() {
     setSyncing(true)
     setSyncResult(null)
     setSyncError(null)
 
-    // Staged fake-progress that mirrors the real sync pipeline:
-    // 0-12%  → boot + Apify start
-    // 12-65% → Apify scraping (longest phase, ~2-3 min)
-    // 65-85% → Whisper transcription
-    // 85-98% → Claude format classification
-    const STAGES = [
-      { at: 5,  label: 'Connecting to Instagram…' },
-      { at: 12, label: 'Scraping reels…' },
-      { at: 65, label: 'Transcribing content…' },
-      { at: 85, label: 'Classifying formats…' },
-      { at: 96, label: 'Almost done…' },
-    ]
-    startSync('Connecting to Instagram…')
-
-    // Advance through stages over expected 3-min sync duration
-    // Each stage occupies a slice of time proportional to its % range.
-    // Total simulated time ≈ 180 s. We tick every 800 ms.
-    const TOTAL_MS = 180_000
-    const TICK_MS  = 800
-    const ticks = TOTAL_MS / TICK_MS  // 225 ticks ≈ 3 min
-    let tick = 0
-    const interval = setInterval(() => {
-      tick++
-      const rawPct = (tick / ticks) * 98  // approach 98% asymptotically
-      // Ease: fast start, slow finish
-      const eased = 98 * (1 - Math.pow(1 - rawPct / 98, 1.6))
-      const pct = Math.min(eased, 97)
-
-      // Pick label from stages
-      const stage = [...STAGES].reverse().find(s => pct >= s.at)
-      updateProgress(pct, stage?.label)
-    }, TICK_MS)
-
+    startSync('Checking your daily statistics refresh…')
     try {
       const res = await fetch('/api/instagram/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ profileId }),
+        body: JSON.stringify({ profileId, statisticsOnly: true }),
       })
       const data = await res.json()
-      clearInterval(interval)
 
-      if (data.error) {
+      if (!res.ok || data.error) {
         finishSync()
-        if (data.error === 'token_expired') setSyncError('Instagram session expired. Reconnect in Settings.')
-        else if (data.error === 'rate_limited') setSyncError('Rate limit hit. Try again in a few minutes.')
-        else setSyncError(data.error)
+        setSyncError(instagramSyncFeedback(data.error).message)
       } else {
-        setSyncResult({ synced: data.synced, total: data.total, warning: data.warning })
+        setHasSynced(Boolean(data.has_synced))
+        setSyncResult({ synced: data.synced, total: data.total, warning: data.warning, message: data.message })
         finishSync()
-        // Refresh thumbnails in background
-        fetch('/api/instagram/sync', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ profileId }),
-        }).catch(() => {})
+        // The sync already persists fresh thumbnails; a second scrape adds cost.
         await fetchReels()
       }
     } catch {
-      clearInterval(interval)
       finishSync()
       setSyncError('Network error. Check your connection.')
     } finally {
@@ -837,9 +835,13 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   const days = TIME_RANGES.find(t => t.label === timeRange)?.days ?? 30
   const currentReels = useMemo(() => filterByDays(reels, days, 0), [reels, days])
   const prevReels    = useMemo(() => filterByDays(reels, days, 1), [reels, days])
+  const combined = useMemo(() => founderStatistics ? founderOverview(founderStatistics, days) : null, [founderStatistics, days])
 
   // ── aggregate stats ───────────────────────────────────────────────────────
   const stats = useMemo(() => {
+    const available = hasSynced || total > 0
+    const viewsKnown = available && (!currentReels.length || currentReels.some(r => r.views != null))
+    const engagementsKnown = available && (!currentReels.length || currentReels.some(r => [r.likes, r.comments, r.saves, r.shares].some(n => n != null)))
     // Views + engagement: both filtered to the selected time window so
     // the "vs prev period" delta is a like-for-like comparison.
     // Note: view counts are accumulated totals per reel at last sync —
@@ -857,11 +859,17 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       : null
 
     return {
-      views:     { value: fmtNum(curViews), change: pct(curViews, prvViews), spark: currentReels.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(r => r.views ?? 0) },
-      eng:       { value: fmtNum(curEng),   change: pct(curEng, prvEng),     spark: currentReels.map(r => (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0)) },
+      views:     { value: viewsKnown ? fmtNum(curViews) : '—', change: viewsKnown ? pct(curViews, prvViews) : null, spark: [...currentReels].sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map(r => r.views ?? 0) },
+      eng:       { value: engagementsKnown ? fmtNum(curEng) : '—', change: engagementsKnown ? pct(curEng, prvEng) : null, spark: currentReels.map(r => (r.likes ?? 0) + (r.comments ?? 0) + (r.saves ?? 0) + (r.shares ?? 0)) },
       followers: { value: localFollowers != null ? fmtNum(localFollowers) : '—', change: followerChange, spark: followerSpark },
     }
-  }, [reels, currentReels, prevReels, localFollowers, followerHistory, days])
+  }, [hasSynced, total, currentReels, prevReels, localFollowers, followerHistory, days])
+
+  const headlineViews = combined ? {
+    value: combined.views === null ? '—' : fmtNum(combined.views),
+    change: combined.views !== null && combined.previousViews !== null ? pct(combined.views, combined.previousViews) : null,
+    spark: combined.spark,
+  } : stats.views
 
   // ── views over time ───────────────────────────────────────────────────────
   const viewsChart = useMemo(() => {
@@ -982,7 +990,8 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
               {profileName ? `${profileName}'s Dashboard` : 'Dashboard'}
             </h1>
             <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: '4px 0 0' }}>
-              {total > 0 ? `${total} reels tracked · Instagram` : 'Connect Instagram in Settings to start'}
+              {total > 0 ? `${total} reels tracked · Instagram` : igUsername ? 'Waiting for your first Instagram sync' : 'Connect Instagram in Settings to start'}
+              {lastSynced && <> · Last synced {new Date(lastSynced).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</>}
             </p>
           </div>
           <div style={{ display: 'flex', gap: 8, flexShrink: 0 }} />
@@ -1007,7 +1016,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       {/* ── Platform + time filters ─────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexWrap: 'wrap', gap: 10 }}>
         {/* Platform tabs */}
-        <div style={{ display: 'flex', gap: 6, overflowX: 'auto' }}>
+        <div aria-label="Platforms" style={{ display: 'flex', gap: 6, overflowX: 'auto', maxWidth: '100%', minWidth: 0, width: isMobile ? '100%' : undefined, paddingBottom: 2 }}>
           {[
             { label: 'All', icon: null, enabled: true },
             { label: 'Instagram', icon: <IgIcon size={13} />, enabled: true },
@@ -1021,7 +1030,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
                 onClick={() => enabled && setActivePlatform(label)}
                 disabled={!enabled}
                 style={{
-                  display: 'flex', alignItems: 'center', gap: 5,
+                  display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0, whiteSpace: 'nowrap',
                   padding: '6px 12px', borderRadius: 8, fontSize: 13, fontWeight: 600,
                   border: isActive ? '1.5px solid var(--accent)' : '1px solid var(--border)',
                   background: isActive ? 'var(--accent)' : 'var(--card)',
@@ -1071,13 +1080,13 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
           background: 'var(--muted)', color: 'var(--foreground)',
           fontSize: 13, fontWeight: 500, border: '1px solid var(--border)',
         }}>
-          Synced {syncResult.synced} new reel{syncResult.synced !== 1 ? 's' : ''} of {syncResult.total} found.
+          {syncResult.message || <>Synced {syncResult.synced} new reel{syncResult.synced !== 1 ? 's' : ''} of {syncResult.total} found.</>}
           {syncResult.classified ? <span style={{ marginLeft: 8 }}>Classified {syncResult.classified} reel{syncResult.classified !== 1 ? 's' : ''}.</span> : null}
           {syncResult.warning && <span style={{ color: 'var(--muted-foreground)', marginLeft: 8 }}>{syncResult.warning}</span>}
         </div>
       )}
       {syncError && (
-        <div style={{
+        <div role="status" style={{
           marginBottom: 16, padding: '10px 14px', borderRadius: 8,
           background: 'var(--change-negative-bg)', color: 'var(--change-negative-text)',
           fontSize: 13, fontWeight: 500, border: '1px solid var(--change-negative-border)',
@@ -1087,19 +1096,22 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
       )}
 
       {/* ── Stat cards ──────────────────────────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 12, marginBottom: 8 }}>
-        <StatCard label="Total Views" value={stats.views.value} change={stats.views.change} sparkData={stats.views.spark} accentColor="#8B5CF6" delay={0} nullLabel="no prior period data" />
-        <StatCard label="Engagements" value={stats.eng.value} change={stats.eng.change} sparkData={stats.eng.spark} accentColor="#3B82F6" delay={0.05} nullLabel="no prior period data" />
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2,1fr)' : `repeat(${combined ? 4 : 3},1fr)`, gap: 12, marginBottom: 8 }}>
+        <StatCard label="Total Views" value={headlineViews.value} change={headlineViews.change} sparkData={headlineViews.spark} accentColor="#8B5CF6" delay={0} nullLabel={headlineViews.value === '—' ? 'Awaiting statistics' : 'no prior period data'} />
+        {combined && <StatCard label="Posts Published" value={combined.posts === null ? '—' : fmtNum(combined.posts)} change={combined.posts !== null && combined.previousPosts !== null ? pct(combined.posts, combined.previousPosts) : null} sparkData={[]} accentColor="#F59E0B" delay={0.03} nullLabel={days > 30 ? 'Complete history unavailable' : 'Awaiting posting history'} />}
+        <StatCard label="Engagements" value={stats.eng.value} change={stats.eng.change} sparkData={stats.eng.spark} accentColor="#3B82F6" delay={0.05} nullLabel={stats.eng.value === '—' ? 'Awaiting statistics' : 'no prior period data'} />
         <StatCard
           label="Followers"
           value={stats.followers.value}
           change={stats.followers.change}
           sparkData={stats.followers.spark}
           accentColor="#10B981"
-          nullLabel="synced on connect"
+          nullLabel={stats.followers.value === '—' ? 'Awaiting first sync' : 'latest available count'}
           delay={0.1}
         />
       </div>
+
+      {combined && <p style={{ fontSize: 11, color: 'var(--muted-foreground)', margin: '4px 0 12px' }}>Views and posts combine @williamscxtt + @willscottbiz. Engagements and followers are for the account shown.</p>}
 
       {/* ── Stat definition note ────────────────────────────────────────────── */}
       <div style={{
@@ -1135,7 +1147,7 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
         <WeeklyAnalysisCard
           analysis={weeklyAnalysis}
           isMobile={isMobile}
-          updatedDaysAgo={null}
+          updatedDaysAgo={Math.max(0, Math.floor((Date.now() - Date.parse(weeklyAnalysis._meta.generated_at)) / 86400000))}
         />
       )}
 

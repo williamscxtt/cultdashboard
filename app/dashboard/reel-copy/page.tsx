@@ -499,7 +499,7 @@ export default function ReelCopyPage() {
               onChange={e => setAudioFile(e.target.files?.[0] ?? null)}
             />
             <p style={{ fontSize: 12, color: 'var(--muted-foreground)', margin: 0, lineHeight: 1.5 }}>
-              Audio is transcribed using OpenAI Whisper, then analysed by Claude. Requires OPENAI_API_KEY to be configured.
+              Upload your reel audio to get a transcript and feedback on the hook, structure and call to action.
             </p>
           </div>
         )}

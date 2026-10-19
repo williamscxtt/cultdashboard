@@ -1,19 +1,20 @@
 import { NextResponse } from 'next/server'
+import { instagramConfig, requireInstagramPilot } from '@/lib/instagram-connection'
+import { createInstagramState, canonicalInstagramUsername, INSTAGRAM_SCOPES, INSTAGRAM_STATE_COOKIE, INSTAGRAM_STATE_TTL } from '@/lib/instagram-oauth-security'
 
 export async function GET() {
-  const clientId = process.env.INSTAGRAM_APP_ID?.trim()
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL?.trim()}/api/auth/instagram/callback`
-
-  if (!clientId) {
-    return NextResponse.json({ error: 'Instagram App ID not configured. Add INSTAGRAM_APP_ID to env vars.' }, { status: 500 })
+  try {
+    const { user, profile } = await requireInstagramPilot()
+    if (!canonicalInstagramUsername(profile.ig_username)) throw new Error('username_required')
+    const config = instagramConfig()
+    const state = createInstagramState(user.id, profile.ig_username!, config.encryptionKey)
+    const params = new URLSearchParams({ client_id: config.appId, redirect_uri: config.redirectUri, scope: INSTAGRAM_SCOPES.join(','), response_type: 'code', state })
+    const response = NextResponse.redirect('https://www.instagram.com/oauth/authorize?' + params)
+    response.headers.set('Cache-Control', 'no-store')
+    response.cookies.set(INSTAGRAM_STATE_COOKIE, state, { httpOnly: true, secure: true, sameSite: 'lax', path: '/api/auth/instagram', maxAge: INSTAGRAM_STATE_TTL })
+    return response
+  } catch (error) {
+    const code = error instanceof Error ? error.message : 'configuration'
+    return NextResponse.json({ error: ['unauthorized', 'pilot_only', 'impersonating', 'username_required'].includes(code) ? code : 'configuration' }, { status: code === 'unauthorized' ? 401 : code === 'configuration' ? 503 : 403 })
   }
-
-  const params = new URLSearchParams({
-    client_id: clientId,
-    redirect_uri: redirectUri,
-    scope: 'instagram_business_basic,instagram_business_manage_insights',
-    response_type: 'code',
-  })
-
-  return NextResponse.redirect(`https://www.instagram.com/oauth/authorize?${params}`)
 }

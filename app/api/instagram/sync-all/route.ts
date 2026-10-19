@@ -1,67 +1,50 @@
-/**
- * POST /api/instagram/sync-all
- *
- * Called by Vercel Cron (daily at 6am UTC) — syncs every active client.
- * Auth: Bearer {CRON_SECRET}
- *
- * Also callable manually as admin from the dashboard.
- */
-
-import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
+import { authorizeInstagramSync } from '@/lib/instagram-sync-auth'
+import { enqueueInstagramStatistics, processInstagramStatistics, instagramProviderHealth, instagramStatisticsStatus, consumeInstagramSyncInvocation } from '@/lib/instagram-statistics-sync'
+import { validInstagramCronSignature } from '@/lib/instagram-cron-signature'
+import { refreshLeaderboardInsights } from '@/lib/leaderboard-insights'
 
-const adminClient = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-)
+export const maxDuration = 180
+export const dynamic = 'force-dynamic'
 
-export const maxDuration = 60 // Just kicks off fire-and-forget per-profile syncs
+async function sync(enqueue: boolean, profileId?: string) {
+  try {
+    await instagramProviderHealth()
+    const queued = enqueue ? await enqueueInstagramStatistics(profileId) : 0
+    const result = await processInstagramStatistics()
+    const insight = result.jobs.queued === 0 && result.jobs.running === 0 ? await refreshLeaderboardInsights() : {}
+    return NextResponse.json({ queued, ...result, ...insight })
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Instagram sync failed' }, { status: 502 })
+  }
+}
 
+/** Vercel invokes cron routes with GET. Jobs are seeded once per UTC day. */
+export async function GET(req: NextRequest) {
+  const secret = process.env.CRON_SECRET
+  const nonce = req.headers.get('x-instagram-sync-nonce')
+  const bearer = Boolean(secret && req.headers.get('authorization') === `Bearer ${secret}`)
+  const signed = secret && validInstagramCronSignature(secret, nonce,
+    req.headers.get('x-instagram-sync-timestamp'), req.headers.get('x-instagram-sync-signature'))
+  if (!bearer && (!signed || !nonce || !await consumeInstagramSyncInvocation(nonce))) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  return sync(new Date().getUTCHours() >= 6)
+}
+
+/** Admin-only manual catch-up, status and provider checks. */
 export async function POST(req: NextRequest) {
-  // Verify cron secret (Vercel sets this automatically for scheduled crons)
-  const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const auth = req.headers.get('authorization')
-    if (auth !== `Bearer ${cronSecret}`) {
-      // Also allow admin requests from within the dashboard (no secret needed if already authed)
-      const { createClient: createServerClient } = await import('@/lib/supabase-server')
-      const supabase = await createServerClient()
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-      const { data: profile } = await adminClient
-        .from('profiles').select('role').eq('id', user.id).single()
-      if (profile?.role !== 'admin') {
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-      }
-    }
+  const denied = await authorizeInstagramSync()
+  if (denied) return denied
+  const body = await req.json().catch(() => ({})) as { action?: string; profileId?: string }
+  if (body.profileId && !/^[0-9a-f-]{36}$/i.test(body.profileId)) {
+    return NextResponse.json({ error: 'Invalid profileId' }, { status: 400 })
   }
-
-  // Fetch all active profiles that have an IG username set
-  const { data: profiles, error } = await adminClient
-    .from('profiles')
-    .select('id, ig_username, name')
-    .not('ig_username', 'is', null)
-    .neq('ig_username', '')
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  if (!profiles?.length) return NextResponse.json({ queued: 0, message: 'No profiles with Instagram configured' })
-
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
-    ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')
-
-  // Fire-and-forget a sync for each profile — they execute independently
-  let queued = 0
-  for (const profile of profiles) {
-    fetch(`${baseUrl}/api/instagram/sync`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ profileId: profile.id }),
-    }).catch(err => {
-      console.error(`[sync-all] Failed to queue sync for ${profile.ig_username}:`, err)
-    })
-    queued++
+  try {
+    if (body.action === 'health') return NextResponse.json(await instagramProviderHealth())
+    if (body.action === 'status') return NextResponse.json(await instagramStatisticsStatus())
+    return sync(body.action !== 'drain', body.profileId)
+  } catch (error) {
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Instagram sync failed' }, { status: 502 })
   }
-
-  console.log(`[sync-all] Queued ${queued} Instagram syncs`)
-  return NextResponse.json({ queued, profiles: profiles.map(p => p.ig_username) })
 }

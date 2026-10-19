@@ -16,9 +16,16 @@ const ACTIVE_EVENTS = new Set([
   'paid_member',
   'subscription_activated',
   'subscription_created',
+  'rejoined',
+  'member_rejoined',
+  'subscription_reactivated',
 ])
 
 const INACTIVE_EVENTS = new Set([
+  'churned',
+  'member_churned',
+  'membership_expired',
+  'subscription_expired',
   'canceled',
   'cancelled',
   'inactive',

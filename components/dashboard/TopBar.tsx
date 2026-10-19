@@ -7,6 +7,7 @@ import { Command, Menu } from 'lucide-react'
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard':               'Home',
   '/dashboard/analytics':     'Analytics',
+  '/dashboard/leaderboard':   'Leaderboard',
   '/dashboard/scripts':       'This Week',
   '/dashboard/content':       'Content Intel',
   '/dashboard/weekly-log':    'Weekly Log',

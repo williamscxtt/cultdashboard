@@ -13,6 +13,11 @@
 import { createClient } from '@supabase/supabase-js'
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { authorizeInstagramSync } from '@/lib/instagram-sync-auth'
+import { instagramSyncFeedback } from '@/lib/instagram-sync-feedback'
+import { statistic, statisticsWindow } from '@/lib/instagram-statistics'
+import { enqueueInstagramStatistics } from '@/lib/instagram-statistics-sync'
+import { restoreLinkedInstagramStatistics } from '@/lib/instagram-cached-statistics'
 
 export const maxDuration = 300 // 5 min — Vercel Pro/Fluid
 
@@ -29,7 +34,7 @@ const ACTOR_ID = 'apify~instagram-reel-scraper'
 
 /**
  * isInitialSync = true  → first 30 reels (history baseline), with comments
- * isInitialSync = false → last 7 days only (25 limit — buffer for prolific posters), no comments
+ * isInitialSync = false → past month (200-reel cap), no comments
  *
  * Comments are only fetched on initial sync to power the AI comment overview.
  * Incremental syncs skip comments to save ~70% Apify compute units.
@@ -43,9 +48,9 @@ async function apifyStartRun(username: string, isInitialSync: boolean): Promise<
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       username: [username],
-      // 30 on first sync for baseline; 25 on incremental (buffer for high-volume posters)
-      // — Apify returns newest-first, so 25 always covers ≥ 7 days for any realistic schedule
-      resultsLimit: isInitialSync ? 30 : 25,
+      // 30 on first sync for analysis; refresh all recent monthly metrics afterwards
+      resultsLimit: isInitialSync ? 30 : 200,
+      ...(!isInitialSync ? { onlyPostsNewerThan: statisticsWindow(new Date().toISOString().slice(0, 10)) } : {}),
       // Comments only on initial sync — powers the AI overview; skip on incrementals
       includeComments: isInitialSync,
       maxCommentsPerPost: isInitialSync ? 30 : 0,
@@ -92,10 +97,8 @@ async function apifyDownload(datasetId: string): Promise<ApifyReel[]> {
         (item.mediaType === 'VIDEO') ||
         (Number(item.videoPlayCount ?? item.playCount ?? item.videoViewCount ?? 0) > 0)
       )
-      // Skip pinned posts — they appear at position 1-3 in the grid regardless of
-      // when they were posted and will massively skew date-filtered stats
-      const isPinned = Boolean(item.isPinned ?? item.pinned ?? item.isTopPost ?? false)
-      return isVideo && !isPinned
+      // Filter by publication date later, including recent pinned reels.
+      return isVideo
     })
     .map(normalise)
 }
@@ -316,12 +319,22 @@ Reply ONLY with JSON array: [{"index":1,"format_type":"Talking Head"},...]`,
 // ── Status helper ─────────────────────────────────────────────────────────────
 
 async function getStatus(profileId: string) {
-  const [{ data: latest }, { count }] = await Promise.all([
+  const { data: profile } = await adminClient.from('profiles').select('ig_username,followers_count').eq('id', profileId).single()
+  const username = String(profile?.ig_username ?? '').trim().replace(/^@/, '').toLowerCase()
+  const [{ data: latest }, { count }, { data: statisticsSync }] = await Promise.all([
     adminClient.from('client_reels').select('created_at').eq('profile_id', profileId)
       .order('created_at', { ascending: false }).limit(1).single(),
     adminClient.from('client_reels').select('*', { count: 'exact', head: true }).eq('profile_id', profileId),
+    adminClient.from('instagram_sync_jobs').select('completed_at').eq('username', username)
+      .eq('status', 'succeeded').order('completed_at', { ascending: false }).limit(1).maybeSingle(),
   ])
-  return { synced: 0, total: count ?? 0, last_synced: latest?.created_at ?? null }
+  const { data: attempt } = await adminClient.from('instagram_sync_jobs').select('status,last_error,updated_at')
+    .eq('username', username).order('sync_date', { ascending: false }).limit(1).maybeSingle()
+  const issue = attempt?.status === 'failed' && attempt.last_error ? instagramSyncFeedback(attempt.last_error) : null
+  const timestamps = [latest?.created_at, statisticsSync?.completed_at].filter(Boolean).sort()
+  return { synced: 0, total: count ?? 0, last_synced: timestamps.at(-1) ?? null,
+    has_synced: Boolean(statisticsSync || count), followers: profile?.followers_count ?? null,
+    sync_issue: issue?.code ?? null, sync_status: attempt?.status ?? null }
 }
 
 // ── GET — status only ─────────────────────────────────────────────────────────
@@ -329,75 +342,48 @@ async function getStatus(profileId: string) {
 export async function GET(req: NextRequest) {
   const profileId = new URL(req.url).searchParams.get('profileId')
   if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
+  const denied = await authorizeInstagramSync(profileId)
+  if (denied) return denied
   return NextResponse.json(await getStatus(profileId))
 }
 
-// ── Quick sync — follower count only (no Apify reel scrape) ──────────────────
+// Statistics refreshes share the durable daily job, including requests from
+// multiple Dashboard profiles linked to the same Instagram handle.
+async function handleDailySync(profileId: string, igUsername: string): Promise<NextResponse> {
+  await enqueueInstagramStatistics(profileId)
+  await restoreLinkedInstagramStatistics(adminClient, profileId)
+  const today = new Date().toISOString().slice(0, 10)
+  const { data: job, error } = await adminClient.from('instagram_sync_jobs').select('status,last_error')
+    .eq('username', igUsername).eq('sync_date', today).maybeSingle()
+  if (error || !job) return NextResponse.json({ error: 'Statistics refresh is unavailable. Please try again later.' }, { status: 503 })
+  if (job.status === 'failed') return NextResponse.json({ error: instagramSyncFeedback(job.last_error).message }, { status: 503 })
+  const status = await getStatus(profileId)
+  const pending = job.status !== 'succeeded'
+  return NextResponse.json({ ...status, pending, cached: !pending,
+    message: pending ? 'Your daily statistics refresh is queued. Saved statistics remain available while it finishes.'
+      : 'Your statistics are already up to date for today.' }, { status: pending ? 202 : 200 })
+}
+
+// ── Quick sync — reuse today's saved followers or daily job ──────────────────
 
 async function handleQuickSync(profileId: string, igUsername: string): Promise<NextResponse> {
-  const token = process.env.APIFY_API_TOKEN
-  if (!token) return NextResponse.json({ quick: true, followers: null })
-
-  try {
-    const startRes = await fetch(
-      `${APIFY_BASE}/acts/apify~instagram-profile-scraper/runs?token=${token}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ usernames: [igUsername], resultsLimit: 1 }),
-      }
-    )
-    if (!startRes.ok) return NextResponse.json({ quick: true, followers: null })
-
-    const startData = await startRes.json() as { data?: { id?: string } }
-    const runId = startData.data?.id
-    if (!runId) return NextResponse.json({ quick: true, followers: null })
-
-    // Poll for up to 60s
-    const deadline = Date.now() + 60_000
-    let datasetId: string | null = null
-    while (Date.now() < deadline) {
-      await new Promise(r => setTimeout(r, 5000))
-      const pollRes = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${token}`)
-      if (pollRes.ok) {
-        const run = (await pollRes.json()).data as { status: string; defaultDatasetId: string }
-        if (run.status === 'SUCCEEDED') { datasetId = run.defaultDatasetId; break }
-        if (['FAILED', 'ABORTED', 'TIMED-OUT'].includes(run.status)) break
-      }
-    }
-
-    if (!datasetId) return NextResponse.json({ quick: true, followers: null })
-
-    const dlRes = await fetch(`${APIFY_BASE}/datasets/${datasetId}/items?token=${token}&clean=true`)
-    if (!dlRes.ok) return NextResponse.json({ quick: true, followers: null })
-
-    const profiles = await dlRes.json() as Array<Record<string, unknown>>
-    const followerCount = Number(
-      profiles[0]?.followersCount ?? profiles[0]?.followerCount ??
-      profiles[0]?.followers ?? 0
-    )
-
-    if (followerCount > 0) {
-      const today = new Date().toISOString().slice(0, 10)
-      await adminClient.from('follower_snapshots').upsert(
-        { profile_id: profileId, date: today, count: followerCount },
-        { onConflict: 'profile_id,date' }
-      )
-      await adminClient.from('profiles').update({ followers_count: followerCount }).eq('id', profileId)
-    }
-
-    return NextResponse.json({ quick: true, followers: followerCount || null })
-  } catch {
-    return NextResponse.json({ quick: true, followers: null })
+  const today = new Date().toISOString().slice(0, 10)
+  const { data: cached } = await adminClient.from('follower_snapshots').select('count')
+    .eq('profile_id', profileId).eq('date', today).maybeSingle()
+  if (cached && Number.isInteger(cached.count) && cached.count >= 0) {
+    return NextResponse.json({ quick: true, followers: cached.count, cached: true })
   }
+  return handleDailySync(profileId, igUsername)
 }
 
 // ── POST — full Apify sync (or quick=true for follower count only) ────────────
 
 export async function POST(req: NextRequest) {
-  const body = await req.json().catch(() => ({})) as { profileId?: string; quick?: boolean }
-  const { profileId, quick } = body
+  const body = await req.json().catch(() => ({})) as { profileId?: string; quick?: boolean; statisticsOnly?: boolean }
+  const { profileId, quick, statisticsOnly } = body
   if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
+  const denied = await authorizeInstagramSync(profileId)
+  if (denied) return denied
 
   // Get profile
   const { data: profile } = await adminClient
@@ -411,6 +397,7 @@ export async function POST(req: NextRequest) {
 
   // Quick mode: just refresh follower count, skip all reel scraping
   if (quick) return handleQuickSync(profileId, igUsername)
+  if (statisticsOnly) return handleDailySync(profileId, igUsername)
 
   // Ensure storage bucket exists (no-op if already created)
   await adminClient.storage.createBucket(BUCKET, { public: true }).catch(() => {})
@@ -434,7 +421,8 @@ export async function POST(req: NextRequest) {
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Apify error'
     console.error('[sync] Apify failed:', msg)
-    return NextResponse.json({ error: msg }, { status: 502 })
+    const feedback = instagramSyncFeedback(msg)
+    return NextResponse.json({ error: feedback.code, message: feedback.message }, { status: feedback.status })
   }
 
   if (!reels.length) {
@@ -493,10 +481,10 @@ export async function POST(req: NextRequest) {
     } catch { /* silent — don't block sync */ }
   }
 
-  // For incremental syncs, discard anything older than 7 days — we only want new content
+  // For incremental syncs, discard anything older than the monthly window — we only want new content
   // (date filter happens AFTER follower extraction above)
   if (!isInitialSync) {
-    const cutoff = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const cutoff = new Date(statisticsWindow(new Date().toISOString().slice(0, 10)))
     reels = reels.filter(r => {
       if (!r.timestamp) return true // keep if no date (safer than dropping)
       const posted = new Date(r.timestamp)
@@ -516,10 +504,11 @@ export async function POST(req: NextRequest) {
   // ── 4. Find new reels ────────────────────────────────────────────────────
   const reelIds = reels.map(r => r.reel_id).filter(Boolean)
   const { data: existing } = await adminClient
-    .from('client_reels').select('reel_id').eq('profile_id', profileId).in('reel_id', reelIds)
+    .from('client_reels').select('reel_id, transcript').eq('profile_id', profileId).in('reel_id', reelIds)
 
   const existingSet = new Set((existing ?? []).map((r: { reel_id: string }) => r.reel_id))
-  const newReels = reels.filter(r => r.reel_id && !existingSet.has(r.reel_id))
+  const analysedSet = new Set((existing ?? []).filter(r => r.transcript?.trim()).map(r => r.reel_id))
+  const newReels = reels.filter(r => r.reel_id && !analysedSet.has(r.reel_id))
 
   // Refresh metrics on existing reels + persist any non-storage thumbnails
   const updatedReels = reels.filter(r => existingSet.has(r.reel_id))
@@ -641,7 +630,7 @@ export async function POST(req: NextRequest) {
     .upsert(rows, { onConflict: 'profile_id,reel_id', ignoreDuplicates: false })
   if (insertErr) {
     console.error('[sync] Upsert error:', insertErr.message)
-    return NextResponse.json({ error: insertErr.message }, { status: 500 })
+    return NextResponse.json({ error: 'sync_unavailable', message: 'Could not save the refreshed statistics. Please try again later.' }, { status: 500 })
   }
 
   return NextResponse.json({
@@ -659,6 +648,8 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json().catch(() => ({})) as { profileId?: string }
   const { profileId } = body
   if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
+  const denied = await authorizeInstagramSync(profileId)
+  if (denied) return denied
 
   const { data: profile } = await adminClient
     .from('profiles').select('ig_username').eq('id', profileId).single()
@@ -678,7 +669,8 @@ export async function PATCH(req: NextRequest) {
     const datasetId = await apifyPollRun(runId)
     reels = await apifyDownload(datasetId)
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : 'Apify error' }, { status: 502 })
+    const feedback = instagramSyncFeedback(err)
+    return NextResponse.json({ error: feedback.code, message: feedback.message }, { status: feedback.status })
   }
 
   // Persist thumbnails for all reels with non-storage URLs

@@ -1,73 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase-server'
-import { createClient as createAdmin } from '@supabase/supabase-js'
-
-const adminClient = createAdmin(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_KEY!
-)
+import { instagramAdmin, instagramConfig, instagramGraph, instagramJson, requireInstagramPilot } from '@/lib/instagram-connection'
+import { canonicalInstagramUsername, encryptInstagramToken, INSTAGRAM_STATE_COOKIE, parseInstagramLongToken, parseInstagramTokenResponse, verifyInstagramState } from '@/lib/instagram-oauth-security'
 
 export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url)
-  const code = searchParams.get('code')
-  const igError = searchParams.get('error')
-  const igErrorReason = searchParams.get('error_reason')
-
-  if (igError || !code) {
-    const msg = igErrorReason || igError || 'no_code'
-    console.log('[IG callback] early exit — ig_error:', msg)
-    return NextResponse.redirect(new URL(`/dashboard/settings?ig_error=${encodeURIComponent(msg)}`, req.url))
-  }
-
-  const appId = process.env.INSTAGRAM_APP_ID?.trim()!
-  const appSecret = process.env.INSTAGRAM_APP_SECRET?.trim()!
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL?.trim()}/api/auth/instagram/callback`
-
+  let outcome = 'connection_failed'
   try {
-    // 1. Exchange code for short-lived token
-    const tokenRes = await fetch('https://api.instagram.com/oauth/access_token', {
-      method: 'POST',
-      body: new URLSearchParams({ client_id: appId, client_secret: appSecret, redirect_uri: redirectUri, code, grant_type: 'authorization_code' }),
-    })
-    const tokenData = await tokenRes.json()
-    if (tokenData.error_type || tokenData.error) {
-      throw new Error(tokenData.error_message || tokenData.error_type || String(tokenData.error))
-    }
-
-    // 2. Exchange for long-lived token (60 days)
-    const longRes = await fetch(
-      `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${appSecret}&access_token=${tokenData.access_token}`
-    )
-    const longData = await longRes.json()
-    const accessToken = longData.access_token || tokenData.access_token
-
-    // 3. Get Instagram user info
-    const userRes = await fetch(
-      `https://graph.instagram.com/v21.0/me?fields=id,username&access_token=${accessToken}`
-    )
-    const userData = await userRes.json()
-    if (userData.error) throw new Error(userData.error.message)
-    const igUsername = userData.username || null
-    const igUserId = userData.id || null
-
-    // 4. Identify the logged-in dashboard user via session
-    const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (!user) throw new Error(`Not authenticated — ${authError?.message ?? 'no session'}`)
-
-    // 5. Save via admin client (bypasses any RLS / session edge-cases)
-    const { error: updateError } = await adminClient
-      .from('profiles')
-      .update({ ig_access_token: accessToken, ig_username: igUsername, ig_user_id: igUserId })
-      .eq('id', user.id)
-
-    console.log(`[IG callback] user=${user.id} ig=@${igUsername} update_err=${updateError?.message ?? 'none'}`)
-    if (updateError) throw new Error(`DB update failed: ${updateError.message}`)
-
-    return NextResponse.redirect(new URL('/dashboard/settings?ig_connected=1', req.url))
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Unknown error'
-    console.error('[IG callback] ERROR:', message)
-    return NextResponse.redirect(new URL(`/dashboard/settings?ig_error=${encodeURIComponent(message)}`, req.url))
+    const { user, profile } = await requireInstagramPilot()
+    const config = instagramConfig()
+    verifyInstagramState(req.nextUrl.searchParams.get('state'), req.cookies.get(INSTAGRAM_STATE_COOKIE)?.value, user.id, profile.ig_username || '', config.encryptionKey)
+    if (req.nextUrl.searchParams.has('error')) throw new Error('cancelled')
+    const code = req.nextUrl.searchParams.get('code')
+    if (!code) throw new Error('invalid_state')
+    const short = parseInstagramTokenResponse(await instagramJson('https://api.instagram.com/oauth/access_token', { method: 'POST', body: new URLSearchParams({ client_id: config.appId, client_secret: config.appSecret, redirect_uri: config.redirectUri, code, grant_type: 'authorization_code' }) }))
+    const longUrl = new URL('https://graph.instagram.com/access_token')
+    longUrl.searchParams.set('grant_type', 'ig_exchange_token'); longUrl.searchParams.set('client_secret', config.appSecret); longUrl.searchParams.set('access_token', short.accessToken)
+    const long = parseInstagramLongToken(await instagramJson(longUrl.toString()))
+    const account = await instagramGraph('me', long.accessToken, { fields: 'id,user_id,username' })
+    const username = canonicalInstagramUsername(account.username)
+    if (!username || username !== canonicalInstagramUsername(profile.ig_username)) throw new Error('account_mismatch')
+    const instagramUserId = String(account.user_id || account.id || '')
+    if (!/^[0-9]+$/.test(instagramUserId)) throw new Error('connection_failed')
+    const now = new Date().toISOString()
+    const { error } = await instagramAdmin().from('instagram_connections').upsert({ profile_id: user.id, instagram_user_id: short.userId, graph_user_id: instagramUserId, username, token_ciphertext: encryptInstagramToken(long.accessToken, user.id, config.encryptionKey), permissions: short.permissions, expires_at: new Date(Date.now() + long.expiresIn * 1000).toISOString(), connected_at: now, refreshed_at: now, status: 'active', last_error: null })
+    if (error) throw new Error('storage')
+    outcome = 'connected'
+  } catch (error) {
+    const message = error instanceof Error ? error.message : ''
+    if (['cancelled', 'invalid_state', 'account_mismatch', 'missing_permissions', 'unauthorized', 'pilot_only', 'impersonating'].includes(message)) outcome = message
+    // No auth code, token, provider response or credential-bearing URL is logged.
   }
+  const base = process.env.NEXT_PUBLIC_APP_URL?.trim() || req.nextUrl.origin
+  const response = NextResponse.redirect(new URL('/dashboard/settings?ig_result=' + outcome, base))
+  response.headers.set('Cache-Control', 'no-store')
+  response.cookies.set(INSTAGRAM_STATE_COOKIE, '', { httpOnly: true, secure: true, sameSite: 'lax', path: '/api/auth/instagram', maxAge: 0 })
+  return response
 }

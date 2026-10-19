@@ -44,3 +44,10 @@ test('rejects a payload without an email or with an unknown event', () => {
   assert.equal(parseSkoolMembershipEvent({ event: 'new_paid_member' }), null)
   assert.equal(parseSkoolMembershipEvent({ email: 'person@example.com', event: 'something_else' }), null)
 })
+
+test('recognises verified churn and a subsequent rejoin', () => {
+  assert.equal(parseSkoolMembershipEvent({ email: 'member@example.com', event: 'member_churned' })?.isActive, false)
+  assert.equal(parseSkoolMembershipEvent({ email: 'member@example.com', event: 'member_rejoined' })?.isActive, true)
+  // A pending cancellation is not proof that the paid membership has ended.
+  assert.equal(parseSkoolMembershipEvent({ email: 'member@example.com', event: 'cancelling' }), null)
+})

@@ -75,6 +75,7 @@ export async function POST(req: NextRequest) {
     external_subscription_id: entitlement.external_subscription_id,
     subscription_status: status,
     subscription_period_end: null,
+    skool_access_review_due_at: null,
     plan_type: 'monthly',
     subscription_amount: null,
     subscription_currency: null,
