@@ -97,10 +97,12 @@ export default function OnboardingPage() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
       if (!user) { router.push('/login'); return }
       const authName = (user.user_metadata?.name as string) || ''
       if (authName) setForm(f => ({ ...f, name: authName }))
+      const { data: profile } = await supabase.from('profiles').select('ig_username').eq('id', user.id).maybeSingle()
+      if (profile?.ig_username) setForm(f => ({ ...f, ig_username: profile.ig_username }))
       setCheckingAuth(false)
     })
   }, [router])
@@ -628,7 +630,7 @@ function StepProfile({ form, set }: { form: FormData; set: (k: keyof FormData, v
       <Field label="Instagram username" hint="We use this to sync your reels and analytics.">
         <div style={{ position: 'relative' }}>
           <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', fontSize: 14, fontWeight: 600 }}>@</span>
-          <input type="text" value={form.ig_username} onChange={e => set('ig_username', e.target.value.replace(/^@/, ''))} placeholder="yourhandle" style={{ paddingLeft: 28 }} />
+          <input type="text" value={form.ig_username} onChange={e => set('ig_username', e.target.value.replace(/^@/, ''))} placeholder="yourhandle" pattern="[A-Za-z0-9._]{1,30}" required style={{ paddingLeft: 28 }} />
         </div>
       </Field>
       <Field label="Your coaching niche *" hint="Be specific, this powers all your AI advice.">
@@ -683,7 +685,7 @@ function CreatorStepProfile({ form, set }: { form: FormData; set: (k: keyof Form
       <Field label="Instagram username" hint="We use this to sync your reels and analytics.">
         <div style={{ position: 'relative' }}>
           <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--muted-foreground)', fontSize: 14, fontWeight: 600 }}>@</span>
-          <input type="text" value={form.ig_username} onChange={e => set('ig_username', e.target.value.replace(/^@/, ''))} placeholder="yourhandle" style={{ paddingLeft: 28 }} />
+          <input type="text" value={form.ig_username} onChange={e => set('ig_username', e.target.value.replace(/^@/, ''))} placeholder="yourhandle" pattern="[A-Za-z0-9._]{1,30}" required style={{ paddingLeft: 28 }} />
         </div>
       </Field>
       <Field label="What is your content niche? *" hint="Be specific, this powers all your AI tools.">

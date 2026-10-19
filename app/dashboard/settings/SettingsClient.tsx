@@ -155,12 +155,7 @@ export default function SettingsClient({ profile, isImpersonating = false, offic
       if (json.ig_username) {
         if (json.wiped) {
           // Username changed — trigger a fresh sync
-          toast.success(`Switched to @${json.ig_username} — syncing data…`)
-          fetch('/api/instagram/sync', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ profileId: profile.id }),
-          }).catch(() => {})
+          toast.success(`Switched to @${json.ig_username} — statistics sync queued`)
         } else {
           toast.success(`Instagram set to @${json.ig_username}`)
         }
