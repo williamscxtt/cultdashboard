@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
 import { calcHubFilledCount, ONBOARDING_UNLOCK_THRESHOLD } from '@/lib/onboarding-keys'
+import { instagramUsername } from '@/lib/instagram-statistics'
+import { enqueueInstagramStatistics } from '@/lib/instagram-statistics-sync'
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -46,10 +48,9 @@ export async function POST(req: NextRequest) {
       } else if (key === 'content_pillars') {
         updates[key] = Array.isArray(val) && val.length > 0 ? val : null
       } else if (key === 'ig_username') {
-        // Strip @ prefix and lowercase
-        updates[key] = typeof val === 'string' && val.trim() !== ''
-          ? val.trim().replace(/^@/, '').toLowerCase()
-          : null
+        const username = instagramUsername(val)
+        if (!username) return NextResponse.json({ error: 'Enter a valid Instagram username.' }, { status: 400 })
+        updates[key] = username
       } else {
         updates[key] = typeof val === 'string' && val.trim() !== '' ? val.trim() : null
       }
@@ -77,6 +78,12 @@ export async function POST(req: NextRequest) {
       .eq('id', profileId)
 
     if (error) throw new Error(error.message)
+
+    if ('ig_username' in updates) {
+      await enqueueInstagramStatistics(profileId).catch(() => {
+        console.error('[profile/onboarding] Could not queue Instagram statistics', profileId)
+      })
+    }
 
     return NextResponse.json({ ok: true })
   } catch (err) {

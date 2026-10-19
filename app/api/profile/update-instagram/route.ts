@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase-server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
+import { instagramUsername } from '@/lib/instagram-statistics'
+import { enqueueInstagramStatistics } from '@/lib/instagram-statistics-sync'
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,11 +28,10 @@ export async function POST(req: NextRequest) {
     const { data: currentProfile } = await adminClient
       .from('profiles').select('ig_username').eq('id', profileId).single()
 
-    const cleaned = typeof ig_username === 'string'
-      ? ig_username.replace(/^@+/, '').trim() || null
-      : null
+    const cleaned = instagramUsername(ig_username)
+    if (!cleaned) return NextResponse.json({ error: 'Enter a valid Instagram username.' }, { status: 400 })
 
-    const usernameChanged = cleaned !== (currentProfile?.ig_username ?? null)
+    const usernameChanged = cleaned !== instagramUsername(currentProfile?.ig_username)
 
     // Update username
     const { error } = await adminClient
@@ -50,6 +51,9 @@ export async function POST(req: NextRequest) {
       ])
     }
 
+    await enqueueInstagramStatistics(profileId).catch(() => {
+      console.error('[profile/update-instagram] Could not queue statistics', profileId)
+    })
     return NextResponse.json({ ok: true, ig_username: cleaned, wiped: usernameChanged && !!cleaned })
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Unknown error'

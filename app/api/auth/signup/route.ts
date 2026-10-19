@@ -11,7 +11,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { Resend } from 'resend'
 import { ensureSignupMembershipAccess } from '@/lib/membership-sync'
-import { normalizeMemberEmail } from '@/lib/skool-membership-event'
+import { signupInput } from '@/lib/signup-input'
+import { enqueueInstagramStatistics } from '@/lib/instagram-statistics-sync'
 
 const admin = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -72,22 +73,16 @@ function buildWelcomeEmail(name: string, email: string, loginUrl: string): strin
 }
 
 export async function POST(req: NextRequest) {
-  const { name, email, password } = await req.json().catch(() => ({})) as {
-    name?: string; email?: string; password?: string
-  }
-
-  if (!email || !password) {
-    return NextResponse.json({ error: 'Email and password are required' }, { status: 400 })
-  }
-
-  const normalizedEmail = normalizeMemberEmail(email)
+  const input = signupInput(await req.json().catch(() => null))
+  if (input.error) return NextResponse.json({ error: input.error }, { status: 400 })
+  const { name, email: normalizedEmail, password, ig_username } = input.data
 
   // Create user via admin — email auto-confirmed, no Supabase SMTP involved
   const { data, error: createError } = await admin.auth.admin.createUser({
     email: normalizedEmail,
     password,
     email_confirm: true,
-    user_metadata: { name: name || '' },
+    user_metadata: { name, ig_username },
   })
 
   if (createError) {
@@ -110,17 +105,28 @@ export async function POST(req: NextRequest) {
   const userId = data.user.id
 
   // Create profile row
-  await admin.from('profiles').upsert({
+  const { error: profileError } = await admin.from('profiles').upsert({
     id: userId,
     name: name || '',
     email: normalizedEmail,
+    ig_username,
     role: 'client',
     is_active: true,
     onboarding_completed: true,
     onboarding_hub_complete: false,
   }, { onConflict: 'id', ignoreDuplicates: false })
 
+  if (profileError) {
+    console.error('[signup] Could not save the new profile', profileError.code)
+    return NextResponse.json({ error: 'Your account was created, but your profile could not be saved. Please sign in and try again.' }, { status: 500 })
+  }
+
   await ensureSignupMembershipAccess(normalizedEmail, userId)
+  // One durable job per handle/day includes followers, Reels and feed posts.
+  // The scheduler can retry an enqueue failure without losing the account.
+  await enqueueInstagramStatistics(userId).catch(() => {
+    console.error('[signup] Could not queue Instagram statistics', userId)
+  })
 
   // Send welcome email via Resend
   if (process.env.RESEND_API_KEY) {

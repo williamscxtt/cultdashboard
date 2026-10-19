@@ -8,6 +8,7 @@ type Mode = 'login' | 'signup' | 'forgot'
 export default function LoginPage() {
   const [mode, setMode] = useState<Mode>('login')
   const [name, setName] = useState('')
+  const [instagram, setInstagram] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState(() => {
@@ -58,7 +59,7 @@ export default function LoginPage() {
     const res = await fetch('/api/auth/signup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
+      body: JSON.stringify({ name, email, password, ig_username: instagram }),
     })
     const data = await res.json()
 
@@ -289,6 +290,11 @@ export default function LoginPage() {
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Full name</label>
                     <input className="login-input" type="text" autoComplete="name" value={name} onChange={e => setName(e.target.value)} placeholder="Your name" required />
+                  </div>
+                  <div>
+                    <label htmlFor="signup-instagram" style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Instagram username</label>
+                    <input id="signup-instagram" name="ig_username" className="login-input" type="text" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="@yourusername" pattern="@?[A-Za-z0-9._]{1,30}" title="Enter your Instagram username, with or without @." aria-describedby="signup-instagram-help" required />
+                    <p id="signup-instagram-help" style={{ fontSize: 12, color: '#A1A4A5', lineHeight: 1.5, margin: '7px 0 0' }}>We’ll sync your Instagram stats for your dashboard and leaderboard.</p>
                   </div>
                   <div>
                     <label style={{ display: 'block', fontSize: 12, fontWeight: 600, color: 'hsl(0 5% 70%)', marginBottom: 7 }}>Email address</label>
