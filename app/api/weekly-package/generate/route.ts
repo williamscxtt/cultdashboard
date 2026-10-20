@@ -15,6 +15,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
 import { createClient } from '@supabase/supabase-js'
+import { authorizeInstagramSync } from '@/lib/instagram-sync-auth'
 
 export const maxDuration = 300
 
@@ -30,6 +31,8 @@ const adminClient = createClient(
 export async function GET(req: NextRequest) {
   const profileId = new URL(req.url).searchParams.get('profileId')
   if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
+  const denied = await authorizeInstagramSync(profileId)
+  if (denied) return denied
 
   const { data: scripts } = await adminClient
     .from('weekly_scripts')
@@ -1240,6 +1243,8 @@ export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => ({})) as { profileId?: string; one_more?: boolean }
   const { profileId, one_more } = body
   if (!profileId) return NextResponse.json({ error: 'profileId required' }, { status: 400 })
+  const denied = await authorizeInstagramSync(profileId)
+  if (denied) return denied
 
   // ── "Generate 1 more" fast path ──────────────────────────────────────────────
   if (one_more) {
