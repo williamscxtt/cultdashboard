@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase'
+import { authRequest, AuthRequestError } from '@/lib/auth-request'
 import { Zap, Check } from 'lucide-react'
 
 type Mode = 'login' | 'signup' | 'forgot'
@@ -34,71 +34,46 @@ export default function LoginPage() {
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true); setError('')
-    const supabase = createClient()
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-    if (error) { setError(error.message); setLoading(false); return }
-    // Check if this client still needs to complete onboarding
-    if (data.user) {
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('onboarding_completed, role')
-        .eq('id', data.user.id)
-        .single()
-      if (profile?.role === 'client' && !profile?.onboarding_completed) {
-        continueAfterAuth('/dashboard/onboarding')
-        return
-      }
-    }
-    continueAfterAuth('/dashboard')
+    try {
+      const data = await authRequest('/api/auth/login', { email, password })
+      continueAfterAuth(data.redirectTo || '/dashboard/analytics')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Could not sign in. Please try again.')
+    } finally { setLoading(false) }
   }
 
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true); setError('')
 
-    const res = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password, ig_username: instagram }),
-    })
-    const data = await res.json()
-
-    if (res.status === 409 || data.error === 'already_exists') {
-      await fetch('/api/auth/forgot-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      })
-      setSuccess("You already have an account. We've sent a link to your email so you can set your password and log in.")
-      setLoading(false)
-      return
-    }
-
-    if (!res.ok) { setError(data.error || 'Something went wrong — please try again'); setLoading(false); return }
-
-    // Email auto-confirmed — sign in directly
-    const supabase = createClient()
-    const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
-    if (signInError) {
-      setSuccess("Account created — sign in with your email and password.")
-      setLoading(false)
-      return
-    }
-
-    continueAfterAuth('/dashboard/onboarding')
+    let created = false
+    try {
+      try {
+        await authRequest('/api/auth/signup', { name, email, password, ig_username: instagram }, 30_000)
+        created = true
+      } catch (error) {
+        if (!(error instanceof AuthRequestError) || error.status !== 409) throw error
+        await authRequest('/api/auth/forgot-password', { email })
+        setSuccess("You already have an account. We've sent a link to your email so you can set your password and log in.")
+        return
+      }
+      await authRequest('/api/auth/login', { email, password })
+      continueAfterAuth('/dashboard/onboarding')
+    } catch (error) {
+      if (created) setSuccess('Account created. Sign in with your email and Dashboard password to continue.')
+      else setError(error instanceof Error ? error.message : 'Could not create your account. Please try again.')
+    } finally { setLoading(false) }
   }
 
   async function handleForgot(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true); setError('')
-    await fetch('/api/auth/forgot-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    })
-    // Always show success to avoid leaking whether email exists
-    setSuccess('Password reset email sent — check your inbox.')
-    setLoading(false)
+    try {
+      await authRequest('/api/auth/forgot-password', { email })
+      setSuccess('If you have a Dashboard account, a password reset email is on its way. Check your inbox.')
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Could not request a reset. Please try again.')
+    } finally { setLoading(false) }
   }
 
   const features = [
@@ -232,7 +207,7 @@ export default function LoginPage() {
                 Welcome back
               </h1>
               <p style={{ fontSize: 13, color: '#A1A4A5', lineHeight: 1.6, marginBottom: 24 }}>
-                Included with your active Creator Cult membership. Use your Skool email and your Dashboard password.
+                Use your Skool email and the password you created for this Dashboard. First visit? Create your free Dashboard account below. Your Skool password is separate.
               </p>
 
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

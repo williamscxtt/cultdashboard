@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase-server'
+import { dashboardSession } from '@/lib/dashboard-session'
+import { after } from 'next/server'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
 import Anthropic from '@anthropic-ai/sdk'
@@ -57,24 +58,19 @@ Be concrete and specific. No fluff. Use present tense. Do not use quotation mark
 // ─── page ─────────────────────────────────────────────────────────────────────
 
 export default async function AnalyticsPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, profile: realProfile } = await dashboardSession()
   if (!user) redirect('/login')
-
-  const { data: realProfile } = await adminClient
-    .from('profiles').select('role').eq('id', user.id).single()
+  if (!realProfile) redirect('/login')
 
   const impersonatingAs = realProfile?.role === 'admin' ? await getImpersonatedId() : null
   const profileId = effectiveId(user.id, realProfile?.role === 'admin', impersonatingAs)
-  await restoreLinkedInstagramStatistics(adminClient, profileId).catch(() => {
-    console.error('[analytics] Could not restore linked public statistics')
-  })
 
   const sixtyDaysAgo = new Date(Date.now() - 60 * 86400000).toISOString().split('T')[0]
 
 
-  const [{ data: profile }, { data: snapshots }, { data: recentReels }] = await Promise.all([
-    adminClient.from('profiles').select('*').eq('id', profileId).single(),
+  const readStatistics = (refreshProfile = false) => Promise.all([
+    !impersonatingAs && !refreshProfile ? Promise.resolve({ data: realProfile })
+      : adminClient.from('profiles').select('*').eq('id', profileId).single(),
     adminClient
       .from('follower_snapshots')
       .select('date, count')
@@ -89,6 +85,17 @@ export default async function AnalyticsPage() {
       .order('date', { ascending: false })
       .limit(120),
   ])
+
+  let [{ data: profile }, { data: snapshots }, { data: recentReels }] = await readStatistics()
+  // Established accounts already have these readings. Only perform the exact
+  // linked-identity cache recovery when statistics are actually missing.
+  if (profile?.ig_username && (!recentReels?.length || profile.followers_count === null)) {
+    const restored = await restoreLinkedInstagramStatistics(adminClient, profileId).catch(() => {
+      console.error('[analytics] Could not restore linked public statistics')
+      return false
+    })
+    if (restored) [{ data: profile }, { data: snapshots }, { data: recentReels }] = await readStatistics(true)
+  }
 
   if (!profile) redirect('/login')
 
@@ -125,7 +132,7 @@ export default async function AnalyticsPage() {
   }
 
   const profileData = profile as Record<string, unknown>
-  let dashboardBio = String(profile.dashboard_bio || '')
+  const dashboardBio = String(profile.dashboard_bio || '')
 
   const onboarded = Boolean(profile.onboarding_completed)
   const firstName = String(profile.name || '').split(' ')[0].toLowerCase()
@@ -133,18 +140,19 @@ export default async function AnalyticsPage() {
   // Bio: regenerate if missing, starts with a markdown heading (#), or name appears twice (DB artifact)
   const bioHasMarkdown = dashboardBio.startsWith('#')
   const bioHasDoubleName = firstName
-    ? (dashboardBio.toLowerCase().match(new RegExp(firstName, 'g')) || []).length >= 2
+    ? dashboardBio.toLowerCase().split(firstName).length > 2
     : false
   const needsBio = onboarded && (!dashboardBio || bioHasMarkdown || bioHasDoubleName)
 
   if (needsBio) {
-    try {
-      const bio = await generateDashboardBio(profileData)
-      if (bio && !bio.startsWith('Honestly ')) {
-        dashboardBio = bio
-        await adminClient.from('profiles').update({ dashboard_bio: bio }).eq('id', profileId)
-      }
-    } catch { console.error('[analytics] Could not update Dashboard bio', profileId) }
+    after(async () => {
+      try {
+        const bio = await generateDashboardBio(profileData)
+        if (bio && !bio.startsWith('Honestly ')) {
+          await adminClient.from('profiles').update({ dashboard_bio: bio }).eq('id', profileId)
+        }
+      } catch { console.error('[analytics] Could not update Dashboard bio', profileId) }
+    })
   }
 
   // Serve only a report tied to the current evidence. The client refreshes the

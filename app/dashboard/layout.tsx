@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase-server'
+import { dashboardSession } from '@/lib/dashboard-session'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import DashboardShell from '@/components/dashboard/DashboardShell'
 import { SyncProgressProvider } from '@/components/dashboard/SyncProgress'
@@ -15,15 +15,8 @@ const adminClient = createAdmin(
 )
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { user, profile: loadedProfile } = await dashboardSession()
   if (!user) redirect('/login')
-
-  const { data: loadedProfile } = await adminClient
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
 
   if (!loadedProfile) redirect('/login')
 

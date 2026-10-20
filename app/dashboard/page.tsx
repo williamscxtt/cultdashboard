@@ -1,19 +1,7 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase-server'
 
-export default async function DashboardPage() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
-
-  if (!profile) redirect('/login')
-
+export default function DashboardPage() {
+  // The proxy and parent layout validate the session and current access.
   // Everyone lands on their own analytics dashboard
   redirect('/dashboard/analytics')
 }
