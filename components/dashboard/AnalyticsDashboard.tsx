@@ -17,6 +17,7 @@ import {
 import { Card } from '@/components/ui'
 import { useSyncProgress } from '@/components/dashboard/SyncProgress'
 import { instagramSyncFeedback } from '@/lib/instagram-sync-feedback'
+import { dashboardRequest } from '@/lib/dashboard-request'
 import { useIsMobile } from '@/lib/use-mobile'
 import type { ClientReel, FollowerSnapshot } from '@/lib/types'
 
@@ -745,37 +746,34 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
   const [activePlatform, setActivePlatform] = useState('All')
   // Saved followers: opening Analytics does not start an additional paid read.
   const [localFollowers, setLocalFollowers] = useState<number | null>(followersCount ?? null)
+  const refreshInFlight = useRef<string | null>(null)
 
   const fetchReels = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [res, statusRes] = await Promise.all([
-        fetch(`/api/instagram/reels?profileId=${profileId}&limit=500&offset=0`),
-        fetch(`/api/instagram/sync?profileId=${profileId}`),
-      ])
-      if (res.ok) {
-        const data = await res.json()
+    if (refreshInFlight.current === profileId) return
+    refreshInFlight.current = profileId
+    // Render saved readings as soon as they arrive. A delayed status request
+    // must not hold the cards in a spinner or hide them on every polling tick.
+    const saved = dashboardRequest<{ reels?: ClientReel[]; total?: number; founderStatistics?: FounderStatistics | null }>(
+      `/api/instagram/reels?profileId=${profileId}&limit=500&offset=0`)
+      .then(data => {
         setReels(data.reels ?? [])
         setTotal(data.total ?? 0)
         setFounderStatistics(data.founderStatistics ?? null)
-      } else {
-        setSyncError('Your saved statistics could not load. Please refresh the page.')
-      }
-      if (statusRes.ok) {
-        const status = await statusRes.json()
+      }).catch(error => setSyncError(error instanceof Error ? error.message : 'Your saved statistics could not load. Please try again.'))
+      .finally(() => setLoading(false))
+    const syncStatus = dashboardRequest<{ has_synced?: boolean; last_synced?: string; sync_status?: string; followers?: number; sync_issue?: string }>(
+      `/api/instagram/sync?profileId=${profileId}`)
+      .then(status => {
         setHasSynced(Boolean(status.has_synced))
         setLastSynced(status.last_synced ?? null)
-        setRefreshPending(['queued', 'running'].includes(status.sync_status))
+        setRefreshPending(['queued', 'running'].includes(status.sync_status ?? ''))
         if (status.sync_status === 'succeeded') setSyncResult(previous => previous
           ? { ...previous, message: 'Your daily statistics are up to date.' } : previous)
         if (typeof status.followers === 'number') setLocalFollowers(status.followers)
         if (status.sync_issue) setSyncError(instagramSyncFeedback(status.sync_issue).message)
-      }
-    } catch {
-      setSyncError('Your saved statistics could not load. Please check your connection and refresh the page.')
-    } finally {
-      setLoading(false)
-    }
+      }).catch(() => { /* Saved readings remain usable if the separate status check fails. */ })
+    await Promise.allSettled([saved, syncStatus])
+    if (refreshInFlight.current === profileId) refreshInFlight.current = null
   }, [profileId])
 
   useEffect(() => { fetchReels() }, [fetchReels])
@@ -807,14 +805,13 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
 
     startSync('Checking your daily statistics refresh…')
     try {
-      const res = await fetch('/api/instagram/sync', {
+      const data = await dashboardRequest<{ synced: number; total: number; warning?: string; message?: string; has_synced?: boolean; error?: string }>('/api/instagram/sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profileId, statisticsOnly: true }),
       })
-      const data = await res.json()
 
-      if (!res.ok || data.error) {
+      if (data.error) {
         finishSync()
         setSyncError(instagramSyncFeedback(data.error).message)
       } else {
@@ -824,9 +821,9 @@ export default function AnalyticsDashboard({ profileId, followersCount, igUserna
         // The sync already persists fresh thumbnails; a second scrape adds cost.
         await fetchReels()
       }
-    } catch {
+    } catch (error) {
       finishSync()
-      setSyncError('Network error. Check your connection.')
+      setSyncError(error instanceof Error ? error.message : 'Network error. Check your connection.')
     } finally {
       setSyncing(false)
     }

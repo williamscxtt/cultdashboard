@@ -14,6 +14,7 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
 import Anthropic from '@anthropic-ai/sdk'
+import { competitorUsername, uniqueCompetitorPosts, competitorReelRow, type CompetitorPost } from '@/lib/competitor-refresh'
 
 export const maxDuration = 300
 
@@ -22,7 +23,7 @@ const adminClient = createAdmin(
   process.env.SUPABASE_SERVICE_KEY!
 )
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! })
+const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY!, timeout: 25_000, maxRetries: 0 })
 
 async function getSupabase() {
   const cookieStore = await cookies()
@@ -41,10 +42,11 @@ const APIFY_BASE = 'https://api.apify.com/v2'
 
 async function startApifyRun(usernames: string[]): Promise<string> {
   const res = await fetch(
-    `${APIFY_BASE}/acts/${APIFY_ACTOR}/runs?token=${APIFY_TOKEN}`,
+    `${APIFY_BASE}/acts/${APIFY_ACTOR}/runs?timeout=180`,
     {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${APIFY_TOKEN}` },
+      signal: AbortSignal.timeout(20_000),
       body: JSON.stringify({
         directUrls: usernames.map(u => `https://www.instagram.com/${u}/`),
         resultsType: 'reels',
@@ -54,18 +56,19 @@ async function startApifyRun(usernames: string[]): Promise<string> {
     }
   )
   if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Apify start failed: ${res.status} — ${text}`)
+    throw new Error(`Instagram collection could not start (HTTP ${res.status}). Please try again later.`)
   }
   const json = await res.json()
   return json.data.id as string
 }
 
-async function waitForApifyRun(runId: string, maxWaitMs = 250_000): Promise<void> {
+async function waitForApifyRun(runId: string, maxWaitMs = 190_000): Promise<void> {
   const start = Date.now()
   while (Date.now() - start < maxWaitMs) {
     await new Promise(r => setTimeout(r, 4000))
-    const res = await fetch(`${APIFY_BASE}/actor-runs/${runId}?token=${APIFY_TOKEN}`)
+    const res = await fetch(`${APIFY_BASE}/actor-runs/${runId}`, {
+      headers: { Authorization: `Bearer ${APIFY_TOKEN}` }, signal: AbortSignal.timeout(15_000), cache: 'no-store',
+    })
     if (!res.ok) throw new Error(`Apify poll failed: ${res.status}`)
     const json = await res.json()
     const status = json.data?.status
@@ -77,29 +80,13 @@ async function waitForApifyRun(runId: string, maxWaitMs = 250_000): Promise<void
   throw new Error('Apify run timed out waiting for results')
 }
 
-async function fetchApifyResults(runId: string): Promise<ApifyPost[]> {
+async function fetchApifyResults(runId: string): Promise<CompetitorPost[]> {
   const res = await fetch(
-    `${APIFY_BASE}/actor-runs/${runId}/dataset/items?token=${APIFY_TOKEN}&format=json&clean=true`
+    `${APIFY_BASE}/actor-runs/${runId}/dataset/items?format=json&clean=true`,
+    { headers: { Authorization: `Bearer ${APIFY_TOKEN}` }, signal: AbortSignal.timeout(20_000), cache: 'no-store' }
   )
   if (!res.ok) throw new Error(`Apify results fetch failed: ${res.status}`)
   return res.json()
-}
-
-interface ApifyPost {
-  ownerUsername?: string
-  shortCode?: string
-  url?: string
-  videoViewCount?: number   // regular videos
-  videoPlayCount?: number   // reels (often the correct field)
-  playCount?: number        // alternate field name used by some scraper versions
-  likesCount?: number
-  commentsCount?: number
-  timestamp?: string
-  caption?: string
-  type?: string
-  videoUrl?: string
-  displayUrl?: string
-  videoDuration?: number
 }
 
 // ─── Format classification via Claude ─────────────────────────────────────────
@@ -150,6 +137,7 @@ ${reels.map((r, i) => `${i + 1}. Hook: "${r.hook}" | Caption: "${r.caption?.slic
 // ─── Main handler ─────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  const requestStarted = Date.now()
   if (!APIFY_TOKEN) {
     return NextResponse.json(
       { error: 'APIFY_API_TOKEN is not configured. Ask Will to add it to Vercel environment variables.' },
@@ -166,12 +154,15 @@ export async function POST(req: NextRequest) {
   const impersonatingAs = isAdmin ? await getImpersonatedId() : null
   const profileId = effectiveId(user.id, isAdmin, impersonatingAs)
 
-  // Optionally accept specific handles to scrape (admin use) or scrape all tracked
+  // Explicit handles are an admin capability. Members refresh their own tracked list.
   let handles: string[] = []
   try {
     const body = await req.json().catch(() => ({}))
     if (body.handles && Array.isArray(body.handles)) {
-      handles = body.handles.map((h: string) => h.replace(/^@/, '').trim().toLowerCase())
+      if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      const parsed = body.handles.map(competitorUsername)
+      if (parsed.some((handle: string | null) => !handle)) return NextResponse.json({ error: 'Enter valid Instagram usernames.' }, { status: 400 })
+      handles = [...new Set(parsed)] as string[]
     }
   } catch { /* ignore */ }
 
@@ -185,8 +176,9 @@ export async function POST(req: NextRequest) {
     if (!competitors?.length) {
       return NextResponse.json({ error: 'no_competitors', message: 'No competitor accounts tracked yet.' }, { status: 422 })
     }
-    handles = competitors.map(c => c.ig_username)
+    handles = [...new Set(competitors.map(c => competitorUsername(c.ig_username)).filter((handle): handle is string => Boolean(handle)))]
   }
+  if (!handles.length) return NextResponse.json({ error: 'Enter valid Instagram usernames in your tracked accounts.' }, { status: 422 })
 
   // Batch into groups of 10 for Apify
   const BATCH_SIZE = 10
@@ -195,19 +187,22 @@ export async function POST(req: NextRequest) {
     batches.push(handles.slice(i, i + BATCH_SIZE))
   }
 
-  const allPosts: ApifyPost[] = []
+  const allPosts: CompetitorPost[] = []
+  let failedBatches = 0
   console.log(`[competitors/scrape] Starting scrape for handles: ${handles.join(', ')}`)
   for (const batch of batches) {
+    if (Date.now() - requestStarted > 210_000) { failedBatches++; break }
     try {
       console.log(`[competitors/scrape] Starting Apify run for batch: ${batch.join(', ')}`)
       const runId = await startApifyRun(batch)
       console.log(`[competitors/scrape] Apify run started: ${runId}`)
-      await waitForApifyRun(runId)
+      await waitForApifyRun(runId, Math.max(1, Math.min(190_000, 220_000 - (Date.now() - requestStarted))))
       const posts = await fetchApifyResults(runId)
       console.log(`[competitors/scrape] Batch returned ${posts.length} posts. Sample fields: ${JSON.stringify(posts[0] ? Object.keys(posts[0]) : [])}`)
       allPosts.push(...posts)
     } catch (err) {
       console.error('[competitors/scrape] Apify batch error:', String(err))
+      failedBatches++
       // Continue with other batches
     }
   }
@@ -217,60 +212,44 @@ export async function POST(req: NextRequest) {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7)
   const cutoffDate = sevenDaysAgo.toISOString().split('T')[0]
 
-  const validPosts = allPosts
-    .filter(p => p.shortCode)
-    .filter(p => !p.timestamp || p.timestamp.split('T')[0] >= cutoffDate)
+  const validPosts = uniqueCompetitorPosts(allPosts, handles, cutoffDate)
 
   if (validPosts.length === 0) {
+    if (failedBatches) return NextResponse.json({ error: 'Instagram could not refresh right now. Your saved Reels are still available. Please try again later.' }, { status: 502 })
     return NextResponse.json({ ok: true, added: 0, accounts_scraped: handles.length, message: 'No reels found from the last 7 days.' })
   }
 
   const scraped_week = `${new Date().toISOString().slice(0, 7)}-W${getISOWeek(new Date())}`
   const today        = new Date().toISOString().split('T')[0]
 
-  function buildRow(p: ApifyPost, format_type: string) {
-    return {
-      account:      (p.ownerUsername ?? '').toLowerCase(),
-      reel_id:      p.shortCode ?? '',
-      scraped_week,
-      date:         p.timestamp ? p.timestamp.split('T')[0] : today,
-      // Reels use videoPlayCount or playCount; fall back to videoViewCount for regular videos
-      views:        p.videoPlayCount ?? p.playCount ?? p.videoViewCount ?? 0,
-      likes:        p.likesCount ?? 0,
-      comments:     p.commentsCount ?? 0,
-      format_type,
-      duration_sec: p.videoDuration != null ? Math.round(p.videoDuration) : null,
-      reel_url:     p.url ?? null,
-      video_url:    p.videoUrl ?? null,
-      thumbnail_url: p.displayUrl ?? null,
-    }
-  }
+  const existing = await adminClient.from('competitor_reels').select('reel_id,format_type').in('reel_id', validPosts.map(post => post.shortCode!))
+  if (existing.error) return NextResponse.json({ error: 'Your saved Reels could not load. Please try again.' }, { status: 503 })
+  const savedFormats = new Map<string, string>((existing.data ?? []).filter(row => row.format_type).map(row => [row.reel_id, row.format_type]))
+  const unclassified = validPosts.filter(post => !savedFormats.has(post.shortCode!))
 
   // Classify all reels for format type
-  const reelInputs = validPosts.map(p => ({
+  const reelInputs = unclassified.map(p => ({
     caption: p.caption ?? '',
     hook: (p.caption ?? '').split(/[.!?\n]/)[0]?.trim().slice(0, 200) ?? '',
   }))
   const formats: string[] = []
   try {
     for (let i = 0; i < reelInputs.length; i += 20) {
+      if (Date.now() - requestStarted > 235_000) break
       const batchFormats = await classifyFormats(reelInputs.slice(i, i + 20))
       formats.push(...batchFormats)
     }
   } catch (classifyErr) {
     console.error('[competitors/scrape] classifyFormats error:', String(classifyErr))
-    while (formats.length < validPosts.length) formats.push('other')
+    while (formats.length < unclassified.length) formats.push('other')
   }
+  unclassified.forEach((post, index) => savedFormats.set(post.shortCode!, formats[index] || 'other'))
 
   try {
-    // Delete-and-replace: wipe existing reels for these accounts, insert fresh 7-day snapshot
-    await adminClient
-      .from('competitor_reels')
-      .delete()
-      .in('account', handles.map(h => h.toLowerCase()))
-
-    const rows = validPosts.map((p, i) => buildRow(p, formats[i] ?? 'other'))
-    const { error: insertErr } = await adminClient.from('competitor_reels').insert(rows)
+    // One idempotent write retains transcripts/hooks and safely handles overlap
+    // between creator batches and concurrent members tracking the same account.
+    const rows = validPosts.map(post => competitorReelRow(post, savedFormats.get(post.shortCode!) || 'other', scraped_week, today))
+    const { error: insertErr } = await adminClient.from('competitor_reels').upsert(rows, { onConflict: 'reel_id' })
     if (insertErr) {
       console.error('[competitors/scrape] Insert error:', insertErr.message)
       return NextResponse.json({ error: insertErr.message }, { status: 500 })
@@ -281,6 +260,7 @@ export async function POST(req: NextRequest) {
       added: rows.length,
       accounts_scraped: handles.length,
       reels_found: validPosts.length,
+      ...(failedBatches ? { warning: 'Some accounts could not refresh. Saved Reels from those accounts were kept.' } : {}),
     })
   } catch (err) {
     console.error('[competitors/scrape] Unexpected error:', String(err))

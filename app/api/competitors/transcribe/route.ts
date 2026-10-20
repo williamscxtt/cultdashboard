@@ -16,6 +16,7 @@ import { createServerClient } from '@supabase/ssr'
 import { createClient as createAdmin } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
+import { limitedWork } from '@/lib/limited-work'
 
 export const maxDuration = 300
 
@@ -109,29 +110,30 @@ export async function POST() {
   if (!reels?.length) return NextResponse.json({ ok: true, transcribed: 0 })
 
   const START = Date.now()
-  const TIME_BUDGET_MS = 240_000 // stop with 60s to spare
+  // A download + transcription can take 90 seconds. Stop claiming more after
+  // 180 seconds, leaving every in-flight item time to save before Vercel's cap.
+  const TIME_BUDGET_MS = 180_000
   let transcribed = 0
   let skipped = 0
 
-  for (const reel of reels) {
-    // Bail if we're running low on time
-    if (Date.now() - START > TIME_BUDGET_MS) break
-
+  await limitedWork(reels, 3, async reel => {
     try {
       const transcript = await transcribeVideoUrl(reel.video_url)
       if (transcript) {
-        await adminClient
+        const { error } = await adminClient
           .from('competitor_reels')
           .update({ transcript })
           .eq('id', reel.id)
+          .is('transcript', null)
+        if (error) throw new Error('Could not save transcription')
         transcribed++
-        console.log(`[transcribe] @${reel.account} — ${transcript.slice(0, 60)}… (${reel.views?.toLocaleString()} views)`)
+        console.log('[transcribe] Saved reel', reel.id)
       }
     } catch (err) {
       skipped++
       console.warn(`[transcribe] Skipped reel ${reel.id} (@${reel.account}): ${String(err).slice(0, 120)}`)
     }
-  }
+  }, () => Date.now() - START < TIME_BUDGET_MS)
 
   return NextResponse.json({ ok: true, transcribed, skipped, total: reels.length })
 }

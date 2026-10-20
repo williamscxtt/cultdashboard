@@ -7,6 +7,7 @@ import { Button, PageHeader, Spinner } from '@/components/ui'
 import CompetitorManager from '@/components/dashboard/CompetitorManager'
 import WeeklyPackage from '@/components/dashboard/WeeklyPackage'
 import { useIsMobile } from '@/lib/use-mobile'
+import { dashboardRequest } from '@/lib/dashboard-request'
 
 interface Props {
   profileId: string
@@ -50,27 +51,14 @@ export default function ContentStudio({ profileId }: Props) {
 
   async function handleGenerate() {
     setPhase('scraping')
-    setPhaseDetail('Fetching the last 7 days of competitor reels via Apify…')
+    setPhaseDetail('Fetching the last 7 days of competitor Reels…')
     setElapsedSec(0)
 
     try {
       // ── Step 1: Scrape ────────────────────────────────────────────────────
-      const scrapeRes = await fetch('/api/competitors/scrape', { method: 'POST' })
-      const scrapeText = await scrapeRes.text()
-      let scrapeJson: Record<string, unknown> = {}
-      try { scrapeJson = JSON.parse(scrapeText) } catch { /* non-JSON 500 */ }
-
-      if (!scrapeRes.ok) {
-        const msg = scrapeRes.status === 503
-          ? 'Apify not configured — add APIFY_API_TOKEN to Vercel'
-          : scrapeJson.error === 'no_competitors'
-          ? 'No competitor accounts tracked — add some below first'
-          : ((scrapeJson.message || scrapeJson.error) as string | undefined) ?? `Scrape failed (${scrapeRes.status})`
-        toast.error(msg)
-        setPhase('error')
-        setPhaseDetail(msg)
-        return
-      }
+      const scrapeJson = await dashboardRequest<{ added?: number; accounts_scraped?: number; warning?: string }>(
+        '/api/competitors/scrape', { method: 'POST' }, 295_000)
+      if (scrapeJson.warning) toast.warning(scrapeJson.warning)
 
       const reelsAdded = (scrapeJson.added as number) ?? 0
       setPhaseDetail(
@@ -82,25 +70,23 @@ export default function ContentStudio({ profileId }: Props) {
       setPhaseDetail('Starting transcription…')
       let totalTranscribed = 0
       for (let batch = 0; batch < 10; batch++) {
-        const res = await fetch('/api/competitors/transcribe', { method: 'POST' })
-        if (!res.ok) break
-        const json = await res.json() as { transcribed?: number; total?: number }
+        const json = await dashboardRequest<{ transcribed?: number; total?: number; skipped?: number }>(
+          '/api/competitors/transcribe', { method: 'POST' }, 295_000)
         totalTranscribed += json.transcribed ?? 0
         setPhaseDetail(`${totalTranscribed} reels transcribed…`)
-        if ((json.total ?? 0) < 30) break
+        if (!json.transcribed && json.skipped) throw new Error('The videos could not be transcribed right now. Please try again later.')
+        if ((json.total ?? 0) < 30 || !json.transcribed) break
       }
 
       // ── Step 3: Generate ──────────────────────────────────────────────────
       setPhase('generating')
-      setPhaseDetail('Claude is analysing competitor content and writing your scripts…')
+      setPhaseDetail('Writing your scripts from the saved competitor content…')
 
-      const genRes = await fetch('/api/weekly-package/generate', {
+      const genJson = await dashboardRequest<{ script_count?: number }>('/api/weekly-package/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ profileId }),
-      })
-      const genJson = await genRes.json()
-      if (!genRes.ok) throw new Error(genJson.error || 'Generation failed')
+      }, 295_000)
 
       const scriptCount = genJson.script_count ?? 7
       setPhase('done')

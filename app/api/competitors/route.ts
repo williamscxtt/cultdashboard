@@ -3,6 +3,7 @@ import { createClient as createAdmin } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { getImpersonatedId, effectiveId } from '@/lib/effective-user'
+import { competitorUsername } from '@/lib/competitor-refresh'
 
 const adminClient = createAdmin(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -66,6 +67,7 @@ export async function GET() {
       .from('competitor_reels')
       .select('account, scraped_week, views')
       .in('account', handles)
+      .gte('date', new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10))
 
     if (reelRows) {
       for (const row of reelRows as Array<{ account: string; scraped_week: string; views: number }>) {
@@ -107,7 +109,8 @@ export async function POST(request: Request) {
   const { ig_username } = body
   if (!ig_username) return NextResponse.json({ error: 'ig_username is required' }, { status: 400 })
 
-  const clean = ig_username.replace(/^@/, '').trim().toLowerCase()
+  const clean = competitorUsername(ig_username)
+  if (!clean) return NextResponse.json({ error: 'Enter a valid Instagram username or profile link.' }, { status: 400 })
 
   // Check for duplicate
   const { data: existing } = await adminClient

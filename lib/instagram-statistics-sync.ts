@@ -51,9 +51,19 @@ async function apify(path: string, input?: Record<string, unknown>) {
   return response.json()
 }
 
-export async function instagramProviderHealth() {
+export async function instagramProviderHealth(includeLimits = false) {
   await apify('/users/me')
-  return { apify: 'connected', cronConfigured: Boolean(process.env.CRON_SECRET) }
+  if (!includeLimits) return { apify: 'connected', cronConfigured: Boolean(process.env.CRON_SECRET) }
+  const { data } = await apify('/users/me/limits')
+  // Owner-only health response: allowlist operational figures, not account data.
+  return { apify: 'connected', cronConfigured: Boolean(process.env.CRON_SECRET), capacity: {
+    memoryGbytes: data?.limits?.maxActorMemoryGbytes ?? null,
+    usedMemoryGbytes: data?.current?.actorMemoryGbytes ?? null,
+    concurrentRuns: data?.limits?.maxConcurrentActorJobs ?? null,
+    activeRuns: data?.current?.activeActorJobCount ?? null,
+    monthlyUsageLimitUsd: data?.limits?.maxMonthlyUsageUsd ?? null,
+    monthlyUsageUsd: data?.current?.monthlyUsageUsd ?? null,
+  } }
 }
 
 export async function enqueueInstagramStatistics(profileId?: string) {

@@ -321,15 +321,15 @@ Reply ONLY with JSON array: [{"index":1,"format_type":"Talking Head"},...]`,
 async function getStatus(profileId: string) {
   const { data: profile } = await adminClient.from('profiles').select('ig_username,followers_count').eq('id', profileId).single()
   const username = String(profile?.ig_username ?? '').trim().replace(/^@/, '').toLowerCase()
-  const [{ data: latest }, { count }, { data: statisticsSync }] = await Promise.all([
+  const [{ data: latest }, { count }, { data: statisticsSync }, { data: attempt }] = await Promise.all([
     adminClient.from('client_reels').select('created_at').eq('profile_id', profileId)
       .order('created_at', { ascending: false }).limit(1).single(),
     adminClient.from('client_reels').select('*', { count: 'exact', head: true }).eq('profile_id', profileId),
     adminClient.from('instagram_sync_jobs').select('completed_at').eq('username', username)
       .eq('status', 'succeeded').order('completed_at', { ascending: false }).limit(1).maybeSingle(),
+    adminClient.from('instagram_sync_jobs').select('status,last_error,updated_at')
+      .eq('username', username).order('sync_date', { ascending: false }).limit(1).maybeSingle(),
   ])
-  const { data: attempt } = await adminClient.from('instagram_sync_jobs').select('status,last_error,updated_at')
-    .eq('username', username).order('sync_date', { ascending: false }).limit(1).maybeSingle()
   const issue = attempt?.status === 'failed' && attempt.last_error ? instagramSyncFeedback(attempt.last_error) : null
   const timestamps = [latest?.created_at, statisticsSync?.completed_at].filter(Boolean).sort()
   return { synced: 0, total: count ?? 0, last_synced: timestamps.at(-1) ?? null,

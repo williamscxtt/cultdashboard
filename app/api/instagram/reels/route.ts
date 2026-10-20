@@ -40,33 +40,16 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  // Fetch total count
-  const { count } = await adminClient
-    .from('client_reels')
-    .select('id', { count: 'exact', head: true })
-    .eq('profile_id', profileId)
-
-  // Fetch paginated reels
-  const { data: reels, error } = await adminClient
-    .from('client_reels')
-    .select('*')
-    .eq('profile_id', profileId)
-    .order('date', { ascending: false })
-    .range(offset, offset + limit - 1)
-
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  let founderStatistics
   try {
-    founderStatistics = await loadFounderStatistics(adminClient, profileId)
+    const [{ count, error: countError }, { data: reels, error }, founderStatistics] = await Promise.all([
+      adminClient.from('client_reels').select('id', { count: 'exact', head: true }).eq('profile_id', profileId),
+      adminClient.from('client_reels').select('*').eq('profile_id', profileId)
+        .order('date', { ascending: false }).range(offset, offset + limit - 1),
+      loadFounderStatistics(adminClient, profileId),
+    ])
+    if (error || countError) return NextResponse.json({ error: 'Your saved statistics could not load. Please try again.' }, { status: 503 })
+    return NextResponse.json({ reels: reels ?? [], total: count ?? 0, founderStatistics })
   } catch {
     return NextResponse.json({ error: 'Your combined statistics could not load. Please refresh.' }, { status: 503 })
   }
-  return NextResponse.json({
-    reels: reels ?? [],
-    total: count ?? 0,
-    founderStatistics,
-  })
 }

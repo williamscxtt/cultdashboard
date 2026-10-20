@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid profileId' }, { status: 400 })
   }
   try {
-    if (body.action === 'health') return NextResponse.json(await instagramProviderHealth())
+    if (body.action === 'health') return NextResponse.json(await instagramProviderHealth(true))
     if (body.action === 'status') return NextResponse.json(await instagramStatisticsStatus())
     return sync(body.action !== 'drain', body.profileId)
   } catch (error) {

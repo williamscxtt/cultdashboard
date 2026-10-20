@@ -4,6 +4,7 @@ import { Card, Button, SectionLabel } from '@/components/ui'
 import { toast } from 'sonner'
 import { X, Plus } from 'lucide-react'
 import { useIsMobile } from '@/lib/use-mobile'
+import { dashboardRequest } from '@/lib/dashboard-request'
 
 interface Competitor {
   id: string
@@ -57,9 +58,7 @@ export default function CompetitorManager() {
 
   async function fetchCompetitors() {
     try {
-      const res = await fetch('/api/competitors')
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error || 'Failed to load')
+      const json = await dashboardRequest<{ competitors: Competitor[]; limit: number | null }>('/api/competitors')
       setCompetitors(json.competitors || [])
       setLimit(json.limit ?? null)
     } catch (err: unknown) {

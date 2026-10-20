@@ -20,12 +20,14 @@ async function readPages<T>(read: (from: number, to: number) => PromiseLike<{ da
 
 export async function loadLeaderboard(viewerId = '', now = new Date()) {
   const db = leaderboardDatabase()
-  const profiles = await readPages<LeaderboardProfile & Parameters<typeof canUseDashboard>[0]>((from, to) => db.from('profiles')
+  const [profiles, roster] = await Promise.all([
+    readPages<LeaderboardProfile & Parameters<typeof canUseDashboard>[0]>((from, to) => db.from('profiles')
     .select('id,name,ig_username,role,is_active,billing_exempt,billing_provider,access_type,membership_tier,subscription_status,subscription_period_end,skool_access_review_due_at')
-    .eq('is_active', true).not('ig_username', 'is', null).neq('ig_username', '').order('id').range(from, to))
+    .eq('is_active', true).not('ig_username', 'is', null).neq('ig_username', '').order('id').range(from, to)),
+    readPages<SkoolLeaderboardCreator>((from, to) => db.from('leaderboard_creators')
+    .select('id,name,ig_username,profile_id,is_active,excluded').eq('is_active', true).eq('excluded', false).order('id').range(from, to)),
+  ])
   const eligible: LeaderboardProfile[] = profiles.filter(canUseDashboard)
-  const roster = await readPages<SkoolLeaderboardCreator>((from, to) => db.from('leaderboard_creators')
-    .select('id,name,ig_username,profile_id,is_active,excluded').eq('is_active', true).eq('excluded', false).order('id').range(from, to))
   const creators = linkedSkoolCreators(roster)
   // Exact verified profile links retain historical metrics and the creator's chosen account.
   const knownIds = new Set(eligible.map(profile => profile.id))
@@ -41,7 +43,8 @@ export async function loadLeaderboard(viewerId = '', now = new Date()) {
   const ids = eligible.map(profile => profile.id)
   const today = Date.parse(now.toISOString().slice(0, 10))
   const day = (offset: number) => new Date(today - offset * 86_400_000).toISOString().slice(0, 10)
-  const [snapshots, reels, syncs, posts] = await Promise.all([
+  const creatorIds = creators.map(creator => creator.id)
+  const [snapshots, reels, syncs, posts, skoolSnapshots, skoolReels, skoolPosts] = await Promise.all([
     ids.length ? readPages<LeaderboardSnapshot>((from, to) => db.from('follower_snapshots').select('profile_id,date,count').in('profile_id', ids)
       .gte('date', day(30)).lte('date', day(0)).order('profile_id').order('date').order('id').range(from, to)) : Promise.resolve<LeaderboardSnapshot[]>([]),
     ids.length ? readPages<LeaderboardReel>((from, to) => db.from('client_reels').select('profile_id,reel_id,date,views').in('profile_id', ids)
@@ -51,20 +54,15 @@ export async function loadLeaderboard(viewerId = '', now = new Date()) {
       .gte('sync_date', day(29)).lte('sync_date', day(0)).order('sync_date', { ascending: false }).order('username').range(from, to)),
     ids.length ? readPages<LeaderboardPost>((from, to) => db.from('instagram_posts').select('profile_id,post_id,posted_at,content_type').in('profile_id', ids)
       .gte('posted_at', day(59)).lte('posted_at', now.toISOString()).order('profile_id').order('post_id').range(from, to)) : Promise.resolve<LeaderboardPost[]>([]),
+    creatorIds.length ? readPages<LeaderboardSnapshot>((from, to) => db.from('leaderboard_creator_snapshots').select('profile_id:creator_id,date,count')
+      .in('creator_id', creatorIds).gte('date', day(30)).lte('date', day(0)).order('creator_id').order('date').range(from, to)) : Promise.resolve<LeaderboardSnapshot[]>([]),
+    creatorIds.length ? readPages<LeaderboardReel>((from, to) => db.from('leaderboard_creator_reels').select('profile_id:creator_id,reel_id,date,views')
+      .in('creator_id', creatorIds).gte('date', day(29)).lte('date', day(0)).order('creator_id').order('reel_id').range(from, to)) : Promise.resolve<LeaderboardReel[]>([]),
+    creatorIds.length ? readPages<LeaderboardPost>((from, to) => db.from('leaderboard_creator_posts').select('profile_id:creator_id,post_id,posted_at,content_type')
+      .in('creator_id', creatorIds).gte('posted_at', day(59)).lte('posted_at', now.toISOString()).order('creator_id').order('post_id').range(from, to)) : Promise.resolve<LeaderboardPost[]>([]),
   ])
-  const creatorIds = creators.map(creator => creator.id)
-  if (creatorIds.length) {
-    const [skoolSnapshots, skoolReels, skoolPosts] = await Promise.all([
-      readPages<LeaderboardSnapshot>((from, to) => db.from('leaderboard_creator_snapshots').select('profile_id:creator_id,date,count')
-        .in('creator_id', creatorIds).gte('date', day(30)).lte('date', day(0)).order('creator_id').order('date').range(from, to)),
-      readPages<LeaderboardReel>((from, to) => db.from('leaderboard_creator_reels').select('profile_id:creator_id,reel_id,date,views')
-        .in('creator_id', creatorIds).gte('date', day(29)).lte('date', day(0)).order('creator_id').order('reel_id').range(from, to)),
-      readPages<LeaderboardPost>((from, to) => db.from('leaderboard_creator_posts').select('profile_id:creator_id,post_id,posted_at,content_type')
-        .in('creator_id', creatorIds).gte('posted_at', day(59)).lte('posted_at', now.toISOString()).order('creator_id').order('post_id').range(from, to)),
-    ])
-    snapshots.push(...skoolSnapshots)
-    reels.push(...skoolReels)
-    posts.push(...skoolPosts)
-  }
+  snapshots.push(...skoolSnapshots)
+  reels.push(...skoolReels)
+  posts.push(...skoolPosts)
   return visibleLeaderboard(buildLeaderboard([...eligible, ...creators], snapshots, reels, viewerId, now, syncs, posts))
 }
